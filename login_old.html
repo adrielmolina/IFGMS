@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+    <html lang="en0">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>IFGMS - Login</title>
+            <link rel="stylesheet" href="style.css">
+        </head>
+
+        <body>
+            <img src="assets/IFGMS-login_ids.png" alt="Classic ID" class="login_id">
+
+            <div class="container">
+                <div class="right-container">
+                    <img src="assets/IFGMS-login_logo.png" alt="logo" class="login_logo">
+                    
+                    <!-- replace with the actual login page -->
+                    <form action="home.html" method="POST" class="login_form">
+                        <p class="login_note">Please login to continue.</p>
+
+                        <input type="text" id="username" name="username" placeholder="Username" required>
+                        <input type="password" id="password" name="password" placeholder="Password" required>
+                        
+                        <!-- remove onclick attr when login logic is implemented -->
+                        <button type="submit" class="login_btn" onclick="window.location.href='home.html';">Login</button>
+                        
+                        <!-- replace with the actual forgot password page -->
+                        <div class="forgot-password">
+                            <a href="/forgot_password.html">Forgot Password?</a>
+                        </div>
+
+
+                    </form>
+
+
+                </div>
+            </div>
+        </body>    
+    </html>
