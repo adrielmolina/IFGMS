@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+    <html lang="en0">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>IFGMS - Home</title>
+            <link rel="stylesheet" href="styles/Add_mem.css">
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dashboard" />
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        </head>
+
+        <body style="background-image: url(/assets/IFGMS-bg-white.png);">
+
+
+            <div class="container">
+                    <input type="checkbox" id="sidebar-toggle">
+        
+                    <!-- Sidebar -->
+                    <div class="sidebar">
+                        <label for="sidebar-toggle" class="menu-btn">☰</label> <!-- Hamburger Button -->
+                            <div class="ifgms">
+                                <h1><img src="assets/IFGMS.png" alt="Icon" width="60px"> IFGMS</h1>
+                            </div>
+                        <hr>
+                        <ul>
+                            <li ><span class="material-symbols-outlined">dashboard</span> Dashboard</li>
+                            <li><i class="fa-regular fa-address-card"></i> Inventory</li>
+                            <li class="active"><i class="fa-solid fa-user-plus"></i> Add Members</li>
+                            <li><i class="fa-solid fa-people-group"></i> Manage Members</li>
+                            <li>Membership Report</li>
+                            <li>Manage Claims</li>
+                            <li> Claims History</li>
+                            <li>Accounts</li>
+                            <li><i class="fa-solid fa-user-gear"></i> Settings</li>
+                            <li><i class="fa-solid fa-door-open"></i> Logout</li>
+                        </ul>
+                    </div>
+            </div>
+            
+                <div class="module_name">
+                    <h1>Add Members</h1>
+                </div>
+
+                <div class="main-content">
+                    <div class="entry">
+                        <div>
+                            <label class="entry_label" for="Num_Entries">Show</label>
+                            <input class="entry_labels" type="number" id="Num_Entries" min="1" value="10">
+                            <label class="entry_label" for="Num_Entries">entries</label>
+                        </div>
+                        <div>
+                            <label class="entry_label" for="search_box">Search:</label>
+                            <input class="entry_labels" type="text" id="search_box" placeholder="Search...">
+                        </div>
+                    </div>
+                    <br>
+                
+                    <!-- Table Section -->
+                    <div class="ID_table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Transaction No.</th>
+                                    <th>Year</th>
+                                    <th>MAAB No.</th>
+                                    <th>Member ID</th>
+                                    <th>Effectivity Date</th>
+                                    <th>Expiry Date</th>
+                                    <th>Particular Location</th>
+                                    <th>Location Category</th>
+                                    <th>Municipality</th>
+                                    <th>District</th>
+                                    <th>OR Number</th>
+                                    <th>OR Date</th>
+                                    <th>Paid</th>
+                                    <th>Remarks</th>
+                                    <th>Origin</th>
+                                    <th>Count in Group</th>
+                                    <th>ID Received</th>
+                                    <th>Declared</th>
+                                    <th>Tags</th>
+                                    <th>Declaration Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1001</td>
+                                    <td>2025</td>
+                                    <td>MAAB001</td>
+                                    <td>M1234</td>
+                                    <td>2025-01-10</td>
+                                    <td>2026-01-10</td>
+                                    <td>Location A</td>
+                                    <td>Urban</td>
+                                    <td>City A</td>
+                                    <td>D1</td>
+                                    <td>123456</td>
+                                    <td>2025-01-15</td>
+                                    <td>Yes</td>
+                                    <td>Active Member</td>
+                                    <td>Branch 1</td>
+                                    <td>3</td>
+                                    <td>Yes</td>
+                                    <td>Yes</td>
+                                    <td>Renewal</td>
+                                    <td>2025-01-10</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1002</td>
+                                    <td>2025</td>
+                                    <td>MAAB002</td>
+                                    <td>M1235</td>
+                                    <td>2025-02-05</td>
+                                    <td>2026-02-05</td>
+                                    <td>Location B</td>
+                                    <td>Rural</td>
+                                    <td>City B</td>
+                                    <td>D2</td>
+                                    <td>123457</td>
+                                    <td>2025-02-07</td>
+                                    <td>Yes</td>
+                                    <td>Pending Update</td>
+                                    <td>Branch 2</td>
+                                    <td>2</td>
+                                    <td>Yes</td>
+                                    <td>No</td>
+                                    <td>New Member</td>
+                                    <td>2025-02-05</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1003</td>
+                                    <td>2025</td>
+                                    <td>MAAB003</td>
+                                    <td>M1236</td>
+                                    <td>2025-03-01</td>
+                                    <td>2026-03-01</td>
+                                    <td>Location C</td>
+                                    <td>Urban</td>
+                                    <td>City C</td>
+                                    <td>D3</td>
+                                    <td>123458</td>
+                                    <td>2025-03-03</td>
+                                    <td>Yes</td>
+                                    <td>Active Member</td>
+                                    <td>Branch 3</td>
+                                    <td>1</td>
+                                    <td>Yes</td>
+                                    <td>Yes</td>
+                                    <td>Renewal</td>
+                                    <td>2025-03-01</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1004</td>
+                                    <td>2025</td>
+                                    <td>MAAB004</td>
+                                    <td>M1237</td>
+                                    <td>2025-04-12</td>
+                                    <td>2026-04-12</td>
+                                    <td>Location D</td>
+                                    <td>Suburban</td>
+                                    <td>City D</td>
+                                    <td>D4</td>
+                                    <td>123459</td>
+                                    <td>2025-04-15</td>
+                                    <td>Yes</td>
+                                    <td>Inactive</td>
+                                    <td>Branch 4</td>
+                                    <td>4</td>
+                                    <td>No</td>
+                                    <td>No</td>
+                                    <td>Terminated</td>
+                                    <td>2025-04-12</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1005</td>
+                                    <td>2025</td>
+                                    <td>MAAB005</td>
+                                    <td>M1238</td>
+                                    <td>2025-05-20</td>
+                                    <td>2026-05-20</td>
+                                    <td>Location E</td>
+                                    <td>Urban</td>
+                                    <td>City E</td>
+                                    <td>D5</td>
+                                    <td>123460</td>
+                                    <td>2025-05-22</td>
+                                    <td>Yes</td>
+                                    <td>Active Member</td>
+                                    <td>Branch 5</td>
+                                    <td>5</td>
+                                    <td>Yes</td>
+                                    <td>Yes</td>
+                                    <td>Renewal</td>
+                                    <td>2025-05-20</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1006</td>
+                                    <td>2025</td>
+                                    <td>MAAB006</td>
+                                    <td>M1239</td>
+                                    <td>2025-06-15</td>
+                                    <td>2026-06-15</td>
+                                    <td>Location F</td>
+                                    <td>Rural</td>
+                                    <td>City F</td>
+                                    <td>D6</td>
+                                    <td>123461</td>
+                                    <td>2025-06-17</td>
+                                    <td>Yes</td>
+                                    <td>Pending Update</td>
+                                    <td>Branch 6</td>
+                                    <td>2</td>
+                                    <td>Yes</td>
+                                    <td>No</td>
+                                    <td>New Member</td>
+                                    <td>2025-06-15</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1007</td>
+                                    <td>2025</td>
+                                    <td>MAAB007</td>
+                                    <td>M1240</td>
+                                    <td>2025-07-08</td>
+                                    <td>2026-07-08</td>
+                                    <td>Location G</td>
+                                    <td>Urban</td>
+                                    <td>City G</td>
+                                    <td>D7</td>
+                                    <td>123462</td>
+                                    <td>2025-07-10</td>
+                                    <td>Yes</td>
+                                    <td>Active Member</td>
+                                    <td>Branch 7</td>
+                                    <td>3</td>
+                                    <td>Yes</td>
+                                    <td>Yes</td>
+                                    <td>Renewal</td>
+                                    <td>2025-07-08</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1008</td>
+                                    <td>2025</td>
+                                    <td>MAAB008</td>
+                                    <td>M1241</td>
+                                    <td>2025-08-22</td>
+                                    <td>2026-08-22</td>
+                                    <td>Location H</td>
+                                    <td>Suburban</td>
+                                    <td>City H</td>
+                                    <td>D8</td>
+                                    <td>123463</td>
+                                    <td>2025-08-24</td>
+                                    <td>Yes</td>
+                                    <td>Inactive</td>
+                                    <td>Branch 8</td>
+                                    <td>1</td>
+                                    <td>No</td>
+                                    <td>No</td>
+                                    <td>Terminated</td>
+                                    <td>2025-08-22</td>
+                                  </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                
+                    <div class="form-container">
+                        <form>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>First Name <span class="required">*</span></label>
+                                    <input type="text" placeholder="Enter First Name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Last Name <span class="required">*</span></label>
+                                    <input type="text" placeholder="Enter Last Name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Birth Date <span class="required">*</span></label>
+                                    <input type="date">
+                                </div>
+                                <div class="form-group">
+                                    <label>Sex <span class="required">*</span></label>
+                                    <select>
+                                        <option>Male</option>
+                                        <option>Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                    
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Contact No <span class="required">*</span></label>
+                                    <input type="text" placeholder="Enter Contact Number">
+                                </div>
+                                <div class="form-group">
+                                    <label>Email Address <span class="required">*</span></label>
+                                    <input type="email" placeholder="Enter Email">
+                                </div>
+                                <div class="form-group">
+                                    <label>Membership Type <span class="required">*</span></label>
+                                    <select>
+                                        <option>Classic</option>
+                                        <option>Bronze</option>
+                                        <option>Silver</option>
+                                        <option>Gold</option>
+                                        <option>Platinum</option>
+                                        <option>Enhanced Platinum</option>
+                                        <option>Senior</option>
+                                        <option>Senior Plus</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Effectivity Date <span class="required">*</span></label>
+                                    <input type="date">
+                                </div>
+                            </div>
+                    
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>School/Company/Organization</label>
+                                    <input type="text" class="sco" placeholder="Enter Organization">
+                                </div>
+                                <div class="form-group">
+                                    <label>Teacher/Coordinator</label>
+                                    <input type="text" class="tc" placeholder="Enter Name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Contact No <span class="required">*</span></label>
+                                    <input type="text" placeholder="Enter Contact No">
+                                </div>
+                            </div>
+                    
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Email Address <span class="required">*</span></label>
+                                    <input type="email" placeholder="Enter Email">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date Submitted <span class="required">*</span></label>
+                                    <input type="date">
+                                </div>
+                            </div>
+                    
+                            <div class="form-buttons">
+                                <button type="submit" class="save-btn">Save</button>
+                                <button type="reset" class="clear-btn">Clear</button>
+                            </div>
+                        </form>
+                    </div>
+                
+        </body>    
+    </html>
