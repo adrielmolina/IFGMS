@@ -5,6 +5,7 @@
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>IFGMS - Home</title>
             <link rel="stylesheet" href="styles/home.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         </head>
 
         <body style="background-image: url(/assets/IFGMS-bg.png);">
@@ -12,7 +13,6 @@
 
             <div class="">
                 <nav>
-                    <!-- Sidebar Toggle Checkbox -->
                     <input type="checkbox" id="sidebar-toggle">
         
                     <!-- Sidebar -->
@@ -20,19 +20,19 @@
                         <label for="sidebar-toggle" class="menu-btn">☰</label> <!-- Hamburger Button -->
                         
                         <ul>
-                            <li>Dashboard</li>
-                            <li>Inventory</li>
-                            <li>Add Members</li>
-                            <li>Manage Members</li>
+                            <li><i class="fa-solid fa-table-columns"></i> Dashboard</li>
+                            <li><i class="fa-regular fa-address-card"></i> Inventory</li>
+                            <li onclick="window.location.href='Add_mem.html'"><i class="fa-solid fa-user-plus"></i> Add Members</li>
+                            <li><i class="fa-solid fa-people-group"></i> Manage Members</li>
                             <li>Membership Report</li>
                             <li>Manage Claims</li>
                             <li>Claims History</li>
-                            <li>Settings</li>
-                            <li>Logout</li>
+                            <li><i class="fa-solid fa-user-gear"></i> Settings</li>
+                            <li><i class="fa-solid fa-door-open"></i> Logout</li>
                         </ul>
                     </div>
                 </nav>
             </div>
-
+            
         </body>    
     </html>

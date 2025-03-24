@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+    <html lang="en0">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>IFGMS - Home</title>
+            <link rel="stylesheet" href="styles/ID_inv.css">
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dashboard" />
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        </head>
+
+        <body style="background-image: url(/assets/IFGMS-bg-white.png);">
+
+
+            <div class="container">
+                    <input type="checkbox" id="sidebar-toggle">
+        
+                    <!-- Sidebar -->
+                    <div class="sidebar">
+                        <label for="sidebar-toggle" class="menu-btn">☰</label> <!-- Hamburger Button -->
+                            <div class="ifgms">
+                                <h1><img src="assets/IFGMS.png" alt="Icon" width="60px"> IFGMS</h1>
+                            </div>
+                        <hr>
+                        <ul>
+                            <li><span class="material-symbols-outlined">dashboard</span> Dashboard</li>
+                            <li><i class="fa-regular fa-address-card"></i> Inventory</li>
+                            <li class="active"><i class="fa-solid fa-user-plus"></i> Add Members</li>
+                            <li><i class="fa-solid fa-people-group"></i> Manage Members</li>
+                            <li>Membership Report</li>
+                            <li>Manage Claims</li>
+                            <li> Claims History</li>
+                            <li>Accounts</li>
+                            <li><i class="fa-solid fa-user-gear"></i> Settings</li>
+                            <li><i class="fa-solid fa-door-open"></i> Logout</li>
+                        </ul>
+                    </div>
+            </div>
+            
+                <div class="module_name">
+                    <h1>ID Inventory</h1>
+                </div>
+
+                <div class="main-content">
+                    <div class="entry">
+                        <p>Show</p>
+                        <input type="number" id="Num_Entries">
+                        <p>entries</p>
+                        <p>Search</p>
+                        <input type="text" id="search_box">
+                    </div>
+
+                    <div class="ID_table">
+                        <table>
+                            <tr>
+                                <th>No.</th>
+                                <th >MAAB Category</th>
+                                <th>MAAB No.</th>
+                                <th>Used</th>
+                                <th>Remarks</th>
+                                <th>Allocated to.</th>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td>Alfreds Futterkiste</td>
+                                <td>Maria Anders</td>
+                                <td>Germany</td>
+                                <td>Germany</td>
+                                <td>Alfreds Futterkiste</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            
+        </body>    
+    </html>
