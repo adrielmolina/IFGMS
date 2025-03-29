@@ -39,7 +39,7 @@ CREATE TABLE `membership_records` (
 	`transaction_no` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`year` YEAR,
 	`maab_no` INTEGER,
-	`member_id` INTEGER,
+	`member_id` INTEGER UNIQUE,
 	`effectivity_date` DATE,
 	`expiry_date` DATE,
 	`location_particular` VARCHAR(255),
@@ -60,7 +60,7 @@ CREATE TABLE `membership_records` (
 );
 
 
-CREATE TABLE `invventory` (
+CREATE TABLE `inventory` (
 	`inv_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
 	`maab_no` VARCHAR(255),
@@ -81,5 +81,5 @@ ALTER TABLE `members_info`
 ADD FOREIGN KEY(`member_id`) REFERENCES `membership_records`(`member_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `membership_records`
-ADD FOREIGN KEY(`maab_no`) REFERENCES `invventory`(`inv_id`)
+ADD FOREIGN KEY(`maab_no`) REFERENCES `inventory`(`inv_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;

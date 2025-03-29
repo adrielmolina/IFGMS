@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, jsonify, redirect, url_for
+from py_scripts import db_conn
 
 server = Flask(__name__)
 
@@ -13,13 +14,9 @@ def login():
     username = request.form.get("username")
     password = request.form.get("password")
 
-    creds = {
-        "adriel": "ad123",
-        "abby": "ab123",
-        "jb": "jb123"
-    }
+    sign_in = db_conn.sign_in(username, password)
     
-    if username in creds and creds[username] == password:
+    if sign_in == 'success':
         return redirect(url_for('home'))  # Redirect to home page on success
     else:
         return '''
@@ -34,5 +31,5 @@ def home():
     return render_template('home.html')
 
 if __name__ == '__main__':
-    server.run(debug=True)
+    server.run(debug=True, use_reloader=True)
     
