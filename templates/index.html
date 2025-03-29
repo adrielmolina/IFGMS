@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+    <html lang="en0">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>IFGMS - Login</title>
+            <link rel="stylesheet" href="/static/styles/login_style.css">
+            <link rel="icon" href="/static/assets/favicon.ico" type="image/x-icon">
+        </head>
+
+        <body style="background-image: url(/static/assets/IFGMS-bg.png);">
+            <img src="/static/assets/IFGMS-login_ids.png" alt="Classic ID" class="login_id">
+
+            <div class="container">
+                <div class="right-container">
+                    <img src="/static/assets/IFGMS-login_logo.png" alt="logo" class="login_logo">
+                    
+                    <!-- replace with the actual login page -->
+                    <form action="/index" method="POST" class="login_form">
+                        <p class="login_note">Please login to continue.</p>
+
+                        <input type="text" id="username" name="username" placeholder="Username" required autocomplete="off"> 
+                        <input type="password" id="password" name="password" placeholder="Password" required autocomplete="off">
+                        
+                        <!-- remove onclick attr when login logic is implemented -->
+                        <button type="submit" class="login_btn">Login</button>
+                        <!-- onclick="window.location.href='home.html';" -->
+                        
+                        <!-- replace with the actual forgot password page -->
+                        <div class="forgot-password">
+                            <a href="/forgot_password.html">Forgot Password?</a>
+                        </div>
+                        
+                        <div class="forgot-password">
+                        <a href="/create_account.html">Request Account</a>
+                        </div>
+                    </form>
+
+
+                </div>
+            </div>
+        </body>    
+    </html>
