@@ -1,0 +1,138 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+
+    justify-content: center;
+    align-items: center;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, sans-serif;
+
+    height: 100%;
+    width: 100%;
+
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.login_id {
+    margin-left: 20px; 
+    max-height: 90%; 
+    object-fit: contain;
+    position: absolute;
+    top: 10%;
+    left: 50px;
+    /* box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.2);     */
+}
+
+.login_logo {
+    position: absolute;
+    height: 30%; /* Limit the height of the logo */
+    width: 70%;
+    object-fit: contain;
+    right: 0%;
+    left: 20%;
+}
+
+.right-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    top: 10%;
+    padding: 20px; /* Adds some padding inside the container */
+    width: 500px;
+    border-radius: 10%;
+    background-color: #95080832; /* You can change the background color */
+    height: 70%; /* Ensures the container takes up the full height */
+    overflow: hidden; /* Allows scrolling if the content exceeds the height */
+    right: 100px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 1);
+    backdrop-filter: blur(5px)
+}
+
+.login_note {
+    margin-top: 140px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #ffffff;
+}
+
+/* Label and input fields */
+label {
+    font-size: 14px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 70%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: 14px;
+    margin: 10px 15%;
+    outline: none;
+
+    background-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px)
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border: 2px solid #691a1a;
+
+    background-color: rgba(232, 136, 136, 0.788);
+    backdrop-filter: blur(5px)
+}
+
+/* Login button */
+button[type="submit"] {
+    width: 70%;
+    padding: 10px;
+    background-color: #1e0b4a;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 5px 15%;
+}
+
+button[type="submit"]:hover {
+    background-color: #ba3439;
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.forgot-password a {
+    color: #0d032e;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+    color: #ffffff;
+}
