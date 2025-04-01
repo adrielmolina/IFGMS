@@ -5,6 +5,9 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 import cryptography
+from random import randint
+from datetime import datetime, timedelta
+
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
@@ -115,6 +118,100 @@ def sign_in(empid_input, password_input):
         else:
             return None
 '''
+
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
+
+def generate_otp():
+    """Generates a random 6-digit OTP."""
+    import random
+    return str(random.randint(100000, 999999))
+
+def save_otp(email, otp):
+    """Stores OTP in the database with an expiration time (5 minutes)."""
+    from datetime import datetime, timedelta
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy import text
+    import db_conn
+
+    expires_at = datetime.now() + timedelta(minutes=5)
+    conn = db_conn.conn_init()
+    Session = sessionmaker(bind=conn)
+
+    with Session() as session:
+        query = text("INSERT INTO otp_verifications (email, otp, expires_at) VALUES (:email, :otp, :expires_at)")
+        session.execute(query, {"email": email, "otp": otp, "expires_at": expires_at})
+        session.commit()
+
+def verify_otp(email, entered_otp):
+    """Verifies if the entered OTP matches the stored OTP and is not expired."""
+    from datetime import datetime
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy import text
+    import db_conn
+
+    conn = db_conn.conn_init()
+    Session = sessionmaker(bind=conn)
+
+    with Session() as session:
+        query = text("""
+            SELECT otp, expires_at FROM otp_verifications 
+            WHERE email = :email 
+            ORDER BY created_at DESC LIMIT 1
+        """)
+        result = session.execute(query, {"email": email}).fetchone()
+
+    if result:
+        stored_otp, expires_at = result
+
+        if datetime.now() > expires_at:
+            return "expired"
+
+        if entered_otp == stored_otp:
+            # Delete OTP after successful verification
+            delete_query = text("DELETE FROM otp_verifications WHERE email = :email")
+            with Session() as session:
+                session.execute(delete_query, {"email": email})
+                session.commit()
+            return "success"
+
+    return "fail"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def get_total_donations_for_today():
     """Fetches the total number of donations for today from the inventory table"""

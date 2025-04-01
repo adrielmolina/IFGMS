@@ -9,6 +9,8 @@ def landing_page():
     return render_template('index.html')
 
 
+
+
 @server.route('/index', methods=['POST'])
 def login():
     username = request.form.get("username")
@@ -29,6 +31,18 @@ def login():
 @server.route('/home')
 def home():
     return render_template('home.html')
+
+@server.route('/members')
+def members():
+    return render_template('members.html')
+
+@server.route('/create_account')
+def create_account():
+    return render_template('create_account.html')
+
+@server.route('/forgot_password')
+def forgot_password():
+    return render_template('forgot_password.html')
 
 if __name__ == '__main__':
     server.run(debug=True, use_reloader=True)
