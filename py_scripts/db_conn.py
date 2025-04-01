@@ -7,7 +7,10 @@ from sqlalchemy.orm import sessionmaker
 import cryptography
 from random import randint
 from datetime import datetime, timedelta
-
+import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
@@ -122,62 +125,76 @@ def sign_in(empid_input, password_input):
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
 
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+
 def generate_otp():
-    """Generates a random 6-digit OTP."""
-    import random
-    return str(random.randint(100000, 999999))
+    """Generate a random 6-digit OTP."""
+    return str(randint(100000, 999999))
 
 def save_otp(email, otp):
-    """Stores OTP in the database with an expiration time (5 minutes)."""
-    from datetime import datetime, timedelta
-    from sqlalchemy.orm import sessionmaker
-    from sqlalchemy import text
-    import db_conn
-
-    expires_at = datetime.now() + timedelta(minutes=5)
-    conn = db_conn.conn_init()
+    """Save OTP in the database with expiration time."""
+    conn = conn_init()
     Session = sessionmaker(bind=conn)
-
+    expires_at = datetime.now() + timedelta(minutes=5)
+    
     with Session() as session:
         query = text("INSERT INTO otp_verifications (email, otp, expires_at) VALUES (:email, :otp, :expires_at)")
         session.execute(query, {"email": email, "otp": otp, "expires_at": expires_at})
         session.commit()
 
-def verify_otp(email, entered_otp):
-    """Verifies if the entered OTP matches the stored OTP and is not expired."""
-    from datetime import datetime
-    from sqlalchemy.orm import sessionmaker
-    from sqlalchemy import text
-    import db_conn
+def send_otp_email(email, otp):
+    """Send OTP to the user's email."""
+    subject = "Your OTP Code"
+    body = f"Your OTP code is: {otp}. It will expire in 5 minutes."
 
-    conn = db_conn.conn_init()
+    message = MIMEMultipart()
+    message['From'] = SENDER_EMAIL
+    message['To'] = email
+    message['Subject'] = subject
+    message.attach(MIMEText(body, 'plain'))
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.sendmail(SENDER_EMAIL, email, message.as_string())
+        print("OTP sent successfully!")
+    except Exception as e:
+        print(f"Failed to send OTP: {e}")
+
+def verify_otp(email, entered_otp):
+    """Verify the OTP entered by the user."""
+    conn = conn_init()
     Session = sessionmaker(bind=conn)
 
     with Session() as session:
-        query = text("""
-            SELECT otp, expires_at FROM otp_verifications 
-            WHERE email = :email 
-            ORDER BY created_at DESC LIMIT 1
-        """)
+        query = text("""SELECT otp, expires_at FROM otp_verifications WHERE email = :email ORDER BY created_at DESC LIMIT 1""")
         result = session.execute(query, {"email": email}).fetchone()
 
     if result:
         stored_otp, expires_at = result
-
         if datetime.now() > expires_at:
             return "expired"
-
         if entered_otp == stored_otp:
-            # Delete OTP after successful verification
             delete_query = text("DELETE FROM otp_verifications WHERE email = :email")
             with Session() as session:
                 session.execute(delete_query, {"email": email})
                 session.commit()
             return "success"
-
     return "fail"
 
-
+def update_password(email, new_password):
+    """Update the password in the database."""
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    
+    with Session() as session:
+        query = text("UPDATE accounts SET password = :new_password WHERE email = :email")
+        session.execute(query, {"new_password": new_password, "email": email})
+        session.commit()
 
 
 
