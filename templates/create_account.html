@@ -151,6 +151,13 @@
             top: 50% !important;
             transform: translateY(-24%) !important;
         }
+
+        img:hover {
+            border-radius: 50%;
+            background-color: rgb(162, 17, 17);
+            color: white;
+        }
+
     </style>
 </head>
 <body>
@@ -269,8 +276,12 @@
 
         <button type="submit">Submit Request</button>
 
-<!--        TODO use the same style in forgot password-->
-        <a href="/">← Cancel</a>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <a href="/">
+                <img src="/static/assets/back_button.png" alt="Cancel" width="30" height="30">
+            </a>
+            <h3 style="color:white; left:5%;">Cancel</h3>
+        </div>
     </form>
 </body>
 </html>

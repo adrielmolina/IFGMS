@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify, redirect, url_for, flash
+from flask import Flask, request, render_template, redirect, url_for, flash
 from py_scripts import db_conn, tools
 from datetime import date
 import os
@@ -88,6 +88,16 @@ def home():
 @server.route('/members')
 def members_page():
     return render_template('/members.html')
+
+
+@server.route('/accounts')
+def show_user_accounts():
+    active_accounts = db_conn.get_user_accounts(status=['approved', 'archived', 'declined'])
+    pending_accounts = db_conn.get_user_accounts(status=['pending'])
+
+    return render_template('accounts.html', active_accounts=active_accounts, pending_accounts=pending_accounts)
+
+
 
 if __name__ == '__main__':
     server.run(debug=True, use_reloader=True)

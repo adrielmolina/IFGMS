@@ -1,0 +1,106 @@
+@import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap");
+
+body {
+    font-family: "Roboto Condensed", sans-serif;
+    background-color: #f3e8e8;
+}
+
+table, th, tr, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+th {
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: #2d1d52;
+    color: white;
+    border-color: white;
+    font-size: 14px;
+}
+
+td {
+    text-align: center;
+}
+
+td[contenteditable="false"] { /* Light grey background */
+    border: 1px solid red;          /* Text color */
+    font-weight: bold;        /* Italicize the text */
+}
+
+.editableTable tr:nth-child(even) {
+    background-color: rgba(125, 133, 133, 0.429);
+}
+
+button, .clearSearch {
+    color: rgb(255, 255, 255);
+    margin-top: 10px;
+    padding: 5px 10px 5px 10px;
+    cursor: pointer;
+    border: none;
+    border-width: 2px;
+    height: 30px;
+    margin: 10px auto 20px auto;
+    outline: none;
+    border-radius: 10px;
+    background-color: #891b19;
+}
+
+button:hover, .clearSearch:hover {
+    border-width: 4px solid;
+    border-color: black;
+    background-color: #ba3439;
+}
+
+.editableTable_filter {
+    margin-bottom: 20px; /* Increase or decrease the bottom margin here */
+}
+
+/* You can also add padding and margins to the search input if needed */
+.dataTables_filter input {
+    margin-left: 10px;
+    margin-right: 10px; /* Adjust the margin between the input field and the clear button */
+}
+
+/* all paginate elemnts need !important tag */
+.dataTables_paginate {
+    background-color: #f3e8e8;
+    color: rgba(183, 73, 73, 0.918);
+    border-radius: 5px;
+    padding: 8px;
+    margin: 5px;
+    font-size: 12px; /* Add units for font-size */
+    text-align: center; /* Ensure buttons are aligned correctly */
+}
+
+/* Customizing the Pagination Button */
+.dataTables_paginate .paginate_button {
+    background-color: #ffffff;
+    color: rgba(183, 73, 73, 0.918);
+    border-radius: 5px;
+    padding: 5px 12px; /* Adjust padding to make buttons smaller */
+    margin: 0 5px; /* Adjust margin between buttons */
+    font-size: 12px; /* Ensure font size applies to button */
+    cursor: pointer;
+    border: none; /* Remove border */
+}
+
+/* Hover state for pagination button */
+.dataTables_paginate .paginate_button:hover {
+    background-color: #ffcc00 !important; /* Example hover background color */
+    color: black; /* Change text color on hover */
+}
+
+/* Active page button */
+.dataTables_paginate .paginate_button.current {
+    background-color: #ff5722;
+    color: white;
+}
+
+/* Disabled page button */
+.dataTables_paginate .paginate_button.disabled {
+    background-color: #ccc;
+    color: #999;
+}

@@ -102,6 +102,19 @@ def sign_in(username=None, password=None):
     else:
         return 'fail'
 
+def get_user_accounts(status):
+    conn = conn_init()
+
+    with conn:
+        query = text("SELECT * FROM accounts WHERE acct_status IN :status")
+        result = conn.execute(query, {'status': tuple(status)})
+        accounts = result.fetchall()
+        return accounts
+
+
+
+
+
 
 '''
 def sign_in(empid_input, password_input):
