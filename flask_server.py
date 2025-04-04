@@ -1,5 +1,7 @@
-from flask import Flask, request, render_template, jsonify, redirect, url_for
+from flask import Flask, request, render_template, jsonify, redirect, url_for, session, request, flash
 from py_scripts import db_conn
+from py_scripts.db_conn import conn_init, generate_otp, save_otp, send_otp_email, verifying_otp, update_password
+from sqlalchemy import text
 
 server = Flask(__name__)
 
@@ -8,6 +10,7 @@ server = Flask(__name__)
 def landing_page():
     return render_template('index.html')
 
+# ========================== INDEX ==========================
 
 @server.route('/index', methods=['POST'])
 def login():
@@ -17,8 +20,7 @@ def login():
     sign_in = db_conn.sign_in(username, password)
     
     if sign_in == 'success':
-        return redirect(url_for('home'))  # Redirect to home page on success
-    else:
+        return redirect(url_for('home'))  
         return '''
         <script>
             alert("Invalid username or password! Try again.");
@@ -38,73 +40,82 @@ def members():
 def create_account():
     return render_template('create_account.html')
 
+
 server.secret_key = 'ifgms'  
 
-# Route to render the Forgot Password page
-@server.route('/forgot_password', methods=['GET', 'POST'])
+# ========================== FORGOT PASSWORD ==========================
+@server.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
-    if request.method == 'POST':
-        email = request.form['email']
-        
-        # Check if email exists in the database
-        from db_conn import conn_init
-        conn = conn_init()
-        cursor = conn.cursor()
-        cursor.execute("SELECT email FROM accounts WHERE email = %s", (email,))
-        user = cursor.fetchone()
+    if request.method == "POST":
+        email = request.form["email"]
 
-        if user:
-            otp = generate_otp()  # Generate OTP
-            save_otp(email, otp)  # Save OTP to the database
-            send_otp_email(email, otp)  # Send OTP to the user's email
+        otp = generate_otp()  # Generate OTP
+        save_otp(email, otp)  # Save OTP in otp_verifications table
+        send_otp_email(email, otp) # Send OTP to user's 
 
-            # Store the email in the session to verify OTP later
-            session['email'] = email
+        session["email"] = email
+        flash("OTP has been sent to your email.", "info")
+        return redirect(url_for("verify_otp"))
 
-            flash('OTP sent to your email. Please check your inbox.', 'info')
-            return redirect(url_for('verify_otp'))  # Redirect to OTP verification page
-        else:
-            flash('Email not found in our records.', 'error')
-            return redirect(url_for('forgot_password'))
+    return render_template("forgot_password.html")
 
-    return render_template('forgot_password.html')
-
-# Route to render OTP verification page
+# ========================== VERIFY OTP ==========================
 @server.route('/verify_otp', methods=['GET', 'POST'])
-def verify_otp():
+def verify_otp(): 
     if request.method == 'POST':
-        otp = request.form['otp']
-        email = session.get('email')
+        email = request.form.get('email')  # Get email from form
+        otp_input = request.form.get('otp')  # Get OTP from form
 
-        # Verify the OTP
-        result = verify_otp(email, otp)
+        # Call the database function to verify OTP
+        result = db_conn.verifying_otp(email, otp_input)
 
         if result == "success":
-            flash('OTP verified! Please reset your password.', 'success')
+            flash({
+                "title": "OTP Verified Successfully!",
+                "text": "You can now proceed to reset your password.",
+                "redirect_url": url_for('reset_password')
+            }, "success")
             return redirect(url_for('reset_password'))  # Redirect to reset password page
+
         elif result == "expired":
-            flash('OTP expired. Please request a new one.', 'error')
-            return redirect(url_for('forgot_password'))
+            flash("OTP has expired. Please try again.", "error")  # Flash message for expired OTP
+            return redirect(url_for('forgot_password'))  # Redirect to forgot password page
+
+        elif result == "email_not_found":
+            flash("This email is not registered. Please check your email or create an account.", "error")
+            return redirect(url_for('forgot_password'))  # Redirect back to forgot password page
+
         else:
-            flash('Invalid OTP. Please try again.', 'error')
-            return redirect(url_for('verify_otp'))
+            flash("Invalid OTP. Please try again.", "error")  # Flash message for invalid OTP
+            return redirect(url_for('verify_otp'))  # Stay on the verify OTP page for retry
 
-    return render_template('verify_otp.html')
+    return render_template('verify_otp.html')  # Render OTP verification page
 
-# Route to render Reset Password form
-@server.route('/reset_password', methods=['GET', 'POST'])
+# ========================== RESET PASSWORD ==========================
+@server.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
-    if request.method == 'POST':
-        email = session.get('email')
-        new_password = request.form['new_password']
+    email = session.get("email")
+    if not email:
+        flash("Session expired. Please try again.", "error")
+        return redirect(url_for("forgot_password"))
 
-        # Update the password in the database
-        update_password(email, new_password)
-        flash('Your password has been reset successfully!', 'success')
-        session.pop('email', None)  # Clear the session
-        return redirect(url_for('login'))  # Redirect to login page after resetting password
+    if request.method == "POST":
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
 
-    return render_template('reset_password.html')
+        if new_password != confirm_password:
+            flash("Passwords do not match. Please try again.", "error")
+        else:
+            update_password(email, new_password)  
+            session.pop("email", None) 
+            flash({
+                "title": "Password Reset Successfully!",
+                "text": "You can now log in with your new password.",
+                "redirect_url": url_for('login')
+            }, "success")
+            return redirect(url_for("login"))  
+        
+    return render_template("reset_password.html")
 
 if __name__ == '__main__':
     server.run(debug=True, use_reloader=True)

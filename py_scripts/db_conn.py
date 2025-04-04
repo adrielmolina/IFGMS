@@ -29,6 +29,7 @@ print(f'SQL CONNECTION DEBUG\nHost={SQL_HOST}\nUser={SQL_USER}\nPass={SQL_PASS}\
 def conn_init():
     try:
         db_url = f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}/{SQL_DB}"
+        global engine
         engine = create_engine(db_url)
         conn = engine.connect()
 
@@ -123,27 +124,42 @@ def sign_in(empid_input, password_input):
 '''
 
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
-
+# TODO move to top
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 
+
+#!!!!!!!!!!!!!!!!!!!!!!!! GENERATE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def generate_otp():
     """Generate a random 6-digit OTP."""
     return str(randint(100000, 999999))
 
+
+#!!!!!!!!!!!!!!!!!!!!!!!! SAVE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def save_otp(email, otp):
     """Save OTP in the database with expiration time."""
     conn = conn_init()
-    Session = sessionmaker(bind=conn)
+    Session = sessionmaker(bind=engine)
     expires_at = datetime.now() + timedelta(minutes=5)
+    created_at = datetime.now()  # Capture the time when OTP is generated
     
     with Session() as session:
-        query = text("INSERT INTO otp_verifications (email, otp, expires_at) VALUES (:email, :otp, :expires_at)")
-        session.execute(query, {"email": email, "otp": otp, "expires_at": expires_at})
+        query = text("""
+            INSERT INTO otp_verifications (email, otp, expires_at, created_at) 
+            VALUES (:email, :otp, :expires_at, :created_at)
+        """)
+        session.execute(query, {
+            "email": email,
+            "otp": otp,
+            "expires_at": expires_at,
+            "created_at": created_at
+        })
         session.commit()
+
+
+#!!!!!!!!!!!!!!!!!!!!!!!! SEND OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 def send_otp_email(email, otp):
     """Send OTP to the user's email."""
@@ -165,65 +181,62 @@ def send_otp_email(email, otp):
     except Exception as e:
         print(f"Failed to send OTP: {e}")
 
-def verify_otp(email, entered_otp):
-    """Verify the OTP entered by the user."""
+#!!!!!!!!!!!!!!!!!!!!!!!! VERIFY OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+def verifying_otp(email, otp_input):
+    """Verify OTP against the database (original version with added debug prints)"""
+    print(f"[DEBUG] Starting OTP verification for {email}")
+    print(f"[DEBUG] Input OTP: {otp_input} (type: {type(otp_input)})")
+    
     conn = conn_init()
-    Session = sessionmaker(bind=conn)
+    if not conn:
+        print("[ERROR] Connection failed!")
+        return "fail"
+
+    Session = sessionmaker(bind=engine)
+    
 
     with Session() as session:
-        query = text("""SELECT otp, expires_at FROM otp_verifications WHERE email = :email ORDER BY created_at DESC LIMIT 1""")
+        query = text("SELECT otp, expires_at FROM otp_verifications WHERE email = :email")
         result = session.execute(query, {"email": email}).fetchone()
+        print(f"[DEBUG] Database query result: {result}")
 
     if result:
-        stored_otp, expires_at = result
-        if datetime.now() > expires_at:
+        otp, expires_at = result
+        current_time = datetime.now()
+        print(f"[DEBUG] Stored OTP: {otp} (type: {type(otp)})")
+        print(f"[DEBUG] Expires at: {expires_at}")
+        print(f"[DEBUG] Current time: {current_time}")
+
+        if current_time > expires_at:
+            print("[DEBUG] OTP expired")
             return "expired"
-        if entered_otp == stored_otp:
+        
+        if str(otp_input) == str(otp):
+            print("[DEBUG] OTP matched")
             delete_query = text("DELETE FROM otp_verifications WHERE email = :email")
             with Session() as session:
                 session.execute(delete_query, {"email": email})
                 session.commit()
             return "success"
-    return "fail"
+        else:
+            print("[DEBUG] OTP mismatch")
+            return "fail"
+    else:
+        print("[DEBUG] No OTP found for this email")
+        return "fail"
+    
+    
 
 def update_password(email, new_password):
     """Update the password in the database."""
     conn = conn_init()
-    Session = sessionmaker(bind=conn)
+    Session = sessionmaker(bind=engine)
     
     with Session() as session:
         query = text("UPDATE accounts SET password = :new_password WHERE email = :email")
         session.execute(query, {"new_password": new_password, "email": email})
         session.commit()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

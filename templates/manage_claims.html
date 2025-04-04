@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFGMS - Home</title>
+    <link rel="stylesheet" href="styles/Add_mem.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dashboard" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Claims Management</h2>
+        <button id="addClaim">Add</button>
+        <button id="archiveClaim">Archive</button>
+        <button id="updateClaim">Update</button>
+    </div>
+    
+    <div class="content">
+        <h2>Manage Claims</h2>
+        <form id="claimForm">
+            <label for="prcId">PRC ID NO.:</label>
+            <input type="text" id="prcId" name="prcId" required>
+            
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" name="firstName" required>
+            
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" name="lastName" required>
+            
+            <label for="birthday">Birthday:</label>
+            <input type="date" id="birthday" name="birthday" required>
+            
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" required>
+            
+            <label for="occupation">Occupation:</label>
+            <input type="text" id="occupation" name="occupation" required>
+            
+            <label for="contact">Contact No.:</label>
+            <input type="tel" id="contact" name="contact" required>
+            
+            <label for="natureAccident">Nature of Accident:</label>
+            <input type="text" id="natureAccident" name="natureAccident" required>
+            
+            <label for="clinicHospital">Clinic / Hospital:</label>
+            <input type="text" id="clinicHospital" name="clinicHospital" required>
+            
+            <label for="status">Status:</label>
+            <select id="status" name="status" required>
+                <option value="pending">Pending</option>
+                <option value="denied">Denied</option>
+            </select>
+            
+            <button type="submit">Submit</button>
+        </form>
+
+        <h2>Claims Table</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>PRC ID NO.</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Birthday</th>
+                    <th>Address</th>
+                    <th>Occupation</th>
+                    <th>Contact No.</th>
+                    <th>Nature of Accident</th>
+                    <th>Clinic / Hospital</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="claimsTableBody">
+                <!-- Data will be populated dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

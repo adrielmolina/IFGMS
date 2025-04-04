@@ -76,6 +76,14 @@ CREATE TABLE `maab_claims` (
 	PRIMARY KEY(`claim_id`)
 );
 
+CREATE TABLE ifgms.otp_verifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 ALTER TABLE `members_info`
 ADD FOREIGN KEY(`member_id`) REFERENCES `membership_records`(`member_id`)

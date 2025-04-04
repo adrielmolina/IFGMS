@@ -1,0 +1,38 @@
+2025-04-02 19:34:15,097 - WARNING -  * Debugger is active!
+2025-04-02 19:34:15,102 - INFO -  * Debugger PIN: 497-551-229
+2025-04-02 19:34:33,183 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-02 19:34:33,183 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-02 19:34:33,186 - INFO -  * Restarting with stat
+2025-04-02 19:34:34,240 - WARNING -  * Debugger is active!
+2025-04-02 19:34:34,245 - INFO -  * Debugger PIN: 497-551-229
+2025-04-02 19:34:52,080 - INFO - 127.0.0.1 - - [02/Apr/2025 19:34:52] "GET /verify_otp HTTP/1.1" 200 -
+2025-04-02 19:34:58,763 - INFO - 127.0.0.1 - - [02/Apr/2025 19:34:58] "GET / HTTP/1.1" 200 -
+2025-04-02 19:34:58,967 - INFO - 127.0.0.1 - - [02/Apr/2025 19:34:58] "[36mGET /static/styles/login_style.css HTTP/1.1[0m" 304 -
+2025-04-02 19:34:59,006 - INFO - 127.0.0.1 - - [02/Apr/2025 19:34:59] "[36mGET /static/assets/IFGMS-bg.png HTTP/1.1[0m" 304 -
+2025-04-02 19:34:59,039 - INFO - 127.0.0.1 - - [02/Apr/2025 19:34:59] "[36mGET /static/assets/IFGMS-login_ids.png HTTP/1.1[0m" 304 -
+2025-04-02 19:34:59,054 - INFO - 127.0.0.1 - - [02/Apr/2025 19:34:59] "[36mGET /static/assets/IFGMS-login_logo.png HTTP/1.1[0m" 304 -
+2025-04-02 19:34:59,083 - INFO - 127.0.0.1 - - [02/Apr/2025 19:34:59] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-04-02 19:35:00,178 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:00] "GET /forgot_password HTTP/1.1" 200 -
+2025-04-02 19:35:00,217 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:00] "[33mGET /assets/back_button.png HTTP/1.1[0m" 404 -
+2025-04-02 19:35:00,230 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:00] "[33mGET /assets/prc_logo.png HTTP/1.1[0m" 404 -
+2025-04-02 19:35:00,243 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:00] "[33mGET /assets/prc-cav.jpg HTTP/1.1[0m" 404 -
+2025-04-02 19:35:07,011 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:07] "[32mPOST /forgot_password HTTP/1.1[0m" 302 -
+2025-04-02 19:35:07,023 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:07] "GET /verify_otp HTTP/1.1" 200 -
+2025-04-02 19:35:07,088 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:07] "[33mGET /assets/back_button.png HTTP/1.1[0m" 404 -
+2025-04-02 19:35:07,092 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:07] "[33mGET /assets/prc_logo.png HTTP/1.1[0m" 404 -
+2025-04-02 19:35:07,102 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:07] "[33mGET /assets/prc-cav.jpg HTTP/1.1[0m" 404 -
+2025-04-02 19:35:20,609 - ERROR - No OTP found for email .
+2025-04-02 19:35:20,612 - INFO - 127.0.0.1 - - [02/Apr/2025 19:35:20] "POST /verify_otp HTTP/1.1" 200 -
+2025-04-02 19:35:52,198 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-02 19:35:52,199 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-02 19:35:52,203 - INFO -  * Restarting with stat
+2025-04-02 19:35:53,348 - WARNING -  * Debugger is active!
+2025-04-02 19:35:53,353 - INFO -  * Debugger PIN: 497-551-229
+2025-04-02 19:36:04,542 - INFO -  * Detected change in 'c:\\Users\\GOD IS LOVE\\Documents\\GitHub\\IFGMS\\py_scripts\\db_conn.py', reloading
+2025-04-02 19:36:04,669 - INFO -  * Restarting with stat
+2025-04-02 19:36:24,107 - INFO -  * Restarting with stat
+2025-04-02 19:36:28,529 - INFO -  * Restarting with stat
+2025-04-02 19:36:31,089 - INFO -  * Restarting with stat
+2025-04-02 19:36:33,534 - INFO -  * Restarting with stat
