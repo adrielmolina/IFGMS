@@ -11,6 +11,8 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from datetime import date
+from py_scripts import tools
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
@@ -79,20 +81,46 @@ def conn_init():
             print(f"Error: {e}")
 
 
+def create_account(**kwargs):
+    """ arguments must be the same name as in the sql query """
+    conn = conn_init()
+
+    try:
+        with conn.begin():
+            query = text(f"INSERT INTO accounts VALUES"
+                         " (NULL, :user, :hashed_pass, :email, :fname, :mname, :lname, :suffix,"
+                         " :bdate, :contact, :acct_created, :branch, DEFAULT, DEFAULT, NULL)")
+            conn.execute(query, kwargs)
+            conn.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+
+
 def sign_in(username=None, password=None):
     conn = conn_init()
     Session = sessionmaker(bind=conn)
 
-    #! IMPLEMENT THE HASHING
-
     with Session() as session:
-        query = text("SELECT password FROM accounts WHERE username = :username")
+        query = text("SELECT password FROM accounts WHERE username = :username AND acct_status = 'approved'")
         result = session.execute(query, {"username": username}).fetchone()
 
-    if result and result[0] == password:
+    if result and tools.check_password(password, result[0]):
         return 'success'
     else:
         return 'fail'
+
+def get_user_accounts(status):
+    conn = conn_init()
+
+    with conn:
+        query = text("SELECT * FROM accounts WHERE acct_status IN :status")
+        result = conn.execute(query, {'status': tuple(status)})
+        accounts = result.fetchall()
+        return accounts
+
+
+
+
 
 
 '''

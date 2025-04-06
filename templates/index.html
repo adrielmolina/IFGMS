@@ -9,6 +9,36 @@
         </head>
 
         <body style="background-image: url(/static/assets/IFGMS-bg.png);">
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    let flashData = JSON.parse(`{{ message | tojson | safe }}`);
+
+                    Swal.fire({
+                        icon: '{{ category }}',  // "success" or "error"
+                        title: flashData.title,
+                        text: flashData.text,
+                        showConfirmButton: true,
+                        confirmButtonText: "Continue",
+                        allowOutsideClick: false,
+
+                        confirmButtonColor: '#891b19',  // confirm button color
+                        background: '#1e0b4ad8',  // background color
+                        color: '#ffffff'    //text color
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = flashData.redirect_url; // Redirect after clicking "OK"
+                        }
+                    });
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    });
+    </script>
+
             <img src="/static/assets/IFGMS-login_ids.png" alt="Classic ID" class="login_id">
 
             <div class="container">
@@ -16,7 +46,7 @@
                     <img src="/static/assets/IFGMS-login_logo.png" alt="logo" class="login_logo">
                     
                     <!-- replace with the actual login page -->
-                    <form action="/index" method="POST" class="login_form">
+                    <form action="/login" method="POST" class="login_form">
                         <p class="login_note">Please login to continue.</p>
 
                         <input type="text" id="username" name="username" placeholder="Username" required autocomplete="off"> 
@@ -32,7 +62,7 @@
                         </div>
                         
                         <div class="forgot-password">
-                        <a href="/create_account.html">Request Account</a>
+                        <a href="/create_account">Request Account</a>
                         </div>
                     </form>
 
