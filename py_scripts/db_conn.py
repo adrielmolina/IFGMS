@@ -3,10 +3,11 @@ from dotenv import load_dotenv
 from pathlib import Path
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 import cryptography
 from datetime import date
 from py_scripts import tools
+from py_scripts import models
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
@@ -94,11 +95,13 @@ def sign_in(username=None, password=None):
     Session = sessionmaker(bind=conn)
 
     with Session() as session:
-        query = text("SELECT password FROM accounts WHERE username = :username AND acct_status = 'approved'")
+        query = text("SELECT password, acct_status FROM accounts WHERE username = :username AND (acct_status = 'approved' OR acct_status = 'pending')")
         result = session.execute(query, {"username": username}).fetchone()
 
-    if result and tools.check_password(password, result[0]):
+    if result and tools.check_password(password, result[0]) and result[1] == 'approved':
         return 'success'
+    elif result and tools.check_password(password, result[0]) and result[1] == 'pending':
+        return 'pending'
     else:
         return 'fail'
 
@@ -111,7 +114,53 @@ def get_user_accounts(status):
         accounts = result.fetchall()
         return accounts
 
-
+def account_action(selected_ids, action):    
+    Session = sessionmaker(bind=conn_init())
+    session = Session()
+    
+    try:
+        affected_accounts = session.query(models.Accounts).filter(models.Accounts.account_id.in_(selected_ids)).all()
+        
+        if action == 'create':
+            pass
+        elif action == 'archive':
+            for account in affected_accounts:
+                account.acct_status = 'archived'
+                session.add(account)
+        elif action == 'reset':
+            for account in affected_accounts:          
+                if account.birth_date:
+                    bdate = str(account.birth_date).replace('-', '')
+                else:
+                    bdate = '00000000'
+                initials = (account.first_name[:1] + account.middle_name[:1] + account.last_name[:1]).lower().strip()
+       
+                reset_pass = bdate + initials
+                print(reset_pass)
+                hashed_pass = tools.hash_password(reset_pass)
+                    
+                account.password = hashed_pass
+                session.add(account)            
+        elif action == 'approve':
+            for account in affected_accounts:
+                account.acct_status = 'approved'
+                session.add(account)
+        elif action == 'decline':
+            for account in affected_accounts:
+                account.acct_status = 'declined'
+                session.add(account)
+            
+            
+            
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close
+    return None
+    
+    
 
 
 

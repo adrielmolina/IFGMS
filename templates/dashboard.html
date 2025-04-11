@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/dashboard.css') }}">
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- TOP -->
+<div class="top-bar">
+    <div class="dropdown-group">
+        <div class="dropdown-container">
+            <label for="monthDropdown">Selected Month:</label>
+            <select id="monthDropdown" onchange="updateMonthLabel()">
+                <option value="">Select Month</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+            </select>
+        </div>
+
+        <div class="dropdown-container">
+            <label for="idTypeDropdown">ID Type:</label>
+            <select id="idTypeDropdown">
+                <option value="">All</option>
+                <option value="Classic">Classic</option>
+                <option value="Premier Bronze">Premier Bronze</option>
+                <option value="Premier Silver">Premier Silver</option>
+                <option value="Premier Gold">Premier Gold</option>
+                <option value="Premier Platinum">Premier Platinum</option>
+                <option value="Enhanced Platinum">Enhanced Platinum</option>
+                <option value="Senior">Senior</option>
+                <option value="Senior Plus">Senior Plus</option>
+            </select>
+        </div>
+        
+    </div>
+    <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search...">
+    </div>
+</div>
+
+<!-- CARDS -->
+<div class="cards-container">
+    <div class="card">
+        <h3>Sales</h3>
+        <h2 class="numbercount" id="salesCurrentTotal">100,000</h2> 
+        <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p> 
+        <p class="subtext">Target: <span id="targetTotalSubtext">1,000,000</span></p> 
+    </div>
+
+    <div class="card">
+        <h3>Total Member Count</h3>
+        <h2 class="numbercount">8,000<h2>
+    </div>
+
+    <div class="card">
+        <h3>New Sign-Ups This Month</h3>
+        <h2 class="numbercount">1,000<h2>
+    </div>
+
+    <div class="card">
+        <h3>Pending Claims</h3>
+        <h2 class="numbercount">10</h2>
+    </div>
+</div>
+
+<!-- TABLE -->
+<div class="chart-container">
+    <div class="chart-card">
+        <div id="chart_div" style="width: 100%; height: 400px;"></div>
+    </div>
+    <div class="side-card">
+        <h4>UNIT SOLD</h4>
+        <table>
+            <tr>
+                <td><b>ID TYPE</b></td><td><b>UNIT SOLD</b></td><td><b>TARGET</b></td>
+            </tr>
+            <tr>
+                <td>Classic</td><td>1000</td><td>30,906</td>
+            </tr>
+            <tr>
+                <td>Premier Bronze</td><td>1000</td><td>32,266</td>
+            </tr>
+            <tr>
+                <td>Premier Silver</td><td>1000</td><td>12,300</td>
+            </tr>
+            <tr>
+                <td>Premier Gold</td><td>1000</td><td>15,000</td>
+            </tr>
+            <tr>
+                <td>Premier Platinum</td><td>1000</td><td>9,000</td>
+            </tr>
+            <tr>
+                <td>Enhanced Platinum</td><td>1000</td><td>5,000</td>
+            </tr>
+            <tr>
+                <td>Senior</td><td>1000</td><td>12000</td>
+            </tr>
+            <tr>
+                <td>Senior Plus</td><td>1000</td><td>14,000</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- GRAPH -->
+<div id="chart_div"></div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    google.charts.load('current', {packages: ['corechart', 'bar']});
+    google.charts.setOnLoadCallback(drawStacked);
+
+    function drawStacked() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Membership Type');
+        data.addColumn('number', 'Actual');
+        data.addColumn('number', 'Target');
+
+        data.addRows([
+            ['Classic', 1800000, 2500000],
+            ['Premier Bronze', 4000000, 5000000],
+            ['Premier Silver', 3600000, 4000000],
+            ['Premier Gold', 5000000, 7500000],
+            ['Premier Platinum', 2000000, 9000000],
+            ['Enhanced Platinum', 6000000, 3000000],
+            ['Senior', 7000000, 4000000],
+            ['Senior Plus', 8000000, 5250000]
+        ]);
+
+        var options = {
+            title: 'SALES PER ID CATEGORY',
+            isStacked: false,
+            chartArea: { width: '80%' }, 
+            width: 1000, 
+            height: 400,
+            vAxis: {
+                viewWindow: {
+                    min: 0,
+                    max: 10000000
+                }
+            }
+        };
+
+        var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+        var totalActual = 0;
+        var totalTarget = 0;
+        for (var i = 0; i < data.getNumberOfRows(); i++) {
+            totalActual += data.getValue(i, 1);
+            totalTarget += data.getValue(i, 2); 
+        }
+
+        // Update the "Current Total" subtext dynamically
+        document.getElementById('currentTotalSubtext').innerText = '₱' + totalActual.toLocaleString();
+        document.getElementById('salesCurrentTotal').innerText = '₱' + totalActual.toLocaleString();
+
+        // Update the "Target" subtext dynamically
+        document.getElementById('targetTotalSubtext').innerText = '₱' + totalTarget.toLocaleString();
+    }
+
+
+    function setDefaultMonth() {
+        const monthDropdown = document.getElementById("monthDropdown");
+        const currentMonthIndex =   new Date().getMonth();
+        monthDropdown.selectedIndex = currentMonthIndex + 1;
+    }
+
+        window.onload = setDefaultMonth;
+    </script>
+{% endblock %}

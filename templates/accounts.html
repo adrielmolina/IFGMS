@@ -1,17 +1,120 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accounts</title>
+{% extends 'base.html' %}
+
+
+{% block title %}Accounts{% endblock %}
+
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/accounts.css') }}">
 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+{% endblock %}
 
-    <link rel="stylesheet" href="/static/styles/accounts.css">
-</head>
-<body>
+
+{% block content %}
+    <form action="/account_action" method="POST">
+        <div class="accounts_table" spellcheck="false">
+            <table class="editableTable">
+                <h2>Accounts</h2>
+                <thead>
+                    <tr>
+                        <th> </th>
+                        <th>ID</th>
+                        <th>USERNAME</th>
+                        <th>EMAIL</th>
+                        <th>FIRST NAME</th>
+                        <th>MIDDLE NAME</th>
+                        <th>LAST NAME</th>
+                        <th>CONTACT NO.</th>
+                        <th>ACCOUNT CREATED</th>
+                        <th>OFFICE</th>
+                        <th>USER LEVEL</th>
+                        <th>STATUS</th>
+                        <th>ACCOUNT REVIEW</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in active_accounts%}
+                    <tr>
+                        <!-- TODO enlarge checkboxes / change to custom cell-->
+                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ account.account_id }}"></td>
+                        <td>{{ account.account_id }}</td>
+                        <td>{{ account.username }}</td>
+                        <td>{{ account.email }}</td>
+                        <td>{{ account.first_name }}</td>
+                        <td>{{ account.middle_name }}</td>
+                        <td>{{ account.last_name }}</td>
+                        <td>{{ account.contact_no }}</td>
+                        <td>{{ account.acct_created }}</td>
+                        <td>{{ account.office_location }}</td>
+                        <td>{{ account.user_level }}</td>
+                        <td>{{ account.acct_status }}</td>
+                        <td>{{ account.acct_review_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="accounts_btns">
+            <button type="submit" name="action" value="create">NEW ACCOUNT</button>
+            <button type="submit" name="action" value="archive">ARCHIVE</button>
+            <button type="submit" name="action" value="reset">RESET PASSWORD</button>
+        </div>
+        
+        <div class="pending_accounts_table" spellcheck="false">
+            <table class="editableTable">
+                <h2>Pending Account Requests</h2>
+                <thead>
+                    <tr>
+                        <th> </th>
+                        <th>ID</th>
+                        <th>USERNAME</th>
+                        <th>EMAIL</th>
+                        <th>FIRST NAME</th>
+                        <th>MIDDLE NAME</th>
+                        <th>LAST NAME</th>
+                        <th>CONTACT NO.</th>
+                        <th>ACCOUNT CREATED</th>
+                        <th>OFFICE</th>
+                        <th>USER LEVEL</th>
+                        <th>STATUS</th>
+                        <th>ACCOUNT REVIEW</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in pending_accounts%}
+                    <tr>
+                        <td><input type="checkbox" name="pending_checkbox" id="pending_checkbox" value="{{ account.account_id }}"></td>
+                        <td>{{ account.account_id }}</td>
+                        <td>{{ account.username }}</td>
+                        <td>{{ account.email }}</td>
+                        <td>{{ account.first_name }}</td>
+                        <td>{{ account.middle_name }}</td>
+                        <td>{{ account.last_name }}</td>
+                        <td>{{ account.contact_no }}</td>
+                        <td>{{ account.acct_created }}</td>
+                        <td>{{ account.office_location }}</td>
+                        <td>{{ account.user_level }}</td>
+                        <td>{{ account.acct_status }}</td>
+                        <td>{{ account.acct_review_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pending_accounts_btns">
+            <button type="submit" name="action" value="approve">APPROVE</button>
+            <button type="submit" name="action" value="decline">DECLINE</button>
+        </div>
+    </form>
+{% endblock %}
+
+
+{% block extra_scripts %}
     <script>
         $(document).ready(function() {
             // Initialize DataTable for tables with the "editableTable" class
@@ -30,97 +133,4 @@
         });
         
     </script>
-    
-    <div class="accounts_table" spellcheck="false">
-        <table class="editableTable">
-            <h2>Accounts</h2>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>USERNAME</th>
-                    <th>EMAIL</th>
-                    <th>FIRST NAME</th>
-                    <th>MIDDLE NAME</th>
-                    <th>LAST NAME</th>
-                    <th>CONTACT NO.</th>
-                    <th>ACCOUNT CREATED</th>
-                    <th>OFFICE</th>
-                    <th>USER LEVEL</th>
-                    <th>STATUS</th>
-                    <th>ACCOUNT REVIEW</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for account in active_accounts%}
-                <tr>
-                    <td contenteditable="false">{{ account.account_id }}</td>
-                    <td contenteditable="true">{{ account.username }}</td>
-                    <td contenteditable="true">{{ account.email }}</td>
-                    <td contenteditable="true">{{ account.first_name }}</td>
-                    <td contenteditable="true">{{ account.middle_name }}</td>
-                    <td contenteditable="true">{{ account.last_name }}</td>
-                    <td contenteditable="true">{{ account.contact_no }}</td>
-                    <td contenteditable="false">{{ account.acct_created }}</td>
-                    <td contenteditable="true">{{ account.office_location }}</td>
-                    <td contenteditable="true">{{ account.user_level }}</td>
-                    <td contenteditable="true">{{ account.acct_status }}</td>
-                    <td contenteditable="false">{{ account.acct_review_date }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="accounts_btns">
-        <button>NEW ACCOUNT</button>
-        <button>ARCHIVE</button>
-        <button>UPDATE</button>
-        <button>RESET PASSWORD</button>
-    </div>
-    
-    <div class="pending_accounts_table" spellcheck="false">
-        <table class="editableTable">
-            <h2>Pending Account Requests</h2>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>USERNAME</th>
-                    <th>EMAIL</th>
-                    <th>FIRST NAME</th>
-                    <th>MIDDLE NAME</th>
-                    <th>LAST NAME</th>
-                    <th>CONTACT NO.</th>
-                    <th>ACCOUNT CREATED</th>
-                    <th>OFFICE</th>
-                    <th>USER LEVEL</th>
-                    <th>STATUS</th>
-                    <th>ACCOUNT REVIEW</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for account in pending_accounts%}
-                <tr>
-                    <td contenteditable="false">{{ account.account_id }}</td>
-                    <td contenteditable="true">{{ account.username }}</td>
-                    <td contenteditable="true">{{ account.email }}</td>
-                    <td contenteditable="true">{{ account.first_name }}</td>
-                    <td contenteditable="true">{{ account.middle_name }}</td>
-                    <td contenteditable="true">{{ account.last_name }}</td>
-                    <td contenteditable="true">{{ account.contact_no }}</td>
-                    <td contenteditable="false">{{ account.acct_created }}</td>
-                    <td contenteditable="true">{{ account.office_location }}</td>
-                    <td contenteditable="true">{{ account.user_level }}</td>
-                    <td contenteditable="true">{{ account.acct_status }}</td>
-                    <td contenteditable="false">{{ account.acct_review_date }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="pending_accounts_btns">
-        <button>APPROVE</button>
-        <button>DECLINE</button>
-    </div>
-</body>
-</html>
+{% endblock %}

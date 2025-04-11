@@ -18,3 +18,8 @@ class Accounts(Base):
     user_level = Column(String(255))
     acct_status = Column(String(255))
     acct_review_date = Column(Date)
+    birth_date = Column(Date)
+    password = Column(String(255))
+ 
+
+

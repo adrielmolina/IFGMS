@@ -19,6 +19,7 @@ th {
     color: white;
     border-color: white;
     font-size: 14px;
+    /*TODO set the headers to center*/
 }
 
 td {
@@ -28,6 +29,12 @@ td {
 td[contenteditable="false"] { /* Light grey background */
     border: 1px solid red;          /* Text color */
     font-weight: bold;        /* Italicize the text */
+}
+
+input[type="checkbox"] {
+    width: 30px;
+    height: 30px;
+    accent-color: #369144;
 }
 
 .editableTable tr:nth-child(even) {
