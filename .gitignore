@@ -1,4 +1,5 @@
 creds.env
 /.venv
 /.idea
+/.vscode
 /py_scripts/__pycache__

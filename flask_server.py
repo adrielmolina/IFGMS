@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, flash
+from flask import Flask, request, render_template, redirect, url_for, flash, session
 from py_scripts import db_conn, tools
 from datetime import date
 import os
@@ -88,7 +88,7 @@ def settings():
     return render_template('settings.html')
 
 
-# <------------ NAVIGATIONS ------------>
+# <------------ /NAVIGATIONS ------------>
 
 
 @server.route('/create_acc_submit', methods=['POST'])
@@ -125,9 +125,95 @@ def create_acc_submit():
     return render_template('create_account.html')
 
 
-@server.route('/reset_pass_email', methods=['POST'])
-def reset_pass_email():
-    return render_template('members.html') #reset pass next page
+# ========================== FORGOT PASSWORD ==========================
+@server.route("/forgot_password_otp", methods=["GET", "POST"])
+def forgot_password_otp():
+    if request.method == "POST":
+        email = request.form.get("email")
+
+        otp = db_conn.generate_otp()  # Generate OTP
+        db_conn.save_otp(email, otp)  # Save OTP in otp_verifications table
+        db_conn.send_otp_email(email, otp)  # Send OTP to user's
+
+        session["email"] = email
+        flash({
+            "title": "OTP Sent!",
+            "text": "OTP has been sent to your email.",
+            "redirect_url": url_for('verify_otp')
+        }, "info")
+
+    return render_template("forgot_password.html")
+
+
+# ========================== VERIFY OTP ==========================
+@server.route('/verify_otp', methods=['GET', 'POST'])
+def verify_otp(): 
+    if request.method == 'POST':
+        email = request.form.get('email')  # Get email from form
+        otp_input = request.form.get('otp')  # Get OTP from form
+
+        # Call the database function to verify OTP
+        result = db_conn.verifying_otp(email, otp_input)
+
+        if result == "success":
+            flash({
+                "title": "OTP Verified Successfully!",
+                "text": "You can now proceed to reset your password.",
+                "redirect_url": url_for('reset_password')
+            }, "success")  # Redirect to reset password page
+
+        elif result == "expired":
+            flash({
+                "title": "OTP Error",
+                "text": "OTP has expired. Please try again.",
+                "redirect_url": url_for('forgot_password')
+            }, "error")
+
+        elif result == "email_not_found":
+            flash({
+                "title": "Email is not registered",
+                "text": " Please check your email or create an account.",
+                "redirect_url": url_for('forgot_password')
+            }, "error")
+
+        else:
+            flash({
+                "title": "Invalid OTP",
+                "text": "Please try again.",
+                "redirect_url": url_for('verify_otp')
+            }, "error")
+
+    email = session.get("email")
+    return render_template('verify_otp.html', email=email)  # Render OTP verification page
+
+
+# ========================== RESET PASSWORD ==========================
+@server.route("/reset_password", methods=["GET", "POST"])
+def reset_password():
+    email = session.get("email")
+    if not email:
+        flash({
+            "title": "Session expired",
+            "text": "Please try again.",
+            "redirect_url": url_for('forgot_password_otp')
+        }, "error")
+
+    if request.method == "POST":
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        if new_password != confirm_password:
+            flash("Passwords do not match. Please try again.", "error")
+        else:
+            db_conn.update_password(email, new_password)  
+            session.pop("email", None) 
+            flash({
+                "title": "Password Reset Successfully!",
+                "text": "You can now log in with your new password.",
+                "redirect_url": url_for('landing_page')
+            }, "success")
+        
+    return render_template("reset_password.html")
 
 
 @server.route('/login', methods=['POST'])

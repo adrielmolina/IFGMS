@@ -5,9 +5,14 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, Session
 import cryptography
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from py_scripts import tools
 from py_scripts import models
+from random import randint
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
@@ -21,6 +26,13 @@ SQL_HOST = os.getenv('SQL_HOST')
 SQL_USER = os.getenv('SQL_USER')
 SQL_PASS = os.getenv('SQL_PASS')
 SQL_DB = os.getenv('SQL_DB')
+
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+
+# todo remove on deployment
 print(f'SQL CONNECTION DEBUG\nHost={SQL_HOST}\nUser={SQL_USER}\nPass={SQL_PASS}\nDB={SQL_DB}')
 
 def conn_init():
@@ -161,117 +173,114 @@ def account_action(selected_ids, action):
     return None
     
     
+# !!!!!!!!!!!!!!!!!!!!!!!! GENERATE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+def generate_otp():
+    """Generate a random 6-digit OTP."""
+    return str(randint(100000, 999999))
 
 
+# !!!!!!!!!!!!!!!!!!!!!!!! SAVE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+def save_otp(email, otp):
+    """Save OTP in the database with expiration time."""
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    expires_at = datetime.now() + timedelta(minutes=5)
+    created_at = datetime.now()  # Capture the time when OTP is generated
+    
+    with Session() as session:
+        query = text("""
+            INSERT INTO otp_verifications (email, otp, expires_at, created_at) 
+            VALUES (:email, :otp, :expires_at, :created_at)
+        """)
+        session.execute(query, {
+            "email": email,
+            "otp": otp,
+            "expires_at": expires_at,
+            "created_at": created_at
+        })
+        session.commit()
 
 
-'''
-def sign_in(empid_input, password_input):
-    # check if emp id and pass matches in db
-    conn = db_conn()
-    with conn.cursor() as cursor:
-        query = 'SELECT * FROM accounts WHERE employee_id = %s'
-        cursor.execute(query, (empid_input, ))
-        result = cursor.fetchone()
+# !!!!!!!!!!!!!!!!!!!!!!!! SEND OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+def send_otp_email(email, otp):
+    """Send OTP to the user's email."""
+    subject = "Your OTP Code"
+    body = f"Your OTP code is: {otp}. It will expire in 5 minutes."
 
-        if result is not None:
-            # debug result print
-            userlvl, empfname, emplname, emp_pass, emp_id = result[2], result[3], result[4], result[5], result[1]
-            print(
-                __name__,
-                f' - User Level: {userlvl},',
-                f'Employee First Name: {empfname.upper()},',
-                f'Employee Last Name: {emplname.upper()}'
-            )
-            gen_fun.current_id = result[1]  # * store the id of current user
-            match = gen_fun.check_password(password_input, emp_pass)
-            if match:
-                return userlvl, empfname, emplname, emp_id
-            else:
-                return None
-        else:
-            return None
-'''
+    message = MIMEMultipart()
+    message['From'] = SENDER_EMAIL
+    message['To'] = email
+    message['Subject'] = subject
+    message.attach(MIMEText(body, 'plain'))
 
-def get_total_donations_for_today():
-    """Fetches the total number of donations for today from the inventory table"""
-    connection = db_conn()
-    if connection:
-        cursor = connection.cursor()
-        query = """
-            SELECT COUNT(*) 
-            FROM inventory 
-            WHERE DATE(collection_date) = CURDATE()
-        """
-        cursor.execute(query)
-        result = cursor.fetchone()
-        cursor.close()
-        connection.close()
-        return result[0] if result else 0
-    return 0
-
-def get_total_released_for_today():
-    """Fetches the total number of blood bags released for today"""
-    connection = db_conn()
-    if connection:
-        cursor = connection.cursor()
-        query = """
-            SELECT COUNT(*) 
-            FROM inventory 
-            WHERE DATE(release_date) = CURDATE()
-        """
-        cursor.execute(query)
-        result = cursor.fetchone()
-        cursor.close()
-        connection.close()
-        return result[0] if result else 0
-    return 0
-
-
-def get_nearly_expired_blood_bags():
-    connection = db_conn()
-    cursor = connection.cursor()
-
-    # SQL query to get the collection date of the blood bags
-    query = """
-    SELECT blood_bag_no, blood_type, collection_date
-    FROM inventory
-    WHERE status = 'available'
-    """
-    cursor.execute(query)
-    blood_bags = cursor.fetchall()
-
-    nearly_expired_bags = []
-
-    # Calculate the expiration and nearly expiry dates
-    for bag in blood_bags:
-        blood_bag_no, blood_type, collection_date = bag  # collection_date is already a datetime.date object
-        expiration_date = collection_date + dt.timedelta(days=35)  # Add 35 days to get expiration
-        nearly_expiry_date = expiration_date - dt.timedelta(days=7)  # Subtract 7 days for nearly expiry
-
-        if nearly_expiry_date <= dt.datetime.now().date():  # Compare with today's date
-            nearly_expired_bags.append(f"{nearly_expiry_date.strftime('%m-%d-%y')}  {blood_bag_no} {blood_type}")
-
-    connection.close()
-    return nearly_expired_bags
-
-
-def transaction_insert(*args):
-    pass
-    # for transactions 
-
-
-def get_user_details(emp_id):
-    print(f"Getting details for emp_id: {emp_id}")  # Debugging line
-    conn = db_conn()
     try:
-        with conn.cursor() as cursor:
-            query = "SELECT fname, lname, email FROM accounts WHERE employee_id = %s"
-            cursor.execute(query, emp_id)
-            result = cursor.fetchone()
-            return result
-    finally:
-        conn.close()
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.sendmail(SENDER_EMAIL, email, message.as_string())
+        print("OTP sent successfully!")
+    except Exception as e:
+        print(f"Failed to send OTP: {e}")
+
+
+# !!!!!!!!!!!!!!!!!!!!!!!! VERIFY OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+def verifying_otp(email, otp_input):
+    """Verify OTP against the database (original version with added debug prints)"""
+    print(f"[DEBUG] Starting OTP verification for {email}")
+    print(f"[DEBUG] Input OTP: {otp_input} (type: {type(otp_input)})")
+    
+    conn = conn_init()
+    if not conn:
+        print("[ERROR] Connection failed!")
+        return "fail"
+
+    Session = sessionmaker(bind=conn)
+
+    with Session() as session:
+        query = text("SELECT otp, expires_at FROM otp_verifications WHERE email = :email ORDER BY created_at DESC LIMIT 1")
+        result = session.execute(query, {"email": email}).fetchone()
+        print(f"[DEBUG] Database query result: {result}")
+
+    if result:
+        otp, expires_at = result
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+        current_time = datetime.now(timezone.utc)
+        print(f"[DEBUG] Stored OTP: {otp} (type: {type(otp)})")
+        print(f"[DEBUG] Expires at: {expires_at}")
+        print(f"[DEBUG] Current time: {current_time}")
+
+        if current_time > expires_at:
+            print("[DEBUG] OTP expired")
+            return "expired"
+        
+        if str(otp_input) == str(otp):
+            print("[DEBUG] OTP matched")
+            delete_query = text("DELETE FROM otp_verifications WHERE email = :email")
+            with Session() as session:
+                session.execute(delete_query, {"email": email})
+                session.commit()
+            return "success"
+        else:
+            print("[DEBUG] OTP mismatch")
+            return "fail"
+    else:
+        print("[DEBUG] No OTP found for this email")
+        return "fail"
+    
+    
+def update_password(email, new_password):
+    """Update the password in the database."""
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+
+    salted_pass = tools.hash_password(new_password)
+
+    with Session() as session:
+        query = text("UPDATE accounts SET password = :new_password WHERE email = :email")
+        session.execute(query, {"new_password": salted_pass, "email": email})
+        session.commit()
+
+
 
 if __name__ == '__main__':
     conn_init()
