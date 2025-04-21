@@ -28,6 +28,9 @@
 - Auto generate PRMs for quit claims
 - Auto name stickers generator
 
+## 📃 TODO List
+- Theme switch
+
 ## ✍️ Authors
 - [Adriel](https://github.com/adrielmolina)
 - [Abby](https://github.com/wobushiaby) 
