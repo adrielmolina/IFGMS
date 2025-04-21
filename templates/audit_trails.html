@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 
-{% block title %}Claims{% endblock %}
+{% block title %}Audit Logs{% endblock %}
 
 
 {% block head %}
@@ -12,47 +12,24 @@
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 {% endblock %}
 
-<!--todo ADD COLOR CODING BASED ON CATEGORY IN CSS-->
 <!--todo ADD COLOR CODING ON THE TABLE HEADER BASED ON MODULE IN CSS-->
 {% block content %}
-    <form action="/claims_action" method="POST">
-        <div class="claims_table" spellcheck="false">
+    <form action="/audit-tr_action" method="POST">
+        <div class="audit-logs_table" spellcheck="false">
             <table class="editableTable">
-                <h2>Claims Management</h2>
+                <h2>Audit Logs</h2>
                 <thead>
                     <tr>
                         <th> </th>
-                        <th>CLAIM_ID</th>
-                        <th>DATE FILED</th>
-                        <th>CLAIM SOURCE</th>
-                        <th>PRINCIPAL INSURED FIRST NAME</th>
-                        <th>PRINCIPAL INSURED MIDDLE NAME</th>
-                        <th>PRINCIPAL INSURED LAST NAME</th>
-                        <th>MAAB NO.</th>
-                        <th>EFFECTIVITY</th>
-                        <th>CLAIMANT FIRST NAME</th>
-                        <th>CLAIMANT MIDDLE NAME</th>
-                        <th>CLAIMANT LAST NAME</th>
-                        <th>RELATIONSHIP</th>
-                        <th>CONTACT NO.</th>
-                        <th>EMAIL</th>
-                        <th>CLAIM REMARKS</th>
-                        <th>STATUS</th>
-                        <th>DATE RELEASED</th>
-                        <th>CHINABANK CHECK NO.</th>
-                        <th>CHINABANK AMOUNT</th>
-                        <th>BPI CHECK NO.</th>
-                        <th>BPI AMOUNT</th>
-                        <th>RELEASE REMARKS</th>
-                        <th>SCANNED DOCS</th>
-                        <th>PRM FILE</th>
-                        <th>QUIT CLAIM FILE</th>
-                        <th>PICKED UP</th>
-                        <th>DATE PICKED UP</th>
+                        <th>ID</th>
+                        <th>DATE</th>
+                        <th>STAFF NAME</th>
+                        <th>USER LEVEL</th>
+                        <th>ACTION NAME</th>
+                        <th>DESCRIPTION</th>
                     </tr>
                 </thead>
                 <tbody>
-<!--                TODO FIX THE TEMPLATES-->
                     {% for account in active_accounts%}
                     <tr>
                         <!-- TODO enlarge checkboxes / change to custom cell-->
@@ -69,7 +46,7 @@
             </table>
         </div>
 
-        <div class="inventory_btns">
+        <div class="audit-logs_btns">
             <button type="submit" name="action" value="create">PLACEHOLDER</button>
             <button type="submit" name="action" value="archive">PLACEHOLDER</button>
             <button type="submit" name="action" value="reset">PLACEHOLDER</button>

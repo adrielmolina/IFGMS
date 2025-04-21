@@ -9,7 +9,7 @@
 
 body {
   min-height: 100vh;
-  background: #F0F4FF;
+  margin-left: 5vw;
 }
 
 
@@ -25,7 +25,7 @@ body {
     background: #161a2d;
     padding: 25px 20px;
     transition: all 0.4s ease;
-    z-index: 2;
+    z-index: 100 !important;
 }
 
 .sidebar:hover {
@@ -119,6 +119,20 @@ body {
 
 .user-account {
     margin-top: auto;
+}
+
+.user-account  a{
+    color: white;
+
+}
+
+.user-account  a:hover{
+  color: #161a2d;
+  background: #fff;
+  text-decoration: none;
+  padding: 5px 5px;
+  border-radius: 4px;
+  display: inline-block;
 }
 
 .user-profile {
