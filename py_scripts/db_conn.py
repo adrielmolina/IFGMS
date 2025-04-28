@@ -172,7 +172,7 @@ def account_action(selected_ids, action):
         session.close
     return None
     
-    
+# ? RESET PASS START
 # !!!!!!!!!!!!!!!!!!!!!!!! GENERATE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def generate_otp():
     """Generate a random 6-digit OTP."""
@@ -280,6 +280,11 @@ def update_password(email, new_password):
         session.execute(query, {"new_password": salted_pass, "email": email})
         session.commit()
 
+# ? RESET PASS END
+
+def get_member_entries():
+    conn = conn_init()
+    cursor = conn.cursor(dictionary=True)
 
 
 if __name__ == '__main__':

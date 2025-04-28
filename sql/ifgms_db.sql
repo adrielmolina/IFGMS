@@ -6,7 +6,7 @@ CREATE TABLE `members_info` (
 	`suffix` ENUM('NA', 'Jr', 'Sr', 'II', 'III', 'IV', 'V', 'VI', 'VII') COMMENT 'change to enum and use the options in create_account',
 	`birth_date` DATE,
 	`age` INTEGER,
-	`gender` VARCHAR(255),
+	`sex` VARCHAR(255),
 	`contact_no` VARCHAR(255),
 	`email` VARCHAR(255),
 	`address` VARCHAR(255) COMMENT 'not sure yet how to use this field',
@@ -23,7 +23,7 @@ CREATE TABLE `accounts` (
 	`first_name` VARCHAR(255),
 	`middle_name` VARCHAR(255),
 	`last_name` VARCHAR(255),
-	`suffix` ENUM('NA', 'Jr', 'Sr', 'II', 'III', 'IV', 'V', 'VI', 'VII'),
+	`suffix` ENUM('NA', 'Jr', 'Sr', 'II', 'III', 'IV', 'V', 'VI', 'VII') DEFAULT 'NA',
 	`birth_date` DATE,
 	`contact_no` VARCHAR(255),
 	`acct_created` DATE,
@@ -36,34 +36,30 @@ CREATE TABLE `accounts` (
 
 
 CREATE TABLE `membership_records` (
-	`transaction_no` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`record_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`year` YEAR,
-	`maab_no` INTEGER,
-	`member_id` INTEGER UNIQUE,
+	`id_received` BOOLEAN COMMENT 'mark automatically if all cards in entry is received',
+	`declared` BOOLEAN COMMENT 'auto mark if all entry content is declared
+',
+	`declaration_date` DATE COMMENT 'if declared. overwrite this field everytime declaration button is clicked',
 	`effectivity_date` DATE,
 	`expiry_date` DATE,
 	`location_particular` VARCHAR(255),
 	`location_category` ENUM('Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder', 'Public Elementary School', 'Private Elementary School', 'Public High School', 'Private High School', 'Public Senior High School', 'Private Senior High School', 'Public Integrated School', 'Private Integrated School', 'Public College', 'Private College', 'Government Company/Organization', 'Private Company/Organization', 'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events', 'Training', 'Company/Organization Training', 'Individual', 'Walk-In'),
 	`municipality` VARCHAR(255),
 	`district` VARCHAR(255),
-	`OR_num` INTEGER,
-	`OR_date` DATE,
-	`paid` BOOLEAN DEFAULT false,
-	`remarks` TEXT(65535),
+	`paid` BOOLEAN DEFAULT false COMMENT 'automatically mark as paid if all contents are paid',
 	`origin` ENUM('Chapter', 'Dasmarinas', 'Silang'),
-	`count_in_group` INTEGER COMMENT 'count of this record in the same group ex. school. idk how to use this yet',
-	`id_received` BOOLEAN COMMENT 'for platinum cards',
-	`declared` BOOLEAN,
+	`remarks` TEXT(65535),
 	`tags` ENUM('late-declare', 'overage', 'underage'),
-	`declaration_date` DATE COMMENT 'if declared. overwrite this field everytime declaration button is clicked',
-	PRIMARY KEY(`transaction_no`)
+	PRIMARY KEY(`record_id`)
 );
 
 
 CREATE TABLE `inventory` (
 	`inv_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
-	`maab_no` VARCHAR(255),
+	`maab_no` VARCHAR(255) UNIQUE,
 	`used` BOOLEAN,
 	`remarks` TEXT(65535),
 	`allocated_to` ENUM('Chapter', 'Dasmarinas', 'Silang'),
@@ -73,22 +69,82 @@ CREATE TABLE `inventory` (
 
 CREATE TABLE `maab_claims` (
 	`claim_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`date_filed` DATE,
+	`claim_source` ENUM('chapter', 'dasma', 'silang'),
+	`principal_insured_fname` VARCHAR(255),
+	`principal_insured_mname` VARCHAR(255),
+	`principal_insured_lname` VARCHAR(255),
+	`maab_no` VARCHAR(255),
+	`effectivity_date` DATE,
+	`claimant_first_name` VARCHAR(255),
+	`claimant_middle_name` VARCHAR(255),
+	`claimant_last_name` VARCHAR(255),
+	`relationship` VARCHAR(255) DEFAULT 'SAME',
+	`contact_no` VARCHAR(255),
+	`email` VARCHAR(255),
+	`claim_remarks` TEXT(65535),
+	`status` ENUM('pending', 'approved', 'denied'),
+	`date_released` DATE,
+	`chinabank_check_no` INTEGER,
+	`chinabank_amount` DECIMAL,
+	`bpi_check_no` INTEGER,
+	`bpi_amount` DECIMAL,
+	`release_remarks` TEXT(65535),
+	`scanned_docs` VARCHAR(255) COMMENT 'create a folder on gdrive to store all the claim docs',
+	`prm_file` VARCHAR(255) COMMENT 'link to prm file',
+	`quit_claim_file` VARCHAR(255) COMMENT 'link to quit claim file',
+	`picked_up` BOOLEAN,
+	`date_picked_up` DATE,
 	PRIMARY KEY(`claim_id`)
 );
 
 
 CREATE TABLE `otp_verifications` (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(255) NOT NULL,
-    otp VARCHAR(6) NOT NULL,
-    expires_at DATETIME NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`email` VARCHAR(255) NOT NULL,
+	`otp` VARCHAR(6) NOT NULL,
+	`expires_at` DATETIME NOT NULL,
+	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY(`id`)
 );
 
 
-ALTER TABLE `members_info`
-ADD FOREIGN KEY(`member_id`) REFERENCES `membership_records`(`member_id`)
+CREATE TABLE `audit_logs` (
+	`action_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`date` DATETIME NOT NULL,
+	`staff_name` VARCHAR(255) NOT NULL,
+	`user_level` ENUM('staff', 'admin') NOT NULL,
+	`action_name` VARCHAR(255) NOT NULL,
+	`description` TEXT(65535) NOT NULL,
+	`account_id` INTEGER NOT NULL UNIQUE,
+	PRIMARY KEY(`action_id`)
+);
+
+
+CREATE TABLE `entry_contents` (
+	`entry_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`record_id` INTEGER,
+	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
+	`maab_no` VARCHAR(255) UNIQUE COMMENT 'maybe foreign key with inventory. what happens when id is platinum?',
+	`member_id` INTEGER,
+	`id_received` BOOLEAN,
+	`declared` BOOLEAN,
+	`declaration_date` DATE,
+	`paid` BOOLEAN,
+	`OR_num` INTEGER,
+	`OR_date` DATE,
+	`remarks` TEXT(65535),
+	`tag` ENUM('late-declare', 'overage', 'underage'),
+	PRIMARY KEY(`entry_id`)
+) COMMENT='table for contents of an entry';
+
+
+ALTER TABLE `audit_logs`
+ADD FOREIGN KEY(`account_id`) REFERENCES `accounts`(`account_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `membership_records`
-ADD FOREIGN KEY(`maab_no`) REFERENCES `inventory`(`inv_id`)
+ALTER TABLE `entry_contents`
+ADD FOREIGN KEY(`record_id`) REFERENCES `membership_records`(`record_id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `entry_contents`
+ADD FOREIGN KEY(`member_id`) REFERENCES `members_info`(`member_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;

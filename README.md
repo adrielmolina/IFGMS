@@ -4,6 +4,8 @@
 <br>
 
 **An integrated data entry webapp for Philippine Red Cross - Cavite Chapter**
+<br>
+<br>
 
 ## 🖥️ Main Features / Modules
 
@@ -24,10 +26,14 @@
 - Overage members notification
 - Auto generate advance notice of claim email
 - Auto generate PRMs for quit claims
+- Auto name stickers generator
+
+## 📃 TODO List
+- Theme switch
 
 ## ✍️ Authors
-- Adriel
-- Abby
-- Josh
-- JB
-- Louis
+- [Adriel](https://github.com/adrielmolina)
+- [Abby](https://github.com/wobushiaby) 
+- [Josh](https://github.com/JoshCrisostomo)
+- [JB](https://github.com/badvibes302)
+- [Louis](https://github.com/laydownandsleep)
