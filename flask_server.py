@@ -41,8 +41,6 @@ def home():
 
 @server.route('/members')
 def members_page():
-    members = None
-
     return render_template('members.html')
 
 
@@ -245,6 +243,32 @@ def login():
             "redirect_url": url_for('landing_page')
         }, "error")
         return render_template('index.html')
+
+
+@server.route('/api/get_members')
+def get_members():
+    records = db_conn.get_member_records()
+    members_list = []
+
+    for row in records:
+        record = dict(row._mapping)
+
+        for key in ['id_received', 'declared', 'paid']:
+            if key in record:
+                record[key] = bool(record[key])
+
+        for key in ['declaration_date', 'effectivity_date']:
+            if key in record and record[key]:
+                record[key] = record[key].strftime('%Y-%m-%d')
+
+        members_list.append(record)
+
+    return jsonify(members_list)
+
+
+@server.route('/api/get_entries')
+def get_entries():
+    pass
 
 
 @server.route('/account_action', methods=['POST'])

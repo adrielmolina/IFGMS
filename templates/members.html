@@ -14,101 +14,374 @@
 
 
 {% block content %}
-    <div id="members_table" class="ht-theme-main-dark-auto"></div>
+    <!-- TODO add sort button and filters on column; add search bar -->
+     <!-- TODO make the scrollbars always visible -->
+    <div id="members_table" class="ht-theme-main"></div>
+
+    <div id="overlay" class="overlay">
+        <div id="overlay-content" class="overlay-content">
+            <span id="close-overlay" class="close-overlay">&times;</span>
+            <div id="overlay-body" class="overlay-body">
+                <!-- Dynamic content goes here -->
+                <!-- TODO change the layout into atable -->
+                <div id="entry_details" class="entry_details">
+                    <form action="/api/get_entries" method="POST" id="record_entries">
+                        <table class="entries_table">
+                            <tr>
+                                <td>
+                                    <label for="record_id">Record ID</label>
+                                    <br>
+                                    <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly>
+                                </td>
+
+                                <td>
+                                    <!-- TODO change to year only or remove the field completely -->
+                                    <label for="year">Year</label>
+                                    <br>
+                                    <input type="text" id="year" name="year" required autocomplete="off" readonly>
+                                </td>
+
+                                <td>
+                                    <label for="id_rcv">ID Received</label>
+                                    <br>
+                                    <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="paid">Paid</label>
+                                    <br>
+                                    <input type="checkbox" id="paid" name="paid" autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="declared">Declared</label>
+                                    <br>
+                                    <input type="checkbox" id="declared" name="declared" autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="dec_date">Declaration Date</label>
+                                    <br>
+                                    <input type="date" id="dec_date" name="dec_date" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="eff_date">Effectivity Date</label>
+                                    <br>
+                                    <input type="date" id="eff_date" name="eff_date" required autocomplete="off">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <label for="loc_par">Location Particular</label>
+                                    <br>
+                                    <input type="text" id="loc_par" name="loc_par" required autocomplete="off">
+                                </td>
+                                
+                                <td colspan="2">
+                                    <label for="loc_cat">Location Category</label>
+                                    <br>
+                                    <select name="loc_cat" id="loc_cat">
+                                        <option value="Public Nursery">Public Nursery</option>
+                                        <option value="Private Nursery">Private Nursery</option>
+                                        <option value="Public Kinder">Public Kinder</option>
+                                        <option value="Private Kinder">Private Kinder</option>
+                                        <option value="Public Elementary School">Public Elementary School</option>
+                                        <option value="Private Elementary School">Private Elementary School</option>
+                                        <option value="Public High School">Public High School</option>
+                                        <option value="Private High School">Private High School</option>
+                                        <option value="Public Senior High School">Public Senior High School</option>
+                                        <option value="Private Senior High School">Private Senior High School</option>
+                                        <option value="Public Integrated School">Public Integrated School</option>
+                                        <option value="Private Integrated School">Private Integrated School</option>
+                                        <option value="Public College">Public College</option>
+                                        <option value="Private College">Private College</option>
+                                        <option value="Government Company/Organization">Government Company/Organization</option>
+                                        <option value="Private Company/Organization">Private Company/Organization</option>
+                                        <option value="Church">Church</option>
+                                        <option value="Red Cross 143">Red Cross 143</option>
+                                        <option value="RCY">RCY</option>
+                                        <option value="Brgy">Brgy</option>
+                                        <option value="LGU">LGU</option>
+                                        <option value="MBD">MBD</option>
+                                        <option value="Events">Events</option>
+                                        <option value="Training">Training</option>
+                                        <option value="Company/Organization Training">Company/Organization Training</option>
+                                        <option value="Individual">Individual</option>
+                                        <option value="Walk-In">Walk-In</option>
+                                    </select>
+                                </td>
+
+                                <td colspan="2">
+                                    <label for="municipality">Municipality</label>
+                                    <br>
+                                    <select name="municipality" id="municipality">
+                                        <option value="Cavite City">Cavite City</option>
+                                        <option value="Kawit">Kawit</option>
+                                        <option value="Noveleta">Noveleta</option>
+                                        <option value="Rosario">Rosario</option>
+                                        <option value="Bacoor">Bacoor</option>
+                                        <option value="Imus">Imus</option>
+                                        <option value="Dasmariñas">Dasmariñas</option>
+                                        <option value="Carmona">Carmona</option>
+                                        <option value="General Mariano Alvarez (GMA)">General Mariano Alvarez (GMA)</option>
+                                        <option value="Silang">Silang</option>
+                                        <option value="General Trias">General Trias</option>
+                                        <option value="Amadeo">Amadeo</option>
+                                        <option value="Indang">Indang</option>
+                                        <option value="Tanza">Tanza</option>
+                                        <option value="Trece Martires">Trece Martires</option>
+                                        <option value="Alfonso">Alfonso</option>
+                                        <option value="Gen. Emilio Aguinaldo (Bailen)">Gen. Emilio Aguinaldo (Bailen)</option>
+                                        <option value="Magallanes">Magallanes</option>
+                                        <option value="Maragondon">Maragondon</option>
+                                        <option value="Mendez">Mendez</option>
+                                        <option value="Naic">Naic</option>
+                                        <option value="Tagaytay City">Tagaytay City</option>
+                                        <option value="Ternate">Ternate</option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <!-- TODO autofill after selecting municipality -->
+                                    <label for="district">District</label>
+                                    <br>
+                                    <input type="text" id="district" name="district" required autocomplete="off" readonly>
+                                </td>
+                                
+                                <td>
+                                    <!-- TODO autofill based on account logged in -->
+                                     <!-- TODO change this to select so it is still modifiable -->
+                                    <label for="origin">Origin</label>
+                                    <br>
+                                    <input type="text" id="origin" name="origin" required autocomplete="off">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td colspan="6">
+                                    <label for="remarks">Remarks</label>
+                                    <br>
+                                    <input type="text" id="remarks" name="remarks" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="tags">Tags</label>
+                                    <br>
+                                    <input type="text" id="tags" name="tags" required autocomplete="off">
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+
+                <div id="entries_table" class="ht-theme-main"></div>
+
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
 <script>
-    const container = document.querySelector('#members_table');
+    function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
+    Handsontable.renderers.TextRenderer.apply(this, arguments); // Use default text renderer
+    td.innerHTML = '<a href="javascript:void(0);" class="open-link">Open</a>';
 
-    const data = [
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test']
-    ];
+    td.querySelector('.open-link').addEventListener('click', function () {
+        const rowData = instance.getSourceDataAtRow(row);
 
-    new Handsontable(container, {
-        data,
-        colHeaders: [
-            'Select', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
-            'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
-        ],
-        columns: [
-        {type: 'checkbox'},
-        {},
-        {},
-        {type: 'checkbox'},
-        {type: 'checkbox'},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {type: 'checkbox'},
-        {},
-        {},
-        {}
-        ],
-        rowHeaders: true,
-        stretchH: 'all',
-        autoWrapRow: false,
-        autoWrapCol: false,
-        licenseKey: 'non-commercial-and-evaluation' // for non-commercial use only
+        // Populate overlay content (example below — customize as needed)
+        /*document.getElementById('overlay-body').innerHTML = `
+            <h2>Record ID: ${rowData.record_id}</h2>
+            <p><strong>Year:</strong> ${rowData.year}</p>
+            <p><strong>Municipality:</strong> ${rowData.municipality}</p>
+            <p><strong>Remarks:</strong> ${rowData.remarks}</p>
+        `;*/
+        /*TODO add the handsontable script */
+        // Show the overlay
+
+        function convertToYYYYMMDD(dateStr) {
+            const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
+        
+            if (parts.length === 3) {
+                let [month, day, year] = parts;
+        
+                // Pad month and day with leading zeros if necessary
+                month = month.padStart(2, '0');
+                day = day.padStart(2, '0');
+        
+                return `${year}-${month}-${day}`;
+            }
+        
+            return ''; // Return empty if format is unrecognized
+        }
+    
+        // Check and format the dates if they exist
+        if (rowData.declaration_date) {
+            rowData.declaration_date = convertToYYYYMMDD(rowData.declaration_date);
+        }
+        if (rowData.effectivity_date) {
+            rowData.effectivity_date = convertToYYYYMMDD(rowData.effectivity_date);
+        }
+        
+        document.getElementById('entries_table').innerHTML = '';
+
+        document.getElementById(`record_id`).value = rowData.record_id;
+        document.getElementById(`year`).value = rowData.year;
+        document.getElementById(`id_rcv`).value = rowData.id_received;
+        document.getElementById(`paid`).value = rowData.paid;
+        document.getElementById(`declared`).value = rowData.declared;
+        document.getElementById(`dec_date`).value = rowData.declaration_date;
+        document.getElementById(`eff_date`).value = rowData.effectivity_date;
+        document.getElementById(`loc_par`).value = rowData.location_particular;
+        document.getElementById(`loc_cat`).value = rowData.location_category;
+        document.getElementById(`municipality`).value = rowData.municipality;
+        document.getElementById(`district`).value = rowData.district;
+        document.getElementById(`origin`).value = rowData.origin;
+        document.getElementById(`remarks`).value = rowData.remarks;
+        document.getElementById(`tags`).value = rowData.tags;
+
+        console.log(rowData.declaration_date)
+        console.log(rowData.effectivity_date)
+        document.getElementById('overlay').style.display = 'flex';
+
+        
+
+        /* TODO change to /api/get_entries */ 
+        fetch("/api/get_members")
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('entries_table');
+
+            new Handsontable(container, {
+                data,
+                colHeaders: [
+                    'Entry ID', 'MAAB Category', 'MAAB No', 'First Name', 'Middle Name', 'Last Name', 'Suffix',
+                    'Birthdate', 'Age', 'Sex', 'Contact #', 'Email', 'Addresss', 'Blood Type', 'ID Received',
+                    'Declared', 'Declaration Date', 'Paid', 'OR #', 'OR Date', 'Remarks', 'Tags'
+                ],
+                /* fill with actual data */
+                columns: [
+                { readOnly: true },
+                {  },
+                {  },
+                {  },
+                {  },
+                {  },
+                {  },
+                { 
+                    type: 'date',
+                    dateFormat: 'MM-DD-YYYY',
+                    correctFormat: true,
+                    allowInvalid: false 
+                },
+                {  },
+                {  },
+                {  },
+                {  },
+                {  },
+                {  },
+                {  },         
+                { type: 'checkbox' },
+                {  
+                    type: 'date',
+                    dateFormat: 'MM-DD-YYYY',
+                    correctFormat: true,
+                    allowInvalid: false
+                },
+                { type: 'checkbox' },
+                {  },
+                { 
+                    type: 'date',
+                    dateFormat: 'MM-DD-YYYY',
+                    correctFormat: true,
+                    allowInvalid: false
+                 },
+                {  },
+                {  }
+                ],
+                rowHeaders: true,
+                stretchH: 'all',
+                autoWrapRow: false,
+                autoWrapCol: false,
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+        });
+
+
     });
+
+    return td;
+    }
+
+    document.getElementById('close-overlay').addEventListener('click', function () {
+        document.getElementById('overlay').style.display = 'none';
+    });
+
+
+    fetch("/api/get_members")
+        .then(response => response.json())
+        .then(data => {
+
+            data.forEach(row => {
+                if (row.declaration_date) {
+                    // Format the date to MM-DD-YYYY
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                }
+                if (row.effectivity_date) {
+                    // Format the date to MM-DD-YYYY
+                    const date = new Date(row.effectivity_date);
+                    row.effectivity_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                }
+            });   
+
+            const container = document.getElementById('members_table');
+
+            new Handsontable(container, {
+                data,
+                colHeaders: [
+                    'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
+                    'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
+                ],
+                columns: [
+                { renderer: openLinkRenderer },
+                { data: 'record_id', readOnly: true},
+                { data: 'year' },
+                { data: 'id_received', type: 'checkbox' },
+                { data: 'declared', type: 'checkbox' },
+                { data: 'declaration_date',
+                    type: 'date',
+                    dateFormat: 'MM-DD-YYYY',
+                    correctFormat: true,
+                    allowInvalid: false
+                },
+                { data: 'effectivity_date',
+                    type: 'date',
+                    dateFormat: 'MM-DD-YYYY',
+                    correctFormat: true,
+                    allowInvalid: false
+                },
+                { data: 'location_particular' },
+                { data: 'location_category' },
+                { data: 'municipality' },
+                { data: 'district' },
+                { data: 'paid', type: 'checkbox' },
+                { data: 'origin' },
+                { data: 'remarks' },
+                { data: 'tags' }
+                ],
+                rowHeaders: true,
+                stretchH: 'all',
+                autoWrapRow: false,
+                autoWrapCol: false,
+                readOnly: true,
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+        });
 </script>
 {% endblock %}

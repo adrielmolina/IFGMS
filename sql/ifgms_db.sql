@@ -5,12 +5,14 @@ CREATE TABLE `members_info` (
 	`last_name` VARCHAR(255),
 	`suffix` ENUM('NA', 'Jr', 'Sr', 'II', 'III', 'IV', 'V', 'VI', 'VII') COMMENT 'change to enum and use the options in create_account',
 	`birth_date` DATE,
-	`age` INTEGER,
-	`sex` VARCHAR(255),
+	`age` INTEGER COMMENT 'age on register',
+	`sex` ENUM('male', 'female'),
 	`contact_no` VARCHAR(255),
 	`email` VARCHAR(255),
 	`address` VARCHAR(255) COMMENT 'not sure yet how to use this field',
 	`blood_type` ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'),
+	`remarks` TEXT(65535),
+	`tags` VARCHAR(255),
 	PRIMARY KEY(`member_id`)
 );
 
@@ -43,7 +45,6 @@ CREATE TABLE `membership_records` (
 ',
 	`declaration_date` DATE COMMENT 'if declared. overwrite this field everytime declaration button is clicked',
 	`effectivity_date` DATE,
-	`expiry_date` DATE,
 	`location_particular` VARCHAR(255),
 	`location_category` ENUM('Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder', 'Public Elementary School', 'Private Elementary School', 'Public High School', 'Private High School', 'Public Senior High School', 'Private Senior High School', 'Public Integrated School', 'Private Integrated School', 'Public College', 'Private College', 'Government Company/Organization', 'Private Company/Organization', 'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events', 'Training', 'Company/Organization Training', 'Individual', 'Walk-In'),
 	`municipality` VARCHAR(255),
@@ -134,7 +135,7 @@ CREATE TABLE `entry_contents` (
 	`OR_num` INTEGER,
 	`OR_date` DATE,
 	`remarks` TEXT(65535),
-	`tag` ENUM('late-declare', 'overage', 'underage'),
+	`tags` ENUM('late-declare', 'overage', 'underage'),
 	PRIMARY KEY(`entry_id`)
 ) COMMENT='table for contents of an entry';
 

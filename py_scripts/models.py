@@ -30,7 +30,6 @@ class Records(Base):
     declared = Column(Boolean)
     declaration_date = Column(Date)
     effectivity_date = Column(Date)
-    expiry_date = Column(Date)
     location_particular = Column(String(255))
     location_category = Column(String(255))
     municipality = Column(String(255))
@@ -38,7 +37,7 @@ class Records(Base):
     paid = Column(Boolean)
     origin = Column(String(255))
     remarks = Column(Text)
-    tag = Column(String(255))
+    tags = Column(String(255))
 
 
 class Entries(Base):
@@ -56,7 +55,7 @@ class Entries(Base):
     OR_num = Column(Integer)
     OR_date = Column(Date)
     remarks = Column(Text)
-    tag = Column(String(255))
+    tags = Column(String(255))
 
 class Members(Base):
     __tablename__ = 'members_info'
@@ -73,7 +72,8 @@ class Members(Base):
     email = Column(String(255))
     address = Column(String(255))
     blood_type = Column(String(255))
-
+    remarks = Column(Text)
+    tags = Column(String(255))
 
  
 

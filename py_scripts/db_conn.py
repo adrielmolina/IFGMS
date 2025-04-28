@@ -282,9 +282,14 @@ def update_password(email, new_password):
 
 # ? RESET PASS END
 
-def get_member_entries():
+def get_member_records():
     conn = conn_init()
-    cursor = conn.cursor(dictionary=True)
+
+    with conn:
+        query = text("SELECT * FROM membership_records")
+        result = conn.execute(query)
+        records = result.fetchall()
+        return records
 
 
 if __name__ == '__main__':
