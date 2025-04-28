@@ -18,6 +18,22 @@ def landing_page():
     return render_template('index.html')
 
 
+@server.route('/profile_settings_display')
+def profile_settings_display():
+    if 'username' not in session:
+        flash({
+            "title": "Not Logged In",
+            "text": "Please log in to access your profile.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        return redirect(url_for('landing_page'))
+
+    username = session['username']
+    user_details = db_conn.get_user_details_by_username(username)
+
+    return render_template('profile_settings_display.html', user_details=user_details)
+
+
 @server.route('/create_account')
 def create_acc():
     return render_template('create_account.html')
@@ -129,6 +145,8 @@ def create_acc_submit():
     return render_template('create_account.html')
 
 
+
+
 # ========================== FORGOT PASSWORD ==========================
 @server.route("/forgot_password_otp", methods=["GET", "POST"])
 def forgot_password_otp():
@@ -226,9 +244,28 @@ def login():
     password = request.form.get("password")
 
     sign_in = db_conn.sign_in(username, password)
-    
+
     if sign_in == 'success':
-        return redirect(url_for('home'))  # Redirect to home page on success
+        user_details = db_conn.get_user_details_by_username(username)
+
+        if user_details:
+            session['username'] = username
+            session['full_name'] = f"{user_details['first_name']} {user_details['middle_name']} {user_details['last_name']}"
+            session['email'] = user_details['email']
+            session['phone'] = user_details['contact_no']
+            session['birthdate'] = user_details['birth_date']
+            session['password'] = user_details['password']
+            session['user_level'] = user_details['user_level']
+            
+            return redirect(url_for('home'))  # success redirect
+        else:
+            flash({
+                "title": "Login Error!",
+                "text": "User details could not be fetched.",
+                "redirect_url": url_for('landing_page')
+            }, "error")
+            return render_template('index.html')
+
     elif sign_in == 'pending':
         flash({
             "title": "Login Error!",

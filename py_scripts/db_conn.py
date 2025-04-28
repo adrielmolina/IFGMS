@@ -294,3 +294,36 @@ def get_member_records():
 
 if __name__ == '__main__':
     conn_init()
+
+def get_user_details_by_username(username):
+    """
+    Fetch user details from the database by username.
+    :param username: username to search for
+    :return: user details as dict or None if not found
+    """
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+
+    with Session() as session:
+        query = text("""
+            SELECT first_name, middle_name, last_name, email, contact_no, birth_date, password, user_level
+            FROM accounts 
+            WHERE username = :username LIMIT 1
+        """)
+        result = session.execute(query, {"username": username}).fetchone()
+
+    if result:
+        # Convert the result to a dictionary
+        return {
+            "first_name": result[0],
+            "middle_name": result[1],
+            "last_name": result[2],
+            "email": result[3],
+            "contact_no": result[4],
+            "birth_date": result[5].strftime("%Y-%m-%d") if result[5] else None,
+            "password": result[6],
+            "user_level": result[7]
+        }
+    else:
+        print(f"No user found with username: {username}")
+        return None
