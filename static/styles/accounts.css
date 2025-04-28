@@ -1,8 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap");
-
+/* TODO rename to tables.css and change references */
 body {
     font-family: "Roboto Condensed", sans-serif;
     background-color: #f3e8e8;
+    padding: 10px;
 }
 
 table, th, tr, td {
@@ -42,23 +43,23 @@ input[type="checkbox"] {
 }
 
 button, .clearSearch {
-    color: rgb(255, 255, 255);
+    color: #1e0b4a;
     margin-top: 10px;
     padding: 5px 10px 5px 10px;
     cursor: pointer;
-    border: none;
+    border: 1px solid #1e0b4a;
     border-width: 2px;
     height: 30px;
     margin: 10px auto 20px auto;
     outline: none;
-    border-radius: 10px;
-    background-color: #891b19;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    font-weight: bolder;
 }
 
 button:hover, .clearSearch:hover {
-    border-width: 4px solid;
-    border-color: black;
-    background-color: #ba3439;
+    background-color: #1e0b4a;
+    color: white;
 }
 
 .editableTable_filter {

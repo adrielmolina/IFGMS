@@ -1,21 +1,17 @@
 {% extends 'base.html' %}
 
 
-{% block title %}Members Management{% endblock %}
+{% block title %}Members{% endblock %}
 
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='/styles/members.css') }}">
-
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dashboard" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 {% endblock %}
 
 
 {% block content %}
-<<<<<<< HEAD
-
 
 <div class="main-content">
     <div class="entry">
@@ -325,103 +321,9 @@
             </div>
         </form>
     </div>
-=======
-    <div id="members_table" class="ht-theme-main-dark-auto"></div>
->>>>>>> fbe98b27b928cd9304917842fed4fb3edcfb0590
 {% endblock %}
 
-<!--TODO fix the order of columns in sql file-->
-<!--TODO fix the flickering when scrolling-->
+
 {% block extra_scripts %}
-<script>
-    const container = document.querySelector('#members_table');
 
-    const data = [
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test']
-    ];
-
-    new Handsontable(container, {
-        data,
-        colHeaders: [
-            'Select', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
-            'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
-        ],
-        columns: [
-        {type: 'checkbox'},
-        {},
-        {},
-        {type: 'checkbox'},
-        {type: 'checkbox'},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {type: 'checkbox'},
-        {},
-        {},
-        {}
-        ],
-        rowHeaders: true,
-        stretchH: 'all',
-        autoWrapRow: false,
-        autoWrapCol: false,
-        licenseKey: 'non-commercial-and-evaluation' // for non-commercial use only
-    });
-</script>
 {% endblock %}

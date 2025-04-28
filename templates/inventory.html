@@ -1,19 +1,78 @@
 {% extends 'base.html' %}
 
 
-{% block title %}Title{% endblock %}
+{% block title %}Inventory{% endblock %}
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/cssname.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/accounts.css') }}">
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 {% endblock %}
 
-
+<!--todo ADD COLOR CODING BASED ON CATEGORY IN CSS-->
+<!--todo ADD COLOR CODING ON THE TABLE HEADER BASED ON MODULE IN CSS-->
 {% block content %}
-    aaaaaaaaaa
+    <form action="/inventory_action" method="POST">
+        <div class="inventory_table" spellcheck="false">
+            <table class="editableTable">
+                <h2>Inventory</h2>
+                <thead>
+                    <tr>
+                        <th> </th>
+                        <th>ID</th>
+                        <th>CATEGORY</th>
+                        <th>MAAB NO.</th>
+                        <th>USED</th>
+                        <th>REMARKS</th>
+                        <th>ALLOCATED TO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in active_accounts%}
+                    <tr>
+                        <!-- TODO enlarge checkboxes / change to custom cell-->
+                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ account.account_id }}"></td>
+                        <td>{{ account.account_id }}</td>
+                        <td>{{ account.username }}</td>
+                        <td>{{ account.email }}</td>
+                        <td>{{ account.first_name }}</td>
+                        <td>{{ account.middle_name }}</td>
+                        <td>{{ account.last_name }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="inventory_btns">
+            <button type="submit" name="action" value="create">PLACEHOLDER</button>
+            <button type="submit" name="action" value="archive">PLACEHOLDER</button>
+            <button type="submit" name="action" value="reset">PLACEHOLDER</button>
+        </div>
+    </form>
 {% endblock %}
 
 
 {% block extra_scripts %}
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable for tables with the "editableTable" class
+            $('.editableTable').each(function() {
+                var table = $(this).DataTable(); // Initialize each table with the "editableTable" class
 
+                // Add clear button next to the default search input field
+                $(this).closest('.dataTables_wrapper').find('.dataTables_filter').append('<button class="clearSearch" style="margin-left: 10px;">Clear</button>');
+
+                // Clear search input when the clear button is clicked
+                $(this).closest('.dataTables_wrapper').find('.clearSearch').click(function() {
+                    $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').val('');  // Clear the search input field
+                    table.search('').draw();  // Reset the DataTable search
+                });
+            });
+        });
+
+    </script>
 {% endblock %}

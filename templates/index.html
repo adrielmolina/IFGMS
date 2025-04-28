@@ -1,73 +1,120 @@
 <!DOCTYPE html>
-    <html lang="en0">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>IFGMS - Login</title>
-            <link rel="stylesheet" href="/static/styles/login_style.css">
-            <link rel="icon" href="/static/assets/favicon.ico" type="image/x-icon">
-        </head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IFGMS - Login</title>
+  <link rel="stylesheet" href="/static/styles/login_style.css" />
+  <link rel="icon" href="/static/assets/favicon.ico" type="image/x-icon" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
 
-        <body style="background-image: url(/static/assets/IFGMS-bg.png);">
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    let flashData = JSON.parse(`{{ message | tojson | safe }}`);
+<body style="background: linear-gradient(135deg, #fbefd5, #f5e0ea); overflow: hidden;">
 
-                    Swal.fire({
-                        icon: '{{ category }}',  // "success" or "error"
-                        title: flashData.title,
-                        text: flashData.text,
-                        showConfirmButton: true,
-                        confirmButtonText: "Continue",
-                        allowOutsideClick: false,
+  <!-- Intro Screen -->
+  <div class="intro-screen" id="introScreen">
+    <img src="/static/assets/IFGMS-login_logo.png" alt="Logo" class="intro-logo" />
+  </div>
 
-                        confirmButtonColor: '#891b19',  // confirm button color
-                        background: '#1e0b4ad8',  // background color
-                        color: '#ffffff'    //text color
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.href = flashData.redirect_url; // Redirect after clicking "OK"
-                        }
-                    });
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay">
+    <img src="/static/assets/favicon.ico" alt="Loading..." class="logo-loader" />
+  </div>
+
+  <div class="wave-lines">
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+    <div class="wave-line"></div>
+  </div>
+
+    <img src="/static/assets/wavy-lines.png" alt="Logo" class="blob"/>
+      <!-- Login ID Card -->
+      <div class="box">
+        <div class="text">
+          <p>MAAB Membership System for</p>
+          <p>Fund Generations Department</p>
+        </div>
+      </div>
+    
+    <div class="form-container">
+  <!-- Decorative Images -->
+    <img src="/static/assets/red.png" class="right-corner-img" alt="Corner Decoration" />
+    <img src="/static/assets/red.png" class="left-corner-img" alt="Corner Decoration" />
+    <img src="/static/assets/cross.png" class="top-corner-img" alt="Corner Decoration" />
+
+    <!-- Login Form -->
+      <div class="glass-card" id="loginForm">
+        <img src="/static/assets/favicon.ico" alt="logo" class="login_logo" />
+        <h1>FGMS <span>Login</span></h1>
+        <p>Please login to continue.</p>
+        <form action="/login" method="POST" onsubmit="return handleLogin(event)">
+          <input type="text" id="username" name="username" placeholder="Username" required autocomplete="off" />
+          <input type="password" id="password" name="password" placeholder="Password" required autocomplete="off" />
+          <button type="submit">Login</button>
+          <div class="divider"><span></span><span>oOo</span><span></span></div>
+          <div class="forgot-password">
+            <a href="/forgot_password">Forgot Password?</a> |
+            <a href="/create_account">Request Account</a>
+          </div>
+        </form>
+
+      </div>
+  </div>
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const intro = document.getElementById("introScreen");
+      const formContainer = document.querySelector(".form-container");
+  
+      if (!sessionStorage.getItem("introShown")) {
+        setTimeout(() => {
+          intro.classList.add("fade-out");
+        }, 1200);
+  
+        setTimeout(() => {
+          intro.style.display = "none";
+          formContainer.classList.add("slide-in-right");
+          sessionStorage.setItem("introShown", "true");
+        }, 2200);
+      } else {
+        intro.style.display = "none";
+        formContainer.classList.add("slide-in-right");
+      }
+  
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            let flashData = JSON.parse(`{{ message | tojson | safe }}`);
+  
+            Swal.fire({
+              icon: '{{ category }}',
+              title: flashData.title,
+              text: flashData.text,
+              showConfirmButton: true,
+              confirmButtonText: "Continue",
+              allowOutsideClick: false,
+              confirmButtonColor: '#891b19',
+              background: '#1e0b4ad8',
+              color: '#ffffff'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                window.location.href = flashData.redirect_url;
+              }
+            });
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
     });
-    </script>
-
-            <img src="/static/assets/IFGMS-login_ids.png" alt="Classic ID" class="login_id">
-
-            <div class="container">
-                <div class="right-container">
-                    <img src="/static/assets/IFGMS-login_logo.png" alt="logo" class="login_logo">
-                    
-                    <!-- replace with the actual login page -->
-                    <form action="/login" method="POST" class="login_form">
-                        <p class="login_note">Please login to continue.</p>
-
-                        <input type="text" id="username" name="username" placeholder="Username" required autocomplete="off"> 
-                        <input type="password" id="password" name="password" placeholder="Password" required autocomplete="off">
-                        
-                        <!-- remove onclick attr when login logic is implemented -->
-                        <button type="submit" class="login_btn">Login</button>
-                        <!-- onclick="window.location.href='home.html';" -->
-                        
-                        <!-- replace with the actual forgot password page -->
-                        <div class="forgot-password">
-                            <a href="/forgot_password">Forgot Password?</a>
-                        </div>
-                        
-                        <div class="forgot-password">
-                        <a href="/create_account">Request Account</a>
-                        </div>
-                    </form>
-
-
-                </div>
-            </div>
-        </body>    
-    </html>
+  
+    function handleLogin(event) {
+      event.preventDefault();
+      document.getElementById("loadingOverlay").style.display = "flex";
+      setTimeout(() => {
+        event.target.submit();
+      }, 300);
+    }
+  </script>  
+</body>
+</html>
