@@ -9,6 +9,7 @@
 
 body {
   min-height: 100vh;
+  margin-left: 5vw;
 }
 
 /* Sidebar base with glassmorphism effect */

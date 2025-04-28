@@ -1,10 +1,14 @@
-from flask import Flask, request, render_template, redirect, url_for, flash, session
+from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify
 from py_scripts import db_conn, tools
 from datetime import date
 import os
 
 server = Flask(__name__)
 server.secret_key = os.urandom(24)
+
+# ?TODO LIST-------------------------------
+# TODO add the summary per month to the module list or wherever
+
 
 # <------------ NAVIGATIONS ------------>
 
@@ -53,6 +57,8 @@ def home():
 
 @server.route('/members')
 def members_page():
+    members = None
+
     return render_template('members.html')
 
 
@@ -312,7 +318,29 @@ def account_action():
     return redirect(url_for('show_user_accounts'))
 
 
+@server.route('/inventory_action', methods=['POST'])
+def inventory_action():
+    pass
+
+
+#! TEST FUNCTIONS GO HERE
+@server.route('/api/hot-update', methods=['POST'])
+def hot_update_data():
+    updates = request.json  # List of row dicts
+    conn = db_conn.conn_init()
+    cursor = conn.cursor()
+    for row in updates:
+        cursor.execute(
+            "UPDATE people SET name = %s, age = %s WHERE id = %s",
+            (row['name'], row['age'], row['id'])
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success"})
+
+
 if __name__ == '__main__':
     server.run(debug=True, use_reloader=True)
-    
+
+
 

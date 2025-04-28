@@ -1,15 +1,11 @@
 body {
     font-family: Arial, sans-serif;
-<<<<<<< HEAD
     margin: 20;
     padding: 1rem;
     background: linear-gradient(135deg, #fbefd5, #f5e0ea); /* BACKGROUND */
     display: flex;
     flex-direction: column;
     min-height: 100vh; 
-=======
-    padding: 0;
->>>>>>> fbe98b27b928cd9304917842fed4fb3edcfb0590
 }
 
 .top-bar {

@@ -3,3 +3,4 @@ creds.env
 /.idea
 /.vscode
 /py_scripts/__pycache__
+/TEST
