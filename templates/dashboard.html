@@ -54,26 +54,30 @@
     </div>
 </div>
 
-<!-- CARDS -->
+</div><!-- CARDS -->
 <div class="cards-container">
-    <div class="card">
+    <div class="card yellow">
+        <!-- Card Reference: Sales Overview -->
         <h3>Sales</h3>
-        <h2 class="numbercount" id="salesCurrentTotal">100,000</h2> 
-        <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p> 
-        <p class="subtext">Target: <span id="targetTotalSubtext">1,000,000</span></p> 
+        <h2 class="numbercount" id="salesCurrentTotal">100,000</h2>
+        <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p>
+        <p class="subtext">Target: <span id="targetTotalSubtext">1,000,000</span></p>
     </div>
 
-    <div class="card">
+    <div class="card violet">
+        <!-- Card Reference: Member Count -->
         <h3>Total Member Count</h3>
-        <h2 class="numbercount">8,000<h2>
+        <h2 class="numbercount">8,000</h2>
     </div>
 
-    <div class="card">
-        <h3>New Sign-Ups This Month</h3>
-        <h2 class="numbercount">1,000<h2>
+    <div class="card blue">
+        <!-- Card Reference: Monthly Sign-ups -->
+        <h3>Expiring soon</h3>
+        <h2 class="numbercount">100</h2>
     </div>
 
-    <div class="card">
+    <div class="card green">
+        <!-- Card Reference: Claims Awaiting Processing -->
         <h3>Pending Claims</h3>
         <h2 class="numbercount">10</h2>
     </div>
@@ -148,9 +152,10 @@
         var options = {
             title: 'SALES PER ID CATEGORY',
             isStacked: false,
-            chartArea: { width: '80%' }, 
-            width: 1000, 
+            chartArea: { width: '80%' },
+            width: 1000,
             height: 400,
+            backgroundColor: '#f4f4f4',
             vAxis: {
                 viewWindow: {
                     min: 0,

@@ -32,12 +32,13 @@ body {
 }
 
 .login_id {
-    margin-left: 20px; 
-    max-height: 90%; 
+    margin-left: 20px;
+    max-height: 90%;
     object-fit: contain;
     position: absolute;
-    top: 10%;
-    left: 50px;
+    top: 0%;
+    left: 140px;
+
     /* box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.2);     */
 }
 
@@ -47,7 +48,8 @@ body {
     width: 70%;
     object-fit: contain;
     right: 0%;
-    left: 20%;
+    left: 15.5%;
+
 }
 
 .right-container {
@@ -68,7 +70,7 @@ body {
 }
 
 .login_note {
-    margin-top: 140px;
+    margin-top: 170px;
     text-align: center;
     margin-bottom: 20px;
     color: #ffffff;
@@ -84,6 +86,7 @@ label {
 input[type="text"],
 input[type="password"] {
     width: 70%;
+    height: 8.5%;
     padding: 10px;
     margin-bottom: 20px;
     border: 1px solid #ccc;
@@ -108,14 +111,18 @@ input[type="password"]:focus {
 /* Login button */
 button[type="submit"] {
     width: 70%;
+    height: 10%;
     padding: 10px;
     background-color: #1e0b4a;
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 20px;
+    font-weight: bold;
     font-size: 16px;
     cursor: pointer;
     margin: 5px 15%;
+
+
 }
 
 button[type="submit"]:hover {
@@ -130,7 +137,8 @@ button[type="submit"]:hover {
 .forgot-password a {
     color: #0d032e;
     text-decoration: none;
-    font-size: 18px;
+    font-size: 15px;
+    padding: 10px;
 }
 
 .forgot-password a:hover {

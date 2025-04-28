@@ -9,10 +9,11 @@
 
 body {
   min-height: 100vh;
+  margin-left: 6vw;
   background: #F0F4FF;
 }
 
-
+/* Sidebar base with glassmorphism effect */
 .sidebar {
     position: fixed;
     top: 0;
@@ -22,14 +23,20 @@ body {
     display: flex;
     overflow-x: hidden;
     flex-direction: column;
-    background: #161a2d;
+    background: linear-gradient(225deg, rgba(249,102,92, 0.8),rgba(238, 80, 52, 0.9),rgba(231, 138, 138, 1) ,rgba(231, 86, 75, 0.9),rgba(230, 77, 77, 0.9),rgba(232,57,57, 0.9));
+    backdrop-filter: blur(15px);  /* Glassmorphism blur effect */
+    -webkit-backdrop-filter: blur(15px); /* For Safari */
     padding: 25px 20px;
     transition: all 0.4s ease;
     z-index: 2;
+    border-radius: 20px; /* Add this to make the sidebar rounded */
+    overflow: hidden; /* This ensures that the sidebar content stays within the rounded edges */
+    box-shadow: 8px 0 20px rgba(0, 0, 0, 0.35);
 }
 
 .sidebar:hover {
     width: 260px;
+    border-radius: 20px; /* Keep the same rounded corners on hover */
 }
 
 .sidebar .sidebar-header {
@@ -44,7 +51,7 @@ body {
 
 .sidebar .sidebar-header h2 {
     color: #fff;
-    text-shadow: 0 0 10px rgba(49, 49, 234, 0.8), 
+    text-shadow:    rgba(232, 57, 57, 0.7),
                 0 0 20px rgba(49, 49, 234, 0.6),
                 0 0 30px rgba(49, 49, 234, 0.4);
     font-size: 40px;
@@ -53,6 +60,7 @@ body {
     margin-left: 23px;
 }
 
+/* Sidebar links */
 .sidebar-links h4 {
     color: #fff;
     font-weight: 500;
@@ -112,11 +120,12 @@ body {
 }
 
 .sidebar-links li a:hover {
-    color: #161a2d;
-    background: #fff;
-    border-radius: 4px;
+    color: #fff;
+    background:  rgba(225, 96, 96, 0.9);
+    border-radius: 10px;
 }
 
+/* User account section */
 .user-account {
     margin-top: auto;
 }
@@ -124,8 +133,17 @@ body {
 .user-profile {
     display: flex;
     align-items: center;
-    color: #f2f2f2;
-    background:#161a2d;
+    padding: 10px;
+    border-radius: 10px;
+    color: white;               /* White text */
+    text-decoration: none;     /* No underline */
+    cursor: default;           /* Not clickable */
+    font-weight: 600;
+}
+
+.user-profile * {
+    color: white !important;       /* Force all inner elements to stay white */
+    text-decoration: none !important;
 }
 
 .user-profile img {
@@ -137,7 +155,7 @@ body {
 
 .user-profile h3 {
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 1000;
 }
 
 .user-profile span {
@@ -146,17 +164,63 @@ body {
 }
 
 .user-detail {
-    margin-left: 23px;
+    margin-left: 10px;
     white-space: nowrap;
 }
 
 .sidebar:hover .user-account {
-    background: #fff;
     border-radius: 4px;
 }
 
-.module_name{
+/* Menu module name */
+.module_name {
     top: 0;
     position: absolute;
     color: #a92f2f;
+}
+
+/*------------ 3D ICONS --------------*/
+.material-symbols-outlined {
+    font-size: 25px;
+    color: #ffffff;
+    padding: 10px;
+    border-radius: 5px;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+    transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease,
+          background 0.3s ease,
+         scale 0.3s ease;
+}
+
+
+
+/* 3D effect on hover */
+.material-symbols-outlined:hover {
+    background: linear-gradient(145deg, #ff3b30, #d02a1a);
+    box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.4), -6px -6px 15px rgba(255, 255, 255, 0.3);
+    transform: translateZ(5px) perspective(500px) rotateX(0deg) rotateY(0deg);
+}
+
+/* Customize sidebar links */
+.sidebar-links li a {
+    display: flex;
+    align-items: center;
+    gap: 0 20px;
+    color: #fff;
+    font-weight: 1000;
+    white-space: nowrap;
+    padding: 15px 10px;
+    text-decoration: none;
+    transition: 0.2s ease;
+}
+
+.sidebar-links li a:hover .material-symbols-outlined {
+    background: linear-gradient(145deg, #ff3b30, #d02a1a);
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(255, 255, 255, 0.2);
+    transform: scale(1.2) translateY(-5px);
 }
