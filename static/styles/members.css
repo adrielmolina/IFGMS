@@ -67,6 +67,7 @@ body {
     box-sizing: border-box;
 }
 
+/* TODO add alternating gray/white color to rows */
 table, th, tr, td {
     border: 1px solid black;
     border-collapse: collapse;
