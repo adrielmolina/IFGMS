@@ -16,7 +16,19 @@ h2 {
     color: #2c3e50;
 }
 
+.module_name {
+    position: absolute;
+    margin-top: 1.5%;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);  /* Centers horizontally */
+    color: rgb(232, 57, 57);
+    text-align: center;  /* Ensures the text inside is centered */
+    width: 100%;  /* Makes sure the element stretches across the container */
+  }
+
 .section {
+    margin-top: 4%;
     background: rgba(255, 255, 255, 0.7); /* translucent white */
     border-radius: 12px;
     padding: 1.5rem;
