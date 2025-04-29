@@ -9,7 +9,8 @@
 
 body {
   min-height: 100vh;
-  margin-left: 5vw;
+  margin-left: 6vw;
+  background: #F0F4FF;
 }
 
 /* Sidebar base with glassmorphism effect */
@@ -22,6 +23,7 @@ body {
     display: flex;
     overflow-x: hidden;
     flex-direction: column;
+
     background: linear-gradient(
         225deg,
         rgba(255, 122, 105, 0.9),   /* light coral */
@@ -38,7 +40,10 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.15);
     padding: 25px 20px;
     transition: all 0.4s ease;
-    z-index: 100 !important;
+    z-index: 2;
+    border-radius: 20px; /* Add this to make the sidebar rounded */
+    overflow: hidden; /* This ensures that the sidebar content stays within the rounded edges */
+    box-shadow: 8px 0 20px rgba(0, 0, 0, 0.35);
 }
 
 .sidebar::before {
@@ -149,20 +154,6 @@ body {
     margin-top: auto;
 }
 
-.user-account  a{
-    color: white;
-
-}
-
-.user-account  a:hover{
-  color: #161a2d;
-  background: #fff;
-  text-decoration: none;
-  padding: 5px 5px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
 .user-profile {
     display: flex;
     align-items: center;
@@ -223,7 +214,7 @@ body {
     background: transparent;
     box-shadow: none;
     transform: none;
-    transition: 
+    transition:
           transform 0.3s ease,
           box-shadow 0.3s ease,
           background 0.3s ease,
@@ -254,7 +245,7 @@ body {
 
 .sidebar-links li a:hover .material-symbols-outlined {
     background: linear-gradient(145deg, #ff3b30, #d02a1a);
-    box-shadow: 
+    box-shadow:
         0 8px 20px rgba(0, 0, 0, 0.5),
         0 0 10px rgba(255, 255, 255, 0.2);
     transform: scale(1.2) translateY(-5px);

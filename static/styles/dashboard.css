@@ -14,7 +14,6 @@ body {
     gap: 10px;
     padding: 10px;
     justify-content: space-between;
-    
 }
 
 .dropdown-group {
@@ -30,7 +29,6 @@ body {
     padding: 8px 12px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 25px;
-  
 }
 
 .dropdown-container label {
@@ -83,7 +81,7 @@ body {
     border-radius: 25px;
     padding: 5px 15px;
     background: #ea5432;
-    backdrop-filter: blur(10px); 
+    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     color: #fff;
     width: 220px;
@@ -106,6 +104,12 @@ body {
 
 .search-container input::placeholder {
     color: white; 
+}
+
+}
+
+.search-container input::placeholder {
+    color: white;
 }
 
 select {
@@ -185,6 +189,26 @@ select {
 
 .card.blue {
     background: linear-gradient(135deg, #0072d3, #5547c0); 
+}
+
+}
+
+.card:hover {
+    transform: translateY(-15px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    filter: brightness(1.2);
+}
+
+.card.yellow {
+    background: linear-gradient(135deg, #ffbc00, #f77b00);
+}
+
+.card.violet {
+    background: linear-gradient(135deg, #a64cb0, #f06cbe);
+}
+
+.card.blue {
+    background: linear-gradient(135deg, #0072d3, #5547c0);
 }
 
 .card.green {
