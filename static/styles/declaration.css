@@ -5,42 +5,28 @@ html, body {
 }
 
 body {
+    font-family: Arial, sans-serif;
+    margin: 20;
+    padding: 1rem;
+    background: linear-gradient(135deg, #fbefd5, #f5e0ea); /* BACKGROUND */
     display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, sans-serif;
-
-    height: 100%;
-    width: 100%;
-
-    background-image: url(/static/assets/IFGMS-bg-white.png);
-
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center center;
-    flex-direction: column
+    flex-direction: column;
+    min-height: 100vh; 
 }
 
-
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
-}
-
-body {
-  min-height: 100vh;
-  background: #F0F4FF;
-}
-
-
+.module_name {
+    position: absolute;
+    margin-top: 1.5%;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);  /* Centers horizontally */
+    color:  rgb(232, 57, 57);
+    text-align: center;  /* Ensures the text inside is centered */
+    width: 100%;  /* Makes sure the element stretches across the container */
+  }
 
 .main-content {
+    margin-top:50px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -54,7 +40,7 @@ body {
     align-items: center;
     justify-content: center; /* changed from space-between */
     gap: 50px;
-    font-size: 20px;
+    font-size: 15pxpx;
     font-weight: bolder;
     width: 90%;
     padding: 10px;
@@ -68,7 +54,7 @@ body {
     width: 240px;
     height: 35px;
     padding: 5px 10px;
-    font-size: 16px;
+    font-size: 15px;
     border: 1px solid #ccc;
     border-radius: 8px;
     background-color: #fff;
@@ -83,20 +69,24 @@ body {
 }
 
 .gen-btn {
-    color: #1e0b4a;
-    border: 1px solid #1e0b4a;
+    color: #212C62; /* Teal color */
+    border: 1px solid #212C62; /* Teal border */
     padding: 10px 60px;
     border-radius: 50px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 15px;
     transition: all 0.3s ease;
     font-weight: bolder;
 }
 
 .gen-btn:hover {
-    background-color: #1e0b4a;
+    background-color: #212C62; /* Teal background on hover */
     color: white;
     font-weight: bolder;
+}
+
+select:focus{
+    background-color: rgba(255,63,63,0.95);
 }
 
 .ID_table {
@@ -104,37 +94,47 @@ body {
     height: 450px;
     overflow-x: auto;
     overflow-y: auto;
-    border: 1px solid #ccc;
     margin-top: 20px;
     padding-bottom: 20px;
     margin-left: 50px;
+    background: rgba(255, 255, 255, 0.1); 
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
 }
 
 /* Table Styling */
 table {
-    width: 700vh;
-    border-collapse: collapse;
-    position: relative;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px; 
+    margin-top: 1rem;
 }
 
 th, td {
-    border: 1px solid #ccc;
-    padding: 10px;
-    text-align: center;
-    font-size: 20px;
+    text-align: left;
+    padding: 14px 38px;
+    font-size: 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.2); 
+    background: rgba(255, 255, 255, 0.2); 
 }
 
 th {
-    background-color: #f2f2f2;
+    background-color: #f5b8a9; 
+    color: #3a3a3a;
+    font-weight:bolder;
 }
 
 tbody tr:nth-child(odd) {
-    background-color: #fafafa;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 tbody tr:nth-child(even) {
-    background-color: #f2f2f2;
+    background: rgba(255, 255, 255, 0.15);
 }
+
 
 
 .form-container {
@@ -170,20 +170,19 @@ tbody tr:nth-child(even) {
     gap: 80px;
     margin-top: 20px;
 }
-
 .save-btn {
-    color: #1e0b4a;
-    border: 1px solid #1e0b4a;
+    color: #212C62; 
+    border: 1px solid #212C62; 
     padding: 10px 60px;
     border-radius: 50px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 15px;
     transition: all 0.3s ease;
     font-weight: bolder;
 }
 
 .save-btn:hover {
-    background-color: #1e0b4a;
+    background-color: #212C62; /* Teal background on hover */
     color: white;
     font-weight: bolder;
 }
