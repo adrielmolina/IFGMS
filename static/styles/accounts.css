@@ -1,14 +1,28 @@
-@import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap");
-/* TODO rename to tables.css and change references */
 body {
-    font-family: "Roboto Condensed", sans-serif;
-    background-color: #f3e8e8;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #fbefd5, #f5e0ea); /* Integrated from inventory.css */
     padding: 10px;
 }
 
+.module_name {
+    position: absolute;
+    margin-top: 1.5%;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%); 
+    color: rgb(232, 57, 57);
+    text-align: center;  
+    width: 100%;  
+}
+
+.inventory_table, .claims_table, .audit-logs_table, .accounts_table {
+    margin-top: 4%;
+}
+
 table, th, tr, td {
-    border: 1px solid black;
+    border: 1px solid #ccc;
     border-collapse: collapse;
+    font-size: 14px; /* From inventory.css */
 }
 
 th {
@@ -16,20 +30,24 @@ th {
     padding-right: 10px;
     padding-top: 5px;
     padding-bottom: 5px;
-    background-color: #2d1d52;
-    color: white;
-    border-color: white;
+    background-color: #f5b8a9; /* From inventory.css */
+    color: #3a3a3a; /* From inventory.css */
+    font-weight: bold;
+    border: 2px solid rgba(255, 255, 255, 0.2); 
     font-size: 14px;
-    /*TODO set the headers to center*/
 }
 
 td {
     text-align: center;
+    border: 2px solid rgba(255, 255, 255, 0.2); 
+    padding: 14px; /* From inventory.css */
+    text-align: left;
+    font-size: 14px; /* Unified size */
 }
 
-td[contenteditable="false"] { /* Light grey background */
-    border: 1px solid red;          /* Text color */
-    font-weight: bold;        /* Italicize the text */
+td[contenteditable="false"] {
+    border: 1px solid red;
+    font-weight: bold;
 }
 
 input[type="checkbox"] {
@@ -38,76 +56,81 @@ input[type="checkbox"] {
     accent-color: #369144;
 }
 
+
 .editableTable tr:nth-child(even) {
-    background-color: rgba(125, 133, 133, 0.429);
+    background: rgba(255, 255, 255, 0.532);
 }
 
+
+.editableTable tr:nth-child(odd) {
+    background: rgba(221, 221, 221, 0.453);
+}
+
+/* Buttons */
 button, .clearSearch {
-    color: #1e0b4a;
-    margin-top: 10px;
-    padding: 5px 10px 5px 10px;
-    cursor: pointer;
-    border: 1px solid #1e0b4a;
-    border-width: 2px;
-    height: 30px;
-    margin: 10px auto 20px auto;
-    outline: none;
-    border-radius: 5px;
-    transition: all 0.3s ease;
+    color: #212C62; /* Updated to inventory-style */
+    background-color: white;
+    border: 1px solid #212C62;
+    border-radius: 50px;
     font-weight: bolder;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    padding: 5px 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 15px;
 }
 
 button:hover, .clearSearch:hover {
-    background-color: #1e0b4a;
+    background-color: #212C62;
     color: white;
 }
 
+/* DataTable Filter + Pagination */
 .editableTable_filter {
-    margin-bottom: 20px; /* Increase or decrease the bottom margin here */
+    margin-top: 10px;
+    margin-bottom: 20px;
+    
 }
 
-/* You can also add padding and margins to the search input if needed */
 .dataTables_filter input {
     margin-left: 10px;
-    margin-right: 10px; /* Adjust the margin between the input field and the clear button */
+    margin-right: 10px;
+    
+    
 }
 
-/* all paginate elemnts need !important tag */
 .dataTables_paginate {
-    background-color: #f3e8e8;
+    background-color: #ffededaa;
     color: rgba(183, 73, 73, 0.918);
     border-radius: 5px;
     padding: 8px;
     margin: 5px;
-    font-size: 12px; /* Add units for font-size */
-    text-align: center; /* Ensure buttons are aligned correctly */
+    font-size: 12px;
+    text-align: center;
 }
 
-/* Customizing the Pagination Button */
 .dataTables_paginate .paginate_button {
     background-color: #ffffff;
     color: rgba(183, 73, 73, 0.918);
     border-radius: 5px;
-    padding: 5px 12px; /* Adjust padding to make buttons smaller */
-    margin: 0 5px; /* Adjust margin between buttons */
-    font-size: 12px; /* Ensure font size applies to button */
+    padding: 5px 12px;
+    margin: 0 5px;
+    font-size: 12px;
     cursor: pointer;
-    border: none; /* Remove border */
+    border: none;
 }
 
-/* Hover state for pagination button */
 .dataTables_paginate .paginate_button:hover {
-    background-color: #ffcc00 !important; /* Example hover background color */
-    color: black; /* Change text color on hover */
+    background-color: #ffcc00 !important;
+    color: black;
 }
 
-/* Active page button */
 .dataTables_paginate .paginate_button.current {
     background-color: #ff5722;
     color: white;
 }
 
-/* Disabled page button */
 .dataTables_paginate .paginate_button.disabled {
     background-color: #ccc;
     color: #999;

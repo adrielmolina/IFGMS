@@ -14,10 +14,12 @@
 
 <!--todo ADD COLOR CODING ON THE TABLE HEADER BASED ON MODULE IN CSS-->
 {% block content %}
+<div class="module_name">
+    <h1>Audit Trail</h1>
+</div>
     <form action="/audit-tr_action" method="POST">
         <div class="audit-logs_table" spellcheck="false">
             <table class="editableTable">
-                <h2>Audit Logs</h2>
                 <thead>
                     <tr>
                         <th> </th>
@@ -46,7 +48,7 @@
             </table>
         </div>
 
-        <div class="audit-logs_btns">
+        <div class="inventory_btns">
             <button type="submit" name="action" value="create">PLACEHOLDER</button>
             <button type="submit" name="action" value="archive">PLACEHOLDER</button>
             <button type="submit" name="action" value="reset">PLACEHOLDER</button>
