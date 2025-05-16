@@ -58,6 +58,9 @@ def home():
 @server.route('/members')
 def members_page():
     return render_template('members.html')
+    
+    # return render_template('test_row_editor.html')
+    # remove this when done testing
 
 
 @server.route('/declaration')
@@ -75,19 +78,9 @@ def claims():
     return render_template('claims.html')
 
 
-@server.route('/bud_v_exp')
+@server.route('/reports')
 def bud_v_exp():
-    return render_template('bud_v_exp.html')
-
-
-@server.route('/trg_v_act')
-def trg_v_act():
-    return render_template('trg_v_act.html')
-
-
-@server.route('/per_district')
-def per_district():
-    return render_template('per_district.html')
+    return render_template('reports.html')
 
 
 @server.route('/audit_trails')

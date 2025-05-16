@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+
+{% block title %}Reports{% endblock %}
+
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/cssname.css') }}">
+{% endblock %}
+
+
+{% block content %}
+    <div id="bud_v_exp" class="bud_v_exp">
+        <h1>BUDGET VS EXPENSES</h1>
+    </div>
+
+    <div id="trg_v_act" class="trg_v_act">
+        <h1>TARGET VS ACTUAL</h1>
+    </div>
+    
+    <div id="per_dist" class="per_dist">
+        <h1>PER DISTRICT</h1>
+    </div>
+{% endblock %}
+
+
+{% block extra_scripts %}
+
+{% endblock %}

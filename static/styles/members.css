@@ -1,6 +1,9 @@
 body {
     background-color: #f3e8e8;
     padding: 10px;
+}
+
+label {
     font-weight: bold;
 }
 
@@ -40,8 +43,8 @@ body {
 
 .overlay-content {
     background: #f3e8e8;
-    width: 90%;
-    margin: 2% auto;
+    width: 100%;
+    margin: 1% 1%;
     padding: 20px;
     border-radius: 10px;
     position: relative;
@@ -59,7 +62,7 @@ body {
 .overlay-body {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    /* align-items: center; */
 
     width: 100%;
     height: 100%;           /* Set a fixed height, not max-height */
@@ -106,4 +109,55 @@ td select {
 #entries_table {
     min-width: 100%;
     height: 100%;  
+}
+
+/* SWITCH BUTTON STYLE */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 25px;
+}
+  
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    background-color: #5850ca;
+    transition: .4s;
+    border-radius: 34px;
+    top: 0; left: 0; right: 0; bottom: 0;
+}
+
+.slider:before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 4px; bottom: 4px;
+    background-color: #ffffff;
+    transition: .1s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #b86152;
+}
+
+input:checked + .slider:before {
+    transform: translateX(16px);
+}
+/* SWITCH BUTTON STYLE END */
+
+/* margin on right disappears when this is on */
+.second_row_off {
+    display: flex;
+    flex-direction: row;
+    /* flex-wrap: wrap; */
+    margin-right: 20px; /* not working */
 }
