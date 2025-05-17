@@ -1,9 +1,11 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify
+from livereload import Server
 from py_scripts import db_conn, tools
 from datetime import date
 import os
 
 server = Flask(__name__)
+server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
 
 # ?TODO LIST-------------------------------
@@ -357,7 +359,12 @@ def hot_update_data():
 
 
 if __name__ == '__main__':
-    server.run(debug=True, use_reloader=True)
+    flask_server = Server(server.wsgi_app)
+    flask_server.watch('static/*.*')  # watches static files (CSS/JS)
+    flask_server.watch('templates/*.html')  # watches templates
+    flask_server.serve()
+    
+    #server.run(debug=True, use_reloader=True)
 
 
 
