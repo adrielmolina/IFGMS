@@ -55,7 +55,7 @@ label {
     top: 10px;
     right: 20px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 28px;
     font-weight: bold;
 }
 
@@ -68,6 +68,10 @@ label {
     height: 100%;           /* Set a fixed height, not max-height */
     overflow: auto;
     box-sizing: border-box;
+}
+
+table {
+    width: 100%;
 }
 
 /* TODO add alternating gray/white color to rows */

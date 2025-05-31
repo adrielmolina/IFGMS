@@ -1,8 +1,11 @@
-from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify
+from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, send_file
 from livereload import Server
 from py_scripts import db_conn, tools
-from datetime import date
+from datetime import date, datetime
 import os
+import pandas as pd
+import openpyxl
+
 
 server = Flask(__name__)
 server.jinja_env.auto_reload = True
@@ -276,8 +279,10 @@ def login():
         }, "error")
         return render_template('index.html')
 
+# API FOR MEMBERS PAGE
 
-@server.route('/api/get_members')
+
+@server.route('/api/get_records')
 def get_members():
     records = db_conn.get_member_records()
     members_list = []
@@ -298,9 +303,26 @@ def get_members():
     return jsonify(members_list)
 
 
-@server.route('/api/get_entries')
+@server.route('/api/add_record', methods=['POST'])
+def add_new_record():
+    new_record_id = db_conn.add_new_record()
+    return jsonify({"success": True, "record_id": new_record_id})
+
+@server.route('/api/save_record_details', methods=['POST'])
+def save_record_details():
+    data = request.get_json()
+    if data:
+        db_conn.save_record_details(data)
+        return jsonify({"success": True})
+
+
+@server.route('/api/get_entries', methods=['POST'])
 def get_entries():
-    pass
+    data = request.get_json()
+    record_id = data.get('record_id')
+    # Use record_id to filter your SQL query
+    entries = db_conn.get_entries(record_id)
+    return jsonify(entries)
 
 
 @server.route('/account_action', methods=['POST'])
@@ -342,7 +364,7 @@ def inventory_action():
     pass
 
 
-#! TEST FUNCTIONS GO HERE
+# ! TEST FUNCTIONS GO HERE
 @server.route('/api/hot-update', methods=['POST'])
 def hot_update_data():
     updates = request.json  # List of row dicts
@@ -358,13 +380,59 @@ def hot_update_data():
     return jsonify({"status": "success"})
 
 
+# declaration report
+@server.route('/generate_report', methods=['POST'])
+def generate_report():
+    try:
+        # Get the date inputs
+        from_date = request.form.get('fromdate')
+        to_date = request.form.get('todate')
+
+        # Validate the input dates (optional)
+        if not from_date or not to_date:
+            flash("Please select both from and to dates.", "error")
+            return render_template('declaration.html')
+
+        # Generate the report file name with timestamp
+        report_filename = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        report_folder = os.path.join(os.path.dirname(__file__), "reports")
+        report_path = os.path.join(report_folder, report_filename)
+
+        # Ensure the _reports folder exists
+        os.makedirs(report_folder, exist_ok=True)
+        print(f"Report will be saved to: {report_path}")
+
+        # Your report generation logic here, for example, using pandas
+        data = [
+            {"Transaction No.": 1001, "Year": 2025, "MAAB No.": "MAAB001", "Member ID": "M1234", "Effectivity Date": "2025-01-10",
+            "Expiry Date": "2026-01-10", "Particular Location": "Location A", "Location Category": "Urban", "Municipality": "City A",
+            "District": "D1", "OR Number": 123456, "OR Date": "2025-01-15", "Paid": "Yes", "Remarks": "Active Member",
+            "Origin": "Branch 1", "Count in Group": 3, "ID Received": "Yes", "Declared": "Yes", "Tags": "Renewal", "Declaration Date": "2025-01-10"},
+            {"Transaction No.": 1002, "Year": 2025, "MAAB No.": "MAAB002", "Member ID": "M1235", "Effectivity Date": "2025-02-05",
+            "Expiry Date": "2026-02-05", "Particular Location": "Location B", "Location Category": "Rural", "Municipality": "City B",
+            "District": "D2", "OR Number": 123457, "OR Date": "2025-02-07", "Paid": "Yes", "Remarks": "Pending Update",
+            "Origin": "Branch 2", "Count in Group": 2, "ID Received": "Yes", "Declared": "No", "Tags": "New Member", "Declaration Date": "2025-02-05"}
+        ]
+
+        # Create a DataFrame
+        df = pd.DataFrame(data)
+
+        # Save the DataFrame to an Excel file
+        df.to_excel(report_path, index=False)
+
+        flash(f"Report generated and saved as {report_filename}!", "success")
+        return redirect(url_for('declaration_page'))  # Redirect back to the page
+
+    except Exception as e:
+        print(f"Error generating report: {e}")
+        flash("Error generating the report. Please try again later.", "error")
+        return render_template('error_page.html')  # Render an error page
+
+
 if __name__ == '__main__':
     flask_server = Server(server.wsgi_app)
     flask_server.watch('static/*.*')  # watches static files (CSS/JS)
     flask_server.watch('templates/*.html')  # watches templates
     flask_server.serve()
-    
-    #server.run(debug=True, use_reloader=True)
 
-
-
+    # server.run(debug=True, use_reloader=True)
