@@ -5,11 +5,11 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/accounts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/inventory.css') }}">
 
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
 {% endblock %}
 
 <!--todo ADD COLOR CODING BASED ON CATEGORY IN CSS-->
@@ -19,54 +19,101 @@
 <div class="module_name">
     <h1>Inventory</h1>
 </div>
-    <form action="/inventory_action" method="POST">
-        
-        <div class="inventory_table" spellcheck="false">
-            <table class="editableTable">
-                <thead>
-                    <tr>
-                        <th> </th>
-                        <th>ID</th>
-                        <th>CATEGORY</th>
-                        <th>MAAB NO.</th>
-                        <th>USED</th>
-                        <th>REMARKS</th>
-                        <th>ALLOCATED TO</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for account in active_accounts %}
-                    <tr>
-                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ account.account_id }}"></td>
-                        <td>{{ account.account_id }}</td>
-                        <td>{{ account.username }}</td>
-                        <td>{{ account.email }}</td>
-                        <td>{{ account.first_name }}</td>
-                        <td>{{ account.middle_name }}</td>
-                        <td>{{ account.last_name }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div id="inventory_table" class="inventory-table">
+    {% for cat in [
+        'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'
+    ] %}
+    <div class="category-table-section" id="table-{{ cat|replace(' ', '_') }}">
+        <div class="category-label">{{ cat }}</div>
+        <div id="hot-{{ cat|replace(' ', '_') }}"></div>
+    </div>
+    {% endfor %}
+    </div>
 
-        <div class="inventory_btns">
-            <button type="submit" name="action" value="create">CREATE</button>
-            <button type="submit" name="action" value="archive">ARCHIVE</button>
-            <button type="submit" name="action" value="reset">RESET</button>
-        </div>
-        
-    </form>
+    <div class="category-bar">
+        <button class="cat-btn" data-cat="Classic">Classic</button>
+        <button class="cat-btn" data-cat="Bronze">Bronze</button>
+        <button class="cat-btn" data-cat="Silver">Silver</button>
+        <button class="cat-btn" data-cat="Gold">Gold</button>
+        <button class="cat-btn" data-cat="Platinum">Platinum</button>
+        <button class="cat-btn" data-cat="Enhanced Platinum">Enhanced Platinum</button>
+        <button class="cat-btn" data-cat="Senior">Senior</button>
+        <button class="cat-btn" data-cat="Senior+">Senior+</button>
+    </div>
 {% endblock %}
+
 {% block extra_scripts %}
     <script>
-        $(document).ready(function() {
-            $('.editableTable').DataTable();
-            $(this).closest('.dataTables_wrapper').find('.dataTables_filter').append('<button class="clearSearch" style="margin-left: 10px;">Clear</button>');
-            $(this).closest('.dataTables_wrapper').find('.clearSearch').click(function() {
-                $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').val('');
-                table.search('').draw();
+        // Handsontable columns
+        const hotColumns = [
+            {data: 'id', type: 'text', title: 'ID'},
+            {data: 'maab_category', type: 'text', title: 'Maab Category'},
+            {data: 'maab_no', type: 'text', title: 'Maab No.'},
+            {data: 'used', type: 'text', title: 'Used'},
+            {data: 'allocated_to', type: 'text', title: 'Allocated To'},
+            {data: 'remarks', type: 'text', title: 'Remarks'}
+        ];
+
+        // Store Handsontable instances
+        const hotInstances = {};
+
+        // List of categories
+        const categories = [
+            'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'
+        ];
+
+        // Variable to store the current selected category
+        let currentCategory = 'Classic';
+
+        // Initialize a Handsontable for each category
+        categories.forEach(cat => {
+            const container = document.getElementById('hot-' + cat.replace(/ /g, '_'));
+            if (container) {
+                hotInstances[cat] = new Handsontable(container, {
+                    data: [],
+                    colHeaders: hotColumns.map(col => col.title),
+                    columns: hotColumns,
+                    rowHeaders: true,
+                    width: '100%',
+                    stretchH: 'all',
+                    height: 300,
+                    licenseKey: 'non-commercial-and-evaluation'
+                });
+            }
+        });
+
+        // Show only the selected category table
+        function showCategory(cat) {
+            categories.forEach(c => {
+                const el = document.getElementById('table-' + c.replace(/ /g, '_'));
+                if (el) {
+                    el.classList.toggle('active', c === cat);
+                }
+            });
+        }
+
+        // Function to update the current selected category and UI
+        function selectCategory(cat) {
+            currentCategory = cat;
+            // Highlight the selected button
+            document.querySelectorAll('.category-bar .cat-btn').forEach(b => {
+                if (b.getAttribute('data-cat') === cat) {
+                    b.classList.add('selected');
+                } else {
+                    b.classList.remove('selected');
+                }
+            });
+            showCategory(cat);
+        }
+        // Button click logic
+        document.querySelectorAll('.category-bar .cat-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const cat = this.getAttribute('data-cat');
+                selectCategory(cat);
             });
         });
+
+        // Show the first category by default
+        selectCategory(currentCategory);
     </script>
 {% endblock %}

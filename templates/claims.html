@@ -1,104 +1,776 @@
 {% extends 'base.html' %}
 
 
-{% block title %}Claims{% endblock %}
+{% block title %}Members Management{% endblock %}
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/accounts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/claims.css') }}">
 
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
 {% endblock %}
 
-<!--TODO ADD COLOR CODING BASED ON CATEGORY IN CSS-->
-<!--TODO ADD COLOR CODING ON THE TABLE HEADER BASED ON MODULE IN CSS-->
-<!--TODO add filed by, date filed, date of loss, received by, field; check claim reqs. paper for other fields that may need to be included -->
 
 {% block content %}
-<div class="module_name">
-    <h1>Manage Claims</h1>
-</div>
-    <form action="/claims_action" method="POST">
-        <div class="claims_table" spellcheck="false">
-            <table class="editableTable">
-                <thead>
-                    <tr>
-                        <th> </th>
-                        <th>CLAIM_ID</th>
-                        <th>DATE FILED</th>
-                        <th>CLAIM SOURCE</th>
-                        <th>PRINCIPAL INSURED FIRST NAME</th>
-                        <th>PRINCIPAL INSURED MIDDLE NAME</th>
-                        <th>PRINCIPAL INSURED LAST NAME</th>
-                        <th>MAAB NO.</th>
-                        <th>EFFECTIVITY</th>
-                        <th>CLAIMANT FIRST NAME</th>
-                        <th>CLAIMANT MIDDLE NAME</th>
-                        <th>CLAIMANT LAST NAME</th>
-                        <th>RELATIONSHIP</th>
-                        <th>CONTACT NO.</th>
-                        <th>EMAIL</th>
-                        <th>CLAIM REMARKS</th>
-                        <th>STATUS</th>
-                        <th>DATE RELEASED</th>
-                        <th>CHINABANK CHECK NO.</th>
-                        <th>CHINABANK AMOUNT</th>
-                        <th>BPI CHECK NO.</th>
-                        <th>BPI AMOUNT</th>
-                        <th>RELEASE REMARKS</th>
-                        <th>SCANNED DOCS</th>
-                        <th>PRM FILE</th>
-                        <th>QUIT CLAIM FILE</th>
-                        <th>PICKED UP</th>
-                        <th>DATE PICKED UP</th>
-                    </tr>
-                </thead>
-                <tbody>
-<!--                TODO FIX THE TEMPLATES-->
-                    {% for account in active_accounts%}
-                    <tr>
-                        <!-- TODO enlarge checkboxes / change to custom cell-->
-                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ account.account_id }}"></td>
-                        <td>{{ account.account_id }}</td>
-                        <td>{{ account.username }}</td>
-                        <td>{{ account.email }}</td>
-                        <td>{{ account.first_name }}</td>
-                        <td>{{ account.middle_name }}</td>
-                        <td>{{ account.last_name }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <!-- TODO add sort button and filters on column; add search bar -->
+     <!-- TODO make the scrollbars always visible -->
+      <!-- TODO add auto district number based on municipality selected -->
+       <!-- TODO add select options for accepted tags -->
+        <!-- TODO add origin select options -->
+         <!-- TODO add js function to set location particular to all caps while typing -->
+          <!-- TODO move declaration excel files to a new folder for files inside static folder -->
+            <!-- TODO make this a file dialog and file opener -->
+                <!-- TODO add PRC Email to settings -->
+    <h4>Claims Records</h4>
+    <button>Add Record</button>
+    <div id="claims_table" class="ht-theme-main"></div>
 
-        <div class="inventory_btns">
-            <button type="submit" name="action" value="create">PLACEHOLDER</button>
-            <button type="submit" name="action" value="archive">PLACEHOLDER</button>
-            <button type="submit" name="action" value="reset">PLACEHOLDER</button>
+    <div id="overlay" class="overlay">
+        <div id="overlay-content" class="overlay-content">
+            <span id="close-overlay" class="close-overlay">&times;</span>
+            <div id="overlay-body" class="overlay-body">
+                <!-- Dynamic content goes here -->
+
+                <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
+                    <h4 style="margin: 0;">Claim Details</h4>
+                    <button id="save_claim_record" class="save_claim_record" style="margin-right: auto;">Save</button>
+                </span>
+                <!-- TODO move the scanned files, PRM, quit claim to a google drive. also include declaration files generated -->
+                <div id="record_details" class="record_details">                 
+                        <table class="claim_record_details_table">
+                            <tr>
+                                <td>
+                                    <label for="claim_id">Claim ID</label>
+                                    <br>
+                                    <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" readonly>
+                                </td>
+
+                                <td>
+                                    <label for="date_filed">Date Filed</label>
+                                    <br>
+                                    <input type="date" id="date_filed" name="date_filed" autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="received_by">Received by</label>
+                                    <br>
+                                    <input type="text" id="received_by" name="received_by" autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="claim_origin">Claim Origin</label>
+                                    <br>
+                                    <!-- <input type="checkbox" id="claim_origin" name="claim_origin" autocomplete="off"> -->
+                                    <select name="claim_origin" id="claim_origin">
+                                        <option value="chapter">Chapter</option>
+                                        <option value="dasma">Dasmariñas</option>
+                                        <option value="silang">Silang</option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <label for="date_of_loss">Date of Loss</label>
+                                    <br>
+                                    <input type="date" id="date_of_loss" name="date_of_loss" autocomplete="off">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <!-- TODO add a list dialogue box to select from existing entries and make the name input boxes readonly-->
+                                <!-- TODO for claimant name add a checkbox for "Same as Insured" and make the inputs readonly, otherwise editable-->
+                                <td>
+                                    <label for="maab_no">MAAB No.</label>
+                                    <br>
+                                    <input type="text" id="maab_no" name="maab_no" autocomplete="off">
+                                    <button>Verify</button>
+                                </td>
+
+                                <td>
+                                    <label for="eff_date">Effectivity Date</label>
+                                    <br>
+                                    <input type="date" id="eff_date" name="eff_date">
+                                </td>
+
+                                <td>
+                                    <label for="prpl_insured_fname">Principal Insured First Name</label>
+                                    <br>
+                                    <input type="text" id="prpl_insured_fname" name="prpl_insured_fname">
+                                </td>
+
+                                <td>
+                                    <label for="prpl_insured_mname">Principal Insured Middle Name</label>
+                                    <br>
+                                    <input type="text" id="prpl_insured_mname" name="prpl_insured_mname">
+                                </td>
+                                
+                                <td>
+                                    <label for="prpl_insured_lname">Principal Insured Last Name</label>
+                                    <br>
+                                    <input type="text" id="prpl_insured_lname" name="prpl_insured_lname">
+                                </td>
+
+                                <td>
+                                    <label for="prpl_insured_suffix">Principal Insured Suffix</label>
+                                    <select name="prpl_insured_suffix" id="prpl_insured_suffix">
+                                        <option value="NA">NA</option>
+                                        <option value="Jr">Jr</option>
+                                        <option value="Sr">Sr</option>
+                                        <option value="II">II</option>
+                                        <option value="III">III</option>
+                                        <option value="IV">IV</option>
+                                        <option value="V">V</option>
+                                        <option value="VI">VI</option>
+                                        <option value="VII">VII</option>
+                                    </select>
+                                </td>                      
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <label for="same_as_insureed">Same as Insured</label>
+                                    <br>
+                                    <input type="checkbox" id="same_as_insureed" name="same_as_insureed">
+                                </td>
+
+                                <td>
+                                    <label for="claimant_fname">Claimant First Name</label>
+                                    <br>
+                                    <input type="text" id="claimant_fname" name="claimant_fname" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="claimant_mname">Claimant Middle Name</label>
+                                    <br>
+                                    <input type="text" id="claimant_mname" name="claimant_mname" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="claimant_lname">Claimant Last Name</label>
+                                    <br>
+                                    <input type="text" id="claimant_lname" name="claimant_lname" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="claimant_suffix">Claimant Suffix</label>
+                                    <br>
+                                    <select name="claimant_suffix" id="claimant_suffix">
+                                        <option value="NA">NA</option>
+                                        <option value="Jr">Jr</option>
+                                        <option value="Sr">Sr</option>
+                                        <option value="II">II</option>
+                                        <option value="III">III</option>
+                                        <option value="IV">IV</option>
+                                        <option value="V">V</option>
+                                        <option value="VI">VI</option>
+                                        <option value="VII">VII</option>
+                                    </select>
+                                </td>
+                 
+
+                            </tr>
+                            <tr>
+
+                                <td>
+                                    <label for="relation">Relation to Principal Insured</label>
+                                    <input list="relation_list" id="relation" name="relation" autocomplete="off">
+                                    <datalist id="relation_list">
+                                        <option value="Spouse">Spouse</option>
+                                        <option value="Son">Son</option>
+                                        <option value="Daughter">Daughter</option>
+                                        <option value="Father">Father</option>
+                                        <option value="Mother">Mother</option>
+                                        <option value="Grandson">Grandson</option>
+                                        <option value="Granddaughter">Granddaughter</option>
+                                        <option value="Grandfather">Grandfather</option>
+                                        <option value="Grandmother">Grandmother</option>
+                                        <option value="Uncle">Uncle</option>
+                                        <option value="Aunt">Aunt</option>
+                                    </datalist>
+                                </td>
+
+                                <td>
+                                    <label for="claimant_contact_no">Claimant Contact No.</label>
+                                    <br>
+                                    <input type="text" id="claimant_contact_no" name="claimant_contact_no" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="claimant_email">Claimant Email</label>
+                                    <br>
+                                    <input type="text" id="claimant_email" name="claimant_email" required autocomplete="off">
+                                </td>
+                                     
+                                <td>
+                                    <label for="picked_up">Picked Up</label>
+                                    <br>
+                                    <input type="checkbox" id="picked_up" name="picked_up">
+                                </td>
+
+                                <td>
+                                    <label for="date_picked_up">Date Picked Up</label>
+                                    <input type="date" id="date_picked_up" name="date_picked_up">
+                                </td>
+                            </tr>
+                            
+                        </table>
+                </div>
+                
+            <!-- TODO make all inputs all caps when saving to db -->
+                <div class="bottom_section" id="bottom_section">
+                    <div class="requiements_section" id="requirements_section">
+                        <h3>Requirements</h3>                 
+
+                        <ul class="requirements-list">
+                            <li>
+                                <input type="checkbox" id="req_claim_form" name="req_claim_form">
+                                <label for="req_claim_form">Claim Form</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_prc_id" name="req_prc_id">
+                                <label for="req_prc_id">PRC ID</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_med_cert" name="req_med_cert">
+                                <label for="req_med_cert">Medical Certificate</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_hos_bill_or" name="req_hos_bill_or">
+                                <label for="req_hos_bill_or">Hospital Bill/OR</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_state_of_acc" name="req_state_of_acc">
+                                <label for="req_state_of_acc">Statement of Account</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_doctor_pres" name="req_doctor_pres">
+                                <label for="req_doctor_pres">Doctor's Prescription</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_purchased_meds" name="req_purchased_meds">
+                                <label for="req_purchased_meds">Purchased Medicines</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_med_records" name="req_med_records">
+                                <label for="req_med_records">Medical Records</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_incident_rep" name="req_incident_rep">
+                                <label for="req_incident_rep">Incident Report</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_police_rep" name="req_police_rep">
+                                <label for="req_police_rep">Police Report</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_drivers_lic" name="req_drivers_lic">
+                                <label for="req_drivers_lic">Driver's License</label>
+                            </li>
+                        </ul>
+     
+                        <button class="generate_claim_letter" id="generate_claim_letter">Generate Claim Letter Template</button>
+
+                        <input type="file" accept=".docx, .pdf" id="upload_scanned_docs" name="upload_scanned_docs" required autocomplete="off">
+                        <a class="scanned_docs" id="scanned_docs" href="drive.google.com">View Scanned Docs</a>
+
+                        <label for="claim_remarks" style="font-weight: bold;">Claim Remarks</label>
+                        <input type="text" id="claim_remarks" name="claim_remarks" autocomplete="off">
+
+                        <input type="checkbox" id="sent_advanced_notice" name="sent_advanced_notice" hidden>
+                    </div>
+
+                    <div class="release_section" id="release_section">
+                        <!-- <h4>Release Section</h4>
+                        <p>For the release of the claim, please ensure that all requirements are met and the claimant has signed the Quit Claim.</p>
+                        <p>For any questions or concerns, please contact the claims department.</p> -->
+                        <div class="columns">
+                            <div class="release_sectin_column">
+                                <label for="claim_status">Status</label>
+                
+                                <!-- <input type="text" id="claim_status" name="claim_status" required autocomplete="off"> -->
+                                <select name="claim_status" id="claim_status">
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="denied">Denied</option>
+                                </select>
+
+                                <label for="chinabank_check_no">Chinabank Check No.</label>
+                                <input type="text" id="chinabank_check_no" name="chinabank_check_no" required autocomplete="off">
+
+                                <label for="bpi_check_no">BPI Check No.</label>
+                                <input type="text" id="bpi_check_no" name="bpi_check_no" required autocomplete="off">   
+
+                                <button class="generate_prm" id="generate_prm">Generate PRM Template</button>
+                                <input type="file" accept=".xlsx" id="upload_prm" name="upload_prm" required autocomplete="off">
+                                <a class="prm_file" id="prm_file" href="drive.google.com">View PRM File</a>
+
+                            </div>
+
+                            <div class="release_sectin_column">
+                                <span>
+                                    <label for="date_released">Date Released</label>
+                                    <button style="float: right;" type="button" onclick="document.getElementById('date_released').value = new Date().toISOString().slice(0, 10);">
+                                        Today
+                                    </button>
+                                </span>
+                                <input type="date" id="date_released" name="date_released" required autocomplete="off">
+
+                                <label for="chinabank_amount">Chinabank Amount</label>
+                                <input type="text" id="chinabank_amount" name="chinabank_amount" required autocomplete="off">
+                                
+                                                          
+                    
+                                <label for="bpi_amount">BPI Amount</label>  
+                                <input type="text" id="bpi_amount" name="bpi_amount" required autocomplete="off">
+
+                                <button class="generate_quit_claim" id="generate_quit_claim">Generate Quit Claim Template</button>
+                                <input type="file" accept=".docx" id="upload_quit_claim" name="upload_quit_claim" required autocomplete="off">
+                                <a class="quit_claim_file" id="quit_claim_file" href="drive.google.com">View Quit Claim File</a>
+                            </div>
+                        </div>
+
+                        <div class="release_remarks_section">
+                            <label for="release_remarks">Release Remarks</label>
+                            <input type="text" id="release_remarks" name="release_remarks" required autocomplete="off">
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
         </div>
-    </form>
+    </div>
 {% endblock %}
 
-
+<!--TODO fix the order of columns in sql file-->
+<!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
-    <script>
-        $(document).ready(function() {
-            // Initialize DataTable for tables with the "editableTable" class
-            $('.editableTable').each(function() {
-                var table = $(this).DataTable(); // Initialize each table with the "editableTable" class
+<script>
+    let hotInstance = null;
+    function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
+    Handsontable.renderers.TextRenderer.apply(this, arguments); // Use default text renderer
+    td.innerHTML = '<a href="javascript:void(0);" class="open-link">Open</a>';
 
-                // Add clear button next to the default search input field
-                $(this).closest('.dataTables_wrapper').find('.dataTables_filter').append('<button class="clearSearch" style="margin-left: 10px;">Clear</button>');
+    td.querySelector('.open-link').addEventListener('click', function () {
+        const rowData = instance.getSourceDataAtRow(row);
 
-                // Clear search input when the clear button is clicked
-                $(this).closest('.dataTables_wrapper').find('.clearSearch').click(function() {
-                    $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').val('');  // Clear the search input field
-                    table.search('').draw();  // Reset the DataTable search
-                });
+        // sets the date format for the HTML date input field
+        function convertToYYYYMMDD(dateStr) {
+            const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
+        
+            if (parts.length === 3) {
+                let [month, day, year] = parts;
+        
+                // Pad month and day with leading zeros if necessary
+                month = month.padStart(2, '0');
+                day = day.padStart(2, '0');
+        
+                return `${year}-${month}-${day}`;
+            }
+        
+            return ''; // Return empty if format is unrecognized
+        }
+    
+        // Check and format the dates if they exist
+        if (rowData.date_filed) {
+            rowData.date_filed = convertToYYYYMMDD(rowData.date_filed);
+        }
+        if (rowData.date_of_loss) {
+            rowData.date_of_loss = convertToYYYYMMDD(rowData.date_of_loss);
+        }
+        if (rowData.effectivity_date) {
+            rowData.effectivity_date = convertToYYYYMMDD(rowData.effectivity_date);
+        }
+        if (rowData.date_released) {
+            rowData.date_released = convertToYYYYMMDD(rowData.date_released);
+        }
+        if (rowData.date_picked_up) {
+            rowData.date_picked_up = convertToYYYYMMDD(rowData.date_picked_up);
+        }
+        
+        // TODO try this for dates. if this works remove the function above ^
+        /*
+            data.forEach(row => {
+                if (row.birth_date) {
+                    const date = new Date(row.birth_date);
+                    row.birth_date = date.toLocaleDateString('en-US');
+                }
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.OR_date) {
+                    const date = new Date(row.OR_date);
+                    row.OR_date = date.toLocaleDateString('en-US');
+                }
+            });
+        */
+
+        /*document.getElementById(`claim_id`).value = rowData.claim_id;
+        document.getElementById(`date_filed`).value = rowData.date_filed;
+        document.getElementById(`date_of_loss`).value = rowData.date_of_loss;
+        document.getElementById(`maab_no`).value = rowData.maab_no;
+        document.getElementById(`eff_date`).value = rowData.effectivity_date;
+        document.getElementById(`prpl_insured_fname`).value = rowData.first_name;
+        document.getElementById(`prpl_insured_mname`).value = rowData.middle_name;
+        document.getElementById(`prpl_insured_lname`).value = rowData.last_name;
+        document.getElementById(`prpl_insured_suffix`).value = rowData.suffix;
+        document.getElementById(`claim_status`).value = rowData.status;
+        document.getElementById(`date_released`).value = rowData.date_released;
+        document.getElementById(`picked_up`).value = rowData.picked_up;
+        document.getElementById(`date_picked_up`).value = rowData.date_picked_up;
+        document.getElementById(`claim_origin`).value = rowData.origin;
+        */
+        document.getElementById('overlay').style.display = 'flex';
+
+    });
+
+    return td;
+    }
+    // for x button in overlay
+    document.getElementById('close-overlay').addEventListener('click', function () {
+        document.getElementById('overlay').style.display = 'none';
+    });
+    // close overlay on ESC key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+            document.getElementById('overlay').style.display = 'none';
+        }
+    });
+
+    // for records table
+    fetch("/api/get_claim_records")
+        .then(response => response.json())
+        .then(data => {
+            // date formats for the handsontable rows
+            
+            claimRecords = data;
+            
+            //console.log(data);
+            data.forEach(row => {
+                if (row.date_filed) {
+                    // Format the date to MM-DD-YYYY
+                    const date = new Date(row.date_filed);
+                    row.date_filed = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                }
+                if (row.date_of_loss) {
+                    // Format the date to MM-DD-YYYY
+                    const date = new Date(row.date_of_loss);
+                    row.date_of_loss = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                }
+                if (row.effectivity_date) {
+                    // Format the date to MM-DD-YYYY
+                    const date = new Date(row.effectivity_date);
+                    row.effectivity_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                }
+                if (row.date_released) {
+                    // Format the date to MM-DD-YYYY
+                    const date = new Date(row.date_released);
+                    row.date_released = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                }
+                if (row.date_picked_up) {
+                    // Format the date to MM-DD-YYYY
+                    const date = new Date(row.date_picked_up);
+                    row.date_picked_up = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                }
+            });   
+            // table rendering data values are from database filed names
+            const container = document.getElementById('claims_table');
+
+            hotInstance = new Handsontable(container, {
+                data,
+                colHeaders: [
+                    'Open', 'Claim ID', 'Date Filed', 'Date of Loss', 'MAAB No.', 'Effectivity Date', 'First Name', 'Middle Name',
+                    'Last Name', 'Suffix', 'Claim Status', 'Date Released', 'Picked Up', 'Date Picked Up', 'Origin'
+                ],
+                columns: [
+                    { renderer: openLinkRenderer },
+                    { data: 'claim_id', readOnly: true},
+                    { data: 'date_filed',
+                        type: 'date',
+                        dateFormat: 'MM-DD-YYYY',
+                        correctFormat: true,
+                        allowInvalid: false
+                    },
+                    { data: 'date_of_loss',
+                        type: 'date',
+                        dateFormat: 'MM-DD-YYYY',
+                        correctFormat: true,
+                        allowInvalid: false
+                    },
+                    { data: 'maab_no'},
+                    { data: 'effectivity_date',
+                        type: 'date',
+                        dateFormat: 'MM-DD-YYYY',
+                        correctFormat: true,
+                        allowInvalid: false
+                    },
+                    { data: 'first_name' },
+                    { data: 'middle_name' },
+                    { data: 'last_name' },
+                    { data: 'suffix' },
+                    { data: 'status'},
+                    { data: 'date_released',
+                        type: 'date',
+                        dateFormat: 'MM-DD-YYYY',
+                        correctFormat: true,
+                        allowInvalid: false
+                    },
+                    { data: 'picked_up', type: 'checkbox' },
+                    { data: 'date_picked_up',
+                        type: 'date',
+                        dateFormat: 'MM-DD-YYYY',
+                        correctFormat: true,
+                        allowInvalid: false
+                    },
+                    { data: 'origin' }
+                ],
+                rowHeaders: true,
+                stretchH: 'all',
+                autoWrapRow: false,
+                autoWrapCol: false,
+                readOnly: true,
+                licenseKey: 'non-commercial-and-evaluation'
             });
         });
+        
 
-    </script>
+    // reload table data
+    function refreshMembersTable() {
+        fetch("/api/get_claim_records")
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(row => {
+                    if (row.date_filed) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.date_filed);
+                        row.date_filed = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+                    if (row.date_of_loss) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.date_of_loss);
+                        row.date_of_loss = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+                    if (row.effectivity_date) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.effectivity_date);
+                        row.effectivity_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+                    if (row.date_released) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.date_released);
+                        row.date_released = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+                    if (row.date_picked_up) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.date_picked_up);
+                        row.date_picked_up = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+                });
+                if (hotInstance) {
+                    hotInstance.loadData(data);
+                }
+            });
+    }
+    // TODO move to another route
+    // Add Record button logic
+    document.querySelector('button').addEventListener('click', function () {
+        // Call backend to add a new record
+        fetch('/api/add_claim_record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+            // Optionally, send default values here if needed
+        })
+        .then(response => response.json())
+        .then(result => {
+            // After adding, refresh the table data
+            
+            // open the new record entry window
+            fetch("/api/get_records")
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(row => {
+                        if (row.date_filed) {
+                            const date = new Date(row.date_filed);
+                            row.date_filed = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                        }
+                        if (row.date_of_loss) {
+                            const date = new Date(row.date_of_loss);
+                            row.date_of_loss = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                        }
+                        if (row.effectivity_date) {
+                            const date = new Date(row.effectivity_date);
+                            row.effectivity_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                        }
+                        if (row.date_released) {
+                            const date = new Date(row.date_released);
+                            row.date_released = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                        }
+                        if (row.date_picked_up) {
+                            const date = new Date(row.date_picked_up);
+                            row.date_picked_up = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                        }
+                    });
+                    if (hotInstance) {
+                        hotInstance.loadData(data);
+
+                        // find index of the new record
+                        const rowIndex = data.findIndex(row => row.claim_id == result.claim_id);
+                        if (rowIndex !== -1) {
+                            // Wait for Handsontable to render, then trigger the open link
+                            setTimeout(() => {
+                                const cell = hotInstance.getCell(rowIndex, 0); // 0 = "Open" column
+                                if (cell) {
+                                    const openLink = cell.querySelector('.open-link');
+                                    if (openLink) openLink.click();
+                                }
+                            }, 100); // Adjust timeout if needed
+                        }
+                    }
+                });
+
+                // refreshMembersTable();
+
+        })
+        .catch(error => {
+            alert('Error adding record');
+            console.error(error);
+        });
+    });
+
+    // pickedup button click
+    document.getElementById('picked_up').addEventListener('change', function() {
+        const datePickedUp = document.getElementById('date_picked_up');
+        if (this.checked) {
+            datePickedUp.disabled = false;
+            datePickedUp.value = new Date().toISOString().slice(0, 10); // Set to today
+        } else {
+            datePickedUp.disabled = true;
+            datePickedUp.value = ''; // Clear the value
+        }
+    });
+
+    // same as insured button click
+    document.getElementById('same_as_insureed').addEventListener('change', function() {
+            const checked = this.checked;
+            const insuredFname = document.getElementById('prpl_insured_fname').value;
+            const insuredMname = document.getElementById('prpl_insured_mname').value;
+            const insuredLname = document.getElementById('prpl_insured_lname').value;
+            const insuredSuffix = document.getElementById('prpl_insured_suffix').value;
+            
+            const claimantFname = document.getElementById('claimant_fname');
+            const claimantMname = document.getElementById('claimant_mname');
+            const claimantLname = document.getElementById('claimant_lname');
+            const claimantSuffix = document.getElementById('claimant_suffix');
+
+            // TODO make a variable to store principal insured contact no and email if the claimant is the same person 
+            const relation = document.getElementById('relation');
+            const claimantContact = document.getElementById('claimant_contact_no');
+            const claimantEmail = document.getElementById('claimant_email');
+
+            if (checked) {
+                claimantFname.value = insuredFname;
+                claimantMname.value = insuredMname;
+                claimantLname.value = insuredLname;
+                claimantSuffix.value = insuredSuffix;
+                relation.value = 'Self';
+                claimantContact.value = '';
+                claimantEmail.value = '';
+                // TODO ^^^ insert the value of the insured contact and email here
+                claimantFname.readOnly = true;
+                claimantMname.readOnly = true;
+                claimantLname.readOnly = true;
+                claimantSuffix.disabled = true;
+                
+                relation.readOnly = true;
+                claimantContact.readOnly = true;
+                claimantEmail.readOnly = true;
+
+                
+            } else {
+                claimantFname.readOnly = false;
+                claimantMname.readOnly = false;
+                claimantLname.readOnly = false;
+                claimantSuffix.readOnly = false;
+                relation.readOnly = false;
+                claimantContact.readOnly = false;
+                claimantEmail.readOnly = false;
+
+                claimantFname.value = '';
+                claimantMname.value = '';
+                claimantLname.value = '';
+                claimantSuffix.disabled = '';
+                relation.value = '';
+                claimantContact.value = '';
+                claimantEmail.value = '';
+            }
+    });
+
+    document.getElementById('save_claim_record').addEventListener('click', function () {
+        // Gather data from the form fields
+        const payload = {
+            claim_id: document.getElementById('claim_id').value,
+            date_filed: document.getElementById('date_filed').value,
+            received_by: document.getElementById('received_by').value,
+            claim_origin: document.getElementById('claim_origin').value,
+            date_of_loss: document.getElementById('date_of_loss').value,
+            maab_no: document.getElementById('maab_no').value,
+            same_as_insured: document.getElementById('same_as_insureed').checked,
+            claimant_first_name: document.getElementById('claimant_fname').value,
+            claimant_middle_name: document.getElementById('claimant_mname').value,
+            claimant_last_name: document.getElementById('claimant_lname').value,
+            claimant_suffix: document.getElementById('claimant_suffix').value,
+            relation_to_insured: document.getElementById('relation').value,
+            claimant_contact_no: document.getElementById('claimant_contact_no').value,
+            claimant_email: document.getElementById('claimant_email').value,
+            claim_remarks: document.getElementById('claim_remarks').value,
+            status: document.getElementById('claim_status').value,
+            date_released: document.getElementById('date_released').value,
+            chinabank_check_no: document.getElementById('chinabank_check_no').value,
+            chinabank_amount: document.getElementById('chinabank_amount').value,
+            bpi_check_no: document.getElementById('bpi_check_no').value,
+            bpi_amount: document.getElementById('bpi_amount').value,
+            release_remarks: document.getElementById('release_remarks').value,
+            scanned_docs: document.getElementById('scanned_docs').value,
+            prm_file: document.getElementById('prm_file').value,
+            quit_claim_file: document.getElementById('quit_claim_file').value,
+            picked_up: document.getElementById('picked_up').checked,
+            date_picked_up: document.getElementById('date_picked_up').value,
+            req_claim_form: document.getElementById('req_claim_form').checked,
+            req_prc_id: document.getElementById('req_prc_id').checked,
+            req_med_cert: document.getElementById('req_med_cert').checked,
+            req_hos_bill_or: document.getElementById('req_hos_bill_or').checked,
+            req_state_of_acc: document.getElementById('req_state_of_acc').checked,
+            req_doctor_pres: document.getElementById('req_doctor_pres').checked,
+            req_purchased_meds: document.getElementById('req_purchased_meds').checked,
+            req_med_records: document.getElementById('req_med_records').checked,
+            req_incident_rep: document.getElementById('req_incident_rep').checked,
+            req_police_rep: document.getElementById('req_police_rep').checked,
+            req_drivers_lic: document.getElementById('req_drivers_lic').checked,
+            sent_advanced_notice: document.getElementById('sent_advanced_notice').checked
+        };
+
+        // Send data to backend
+        fetch('/api/save_claim_record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Record details saved!');
+                refreshMembersTable()
+            } else {
+                alert('Failed to save record details.');
+            }
+        })
+        .catch(error => {
+            alert('Error saving record details.');
+            console.error(error);
+        });
+    });
+
+</script>
 {% endblock %}

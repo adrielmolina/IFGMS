@@ -283,6 +283,7 @@ def update_password(email, new_password):
 
 # ? RESET PASS END
 
+
 def get_member_records():
     conn = conn_init()
 
@@ -291,9 +292,27 @@ def get_member_records():
         result = conn.execute(query)
         records = result.fetchall()
         return records
-    
-def get_entry_contents():
-    pass
+
+
+def get_claim_records():
+    conn = conn_init()
+    with conn:
+        query = text("""
+            SELECT 
+                mc.*,  
+                mr.effectivity_date,
+                mi.first_name, 
+                mi.middle_name, 
+                mi.last_name, 
+                mi.suffix
+            FROM maab_claims mc
+            JOIN entry_contents ec ON mc.maab_no = ec.maab_no
+            JOIN membership_records mr ON ec.record_id = mr.record_id
+            JOIN members_info mi ON ec.member_id = mi.member_id
+        """)
+        result = conn.execute(query)
+        records = result.fetchall()
+        return records
 
 
 def add_new_record():

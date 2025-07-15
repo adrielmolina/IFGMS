@@ -28,7 +28,7 @@ CREATE TABLE `accounts` (
 	`contact_no` VARCHAR(255),
 	`acct_created` DATE,
 	`office_location` ENUM('Chapter', 'Dasmarinas', 'Silang'),
-	`user_level` ENUM('admin', 'user') DEFAULT 'user',
+	`user_level` ENUM('admin', 'user', 'superadmin') DEFAULT 'user',
 	`acct_status` ENUM('pending', 'approved', 'declined', 'archived') DEFAULT 'pending',
 	`acct_review_date` DATE,
 	PRIMARY KEY(`account_id`)
@@ -45,8 +45,8 @@ CREATE TABLE `membership_records` (
 	`effectivity_date` DATE,
 	`location_particular` VARCHAR(255),
 	`location_category` ENUM('Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder', 'Public Elementary School', 'Private Elementary School', 'Public High School', 'Private High School', 'Public Senior High School', 'Private Senior High School', 'Public Integrated School', 'Private Integrated School', 'Public College', 'Private College', 'Government Company/Organization', 'Private Company/Organization', 'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events', 'Training', 'Company/Organization Training', 'Individual', 'Walk-In'),
-	`municipality` VARCHAR(255),
-	`district` VARCHAR(255),
+	`municipality` ENUM('Cavite City', 'Kawit', 'Noveleta', 'Rosario', 'Bacoor', 'Imus', 'Dasmariñas', 'Carmona', 'General Mariano Alvarez (GMA)', 'Silang', 'General Trias', 'Amadeo', 'Indang', 'Tanza', 'Trece Martires', 'Alfonso', 'Gen. Emilio Aguinaldo (Bailen)', 'Magallanes', 'Maragondon', 'Mendez', 'Naic', 'Tagaytay City', 'Ternate'),
+	`district` INTEGER,
 	`paid` BOOLEAN DEFAULT false COMMENT 'automatically mark as paid if all contents are paid',
 	`origin` ENUM('Chapter', 'Dasmarinas', 'Silang'),
 	`remarks` TEXT(65535),
@@ -60,8 +60,8 @@ CREATE TABLE `inventory` (
 	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
 	`maab_no` VARCHAR(255) UNIQUE,
 	`used` BOOLEAN,
-	`remarks` TEXT(65535),
 	`allocated_to` ENUM('Chapter', 'Dasmarinas', 'Silang'),
+	`remarks` TEXT(65535),
 	PRIMARY KEY(`inv_id`)
 );
 
@@ -69,18 +69,18 @@ CREATE TABLE `inventory` (
 CREATE TABLE `maab_claims` (
 	`claim_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`date_filed` DATE,
-	`claim_source` ENUM('chapter', 'dasma', 'silang'),
-	`principal_insured_fname` VARCHAR(255),
-	`principal_insured_mname` VARCHAR(255),
-	`principal_insured_lname` VARCHAR(255),
+	`received_by` VARCHAR(255),
+	`claim_origin` ENUM('chapter', 'dasma', 'silang'),
+	`date_of_loss` DATE,
 	`maab_no` VARCHAR(255),
-	`effectivity_date` DATE,
+	`same_as_insured` BOOLEAN,
 	`claimant_first_name` VARCHAR(255),
 	`claimant_middle_name` VARCHAR(255),
 	`claimant_last_name` VARCHAR(255),
-	`relationship` VARCHAR(255) DEFAULT 'SAME',
-	`contact_no` VARCHAR(255),
-	`email` VARCHAR(255),
+	`claimant_suffix` ENUM('NA', 'Jr', 'Sr', 'II', 'III', 'IV', 'V', 'VI', 'VII'),
+	`relation_to_insured` VARCHAR(255) DEFAULT 'SAME',
+	`claimant_contact_no` VARCHAR(255),
+	`claimant_email` VARCHAR(255),
 	`claim_remarks` TEXT(65535),
 	`status` ENUM('pending', 'approved', 'denied'),
 	`date_released` DATE,
@@ -94,6 +94,18 @@ CREATE TABLE `maab_claims` (
 	`quit_claim_file` VARCHAR(255) COMMENT 'link to quit claim file',
 	`picked_up` BOOLEAN,
 	`date_picked_up` DATE,
+	`req_claim_form` BOOLEAN,
+	`req_prc_id` BOOLEAN,
+	`req_med_cert` BOOLEAN,
+	`req_hos_bill_or` BOOLEAN,
+	`req_state_of_acc` BOOLEAN,
+	`req_doctor_pres` BOOLEAN,
+	`req_purchased_meds` BOOLEAN,
+	`req_med_records` BOOLEAN,
+	`req_incident_rep` BOOLEAN,
+	`req_police_rep` BOOLEAN,
+	`req_drivers_lic` BOOLEAN,
+	`sent_advanced_notice` BOOLEAN,
 	PRIMARY KEY(`claim_id`)
 );
 
@@ -146,4 +158,7 @@ ADD FOREIGN KEY(`record_id`) REFERENCES `membership_records`(`record_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `entry_contents`
 ADD FOREIGN KEY(`member_id`) REFERENCES `members_info`(`member_id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `maab_claims`
+ADD FOREIGN KEY(`maab_no`) REFERENCES `entry_contents`(`maab_no`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;

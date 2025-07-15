@@ -11,7 +11,7 @@ INSERT INTO membership_records
 VALUES
     (NULL, 2025, TRUE, TRUE, '2025-04-10', '2025-04-10', 'CVSU', 'Public College', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL),
     (NULL, 2024, TRUE, TRUE, '2025-11-10', '2024-11-04', 'CNHS', 'Public High School', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL),
-    (NULL, 2023, FALSE, TRUE, '2025-02-25', '2023-02-12', 'NCST', 'Private College', 'Dasmarinas', '1', TRUE, 'Dasmarinas', NULL, 'late-declare'),
+    (NULL, 2023, FALSE, TRUE, '2025-02-25', '2023-02-12', 'NCST', 'Private College', 'Dasmariñas', '1', TRUE, 'Dasmarinas', NULL, 'late-declare'),
     (NULL, 2022, TRUE, TRUE, '2025-05-25', '2022-05-22', 'San Sebastian College Recoletos', 'Private College', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL),
     (NULL, 2021, TRUE, FALSE, NULL, '2021-01-13', 'LDES', 'Public Elementary School', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL)
 ;

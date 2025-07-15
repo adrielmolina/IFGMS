@@ -325,6 +325,37 @@ def get_entries():
     return jsonify(entries)
 
 
+@server.route('/api/get_claim_records')
+def get_claim_records():
+    records = db_conn.get_claim_records()
+    claims_list = []
+
+    for row in records:
+        record = dict(row._mapping)
+
+        for key in ['same_as_insured', 'picked_up']:
+            if key in record:
+                record[key] = bool(record[key])
+
+        for key in ['date_filed', 'date_of_loss', 'date_released', 'date_picked_up', 'effectivity_date']:
+            if key in record and record[key]:
+                record[key] = record[key].strftime('%Y-%m-%d')
+
+        claims_list.append(record)
+    return jsonify(claims_list)
+
+
+@server.route('/api/add_claim_record', methods=['POST'])
+def add_claim_record():
+    pass
+
+
+@server.route('/api/save_claim_record', methods=['POST'])
+def save_claim_record():
+    pass
+
+
+
 @server.route('/account_action', methods=['POST'])
 def account_action():
     action = request.form.get('action')
