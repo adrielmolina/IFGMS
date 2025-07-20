@@ -347,7 +347,8 @@ def get_claim_records():
 
 @server.route('/api/add_claim_record', methods=['POST'])
 def add_claim_record():
-    pass
+    new_claim_id = db_conn.add_claim_record()
+    return jsonify({"success": True, "claim_id": new_claim_id})
 
 
 @server.route('/api/save_claim_record', methods=['POST'])

@@ -6,6 +6,7 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='/styles/claims.css') }}">
+    <link rel="icon" href="/static/assets/favicon.ico" type="image/x-icon">
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
@@ -90,30 +91,30 @@
                                 <td>
                                     <label for="eff_date">Effectivity Date</label>
                                     <br>
-                                    <input type="date" id="eff_date" name="eff_date">
+                                    <input type="date" id="eff_date" name="eff_date" readonly>
                                 </td>
 
                                 <td>
                                     <label for="prpl_insured_fname">Principal Insured First Name</label>
                                     <br>
-                                    <input type="text" id="prpl_insured_fname" name="prpl_insured_fname">
+                                    <input type="text" id="prpl_insured_fname" name="prpl_insured_fname" readonly>
                                 </td>
 
                                 <td>
                                     <label for="prpl_insured_mname">Principal Insured Middle Name</label>
                                     <br>
-                                    <input type="text" id="prpl_insured_mname" name="prpl_insured_mname">
+                                    <input type="text" id="prpl_insured_mname" name="prpl_insured_mname" readonly>
                                 </td>
                                 
                                 <td>
                                     <label for="prpl_insured_lname">Principal Insured Last Name</label>
                                     <br>
-                                    <input type="text" id="prpl_insured_lname" name="prpl_insured_lname">
+                                    <input type="text" id="prpl_insured_lname" name="prpl_insured_lname" readonly>
                                 </td>
 
                                 <td>
                                     <label for="prpl_insured_suffix">Principal Insured Suffix</label>
-                                    <select name="prpl_insured_suffix" id="prpl_insured_suffix">
+                                    <select name="prpl_insured_suffix" id="prpl_insured_suffix" disabled>
                                         <option value="NA">NA</option>
                                         <option value="Jr">Jr</option>
                                         <option value="Sr">Sr</option>
@@ -124,7 +125,9 @@
                                         <option value="VI">VI</option>
                                         <option value="VII">VII</option>
                                     </select>
-                                </td>                      
+                                </td>        
+                                <input type="text" id="prpl_insured_contact" name="prpl_insured_contact" hidden>
+                                <input type="text" id="prpl_insured_email" name="prpl_insured_email" hidden>              
                             </tr>
 
                             <tr>
@@ -167,8 +170,7 @@
                                         <option value="VII">VII</option>
                                     </select>
                                 </td>
-                 
-
+                                
                             </tr>
                             <tr>
 
@@ -371,57 +373,144 @@
         
             return ''; // Return empty if format is unrecognized
         }
-    
-        // Check and format the dates if they exist
-        if (rowData.date_filed) {
-            rowData.date_filed = convertToYYYYMMDD(rowData.date_filed);
-        }
-        if (rowData.date_of_loss) {
-            rowData.date_of_loss = convertToYYYYMMDD(rowData.date_of_loss);
-        }
-        if (rowData.effectivity_date) {
-            rowData.effectivity_date = convertToYYYYMMDD(rowData.effectivity_date);
-        }
-        if (rowData.date_released) {
-            rowData.date_released = convertToYYYYMMDD(rowData.date_released);
-        }
-        if (rowData.date_picked_up) {
-            rowData.date_picked_up = convertToYYYYMMDD(rowData.date_picked_up);
-        }
         
-        // TODO try this for dates. if this works remove the function above ^
-        /*
-            data.forEach(row => {
-                if (row.birth_date) {
-                    const date = new Date(row.birth_date);
-                    row.birth_date = date.toLocaleDateString('en-US');
-                }
-                if (row.declaration_date) {
-                    const date = new Date(row.declaration_date);
-                    row.declaration_date = date.toLocaleDateString('en-US');
-                }
-                if (row.OR_date) {
-                    const date = new Date(row.OR_date);
-                    row.OR_date = date.toLocaleDateString('en-US');
-                }
-            });
-        */
+        //TODO make the claimant fields readonly if the entry openede has the same_as_insured checked
 
-        /*document.getElementById(`claim_id`).value = rowData.claim_id;
-        document.getElementById(`date_filed`).value = rowData.date_filed;
-        document.getElementById(`date_of_loss`).value = rowData.date_of_loss;
-        document.getElementById(`maab_no`).value = rowData.maab_no;
-        document.getElementById(`eff_date`).value = rowData.effectivity_date;
-        document.getElementById(`prpl_insured_fname`).value = rowData.first_name;
-        document.getElementById(`prpl_insured_mname`).value = rowData.middle_name;
-        document.getElementById(`prpl_insured_lname`).value = rowData.last_name;
-        document.getElementById(`prpl_insured_suffix`).value = rowData.suffix;
-        document.getElementById(`claim_status`).value = rowData.status;
-        document.getElementById(`date_released`).value = rowData.date_released;
-        document.getElementById(`picked_up`).value = rowData.picked_up;
-        document.getElementById(`date_picked_up`).value = rowData.date_picked_up;
-        document.getElementById(`claim_origin`).value = rowData.origin;
-        */
+        claimDetails = claimRecords.find(claim_record => claim_record.claim_id === rowData.claim_id);
+        // TODO if claimant is same as insured make sure the claimant input fields is in readonly
+        let converted_date_filed = '';
+        let converted_date_of_loss = '';
+        let converted_effectivity_date = '';
+        let converted_date_released = '';
+        let converted_date_picked_up = '';
+        if (claimDetails) {
+
+            if (claimDetails.date_filed) {
+                converted_date_filed = convertToYYYYMMDD(claimDetails.date_filed);
+            }
+            if (claimDetails.date_of_loss) {
+                converted_date_of_loss = convertToYYYYMMDD(claimDetails.date_of_loss);
+            }
+            if (claimDetails.effectivity_date) {
+                converted_effectivity_date = convertToYYYYMMDD(claimDetails.effectivity_date);
+            }
+            if (claimDetails.date_released) {
+                converted_date_released = convertToYYYYMMDD(claimDetails.date_released);
+            }
+            if (claimDetails.date_picked_up) {
+                converted_date_picked_up = convertToYYYYMMDD(claimDetails.date_picked_up);
+            }
+
+
+            document.getElementById('claim_id').value = claimDetails.claim_id || '';
+            document.getElementById('date_filed').value = converted_date_filed || '';
+            document.getElementById('received_by').value = claimDetails.received_by || '';
+            document.getElementById('claim_origin').value = claimDetails.claim_origin || '';
+            document.getElementById('date_of_loss').value = converted_date_of_loss || '';
+            document.getElementById('maab_no').value = claimDetails.maab_no || '';
+
+            document.getElementById('eff_date').value = converted_effectivity_date || '';
+            document.getElementById('prpl_insured_fname').value = claimDetails.first_name || '';
+            document.getElementById('prpl_insured_mname').value = claimDetails.middle_name || '';
+            document.getElementById('prpl_insured_lname').value = claimDetails.last_name || '';
+            document.getElementById('prpl_insured_suffix').value = claimDetails.suffix || '';
+            document.getElementById('prpl_insured_contact').value = claimDetails.contact_no || '';
+            document.getElementById('prpl_insured_email').value = claimDetails.email || '';
+
+            document.getElementById('same_as_insureed').checked = !!claimDetails.same_as_insured;
+            if (claimDetails.same_as_insured === true) {
+                document.getElementById('claimant_fname').readOnly = true;
+                document.getElementById('claimant_mname').readOnly = true;
+                document.getElementById('claimant_lname').readOnly = true;
+                document.getElementById('claimant_suffix').disabled = true;
+                document.getElementById('relation').readOnly = true;
+                document.getElementById('claimant_contact_no').readOnly = true;
+                document.getElementById('claimant_email').readOnly = true;
+            }
+
+            document.getElementById('claimant_fname').value = claimDetails.claimant_first_name || '';
+            document.getElementById('claimant_mname').value = claimDetails.claimant_middle_name || '';
+            document.getElementById('claimant_lname').value = claimDetails.claimant_last_name || '';
+            document.getElementById('claimant_suffix').value = claimDetails.claimant_suffix || '';
+            document.getElementById('relation').value = claimDetails.relation_to_insured || '';
+            document.getElementById('claimant_contact_no').value = claimDetails.contact_no || '';
+            document.getElementById('claimant_email').value = claimDetails.email || '';
+            document.getElementById('claim_remarks').value = claimDetails.claim_remarks || '';
+            document.getElementById('claim_status').value = claimDetails.status || '';
+            document.getElementById('date_released').value = converted_date_released || '';
+            document.getElementById('chinabank_check_no').value = claimDetails.chinabank_check_no || '';
+            document.getElementById('chinabank_amount').value = claimDetails.chinabank_amount || '';
+            document.getElementById('bpi_check_no').value = claimDetails.bpi_check_no || '';
+            document.getElementById('bpi_amount').value = claimDetails.bpi_amount || '';
+            document.getElementById('release_remarks').value = claimDetails.release_remarks || '';
+            document.getElementById('scanned_docs').value = claimDetails.scanned_docs || '';
+            document.getElementById('prm_file').value = claimDetails.prm_file || '';
+            document.getElementById('quit_claim_file').value = claimDetails.quit_claim_file || '';
+            document.getElementById('picked_up').checked = !!claimDetails.picked_up;
+            document.getElementById('date_picked_up').value = converted_date_picked_up || '';
+            document.getElementById('req_claim_form').checked = !!claimDetails.req_claim_form;
+            document.getElementById('req_prc_id').checked = !!claimDetails.req_prc_id;
+            document.getElementById('req_med_cert').checked = !!claimDetails.req_med_cert;
+            document.getElementById('req_hos_bill_or').checked = !!claimDetails.req_hos_bill_or;
+            document.getElementById('req_state_of_acc').checked = !!claimDetails.req_state_of_acc;
+            document.getElementById('req_doctor_pres').checked = !!claimDetails.req_doctor_pres;
+            document.getElementById('req_purchased_meds').checked = !!claimDetails.req_purchased_meds;
+            document.getElementById('req_med_records').checked = !!claimDetails.req_med_records;
+            document.getElementById('req_incident_rep').checked = !!claimDetails.req_incident_rep;
+            document.getElementById('req_police_rep').checked = !!claimDetails.req_police_rep;
+            document.getElementById('req_drivers_lic').checked = !!claimDetails.req_drivers_lic;
+            document.getElementById('sent_advanced_notice').checked = !!claimDetails.sent_advanced_notice;
+        } else {
+            // Clear all fields if no record is found
+            document.getElementById('claim_id').value = '';
+            document.getElementById('date_filed').value = '';
+            document.getElementById('received_by').value = '';
+            document.getElementById('claim_origin').value = '';
+            document.getElementById('date_of_loss').value = '';
+            document.getElementById('maab_no').value = '';
+
+            document.getElementById('eff_date').value = '';
+            document.getElementById('prpl_insured_fname').value = '';
+            document.getElementById('prpl_insured_mname').value = '';
+            document.getElementById('prpl_insured_lname').value = '';
+            document.getElementById('prpl_insured_suffix').value = '';
+
+            document.getElementById('same_as_insureed').checked = false;
+            document.getElementById('claimant_fname').value = '';
+            document.getElementById('claimant_mname').value = '';
+            document.getElementById('claimant_lname').value = '';
+            document.getElementById('claimant_suffix').value = '';
+            document.getElementById('relation').value = '';
+            document.getElementById('claimant_contact_no').value = '';
+            document.getElementById('claimant_email').value = '';
+            document.getElementById('claim_remarks').value = '';
+            document.getElementById('claim_status').value = '';
+            document.getElementById('date_released').value = '';
+            document.getElementById('chinabank_check_no').value = '';
+            document.getElementById('chinabank_amount').value = '';
+            document.getElementById('bpi_check_no').value = '';
+            document.getElementById('bpi_amount').value = '';
+            document.getElementById('release_remarks').value = '';
+            document.getElementById('scanned_docs').value = '';
+            document.getElementById('prm_file').value = '';
+            document.getElementById('quit_claim_file').value = '';
+            document.getElementById('picked_up').checked = false;
+            document.getElementById('date_picked_up').value = '';
+            document.getElementById('req_claim_form').checked = false;
+            document.getElementById('req_prc_id').checked = false;
+            document.getElementById('req_med_cert').checked = false;
+            document.getElementById('req_hos_bill_or').checked = false;
+            document.getElementById('req_state_of_acc').checked = false;
+            document.getElementById('req_doctor_pres').checked = false;
+            document.getElementById('req_purchased_meds').checked = false;
+            document.getElementById('req_med_records').checked = false;
+            document.getElementById('req_incident_rep').checked = false;
+            document.getElementById('req_police_rep').checked = false;
+            document.getElementById('req_drivers_lic').checked = false;
+            document.getElementById('sent_advanced_notice').checked = false;
+        }
+
+
         document.getElementById('overlay').style.display = 'flex';
 
     });
@@ -447,7 +536,9 @@
             
             claimRecords = data;
             
+            
             //console.log(data);
+
             data.forEach(row => {
                 if (row.date_filed) {
                     // Format the date to MM-DD-YYYY
@@ -517,6 +608,7 @@
                         correctFormat: true,
                         allowInvalid: false
                     },
+                    // TODO set picked_up readonly: false and make the date auto
                     { data: 'picked_up', type: 'checkbox' },
                     { data: 'date_picked_up',
                         type: 'date',
@@ -573,65 +665,67 @@
                 }
             });
     }
-    // TODO move to another route
     // Add Record button logic
     document.querySelector('button').addEventListener('click', function () {
         // Call backend to add a new record
         fetch('/api/add_claim_record', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
             // Optionally, send default values here if needed
         })
         .then(response => response.json())
         .then(result => {
             // After adding, refresh the table data
+            console.log('Record added:', result);
             
-            // open the new record entry window
-            fetch("/api/get_records")
+            fetch("/api/get_claim_records")
                 .then(response => response.json())
                 .then(data => {
-                    data.forEach(row => {
-                        if (row.date_filed) {
-                            const date = new Date(row.date_filed);
-                            row.date_filed = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                        }
-                        if (row.date_of_loss) {
-                            const date = new Date(row.date_of_loss);
-                            row.date_of_loss = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                        }
-                        if (row.effectivity_date) {
-                            const date = new Date(row.effectivity_date);
-                            row.effectivity_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                        }
-                        if (row.date_released) {
-                            const date = new Date(row.date_released);
-                            row.date_released = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                        }
-                        if (row.date_picked_up) {
-                            const date = new Date(row.date_picked_up);
-                            row.date_picked_up = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                        }
-                    });
+                    
+                    if (row.date_filed) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.date_filed);
+                        row.date_filed = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+                    if (row.date_of_loss) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.date_of_loss);
+                        row.date_of_loss = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+                    if (row.effectivity_date) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.effectivity_date);
+                        row.effectivity_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+                    if (row.date_released) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.date_released);
+                        row.date_released = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+                    if (row.date_picked_up) {
+                        // Format the date to MM-DD-YYYY
+                        const date = new Date(row.date_picked_up);
+                        row.date_picked_up = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                    }
+
                     if (hotInstance) {
+                        claimRecords = data;
                         hotInstance.loadData(data);
 
-                        // find index of the new record
                         const rowIndex = data.findIndex(row => row.claim_id == result.claim_id);
                         if (rowIndex !== -1) {
-                            // Wait for Handsontable to render, then trigger the open link
                             setTimeout(() => {
                                 const cell = hotInstance.getCell(rowIndex, 0); // 0 = "Open" column
                                 if (cell) {
                                     const openLink = cell.querySelector('.open-link');
                                     if (openLink) openLink.click();
                                 }
-                            }, 100); // Adjust timeout if needed
+                            }, 100);
                         }
                     }
                 });
-
-                // refreshMembersTable();
-
+            
+            //refreshMembersTable();
         })
         .catch(error => {
             alert('Error adding record');
@@ -651,6 +745,7 @@
         }
     });
 
+    let previousClaimantValues = {};  
     // same as insured button click
     document.getElementById('same_as_insureed').addEventListener('change', function() {
             const checked = this.checked;
@@ -658,31 +753,41 @@
             const insuredMname = document.getElementById('prpl_insured_mname').value;
             const insuredLname = document.getElementById('prpl_insured_lname').value;
             const insuredSuffix = document.getElementById('prpl_insured_suffix').value;
-            
+            const insuredContact = document.getElementById('prpl_insured_contact').value;
+            const insuredEmail = document.getElementById('prpl_insured_email').value;
+
             const claimantFname = document.getElementById('claimant_fname');
             const claimantMname = document.getElementById('claimant_mname');
             const claimantLname = document.getElementById('claimant_lname');
-            const claimantSuffix = document.getElementById('claimant_suffix');
-
-            // TODO make a variable to store principal insured contact no and email if the claimant is the same person 
+            const claimantSuffix = document.getElementById('claimant_suffix');        
             const relation = document.getElementById('relation');
             const claimantContact = document.getElementById('claimant_contact_no');
             const claimantEmail = document.getElementById('claimant_email');
 
             if (checked) {
+                // store the current values before erasing
+                previousClaimantValues = {
+                    fname: claimantFname.value,
+                    mname: claimantMname.value,
+                    lname: claimantLname.value,
+                    suffix: claimantSuffix.value,
+                    relation: relation.value,
+                    contact: claimantContact.value,
+                    email: claimantEmail.value
+                };
+
                 claimantFname.value = insuredFname;
                 claimantMname.value = insuredMname;
                 claimantLname.value = insuredLname;
                 claimantSuffix.value = insuredSuffix;
                 relation.value = 'Self';
-                claimantContact.value = '';
-                claimantEmail.value = '';
-                // TODO ^^^ insert the value of the insured contact and email here
+                claimantContact.value = insuredContact;
+                claimantEmail.value = insuredEmail;
+
                 claimantFname.readOnly = true;
                 claimantMname.readOnly = true;
                 claimantLname.readOnly = true;
                 claimantSuffix.disabled = true;
-                
                 relation.readOnly = true;
                 claimantContact.readOnly = true;
                 claimantEmail.readOnly = true;
@@ -692,18 +797,19 @@
                 claimantFname.readOnly = false;
                 claimantMname.readOnly = false;
                 claimantLname.readOnly = false;
-                claimantSuffix.readOnly = false;
+                claimantSuffix.disabled = false;
                 relation.readOnly = false;
                 claimantContact.readOnly = false;
                 claimantEmail.readOnly = false;
 
-                claimantFname.value = '';
-                claimantMname.value = '';
-                claimantLname.value = '';
-                claimantSuffix.disabled = '';
-                relation.value = '';
-                claimantContact.value = '';
-                claimantEmail.value = '';
+                // restore previous values
+                claimantFname.value = previousClaimantValues.fname || '';
+                claimantMname.value = previousClaimantValues.mname || '';
+                claimantLname.value = previousClaimantValues.lname || '';
+                claimantSuffix.value = previousClaimantValues.suffix || '';
+                relation.value = previousClaimantValues.relation || '';
+                claimantContact.value = previousClaimantValues.contact || '';
+                claimantEmail.value = previousClaimantValues.email || '';
             }
     });
 

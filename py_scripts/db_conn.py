@@ -298,17 +298,19 @@ def get_claim_records():
     conn = conn_init()
     with conn:
         query = text("""
-            SELECT 
-                mc.*,  
+            SELECT
+                mc.*,
                 mr.effectivity_date,
-                mi.first_name, 
-                mi.middle_name, 
-                mi.last_name, 
-                mi.suffix
+                mi.first_name,
+                mi.middle_name,
+                mi.last_name,
+                mi.suffix,
+                mi.contact_no,
+                mi.email
             FROM maab_claims mc
-            JOIN entry_contents ec ON mc.maab_no = ec.maab_no
-            JOIN membership_records mr ON ec.record_id = mr.record_id
-            JOIN members_info mi ON ec.member_id = mi.member_id
+            LEFT JOIN entry_contents ec ON mc.maab_no = ec.maab_no
+            LEFT JOIN membership_records mr ON ec.record_id = mr.record_id
+            LEFT JOIN members_info mi ON ec.member_id = mi.member_id
         """)
         result = conn.execute(query)
         records = result.fetchall()
@@ -337,6 +339,18 @@ def add_new_record():
         session.add(new_record)
         session.commit()
         return new_record.record_id
+
+
+def add_claim_record():
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        new_claim_record = models.Claims(
+            status='pending'
+        )
+        session.add(new_claim_record)
+        session.commit()
+        return new_claim_record.claim_id
 
 
 def save_record_details(data):
