@@ -351,9 +351,25 @@ def add_claim_record():
     return jsonify({"success": True, "claim_id": new_claim_id})
 
 
+@server.route('/api/verify_maab_no', methods=['POST'])
+def verify_maab_no():
+    data = request.get_json()
+    maab_no = data.get('maab_no')
+    if not maab_no:
+        return jsonify({"exists": False, "error": "No MAAB No. provided"}), 400
+
+    result = db_conn.verify_maab_no(maab_no)
+    if result is None:
+        return jsonify({"exists": False})
+    return jsonify(result)
+
+
 @server.route('/api/save_claim_record', methods=['POST'])
 def save_claim_record():
-    pass
+    data = request.get_json()
+    if data:
+        db_conn.save_claim_record(data)
+        return jsonify({"success": True})
 
 
 

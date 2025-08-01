@@ -353,6 +353,42 @@ def add_claim_record():
         return new_claim_record.claim_id
 
 
+def verify_maab_no(maab_no):
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+
+    with Session() as session:
+        # Check if maab_no exists and get member_id
+        query = text("SELECT member_id FROM entry_contents WHERE maab_no = :maab_no")
+        result = session.execute(query, {"maab_no": maab_no}).fetchone()
+
+        if not result:
+            return None  # maab_no does not exist
+
+        member_id = result[0]
+
+        # Get name fields from members_info
+        query = text("""
+            SELECT first_name, middle_name, last_name, suffix, contact_no, email
+            FROM members_info
+            WHERE member_id = :member_id
+        """)
+        member = session.execute(query, {"member_id": member_id}).fetchone()
+
+        if member:
+            return {
+                "exists": True,
+                "first_name": member[0],
+                "middle_name": member[1],
+                "last_name": member[2],
+                "suffix": member[3],
+                "contact_no": member[4],
+                "email": member[5]
+            }
+        else:
+            return {"exists": True, "first_name": None, "middle_name": None, "last_name": None, "suffix": None}
+
+
 def save_record_details(data):
     conn = conn_init()
     Session = sessionmaker(bind=conn)
@@ -373,6 +409,39 @@ def save_record_details(data):
                 if value == '':
                     value = None
                 setattr(record, field, value)
+
+        session.commit()
+        return True
+
+
+def save_claim_record(data):
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        claim = session.query(models.Claims).filter_by(claim_id=data['claim_id']).first()
+        if not claim:
+            return False  # Or raise an exception
+
+        # List of all fields to update
+        fields = [
+            'date_filed', 'received_by', 'claim_origin', 'date_of_loss', 'maab_no',
+            'same_as_insured', 'claimant_first_name', 'claimant_middle_name', 'claimant_last_name',
+            'claimant_suffix', 'relation_to_insured', 'claimant_contact_no', 'claimant_email',
+            'claim_remarks', 'status', 'date_released', 'chinabank_check_no', 'chinabank_amount',
+            'bpi_check_no', 'bpi_amount', 'release_remarks', 'scanned_docs', 'prm_file',
+            'quit_claim_file', 'picked_up', 'date_picked_up', 'req_claim_form', 'req_prc_id',
+            'req_med_cert', 'req_hos_bill_or', 'req_state_of_acc', 'req_doctor_pres',
+            'req_purchased_meds', 'req_med_records', 'req_incident_rep', 'req_police_rep',
+            'req_drivers_lic', 'sent_advanced_notice'
+        ]
+
+        for field in fields:
+            if field in data:
+                value = data[field]
+                # Convert empty string to None for nullable columns
+                if value == '':
+                    value = None
+                setattr(claim, field, value)
 
         session.commit()
         return True

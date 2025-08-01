@@ -85,7 +85,7 @@ class Claims(Base):
     received_by = Column(String(255))
     claim_origin = Column(String(255))
     date_of_loss = Column(Date)
-    maab_no = Column(String(255))
+    maab_no = Column(String(255), ForeignKey('entry_contents.maab_no'))
     same_as_insured = Column(Boolean)
     claimant_first_name = Column(String(255))
     claimant_middle_name = Column(String(255))
@@ -98,9 +98,9 @@ class Claims(Base):
     status = Column(String(255))
     date_released = Column(Date)
     chinabank_check_no = Column(Integer)
-    chinabank_amount = Column(DECIMAL)
+    chinabank_amount = Column(DECIMAL(10, 0))
     bpi_check_no = Column(Integer)
-    bpi_amount = Column(DECIMAL)
+    bpi_amount = Column(DECIMAL(10, 0))
     release_remarks = Column(Text)
     scanned_docs = Column(String(255))  # GDrive folder for claim docs
     prm_file = Column(String(255))      # Link to prm file
