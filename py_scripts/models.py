@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, DateTime, func, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, DateTime, func, ForeignKey, Enum, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -76,6 +76,19 @@ class Members(Base):
     address = Column(String(255))
     blood_type = Column(String(255))
 
+
+class Inventory(Base):
+    __tablename__ = 'inventory'
+    
+    inv_id = Column(Integer, primary_key=True)
+    maab_category = Column(Enum(
+        'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 
+        'Enhanced Platinum', 'Senior', 'Senior+'))
+    maab_no = Column(String(255))
+    used = Column(SmallInteger)
+    remarks = Column(Text)
+    allocated_to = Column(Enum('Chapter', 'Dasmarinas', 'Silang'))
+    
 
 class Claims(Base):
     __tablename__ = 'maab_claims'
