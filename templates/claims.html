@@ -195,13 +195,13 @@
                                 <td>
                                     <label for="claimant_contact_no">Claimant Contact No.</label>
                                     <br>
-                                    <input type="text" id="claimant_contact_no" name="claimant_contact_no" required autocomplete="off">
+                                    <input type="tel" id="claimant_contact_no" name="claimant_contact_no">
                                 </td>
 
                                 <td>
                                     <label for="claimant_email">Claimant Email</label>
                                     <br>
-                                    <input type="text" id="claimant_email" name="claimant_email" required autocomplete="off">
+                                    <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
                                 </td>
                                      
                                 <td>
@@ -846,7 +846,7 @@
     document.getElementById('save_claim_record').addEventListener('click', function () {
         // Gather data from the form fields
         const payload = {
-            // removed claim_id (auto increment) 
+            claim_id: document.getElementById('claim_id').value,
             date_filed: document.getElementById('date_filed').value,
             received_by: document.getElementById('received_by').value,
             claim_origin: document.getElementById('claim_origin').value,
