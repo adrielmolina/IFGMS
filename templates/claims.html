@@ -85,7 +85,7 @@
                                     <label for="maab_no">MAAB No.</label>
                                     <br>
                                     <input type="text" id="maab_no" name="maab_no" autocomplete="off">
-                                    <button>Verify</button>
+                                    <button id="verify_maab_no" class="verify_maab_no">Verify</button>
                                 </td>
 
                                 <td>
@@ -195,13 +195,13 @@
                                 <td>
                                     <label for="claimant_contact_no">Claimant Contact No.</label>
                                     <br>
-                                    <input type="text" id="claimant_contact_no" name="claimant_contact_no" required autocomplete="off">
+                                    <input type="tel" id="claimant_contact_no" name="claimant_contact_no">
                                 </td>
 
                                 <td>
                                     <label for="claimant_email">Claimant Email</label>
                                     <br>
-                                    <input type="text" id="claimant_email" name="claimant_email" required autocomplete="off">
+                                    <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
                                 </td>
                                      
                                 <td>
@@ -733,6 +733,34 @@
         });
     });
 
+    document.getElementById('verify_maab_no').addEventListener('click', function () {
+        const maabNo = document.getElementById('maab_no').value;
+        if (!maabNo) {
+            alert('Please enter a MAAB No.');
+            return;
+        }
+        
+        fetch(`/api/verify_maab_no/${maabNo}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    //document.getElementById('eff_date').value = data.effectivity_date || '';
+                    document.getElementById('prpl_insured_fname').value = data.first_name || '';
+                    document.getElementById('prpl_insured_mname').value = data.middle_name || '';
+                    document.getElementById('prpl_insured_lname').value = data.last_name || '';
+                    document.getElementById('prpl_insured_suffix').value = data.suffix || '';
+                    document.getElementById('prpl_insured_contact').value = data.contact_no || '';
+                    document.getElementById('prpl_insured_email').value = data.email || '';
+                } else {
+                    alert('MAAB No. does not exist in the database.');
+                }
+            })
+            .catch(error => {
+                console.error('Error verifying MAAB No:', error);
+                alert('Error verifying MAAB No.');
+            });
+    });
+
     // pickedup button click
     document.getElementById('picked_up').addEventListener('change', function() {
         const datePickedUp = document.getElementById('date_picked_up');
@@ -813,6 +841,8 @@
             }
     });
 
+
+    // TODO finish save function and add a delete record function
     document.getElementById('save_claim_record').addEventListener('click', function () {
         // Gather data from the form fields
         const payload = {
@@ -857,6 +887,7 @@
             sent_advanced_notice: document.getElementById('sent_advanced_notice').checked
         };
 
+        console.log(payload)
         // Send data to backend
         fetch('/api/save_claim_record', {
             method: 'POST',
