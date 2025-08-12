@@ -456,6 +456,41 @@ def get_user_details_by_username(username):
         return None
 
 
+def get_inventory_entries(allocated_to=None):
+    # Initialize connection
+    conn = conn_init()
+
+    # Create session
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        # Query inventory table with optional filter on 'allocated_to'
+        query = session.query(
+            models.Inventory.inv_id,
+            models.Inventory.maab_category,
+            models.Inventory.maab_no,
+            models.Inventory.used,
+            models.Inventory.remarks,
+            models.Inventory.allocated_to
+        )
+
+        # Apply filter if 'allocated_to' is provided
+        if allocated_to:
+            query = query.filter(models.Inventory.allocated_to == allocated_to)
+
+        # Fetch all results
+        results = query.all()
+
+        # Check if any results were returned
+        if not results:
+            print("No inventory data found.")
+        
+        # Convert results to list of dictionaries
+        col_names = [
+            'inv_id', 'maab_category', 'maab_no', 'used', 'remarks', 'allocated_to'
+        ]
+        return [dict(zip(col_names, row)) for row in results]
+
+
 if __name__ == '__main__':
     conn_init()
     

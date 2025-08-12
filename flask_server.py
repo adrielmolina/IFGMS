@@ -75,8 +75,14 @@ def declaration_page():
 
 @server.route('/inventory')
 def inventory():
-    return render_template('inventory.html')
-
+    # Fetch inventory entries from the database
+    inventory_data = db_conn.get_inventory_entries()  # Ensure this returns data correctly
+    
+    # Print or log the data to verify it's being passed correctly
+    print(inventory_data)
+    
+    # Pass data to the template
+    return render_template('inventory.html', inventory_data=inventory_data)
 
 @server.route('/claims')
 def claims():
