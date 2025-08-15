@@ -26,6 +26,11 @@
                 <!-- TODO add PRC Email to settings -->
     <h4>Claims Records</h4>
     <button>Add Record</button>
+
+    <br>
+    <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
+    <button id="search_clear">Clear</button>
+
     <div id="claims_table" class="ht-theme-main"></div>
 
     <div id="overlay" class="overlay">
@@ -37,190 +42,169 @@
                 <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
                     <h4 style="margin: 0;">Claim Details</h4>
                     <button id="save_claim_record" class="save_claim_record" style="margin-right: auto;">Save</button>
+                    <button id="delete_claim_record" class="delete_claim_record">Delete Record</button>
                 </span>
-                <!-- TODO move the scanned files, PRM, quit claim to a google drive. also include declaration files generated -->
-                <div id="record_details" class="record_details">                 
-                        <table class="claim_record_details_table">
-                            <tr>
-                                <td>
-                                    <label for="claim_id">Claim ID</label>
-                                    <br>
-                                    <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" readonly>
-                                </td>
-
-                                <td>
-                                    <label for="date_filed">Date Filed</label>
-                                    <br>
-                                    <input type="date" id="date_filed" name="date_filed" autocomplete="off">
-                                </td>
-
-                                <td>
-                                    <label for="received_by">Received by</label>
-                                    <br>
-                                    <input type="text" id="received_by" name="received_by" autocomplete="off">
-                                </td>
-
-                                <td>
-                                    <label for="claim_origin">Claim Origin</label>
-                                    <br>
-                                    <!-- <input type="checkbox" id="claim_origin" name="claim_origin" autocomplete="off"> -->
-                                    <select name="claim_origin" id="claim_origin">
-                                        <option value="chapter">Chapter</option>
-                                        <option value="dasma">Dasmariñas</option>
-                                        <option value="silang">Silang</option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <label for="date_of_loss">Date of Loss</label>
-                                    <br>
-                                    <input type="date" id="date_of_loss" name="date_of_loss" autocomplete="off">
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <!-- TODO add a list dialogue box to select from existing entries and make the name input boxes readonly-->
-                                <!-- TODO for claimant name add a checkbox for "Same as Insured" and make the inputs readonly, otherwise editable-->
-                                <td>
-                                    <label for="maab_no">MAAB No.</label>
-                                    <br>
-                                    <input type="text" id="maab_no" name="maab_no" autocomplete="off">
-                                    <button id="verify_maab_no" class="verify_maab_no">Verify</button>
-                                </td>
-
-                                <td>
-                                    <label for="eff_date">Effectivity Date</label>
-                                    <br>
-                                    <input type="date" id="eff_date" name="eff_date" readonly>
-                                </td>
-
-                                <td>
-                                    <label for="prpl_insured_fname">Principal Insured First Name</label>
-                                    <br>
-                                    <input type="text" id="prpl_insured_fname" name="prpl_insured_fname" readonly>
-                                </td>
-
-                                <td>
-                                    <label for="prpl_insured_mname">Principal Insured Middle Name</label>
-                                    <br>
-                                    <input type="text" id="prpl_insured_mname" name="prpl_insured_mname" readonly>
-                                </td>
-                                
-                                <td>
-                                    <label for="prpl_insured_lname">Principal Insured Last Name</label>
-                                    <br>
-                                    <input type="text" id="prpl_insured_lname" name="prpl_insured_lname" readonly>
-                                </td>
-
-                                <td>
-                                    <label for="prpl_insured_suffix">Principal Insured Suffix</label>
-                                    <select name="prpl_insured_suffix" id="prpl_insured_suffix" disabled>
-                                        <option value="NA">NA</option>
-                                        <option value="Jr">Jr</option>
-                                        <option value="Sr">Sr</option>
-                                        <option value="II">II</option>
-                                        <option value="III">III</option>
-                                        <option value="IV">IV</option>
-                                        <option value="V">V</option>
-                                        <option value="VI">VI</option>
-                                        <option value="VII">VII</option>
-                                    </select>
-                                </td>        
-                                <input type="text" id="prpl_insured_contact" name="prpl_insured_contact" hidden>
-                                <input type="text" id="prpl_insured_email" name="prpl_insured_email" hidden>              
-                            </tr>
-
-                            <tr>
-                                <td>
-                                    <label for="same_as_insureed">Same as Insured</label>
-                                    <br>
-                                    <input type="checkbox" id="same_as_insureed" name="same_as_insureed">
-                                </td>
-
-                                <td>
-                                    <label for="claimant_fname">Claimant First Name</label>
-                                    <br>
-                                    <input type="text" id="claimant_fname" name="claimant_fname" required autocomplete="off">
-                                </td>
-
-                                <td>
-                                    <label for="claimant_mname">Claimant Middle Name</label>
-                                    <br>
-                                    <input type="text" id="claimant_mname" name="claimant_mname" required autocomplete="off">
-                                </td>
-
-                                <td>
-                                    <label for="claimant_lname">Claimant Last Name</label>
-                                    <br>
-                                    <input type="text" id="claimant_lname" name="claimant_lname" required autocomplete="off">
-                                </td>
-
-                                <td>
-                                    <label for="claimant_suffix">Claimant Suffix</label>
-                                    <br>
-                                    <select name="claimant_suffix" id="claimant_suffix">
-                                        <option value="NA">NA</option>
-                                        <option value="Jr">Jr</option>
-                                        <option value="Sr">Sr</option>
-                                        <option value="II">II</option>
-                                        <option value="III">III</option>
-                                        <option value="IV">IV</option>
-                                        <option value="V">V</option>
-                                        <option value="VI">VI</option>
-                                        <option value="VII">VII</option>
-                                    </select>
-                                </td>
-                                
-                            </tr>
-                            <tr>
-
-                                <td>
-                                    <label for="relation">Relation to Principal Insured</label>
-                                    <input list="relation_list" id="relation" name="relation" autocomplete="off">
-                                    <datalist id="relation_list">
-                                        <option value="Spouse">Spouse</option>
-                                        <option value="Son">Son</option>
-                                        <option value="Daughter">Daughter</option>
-                                        <option value="Father">Father</option>
-                                        <option value="Mother">Mother</option>
-                                        <option value="Grandson">Grandson</option>
-                                        <option value="Granddaughter">Granddaughter</option>
-                                        <option value="Grandfather">Grandfather</option>
-                                        <option value="Grandmother">Grandmother</option>
-                                        <option value="Uncle">Uncle</option>
-                                        <option value="Aunt">Aunt</option>
-                                    </datalist>
-                                </td>
-
-                                <td>
-                                    <label for="claimant_contact_no">Claimant Contact No.</label>
-                                    <br>
-                                    <input type="tel" id="claimant_contact_no" name="claimant_contact_no">
-                                </td>
-
-                                <td>
-                                    <label for="claimant_email">Claimant Email</label>
-                                    <br>
-                                    <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
-                                </td>
-                                     
-                                <td>
-                                    <label for="picked_up">Picked Up</label>
-                                    <br>
-                                    <input type="checkbox" id="picked_up" name="picked_up">
-                                </td>
-
-                                <td>
-                                    <label for="date_picked_up">Date Picked Up</label>
-                                    <input type="date" id="date_picked_up" name="date_picked_up">
-                                </td>
-                            </tr>
-                            
-                        </table>
+                <!-- TODO add credits and help buttons in sidebar -->
+                <!-- TODO change the checkbox icon to an ARROW that point right/down -->
+                <div class="collapse_box_header">
+                    <input id="claim_info_check" name="claim_info_check" class="collapse_box_checkbox"
+                    type="checkbox" checked data-target_div="claim_info"> 
+                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
+                    <label for="claim_info_check" class="collapse_box_label">Claim Info</label>
                 </div>
-                
-            <!-- TODO make all inputs all caps when saving to db -->
-                <div class="bottom_section" id="bottom_section">
+                <div id="claim_info" class="collapse_group">                 
+ 
+                    <label for="claim_id">Claim ID</label>
+                    <br>
+                    <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" readonly>
+
+                    <label for="date_filed">Date Filed</label>
+                    <br>
+                    <input type="date" id="date_filed" name="date_filed" autocomplete="off">
+
+                    <label for="received_by">Received by</label>
+                    <br>
+                    <input type="text" id="received_by" name="received_by" autocomplete="off">
+
+                    <label for="claim_origin">Claim Origin</label>
+                    <br>
+                    <!-- <input type="checkbox" id="claim_origin" name="claim_origin" autocomplete="off"> -->
+                    <select name="claim_origin" id="claim_origin">
+                        <option value="chapter">Chapter</option>
+                        <option value="dasma">Dasmariñas</option>
+                        <option value="silang">Silang</option>
+                    </select>
+
+                    <label for="date_of_loss">Date of Loss</label>
+                    <br>
+                    <input type="date" id="date_of_loss" name="date_of_loss" autocomplete="off">
+                    
+                    <label for="claim_type">Claim Type</label>
+                    <br>
+                    <select name="claim_type" id="claim_type">
+                        <option value="ACCIDENT">Accident</option>
+                        <option value="DEATH">Death</option>
+                    </select>
+
+                </div>
+
+                <div class="collapse_box_header">
+                    <input id="principal_insured_info_check" name="principal_insured_info_check" class="collapse_box_checkbox"
+                    type="checkbox" checked data-target_div="principal_insured_info"> 
+                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
+                    <label for="principal_insured_info_check" class="collapse_box_label">Principal Insured Info</label>
+                </div>
+                <div id="principal_insured_info" class="collapse_group">                 
+                    <!-- TODO add a list dialogue box to select from existing entries and make the name input boxes readonly-->
+                    <!-- TODO for claimant name add a checkbox for "Same as Insured" and make the inputs readonly, otherwise editable-->
+                    <label for="maab_no">MAAB No.</label>
+                    <br>
+                    <input type="text" id="maab_no" name="maab_no" autocomplete="off">
+                    <button id="verify_maab_no" class="verify_maab_no">Verify</button>
+
+                    <label for="eff_date">Effectivity Date</label>
+                    <br>
+                    <input type="date" id="eff_date" name="eff_date" readonly>
+
+                    <label for="prpl_insured_fname">Principal Insured First Name</label>
+                    <br>
+                    <input type="text" id="prpl_insured_fname" name="prpl_insured_fname" readonly>
+
+                    <label for="prpl_insured_mname">Principal Insured Middle Name</label>
+                    <br>
+                    <input type="text" id="prpl_insured_mname" name="prpl_insured_mname" readonly>
+
+                    <label for="prpl_insured_lname">Principal Insured Last Name</label>
+                    <br>
+                    <input type="text" id="prpl_insured_lname" name="prpl_insured_lname" readonly>
+
+                    <label for="prpl_insured_suffix">Principal Insured Suffix</label>
+                    <select name="prpl_insured_suffix" id="prpl_insured_suffix" disabled>
+                        <option value="NA">NA</option>
+                        <option value="Jr">Jr</option>
+                        <option value="Sr">Sr</option>
+                        <option value="II">II</option>
+                        <option value="III">III</option>
+                        <option value="IV">IV</option>
+                        <option value="V">V</option>
+                        <option value="VI">VI</option>
+                        <option value="VII">VII</option>
+                    </select>
+    
+                    <input type="text" id="prpl_insured_contact" name="prpl_insured_contact" hidden>
+                    <input type="text" id="prpl_insured_email" name="prpl_insured_email" hidden> 
+                </div>
+
+                <!-- TODO add the input fields for the added db fields -->
+                <div class="collapse_box_header">
+                    <input id="claimant_info_check" name="claimant_info_check" class="collapse_box_checkbox"
+                    type="checkbox" checked data-target_div="claimant_info"> 
+                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
+                    <label for="claimant_info_check" class="collapse_box_label">Claimant Info</label>
+                </div>
+                <div id="claimant_info" class="collapse_group">  
+                    <label for="same_as_insureed">Same as Insured</label>
+                    <br>
+                    <input type="checkbox" id="same_as_insureed" name="same_as_insureed">
+
+                    <label for="claimant_fname">Claimant First Name</label>
+                    <br>
+                    <input type="text" id="claimant_fname" name="claimant_fname" required autocomplete="off">
+  
+                    <label for="claimant_mname">Claimant Middle Name</label>
+                    <br>
+                    <input type="text" id="claimant_mname" name="claimant_mname" required autocomplete="off">
+
+                    <label for="claimant_lname">Claimant Last Name</label>
+                    <br>
+                    <input type="text" id="claimant_lname" name="claimant_lname" required autocomplete="off">
+
+                    <label for="claimant_suffix">Claimant Suffix</label>
+                    <br>
+                    <select name="claimant_suffix" id="claimant_suffix">
+                        <option value="NA">NA</option>
+                        <option value="Jr">Jr</option>
+                        <option value="Sr">Sr</option>
+                        <option value="II">II</option>
+                        <option value="III">III</option>
+                        <option value="IV">IV</option>
+                        <option value="V">V</option>
+                        <option value="VI">VI</option>
+                        <option value="VII">VII</option>
+                    </select>
+
+                    <label for="relation">Relation to Principal Insured</label>
+                    <input list="relation_list" id="relation" name="relation" autocomplete="off">
+                    <datalist id="relation_list">
+                        <option value="Spouse">Spouse</option>
+                        <option value="Son">Son</option>
+                        <option value="Daughter">Daughter</option>
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Grandson">Grandson</option>
+                        <option value="Granddaughter">Granddaughter</option>
+                        <option value="Grandfather">Grandfather</option>
+                        <option value="Grandmother">Grandmother</option>
+                        <option value="Uncle">Uncle</option>
+                        <option value="Aunt">Aunt</option>
+                    </datalist>
+  
+                    <label for="claimant_contact_no">Claimant Contact No.</label>
+                    <br>
+                    <input type="tel" id="claimant_contact_no" name="claimant_contact_no">
+
+                    <label for="claimant_email">Claimant Email</label>
+                    <br>
+                    <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
+                </div>
+
+                <div class="collapse_box_header">
+                    <input id="requirements_check" name="requirements_check" class="collapse_box_checkbox"
+                    type="checkbox" checked data-target_div="requirements"> 
+                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
+                    <label for="requirements_check" class="collapse_box_label">Required Documents</label>
+                </div>
+                <div id="requirements" class="collapse_group">  
                     <div class="requiements_section" id="requirements_section">
                         <h3>Requirements</h3>                 
 
@@ -258,6 +242,10 @@
                                 <label for="req_med_records">Medical Records</label>
                             </li>
                             <li>
+                                <input type="checkbox" id="req_animal_bite_treat_rec" name="req_animal_bite_treat_rec">
+                                <label for="req_animal_bite_treat_rec">Animal Bite Treatment Record</label>
+                            </li>
+                            <li>
                                 <input type="checkbox" id="req_incident_rep" name="req_incident_rep">
                                 <label for="req_incident_rep">Incident Report</label>
                             </li>
@@ -266,8 +254,28 @@
                                 <label for="req_police_rep">Police Report</label>
                             </li>
                             <li>
+                                <input type="checkbox" id="req_brgy_rep" name="req_brgy_rep">
+                                <label for="req_brgy_rep">Barangay Report</label>
+                            </li>
+                            <li>
                                 <input type="checkbox" id="req_drivers_lic" name="req_drivers_lic">
                                 <label for="req_drivers_lic">Driver's License</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_birth_cert" name="req_birth_cert">
+                                <label for="req_birth_cert">Birth Certificate</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_marriage_cert" name="req_marriage_cert">
+                                <label for="req_marriage_cert">Marriage Certificate</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_death_cert" name="req_death_cert">
+                                <label for="req_death_cert">Death Certificate</label>
+                            </li>
+                            <li>
+                                <input type="checkbox" id="req_burial_receipts" name="req_burial_receipts">
+                                <label for="req_burial_receipts">Burial Receipts</label>
                             </li>
                         </ul>
      
@@ -281,7 +289,15 @@
 
                         <input type="checkbox" id="sent_advanced_notice" name="sent_advanced_notice" hidden>
                     </div>
+                </div>
 
+                <div class="collapse_box_header">
+                    <input id="claim_status_check" name="claim_status_check" class="collapse_box_checkbox"
+                    type="checkbox" checked data-target_div="claim_status"> 
+                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
+                    <label for="claim_status_check" class="collapse_box_label">Claim Status</label>
+                </div>
+                <div id="claim_status" class="collapse_group">  
                     <div class="release_section" id="release_section">
                         <!-- <h4>Release Section</h4>
                         <p>For the release of the claim, please ensure that all requirements are met and the claimant has signed the Quit Claim.</p>
@@ -337,7 +353,34 @@
                             <input type="text" id="release_remarks" name="release_remarks" required autocomplete="off">
                         </div>
 
+       
+                       
+  
                     </div>
+                    <label for="picked_up">Picked Up</label>
+                    <br>
+                    <input type="checkbox" id="picked_up" name="picked_up">
+
+                    <label for="date_picked_up">Date Picked Up</label>
+                    <input type="date" id="date_picked_up" name="date_picked_up">
+                </div>
+
+
+
+                <!-- TODO move the scanned files, PRM, quit claim to a google drive. also include declaration files generated -->
+                <div id="record_details" class="record_details">                 
+                        <table class="claim_record_details_table">
+                           
+
+                            
+                        </table>
+                </div>
+                
+            <!-- TODO make all inputs all caps when saving to db -->
+                <div class="bottom_section" id="bottom_section">
+                    
+
+                    
                 </div>
 
             </div>
@@ -349,6 +392,22 @@
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
 <script>
+    // page load functions
+    document.addEventListener('DOMContentLoaded', function () {
+        // clear the search input field
+        document.getElementById('search_input').value = '';
+
+        //TODO add a function to save collapsed state of the collapse boxes
+        // check all the collapse box checkboxes on page load
+        document.querySelectorAll('.collapse_box_checkbox')
+        .forEach(cb => {
+            cb.checked = true;
+            cb.dispatchEvent(new Event('change'));
+        });
+    });
+
+
+
     let hotInstance = null;
     function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
     Handsontable.renderers.TextRenderer.apply(this, arguments); // Use default text renderer
@@ -528,6 +587,31 @@
         }
     });
 
+    // for collapse box checkboxes
+    document.querySelectorAll('.collapse_box_checkbox[data-target_div]')
+    .forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // dataset.* should match the selector 
+            const targetId = this.dataset.target_div;
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.style.display = this.checked ? 'flex' : 'none';
+            }
+        });
+    });
+    // to make the collapse div clickable
+    document.querySelectorAll('.collapse_box_header')
+    .forEach(header => {
+        header.addEventListener('click', function() {
+            const checkbox = this.querySelector('.collapse_box_checkbox');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked; // toggle the checkbox state
+                checkbox.dispatchEvent(new Event('change')); // trigger the change event
+            }
+        });
+    });
+
+
     // for records table
     fetch("/api/get_claim_records")
         .then(response => response.json())
@@ -623,10 +707,29 @@
                 autoWrapRow: false,
                 autoWrapCol: false,
                 readOnly: true,
+                search: true,
+                filters: true,
+                dropdownMenu: true,
                 licenseKey: 'non-commercial-and-evaluation'
             });
+
+            const searchPlugin = hotInstance.getPlugin('search');
+            document.getElementById('search_input').addEventListener('input', function() {
+            const query = this.value;
+
+            searchPlugin.query(query);
+            hotInstance.render(); // refresh the table to show highlights
+            });
+
         });
         
+    //search input clear button function
+    document.getElementById('search_clear').addEventListener('click', function() {
+        document.getElementById('search_input').value = '';
+        const searchPlugin = hotInstance.getPlugin('search');
+        searchPlugin.query('');
+        hotInstance.render(); // refresh the table to clear highlights
+    });
 
     // reload table data
     function refreshMembersTable() {
@@ -681,51 +784,32 @@
             fetch("/api/get_claim_records")
                 .then(response => response.json())
                 .then(data => {
-                    
-                    if (row.date_filed) {
-                        // Format the date to MM-DD-YYYY
-                        const date = new Date(row.date_filed);
-                        row.date_filed = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                    }
-                    if (row.date_of_loss) {
-                        // Format the date to MM-DD-YYYY
-                        const date = new Date(row.date_of_loss);
-                        row.date_of_loss = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                    }
-                    if (row.effectivity_date) {
-                        // Format the date to MM-DD-YYYY
-                        const date = new Date(row.effectivity_date);
-                        row.effectivity_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                    }
-                    if (row.date_released) {
-                        // Format the date to MM-DD-YYYY
-                        const date = new Date(row.date_released);
-                        row.date_released = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                    }
-                    if (row.date_picked_up) {
-                        // Format the date to MM-DD-YYYY
-                        const date = new Date(row.date_picked_up);
-                        row.date_picked_up = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                    }
+            data.forEach(row => {
+                if (row.date_filed) row.date_filed = new Date(row.date_filed).toLocaleDateString('en-US');
+                if (row.date_of_loss) row.date_of_loss = new Date(row.date_of_loss).toLocaleDateString('en-US');
+                if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
+                if (row.date_released) row.date_released = new Date(row.date_released).toLocaleDateString('en-US');
+                if (row.date_picked_up) row.date_picked_up = new Date(row.date_picked_up).toLocaleDateString('en-US');
+            });
 
-                    if (hotInstance) {
-                        claimRecords = data;
-                        hotInstance.loadData(data);
+            if (hotInstance) {
+                claimRecords = data;
+                hotInstance.loadData(data);
 
-                        const rowIndex = data.findIndex(row => row.claim_id == result.claim_id);
-                        if (rowIndex !== -1) {
-                            setTimeout(() => {
-                                const cell = hotInstance.getCell(rowIndex, 0); // 0 = "Open" column
-                                if (cell) {
-                                    const openLink = cell.querySelector('.open-link');
-                                    if (openLink) openLink.click();
-                                }
-                            }, 100);
+                const rowIndex = data.findIndex(row => row.claim_id == result.claim_id);
+                if (rowIndex !== -1) {
+                    setTimeout(() => {
+                        const cell = hotInstance.getCell(rowIndex, 0); // "Open" column
+                        if (cell) {
+                            const openLink = cell.querySelector('.open-link');
+                            if (openLink) openLink.click();
                         }
-                    }
-                });
+                    }, 100);
+                }
+            }
+        });
             
-            //refreshMembersTable();
+            refreshMembersTable();
         })
         .catch(error => {
             alert('Error adding record');
@@ -843,6 +927,7 @@
 
 
     // TODO finish save function and add a delete record function
+    // save details button click
     document.getElementById('save_claim_record').addEventListener('click', function () {
         // Gather data from the form fields
         const payload = {
@@ -881,13 +966,20 @@
             req_doctor_pres: document.getElementById('req_doctor_pres').checked,
             req_purchased_meds: document.getElementById('req_purchased_meds').checked,
             req_med_records: document.getElementById('req_med_records').checked,
+            req_animal_bite_treat_rec: document.getElementById('req_animal_bite_treat_rec').checked,
             req_incident_rep: document.getElementById('req_incident_rep').checked,
             req_police_rep: document.getElementById('req_police_rep').checked,
+            req_brgy_rep: document.getElementById('req_brgy_rep').checked,
             req_drivers_lic: document.getElementById('req_drivers_lic').checked,
-            sent_advanced_notice: document.getElementById('sent_advanced_notice').checked
+            req_birth_cert: document.getElementById('req_birth_cert').checked,
+            req_marriage_cert: document.getElementById('req_marriage_cert').checked,
+            req_death_cert: document.getElementById('req_death_cert').checked,
+            req_burial_receipts: document.getElementById('req_burial_receipts').checked,
+            sent_advanced_notice: document.getElementById('sent_advanced_notice').checked,
+            claim_type: document.getElementById('claim_type').value
         };
 
-        console.log(payload)
+        //console.log(payload)
         // Send data to backend
         fetch('/api/save_claim_record', {
             method: 'POST',
@@ -908,6 +1000,45 @@
             console.error(error);
         });
     });
+
+    // delete record button click
+    document.getElementById('delete_claim_record').addEventListener('click', function () {
+        const claimId = document.getElementById('claim_id').value;
+
+        // TODO change all alerts to custom dialog boxes
+        if (!claimId) {
+            alert('Please select a record to delete.');
+            return;
+        }
+
+        // TODO fix the SQL procedure for auto deletion of archive records after 366 days
+        if (!confirm('Are you sure you want to delete this record?')) {
+            return; // User cancelled
+        }
+        //console.log(claimId)
+        fetch(`/api/delete_claim_record`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ claim_id: claimId })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Close overlay after successful deletion
+                refreshMembersTable();
+                document.getElementById('overlay').style.display = 'none';
+                alert('Record deleted successfully.');
+            } else {
+                alert('Failed to delete record.');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting record:', error);
+            alert('An error occurred while deleting the record.');
+        });
+    });
+
+
 
 </script>
 {% endblock %}

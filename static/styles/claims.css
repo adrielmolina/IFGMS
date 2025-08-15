@@ -26,6 +26,10 @@ label {
 .handsontable .ht_master {
     background-color: #f9f9f9;  /* light grey, change as needed */
 }
+#claims_table .htSearchResult {
+    background-color: rgba(63, 173, 33, 0.648) !important;
+    color: #000000;
+}
 
 /* TODO remove when done styling the form */
 #overlay {
@@ -226,4 +230,49 @@ input:checked + .slider:before {
     width: auto;
     flex-direction: column;
     flex: 1; /* optional: equal width columns */
+}
+
+.collapse_box_header {
+    background-color: #4e474732;
+    width: 100%;
+    height: 4%;
+    border-radius: 10px;
+    margin-top: 1%;
+}
+.collapse_box_checkbox {
+    display: none;
+}
+
+/* Base label style */
+.collapse_box_label {
+  cursor: pointer;
+  font-size: 20px;
+  user-select: none;
+  /* margin-left: 1%; */
+  margin: 1%
+}
+.collapse_box_label:hover {
+  text-decoration: underline;
+}
+/* Default arrow (right) */
+.collapse_box_label::before {
+  content: "▶";  /* right-pointing triangle */
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 1s;
+}
+
+/* Checked arrow (down) */
+.collapse_box_checkbox:checked + .collapse_box_label::before {
+  content: "▼";  /* down-pointing triangle */
+  color: rgb(43, 208, 43);
+}
+
+.collapse_group {
+    /* background-color: #5f0909bf; */
+    border: 1px solid black;
+    margin-bottom: 1%;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
 }

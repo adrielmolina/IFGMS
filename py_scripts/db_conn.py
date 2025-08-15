@@ -415,7 +415,7 @@ def save_record_details(data):
 
 
 def save_claim_record(data):
-    conn = conn_init()
+    '''conn = conn_init()
     Session = sessionmaker(bind=conn)
     with Session() as session:
         claim = session.query(models.Claims).filter_by(claim_id=data['claim_id']).first()
@@ -444,7 +444,60 @@ def save_claim_record(data):
                 setattr(claim, field, value)
 
         session.commit()
+        return True'''
+    # TODO check if this works properly then delete above code. check if each field is saving
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        claim = session.query(models.Claims).filter_by(claim_id=data.get('claim_id')).first()
+        if not claim:
+            return False  # or raise Exception("Claim not found")
+
+        # Get list of column names directly from the ORM model
+        model_columns = {col.name for col in models.Claims.__table__.columns}
+
+        for field, value in data.items():
+            if field in model_columns and field != "claim_id":  # don't overwrite PK
+                setattr(claim, field, value or None)  # empty string → None
+
+        session.commit()
         return True
+
+
+def delete_claim_record(claim_id):
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        claim = session.query(models.Claims).get(claim_id)
+        if not claim:
+            return False
+
+        try:
+            # Get all column names from Claims_Archive except PK and extra columns
+            archive_columns = [
+                col.name for col in models.Claims_Archive.__table__.columns
+                if col.name != ("archived_claim_id",)  # Exclude PK or auto fields
+            ]
+
+            # Create a dict of column:value from the Claims record
+            claim_data = {
+                col: getattr(claim, col)
+                for col in archive_columns
+                if hasattr(claim, col)
+            }
+
+            # Create archive record dynamically
+            archived_claim = models.Claims_Archive(**claim_data)
+
+            session.add(archived_claim)
+            session.delete(claim)
+            session.commit()
+            return True
+
+        except Exception as e:
+            session.rollback()
+            print(f"Error deleting claim: {e}")
+            return False
 
 
 def get_entries(record_id):
