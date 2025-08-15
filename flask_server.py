@@ -378,6 +378,20 @@ def save_claim_record():
         return jsonify({"success": True})
 
 
+@server.route('/api/delete_claim_record', methods=['DELETE'])
+def delete_claim_record():
+    data = request.get_json()
+    claim_id = data.get('claim_id')
+    if not claim_id:
+        return jsonify({"success": False, "error": "No claim ID provided"}), 400
+
+    success = db_conn.delete_claim_record(claim_id)
+    if success:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False, "error": "Failed to delete claim record"}), 500
+
+
 
 @server.route('/account_action', methods=['POST'])
 def account_action():
