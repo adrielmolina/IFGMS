@@ -12,7 +12,8 @@
 {% block content %}
 <!-- TOP -->
 <div class="module_name">
-    <h1>Dashboard</h1>
+    <h1>D A S H B O A R D</h1>
+    <!-- <h1>DASHBOARD</h1> -->
 </div>
 <div class="top-bar">
     <div class="dropdown-group">
@@ -79,10 +80,10 @@
         <h2 class="numbercount">100</h2>
     </div>
 
-    <div class="card green">
+    <div class="card green" onclick="window.location.href='/claims?status=pending'">
         <!-- Card Reference: Claims Awaiting Processing -->
         <h3>Pending Claims</h3>
-        <h2 class="numbercount">10</h2>
+        <h2 id="pending_claims_count" class="numbercount">0</h2>
     </div>
 </div>
 
@@ -132,6 +133,21 @@
 
 {% block extra_scripts %}
 <script>
+    // page load functions
+    document.addEventListener('DOMContentLoaded', function () {
+        fetch("/api/get_pending_claims_count")
+        .then(res => res.json())
+        .then(data => {
+            console.log("pending claims:", data.pending_claims_count);
+            document.getElementById("pending_claims_count").textContent = data.pending_claims_count;
+        })
+        .catch(err => console.error(err));
+    });
+
+
+
+
+
     google.charts.load('current', {packages: ['corechart', 'bar']});
     google.charts.setOnLoadCallback(drawStacked);
 

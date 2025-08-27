@@ -1,6 +1,10 @@
 body {
     background-color: #f3e8e8;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
+    /* justify-content: center; */
+    /* align-items: center; */
 }
 
 label {
@@ -26,10 +30,14 @@ label {
 .handsontable .ht_master {
     background-color: #f9f9f9;  /* light grey, change as needed */
 }
+#members_table .htSearchResult {
+    background-color: #c7db14a5 !important;
+    color: #000000;
+}
 
 /* TODO remove when done styling the form */
 #overlay {
-  /* display: block !important; */
+  /* display: flex !important; */
 }
 
 .overlay {
@@ -39,13 +47,19 @@ label {
     width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.6);
     z-index: 9999;
+
+    /* disable highlighting */
+    user-select: none;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;
 }
 
 .overlay-content {
     background: #f3e8e8;
     width: 100%;
     margin: 1% 1%;
-    padding: 20px;
+    padding: 30px;
     border-radius: 10px;
     position: relative;
 }
@@ -62,12 +76,30 @@ label {
 .overlay-body {
     display: flex;
     flex-direction: column;
-    /* align-items: center; */
+    align-items: center;
+    justify-items: center;
 
     width: 100%;
     height: 100%;           /* Set a fixed height, not max-height */
     overflow: auto;
     box-sizing: border-box;
+}
+
+.record_details {
+    display: block;
+    flex-direction: column;
+    align-items: center;
+    /* justify-content: center; */
+    width: 100%;
+    /* height: 100%; */
+}
+.entry_details {
+    display: block;
+    flex-direction: column;
+    align-items: center;
+    /* justify-content: center; */
+    width: 100%;
+    /* height: 100%; */
 }
 
 table {
@@ -158,10 +190,27 @@ input:checked + .slider:before {
 }
 /* SWITCH BUTTON STYLE END */
 
-/* margin on right disappears when this is on */
-.second_row_off {
+
+
+.controls_box {
+    /* border: #000000 1px solid; */
+    border-bottom: 1px solid black;
+    width: 99%;
+    height: fit-content;
+    padding: 5px;
+    margin: 5px;
     display: flex;
     flex-direction: row;
-    /* flex-wrap: wrap; */
-    margin-right: 20px; /* not working */
+    gap: 15px;;
+}
+.controls_box button {
+    background-color: #4e4747;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.controls_box button:hover {
+    background-color: #3c3c3c;
 }

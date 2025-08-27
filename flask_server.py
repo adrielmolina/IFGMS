@@ -1,4 +1,5 @@
-from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, send_file
+from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, send_file, send_from_directory, abort
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from livereload import Server
 from py_scripts import db_conn, tools
 from datetime import date, datetime
@@ -11,20 +12,122 @@ server = Flask(__name__)
 server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
 
+login_manager = LoginManager()
+login_manager.init_app(server)
+login_manager.login_view = 'landing_page'
+login_manager.login_message = {
+    "title": "Login Required",
+    "text": "You must log in to view this page.",
+    "redirect_url": "/"
+}
+# TODO remove all flash template and use another dialog box
+# TODO try toastr for the dialogs
+login_manager.login_message_category = "warning"
+
+# TODO put @login_required on all template and api routes
+
+# for closing the session after requests
+@server.teardown_appcontext
+def cleanup(exception=None):
+    db_conn.shutdown_session()
+
+# f0r the login 
+@login_manager.user_loader
+def load_user(user_id):
+    db_session = db_conn.SessionLocal()
+    return db_session.query(db_conn.models.Accounts).get(int(user_id))
+
+
 # ?TODO LIST-------------------------------
 # TODO add the summary per month to the module list or wherever
 
 
 # <------------ NAVIGATIONS ------------>
 
-
 @server.route('/')
 def landing_page():
     return render_template('index.html')
 
 
-@server.route('/profile_settings_display')
-def profile_settings_display():
+@server.route('/login', methods=['POST'])
+def login():
+    username = request.form.get("username")
+    password = request.form.get("password")
+
+    user = db_conn.sign_in(username, password)
+
+    if user:
+        # print('\nCurrent User:\n')
+        # print({c.name: getattr(user, c.name) for c in user.__table__.columns})# Debugging line. remove after testing
+        if user.acct_status == 'approved':
+            login_user(user)
+            return redirect(url_for('dashboard'))
+        elif user.acct_status == 'pending':
+            flash({
+                "title": "Login Error!",
+                "text": "Account not approved yet. Contact admin.",
+                "redirect_url": url_for('landing_page')
+            },"error")
+            return render_template('index.html')
+    else:
+        flash({
+            "title": "Login Error!",
+            "text": "Wrong username or password. Try again.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        return render_template('index.html')
+    
+    '''
+    if sign_in == 'success':
+        user_details = db_conn.get_user_details_by_username(username)
+
+        if user_details:
+            session['username'] = username
+            session['full_name'] = f"{user_details['first_name']} {user_details['middle_name']} {user_details['last_name']}"
+            session['email'] = user_details['email']
+            session['phone'] = user_details['contact_no']
+            session['birthdate'] = user_details['birth_date']
+            session['password'] = user_details['password']
+            session['user_level'] = user_details['user_level']
+            
+            return redirect(url_for('home'))  # success redirect
+        else:
+            flash({
+                "title": "Login Error!",
+                "text": "User details could not be fetched.",
+                "redirect_url": url_for('landing_page')
+            }, "error")
+            return render_template('index.html')
+    
+    elif sign_in == 'pending':
+        flash({
+            "title": "Login Error!",
+            "text": "Account not approved yet. Contact admin.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        return render_template('index.html')
+    
+    else:
+        flash({
+            "title": "Login Error!",
+            "text": "Wrong username or password. Try again.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        return render_template('index.html')
+    '''
+
+@server.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    session.clear()
+    return redirect(url_for("landing_page"))
+
+
+@server.route('/profile_settings')
+@login_required
+def profile_settings():
+    '''
     if 'username' not in session:
         flash({
             "title": "Not Logged In",
@@ -35,8 +138,9 @@ def profile_settings_display():
 
     username = session['username']
     user_details = db_conn.get_user_details_by_username(username)
-
-    return render_template('profile_settings_display.html', user_details=user_details)
+    '''
+    
+    return render_template('profile_settings.html')
 
 
 @server.route('/create_account')
@@ -50,17 +154,19 @@ def forgot_password():
 
 
 @server.route('/profile')
+@login_required
 def profile():
     return render_template('profile.html')
 
 
-# TODO fix the home being accessible without logging in
-@server.route('/home')
-def home():
+@server.route('/dashboard')
+@login_required
+def dashboard():
     return render_template('dashboard.html')
 
 
 @server.route('/members')
+@login_required
 def members_page():
     return render_template('members.html')
     
@@ -69,11 +175,13 @@ def members_page():
 
 
 @server.route('/declaration')
+@login_required
 def declaration_page():
     return render_template('declaration.html')
 
 
 @server.route('/inventory')
+@login_required
 def inventory():
     # Fetch inventory entries from the database
     inventory_data = db_conn.get_inventory_entries()  # Ensure this returns data correctly
@@ -85,21 +193,25 @@ def inventory():
     return render_template('inventory.html', inventory_data=inventory_data)
 
 @server.route('/claims')
+@login_required
 def claims():
     return render_template('claims.html')
 
 
 @server.route('/reports')
+@login_required
 def bud_v_exp():
     return render_template('reports.html')
 
 
 @server.route('/audit_trails')
+@login_required
 def audit_trails():
     return render_template('audit_trails.html')
 
 
 @server.route('/accounts')
+@login_required
 def show_user_accounts():
     active_accounts = db_conn.get_user_accounts(status=['approved', 'archived', 'declined'])
     pending_accounts = db_conn.get_user_accounts(status=['pending'])
@@ -108,6 +220,7 @@ def show_user_accounts():
 
 
 @server.route('/settings')
+@login_required
 def settings():
     return render_template('settings.html')
 
@@ -242,48 +355,12 @@ def reset_password():
     return render_template("reset_password.html")
 
 
-@server.route('/login', methods=['POST'])
-def login():
-    username = request.form.get("username")
-    password = request.form.get("password")
+# API FOR DASHBOARD
+@server.route('/api/get_pending_claims_count')
+def get_pending_claims_count():
+    count = db_conn.get_pending_claims_count()
+    return jsonify({"pending_claims_count": count})
 
-    sign_in = db_conn.sign_in(username, password)
-
-    if sign_in == 'success':
-        user_details = db_conn.get_user_details_by_username(username)
-
-        if user_details:
-            session['username'] = username
-            session['full_name'] = f"{user_details['first_name']} {user_details['middle_name']} {user_details['last_name']}"
-            session['email'] = user_details['email']
-            session['phone'] = user_details['contact_no']
-            session['birthdate'] = user_details['birth_date']
-            session['password'] = user_details['password']
-            session['user_level'] = user_details['user_level']
-            
-            return redirect(url_for('home'))  # success redirect
-        else:
-            flash({
-                "title": "Login Error!",
-                "text": "User details could not be fetched.",
-                "redirect_url": url_for('landing_page')
-            }, "error")
-            return render_template('index.html')
-
-    elif sign_in == 'pending':
-        flash({
-            "title": "Login Error!",
-            "text": "Account not approved yet. Contact admin.",
-            "redirect_url": url_for('landing_page')
-        }, "error")
-        return render_template('index.html')
-    else:
-        flash({
-            "title": "Login Error!",
-            "text": "Wrong username or password. Try again.",
-            "redirect_url": url_for('landing_page')
-        }, "error")
-        return render_template('index.html')
 
 # API FOR MEMBERS PAGE
 
@@ -497,10 +574,35 @@ def generate_report():
         return render_template('error_page.html')  # Render an error page
 
 
+###? MISC ROUTES ?###
+
+# TODO make a 4040 page
+@server.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
+
+ROOT_STATIC_FILES = {
+    "robots.txt",
+    "humans.txt",
+    "security.txt"
+}
+@server.route('/<path:filename>')
+def root_static_files(filename):
+    if filename in ROOT_STATIC_FILES:
+        return send_from_directory(server.static_folder, filename)
+    abort(404)
+    
+# Favicon
+@server.route('/favicon.ico')
+def favicon():
+    return send_from_directory(server.static_folder, 'assets/favicon.ico')
+
+###? MISC ROUTES ?#################################################
+
 if __name__ == '__main__':
     flask_server = Server(server.wsgi_app)
     flask_server.watch('static/*.*')  # watches static files (CSS/JS)
     flask_server.watch('templates/*.html')  # watches templates
-    flask_server.serve()
+    flask_server.serve(port=5000, host="127.0.0.1")
 
-    # server.run(debug=True, use_reloader=True)
+    #server.run(debug=True, use_reloader=True, port=5000)

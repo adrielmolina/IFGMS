@@ -1,9 +1,9 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, func
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, scoped_session
 import cryptography
 from datetime import date, datetime, timedelta, timezone
 from py_scripts import tools
@@ -88,6 +88,24 @@ def conn_init():
             print(f"Error: {e}")
 
 
+# TODO maybe move this at the top
+# TODO remove the auto create database after development
+# TODO replace all session with this code
+conn = conn_init()
+SessionLocal = scoped_session(sessionmaker(bind=conn))
+# db_session = SessionLocal() # Use this for queries
+
+
+def shutdown_session():
+    """Remove session (for Flask teardown)"""
+    SessionLocal.remove()
+
+
+def load_user(user_id):
+    db_session = SessionLocal()
+    return db_session.query(models.Accounts).get(int(user_id))
+
+
 def create_account(**kwargs):
     """ arguments must be the same name as in the sql query """
     conn = conn_init()
@@ -104,6 +122,7 @@ def create_account(**kwargs):
 
 
 def sign_in(username=None, password=None):
+    '''
     conn = conn_init()
     Session = sessionmaker(bind=conn)
 
@@ -117,6 +136,20 @@ def sign_in(username=None, password=None):
         return 'pending'
     else:
         return 'fail'
+    '''
+    
+    db_session = SessionLocal()
+
+    user = db_session.query(models.Accounts).filter(
+        models.Accounts.username == username,
+        models.Accounts.acct_status.in_(["approved", "pending"])
+    ).first()
+
+    if user and tools.check_password(password, user.password):
+        return user  # return full user object instead of "success/pending/fail"
+    return None
+    
+    
 
 def get_user_accounts(status):
     conn = conn_init()
@@ -284,6 +317,20 @@ def update_password(email, new_password):
 # ? RESET PASS END
 
 
+def get_pending_claims_count():
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        count_pending = (
+            session.query(func.count(models.Claims.claim_id))
+            .filter(models.Claims.status == "pending")
+            .scalar()
+        )
+
+    return count_pending
+
+
+
 def get_member_records():
     conn = conn_init()
 
@@ -359,11 +406,16 @@ def verify_maab_no(maab_no):
 
     with Session() as session:
         # Check if maab_no exists and get member_id
-        query = text("SELECT member_id FROM entry_contents WHERE maab_no = :maab_no")
+        query = text("SELECT member_id, record_id FROM entry_contents WHERE maab_no = :maab_no")
         result = session.execute(query, {"maab_no": maab_no}).fetchone()
 
         if not result:
             return None  # maab_no does not exist
+        else:
+            record_id = result[1]
+            query = text("SELECT effectivity_date FROM membership_records WHERE record_id = :record_id")
+            record = session.execute(query, {"record_id": record_id}).fetchone()
+            effectivity_date = record[0] if record else None
 
         member_id = result[0]
 
@@ -378,6 +430,7 @@ def verify_maab_no(maab_no):
         if member:
             return {
                 "exists": True,
+                "effectivity_date": effectivity_date.isoformat() if effectivity_date else None,
                 "first_name": member[0],
                 "middle_name": member[1],
                 "last_name": member[2],
@@ -386,9 +439,9 @@ def verify_maab_no(maab_no):
                 "email": member[5]
             }
         else:
-            return {"exists": True, "first_name": None, "middle_name": None, "last_name": None, "suffix": None}
+            return {"exists": False, "effectivity_date": None, "first_name": None, "middle_name": None, "last_name": None, "suffix": None}
 
-
+# TODO add indexes on fields that are frequently queried
 def save_record_details(data):
     conn = conn_init()
     Session = sessionmaker(bind=conn)
@@ -413,7 +466,9 @@ def save_record_details(data):
         session.commit()
         return True
 
-
+# TODO add the new fields here to update
+# TODO change the column 'status' to claim_status
+# TODO change all instance of enhanced platinum to safe card
 def save_claim_record(data):
     '''conn = conn_init()
     Session = sessionmaker(bind=conn)
@@ -543,7 +598,7 @@ def get_entries(record_id):
         ]
         return [dict(zip(col_names, row)) for row in results]
 
-
+# ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
     """
     Fetch user details from the database by username.
