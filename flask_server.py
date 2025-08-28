@@ -109,7 +109,18 @@ def show_user_accounts():
 
 @server.route('/settings')
 def settings():
-    return render_template('settings.html')
+    if 'username' not in session:
+        flash({
+            "title": "Not Logged In",
+            "text": "Please log in to access your profile.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        return redirect(url_for('landing_page'))
+
+    username = session['username']
+    user_details = db_conn.get_user_details_by_username(username)
+
+    return render_template('settings.html', user_details=user_details)
 
 
 # <------------ /NAVIGATIONS ------------>
