@@ -503,4 +503,4 @@ if __name__ == '__main__':
     flask_server.watch('templates/*.html')  # watches templates
     flask_server.serve()
 
-    # server.run(debug=True, use_reloader=True)
+
