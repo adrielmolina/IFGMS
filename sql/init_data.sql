@@ -79,7 +79,7 @@ VALUES
     (NULL, 5, 'Gold', 'PG5000025', 25, FALSE, TRUE, '2025-08-14', TRUE, 50227, '2025-08-05', NULL, NULL)
 ;
 
-INSERT INTO maab_claims (
+INSERT INTO ifgms.maab_claims (
     date_filed, received_by, claim_origin, date_of_loss, maab_no,
     same_as_insured, claimant_first_name, claimant_middle_name, claimant_last_name,
     claimant_suffix, relation_to_insured, claimant_contact_no, claimant_email,
@@ -90,8 +90,8 @@ INSERT INTO maab_claims (
     req_purchased_meds, req_med_records, req_incident_rep, req_police_rep,
     req_drivers_lic, sent_advanced_notice
 ) VALUES
--- 1
-('2025-05-10', 'abby', 'chapter', '2025-05-05', 'MAAB-1001',
+-- 1 : PG1000001
+('2025-05-10', 'abby', 'chapter', '2025-05-05', 'PG1000001',
  TRUE, 'Juan', 'Santos', 'Dela Cruz', NULL, 'Self', '09171234567', 'juan.delacruz@email.com',
  'Minor injury claim', 'approved', '2025-05-20', '12001', 5000.00,
  NULL, NULL, 'Released to claimant', TRUE, TRUE,
@@ -99,8 +99,8 @@ INSERT INTO maab_claims (
  TRUE, FALSE, TRUE, FALSE,
  TRUE, TRUE, FALSE, FALSE,
  FALSE, TRUE),
--- 2
-('2025-06-02', 'jb', 'dasma', '2025-05-30', 'MAAB-1002',
+-- 2 : PS1000002
+('2025-06-02', 'jb', 'dasma', '2025-05-30', 'PS1000002',
  FALSE, 'Maria', 'Reyes', 'Lopez', NULL, 'Spouse', '09182345678', 'maria.lopez@email.com',
  'Pending verification', 'pending', NULL, NULL, NULL,
  NULL, NULL, NULL, FALSE, FALSE,
@@ -108,17 +108,17 @@ INSERT INTO maab_claims (
  FALSE, FALSE, FALSE, FALSE,
  FALSE, FALSE, FALSE, FALSE,
  FALSE, FALSE),
--- 3
-('2025-04-18', 'adriel', 'silang', '2025-04-15', 'MAAB-1003',
- TRUE, 'Pedro', 'Gomez', 'Santos', 'Jr.', 'Parent', '09193456789', 'pedro.santos@email.com',
+-- 3 : PB1000003
+('2025-04-18', 'adriel', 'silang', '2025-04-15', 'PB1000003',
+ TRUE, 'Pedro', 'Gomez', 'Santos', 'Jr', 'Parent', '09193456789', 'pedro.santos@email.com',
  'Claim denied - insufficient documents', 'denied', NULL, NULL, NULL,
  NULL, NULL, 'Lacks medical certificate', FALSE, TRUE,
  FALSE, FALSE, NULL, TRUE, TRUE,
  FALSE, FALSE, FALSE, FALSE,
  FALSE, FALSE, FALSE, FALSE,
  FALSE, FALSE),
--- 4
-('2025-07-07', 'louis', 'chapter', '2025-07-03', 'MAAB-1004',
+-- 4 : 1000004
+('2025-07-07', 'louis', 'chapter', '2025-07-03', '1000004',
  FALSE, 'Luz', 'Castillo', 'Marquez', NULL, 'Child', '09204567891', 'luz.marquez@email.com',
  'Fracture treatment claim', 'approved', '2025-07-15', NULL, NULL,
  '453001', 8000.00, 'Released to spouse', TRUE, TRUE,
@@ -126,58 +126,12 @@ INSERT INTO maab_claims (
  TRUE, TRUE, FALSE, TRUE,
  TRUE, FALSE, FALSE, FALSE,
  FALSE, TRUE),
--- 5
-('2025-08-01', 'josh', 'dasma', '2025-07-29', 'MAAB-1005',
+-- 5 : PP1000005
+('2025-08-01', 'josh', 'dasma', '2025-07-29', 'PP1000005',
  TRUE, 'Jose', 'Martinez', 'Villanueva', NULL, 'Self', '09215678912', 'jose.villanueva@email.com',
  'Awaiting PRC ID', 'pending', NULL, NULL, NULL,
  NULL, NULL, NULL, FALSE, FALSE,
  FALSE, FALSE, NULL, TRUE, FALSE,
  FALSE, FALSE, FALSE, FALSE,
  FALSE, FALSE, FALSE, FALSE,
- FALSE, FALSE),
--- 6
-('2025-03-22', 'aby', 'silang', '2025-03-20', 'MAAB-1006',
- TRUE, 'Ana', 'Flores', 'Garcia', NULL, 'Parent', '09226789123', 'ana.garcia@email.com',
- 'Released early', 'approved', '2025-03-30', '786678002', 6000.00,
- NULL, NULL, 'Picked up by father', TRUE, TRUE,
- TRUE, TRUE, '2025-04-01', TRUE, TRUE,
- TRUE, TRUE, TRUE, TRUE,
- TRUE, FALSE, FALSE, FALSE,
- FALSE, TRUE),
--- 7
-('2025-01-12', 'aby', 'chapter', '2025-01-10', 'MAAB-1007',
- FALSE, 'Carlos', 'Diaz', 'Torres', NULL, 'Sibling', '09237891234', 'carlos.torres@email.com',
- 'No PRC ID provided', 'denied', NULL, NULL, NULL,
- NULL, NULL, 'Missing PRC ID', FALSE, FALSE,
- FALSE, FALSE, NULL, FALSE, FALSE,
- FALSE, FALSE, FALSE, FALSE,
- FALSE, FALSE, FALSE, FALSE,
- FALSE, FALSE),
--- 8
-('2025-02-05', 'aby', 'dasma', '2025-02-01', 'MAAB-1008',
- TRUE, 'Rosa', 'Bautista', 'Cruz', NULL, 'Spouse', '09248912345', 'rosa.cruz@email.com',
- 'Approved and released', 'approved', '2025-02-15', NULL, NULL,
- '45634002', 4500.00, 'Released in person', TRUE, TRUE,
- TRUE, TRUE, '2025-02-17', TRUE, TRUE,
- TRUE, TRUE, FALSE, TRUE,
- TRUE, FALSE, FALSE, FALSE,
- FALSE, TRUE),
--- 9
-('2025-05-25', 'aby', 'silang', '2025-05-21', 'MAAB-1009',
- FALSE, 'Miguel', 'Santos', 'Rivera', NULL, 'Self', '09259123456', 'miguel.rivera@email.com',
- 'Under review', 'pending', NULL, NULL, NULL,
- NULL, NULL, NULL, FALSE, FALSE,
- FALSE, FALSE, NULL, TRUE, TRUE,
- FALSE, FALSE, FALSE, FALSE,
- FALSE, FALSE, FALSE, FALSE,
- FALSE, FALSE),
--- 10
-('2025-06-18', 'aby', 'chapter', '2025-06-15', 'MAAB-1010',
- TRUE, 'Elena', 'Morales', 'Fernandez', NULL, 'Parent', '09261234567', 'elena.fernandez@email.com',
- 'Approved, awaiting pickup', 'approved', '2025-06-28', '43453003', 7000.00,
- NULL, NULL, 'For pickup by son', TRUE, TRUE,
- TRUE, TRUE, '2025-06-30', TRUE, TRUE,
- TRUE, FALSE, TRUE, TRUE,
- TRUE, FALSE, FALSE, FALSE,
- FALSE, TRUE)
- ;
+ FALSE, FALSE);

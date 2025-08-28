@@ -6,6 +6,7 @@ from datetime import date, datetime
 import os
 import pandas as pd
 import openpyxl
+from functools import wraps
 
 
 server = Flask(__name__)
@@ -36,6 +37,20 @@ def cleanup(exception=None):
 def load_user(user_id):
     db_session = db_conn.SessionLocal()
     return db_session.query(db_conn.models.Accounts).get(int(user_id))
+
+    
+def roles_required(*roles):
+    '''  Decorator to restrict access to users with a specific role.'''
+    def wrapper(fn):
+        @wraps(fn)
+        def decorated_view(*args, **kwargs):
+            if not current_user.is_authenticated:
+                return login_manager.unauthorized()
+            if current_user.user_level not in roles:
+                abort(403)
+            return fn(*args, **kwargs)
+        return decorated_view
+    return wrapper
 
 
 # ?TODO LIST-------------------------------
@@ -176,6 +191,7 @@ def members_page():
 
 @server.route('/declaration')
 @login_required
+@roles_required('admin', 'superadmin')
 def declaration_page():
     return render_template('declaration.html')
 
@@ -200,18 +216,21 @@ def claims():
 
 @server.route('/reports')
 @login_required
+@roles_required('admin', 'superadmin')
 def bud_v_exp():
     return render_template('reports.html')
 
 
 @server.route('/audit_trails')
 @login_required
+@roles_required('admin', 'superadmin')
 def audit_trails():
     return render_template('audit_trails.html')
 
 
 @server.route('/accounts')
 @login_required
+@roles_required('admin', 'superadmin')
 def show_user_accounts():
     active_accounts = db_conn.get_user_accounts(status=['approved', 'archived', 'declined'])
     pending_accounts = db_conn.get_user_accounts(status=['pending'])
