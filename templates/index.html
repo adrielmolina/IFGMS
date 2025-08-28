@@ -88,7 +88,7 @@
         {% if messages %}
           {% for category, message in messages %}
             let flashData = JSON.parse(`{{ message | tojson | safe }}`);
-  
+            // TODO retire this and use javascript dialog box
             Swal.fire({
               icon: '{{ category }}',
               title: flashData.title,
@@ -101,7 +101,11 @@
               color: '#ffffff'
             }).then((result) => {
               if (result.isConfirmed) {
-                window.location.href = flashData.redirect_url;
+                if (flashData.redirect_url) {
+                  window.location.href = flashData.redirect_url;
+                } else {
+                  window.location.href = "/"; // fallback
+                }
               }
             });
           {% endfor %}
