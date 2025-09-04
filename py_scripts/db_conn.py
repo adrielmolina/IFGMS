@@ -22,6 +22,12 @@ print("ENV File Location:", env_loc)
 
 load_dotenv(env_loc)
 
+DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'local').lower()
+
+# FOR AIVEN DB CONNECTION
+AIVEN_URI = os.getenv('AIVEN_URI')
+
+# FOR LOCAL DB CONNECTION
 SQL_HOST = os.getenv('SQL_HOST')
 SQL_USER = os.getenv('SQL_USER')
 SQL_PASS = os.getenv('SQL_PASS')
@@ -38,59 +44,31 @@ SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 
 def conn_init():
     try:
-        db_url = f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}/{SQL_DB}"
-        engine = create_engine(db_url)
-        conn = engine.connect()
-
+        if DB_CONNECTION_MODE == "aiven":
+            ca_path = Path(__file__).resolve().parent.parent / "sql" / "aiven" / "ca.pem"
+            if not ca_path.exists():
+                raise FileNotFoundError(f"SSL certificate not found: {ca_path}")
+            
+            db_url = f"{AIVEN_URI}&ssl_ca={ca_path}"
+            print(f"Connecting to Aiven DB")
+        
+        else:  # local connection
+            db_url = f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}/{SQL_DB}"
+            print(f"Connecting to local DB")
+            
+        engine = create_engine(db_url, pool_pre_ping=True)
         print('Database Connection Success')
-        return conn
-    except OperationalError:
-        try:
-            print('Database doesn\'t exist. Creating one...')
-            engine = create_engine(f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}")
-            db_init_script = Path(parent_dir/'sql/ifgms_db.sql')
-            init_val_script = Path(parent_dir/'sql/init_data.sql')
+        return engine
+    
+    except OperationalError as e:
+        print(f"Database Connection Failed: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected Error: {e}")
+        return None
+    
 
-            with engine.connect() as conn:
-                conn.execute(text(f"CREATE DATABASE {SQL_DB};"))
-                print(f"Database '{SQL_DB}' created successfully!")
-
-                # Function to execute SQL scripts
-                def execute_sql_script(script_path, engine):
-                    if script_path.exists():
-                        with open(script_path, "r") as file:
-                            sql_script = file.read()
-
-                        print(f"Executing {script_path.name}...")
-                        with engine.connect() as conn:
-                            for statement in sql_script.split(";"):  # Split script into individual statements
-                                statement = statement.strip()
-                                if statement:  # Ignore empty statements
-                                    conn.execute(text(statement))
-                            conn.commit()
-                        print(f"{script_path.name} executed successfully!")
-                    else:
-                        print(f"SQL script '{script_path}' not found!")
-
-                # Reconnect with the new database
-                db_url_with_db = f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}/{SQL_DB}"
-                engine_with_db = create_engine(db_url_with_db)
-
-                # Execute both SQL scripts
-                execute_sql_script(db_init_script, engine_with_db)
-                execute_sql_script(init_val_script, engine_with_db)
-
-                # Final connection
-                conn = engine_with_db.connect()
-                print("Database connection successful!")
-                return conn
-        except Exception as e:
-            print(f"Error: {e}")
-
-
-# TODO maybe move this at the top
-# TODO remove the auto create database after development
-# TODO replace all session with this code
+# TODO replace all session binds with SessionLocal
 conn = conn_init()
 SessionLocal = scoped_session(sessionmaker(bind=conn))
 # db_session = SessionLocal() # Use this for queries
@@ -121,23 +99,7 @@ def create_account(**kwargs):
         print(f"Error: {e}")
 
 
-def sign_in(username=None, password=None):
-    '''
-    conn = conn_init()
-    Session = sessionmaker(bind=conn)
-
-    with Session() as session:
-        query = text("SELECT password, acct_status FROM accounts WHERE username = :username AND (acct_status = 'approved' OR acct_status = 'pending')")
-        result = session.execute(query, {"username": username}).fetchone()
-
-    if result and tools.check_password(password, result[0]) and result[1] == 'approved':
-        return 'success'
-    elif result and tools.check_password(password, result[0]) and result[1] == 'pending':
-        return 'pending'
-    else:
-        return 'fail'
-    '''
-    
+def sign_in(username=None, password=None):    
     db_session = SessionLocal()
 
     user = db_session.query(models.Accounts).filter(
@@ -152,13 +114,16 @@ def sign_in(username=None, password=None):
     
 
 def get_user_accounts(status):
-    conn = conn_init()
-
-    with conn:
-        query = text("SELECT * FROM accounts WHERE acct_status IN :status")
-        result = conn.execute(query, {'status': tuple(status)})
-        accounts = result.fetchall()
+    db_session = SessionLocal()
+    try:
+        accounts = (
+            db_session.query(models.Accounts)
+            .filter(models.Accounts.acct_status.in_(status))
+            .all()
+        )
         return accounts
+    finally:
+        db_session.close()
 
 def account_action(selected_ids, action):    
     Session = sessionmaker(bind=conn_init())
@@ -669,6 +634,7 @@ def get_inventory_entries(allocated_to=None):
 
 
 if __name__ == '__main__':
-    conn_init()
+    print('do no run this module directly lol')
+    print('use initialize_database.py')
     
     

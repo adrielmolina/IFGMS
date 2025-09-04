@@ -206,7 +206,7 @@ CREATE TABLE `entry_contents` (
 	`remarks` TEXT(65535),
 	`tags` ENUM('late-declare', 'overage', 'underage'),
 	PRIMARY KEY(`entry_id`)
-) COMMENT='table for contents of an entry';
+) COMMENT='table for contents of a membership_record entry';
 
 
 CREATE TABLE `dispatch` (
