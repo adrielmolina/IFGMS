@@ -1,3 +1,4 @@
+
 body {
     background-color: #f3e8e8;
     padding: 10px;
@@ -27,7 +28,7 @@ label {
     background-color: #f9f9f9;  /* light grey, change as needed */
 }
 #claims_table .htSearchResult {
-    background-color: rgba(63, 173, 33, 0.648) !important;
+    background-color: #c7db14a5 !important;
     color: #000000;
 }
 
@@ -56,7 +57,7 @@ label {
     background: #f3e8e8;
     width: 100%;
     margin: 1% 1%;
-    padding: 20px;
+    padding: 30px;
     border-radius: 10px;
     position: relative;
 }
@@ -73,7 +74,7 @@ label {
 .overlay-body {
     display: flex;
     flex-direction: column;
-    /* align-items: center; */
+    align-items: center;
 
     width: 100%;
     height: 100%;           /* Set a fixed height, not max-height */
@@ -187,10 +188,9 @@ input:checked + .slider:before {
 .requiements_section {
     border: 1px solid black;
     display: flex;
-    flex-direction: column;
-    width: 20%;
+    flex-direction: row;
+    width: fit-content;
     padding: 1%;
-
 }
 
 .requiements_section ul label {
@@ -202,6 +202,10 @@ input:checked + .slider:before {
 .requiements_section ul {
     list-style-type: none;
     padding-left: 0; /* optional: removes default indentation */
+    display: flex;
+    flex-direction: column;
+    margin-left: 20px;
+    margin-right: 20px;
 }
 
 .columns {
@@ -232,13 +236,44 @@ input:checked + .slider:before {
     flex: 1; /* optional: equal width columns */
 }
 
+.controls_box {
+    /* border: #000000 1px solid; */
+    border-bottom: 1px solid black;
+    width: 99%;
+    height: fit-content;
+    padding: 5px;
+    margin: 5px;
+    display: flex;
+    flex-direction: row;
+    gap: 15px;;
+}
+.controls_box button {
+    background-color: #4e4747;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.controls_box button:hover {
+    background-color: #3c3c3c;
+}
+
 .collapse_box_header {
     background-color: #4e474732;
-    width: 100%;
-    height: 4%;
+    width: 99%;
+    height: 4vh;
     border-radius: 10px;
-    margin-top: 1%;
+    margin: 5px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
 }
+.collapse_box_header:hover {
+    border: #000000 1px solid;
+    cursor: pointer;
+}
+
 .collapse_box_checkbox {
     display: none;
 }
@@ -265,14 +300,21 @@ input:checked + .slider:before {
 /* Checked arrow (down) */
 .collapse_box_checkbox:checked + .collapse_box_label::before {
   content: "▼";  /* down-pointing triangle */
-  color: rgb(43, 208, 43);
+  color: rgb(36, 183, 36);
 }
 
 .collapse_group {
     /* background-color: #5f0909bf; */
-    border: 1px solid black;
+    /* border: 1px solid black; */
     margin-bottom: 1%;
     display: flex;
     gap: 10px;
-    padding: 10px;
+    padding: 20px;
+    width: 99%;
+}
+.input_set {
+    display: flex;
+    flex-direction: column;
+    width: 80%;
+    margin: 5px;
 }

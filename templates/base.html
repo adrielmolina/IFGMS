@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}My Website{% endblock %}</title>
+    <title>{% block title %}IFGMS{% endblock %}</title>
 
     <!-- imports for for nav bar -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/navbar.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+    <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
+    
     {% block head %}{% endblock %}
 
 </head>
 <body>
-
+    <!-- TODO download all assets instead of loading from google api -->
     <!-- Sidebar Navigation -->
     <nav class="navbar">
         <aside class="sidebar">
@@ -32,13 +33,13 @@
                   <img src="/static/assets/prc_logo.png" alt="Profile Image" />
                   
                   <div class="user-detail">
-                      {% if 'full_name' in session %}
-                          <a href="{{ url_for('profile_settings_display') }}">
-                              <h5>{{ session['full_name'] }}</h5>
+                      {% if current_user.is_authenticated %}
+                          <a href="{{ url_for('profile_settings') }}">
+                              <h5>{{ current_user.first_name }} {{ current_user.last_name }}</h5>
                           </a>
                       {% else %}
-                          <a href="{{ url_for('login') }}">
-                              <h3>Login</h3>
+                          <a href="{{ url_for('landing_page') }}">
+                              <h3>Please Login</h3>
                           </a>
                       {% endif %}
                   </div>
@@ -50,28 +51,27 @@
                     <span>Main Menu</span>
                     <div class="menu-separator"></div>
                 </h4>
-                <li>
-                    <a href="/home">
-                        <span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+                <li id="dashboard">
+                    <a href="/dashboard"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
                 </li>
 
-                <li>
+                <li id="members">
                     <a href="/members"><span class="material-symbols-outlined">overview</span>Members</a>
                 </li>
 
-                <li>
-                    <a href="/declaration"><span class="material-symbols-outlined">folder</span>Declaration</a>
+                <li id="declaration" hidden>
+                    <a href="/declaration" ><span class="material-symbols-outlined">folder</span>Declaration</a>
                 </li>
 
-                <li>
+                <li id="inventory">
                     <a href="/inventory"><span class="material-symbols-outlined">groups</span>Inventory</a>
                 </li>
             
-                <li>
+                <li id="claims">
                     <a href="/claims"><span class="material-symbols-outlined">personal_injury</span>Manage Claims</a>
                 </li>
 
-                <li>
+                <li id="reports" hidden>
                     <a href="/reports"><span class="material-symbols-outlined">analytics</span>Reports</a>
                 </li>
 
@@ -80,20 +80,20 @@
                     <div class="menu-separator"></div>
                 </h4>
 
-                <li>
+                <li id="audit_trails" hidden>
                     <a href="/audit_trails"><span class="material-symbols-outlined">account_circle</span>Audit Trail</a>
                 </li>
 
-                <li>
+                <li id="accounts" hidden>
                     <a href="/accounts"><span class="material-symbols-outlined">account_circle</span>Accounts</a>
                 </li>
 
-                <li>
+                <li id="settings">
                     <a href="/settings"><span class="material-symbols-outlined">settings</span>Settings</a>
                 </li>
 
-                <li>
-                    <a href="/"><span class="material-symbols-outlined">logout</span>Logout</a>
+                <li id="logout">
+                    <a href="/logout"><span class="material-symbols-outlined">logout</span>Logout</a>
                 </li>
             </ul>
         </aside>
@@ -103,6 +103,19 @@
     <div class="content">
         {% block content %} {% endblock %}
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const current_userLevel = {{current_user.user_level|tojson}};
+
+            if (current_userLevel === "admin" || current_userLevel === "superadmin") {
+                document.getElementById("declaration").removeAttribute("hidden");
+                document.getElementById("reports").removeAttribute("hidden");
+                document.getElementById("audit_trails").removeAttribute("hidden");
+                document.getElementById("accounts").removeAttribute("hidden");
+            }
+        });
+    </script>
 
     {% block extra_scripts %} {% endblock %}
 

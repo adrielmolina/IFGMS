@@ -206,7 +206,35 @@ CREATE TABLE `entry_contents` (
 	`remarks` TEXT(65535),
 	`tags` ENUM('late-declare', 'overage', 'underage'),
 	PRIMARY KEY(`entry_id`)
-) COMMENT='table for contents of an entry';
+) COMMENT='table for contents of a membership_record entry';
+
+
+CREATE TABLE `dispatch` (
+	`dispatch_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`dispatch_type` ENUM('declaration', 'transmission'),
+	`dispatch_origin` ENUM('chapter', 'dasma', 'silang'),
+	`dispatch_year` YEAR,
+	`dispatch_cutoff` DATE,
+	`date_dispatched` DATE,
+	`dispatch_total` INTEGER,
+	`late_declare` BOOLEAN,
+	`dispatch_remarks` TEXT(65535),
+	PRIMARY KEY(`dispatch_id`)
+);
+
+
+CREATE TABLE `dispatch_contents` (
+	`dispatch_content_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`entry_id` INTEGER NOT NULL UNIQUE,
+	`maab_category` ENUM('classic', 'bronze', 'silver', 'gold', 'platinum', 'safe card', 'senior', 'senior+'),
+	`maab_no` VARCHAR(255) UNIQUE,
+	`member_name` VARCHAR(255),
+	`member_birth_date` DATE,
+	`effectivity_date` DATE,
+	`location_particular` VARCHAR(255),
+	`late_declare` BOOLEAN,
+	PRIMARY KEY(`dispatch_content_id`)
+);
 
 
 ALTER TABLE `audit_logs`

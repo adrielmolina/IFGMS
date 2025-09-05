@@ -1,10 +1,11 @@
-from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, DateTime, func, ForeignKey, Enum, SmallInteger
+from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, ForeignKey, Enum, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
+from flask_login import UserMixin
 
 Base = declarative_base()
 
 
-class Accounts(Base):
+class Accounts(Base, UserMixin):
     __tablename__ = 'accounts'
 
     account_id = Column(Integer, primary_key=True)
@@ -21,6 +22,10 @@ class Accounts(Base):
     acct_review_date = Column(Date)
     birth_date = Column(Date)
     password = Column(String(255))
+
+    def get_id(self):
+        # (default is id, so override it for account_id)
+        return str(self.account_id)
 
 
 class Records(Base):

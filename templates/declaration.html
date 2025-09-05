@@ -3,7 +3,7 @@
 {% block title %}Declaration{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -50,60 +50,82 @@
       <option>No</option>
     </select>
   </div>
-  <button class="btn clear-filters">Clear Filters</button>
-</div>
+</form>
 
-<!-- Action Buttons -->
-<div class="action-buttons">
-  <button class="btn transmit" disabled>Transmit (0)</button>
-  <button class="btn history" disabled>History (0)</button>
-  <button class="btn select-all">Select All</button>
-</div>
-
-
-
-<!-- Table -->
-<div class="ID_table">
-  <table id="dataTable">
-    <thead>
-      <tr>
-        <th><input type="checkbox" id="selectAll"></th>
-        <th>Entry ID</th>
-        <th>MAAB Category</th>
-        <th>MAAB No.</th>
-        <th>Member Name</th>
-        <th>Member Birth Date</th>
-        <th>Effectivity Date</th>
-        <th>Location Particular</th>
-        <th>Late Declare</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><input type="checkbox" class="row-check"></td>
-        <td>E001</td>
-        <td>Gold</td>
-        <td>MAAB001</td>
-        <td>Juan Dela Cruz</td>
-        <td>1995-05-15</td>
-        <td>2025-01-15</td>
-        <td>Cavite State University</td>
-        <td>No</td>
-      </tr>
-      <tr>
-        <td><input type="checkbox" class="row-check"></td>
-        <td>E002</td>
-        <td>Silver</td>
-        <td>MAAB002</td>
-        <td>Maria Santos</td>
-        <td>1992-08-20</td>
-        <td>2025-02-10</td>
-        <td>De La Salle University Dasmarinas</td>
-        <td>Yes</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+  <div class="ID_table">
+    <table>
+        <thead>
+            <tr>
+                <th>Transaction No.</th>
+                <th>Year</th>
+                <th>MAAB No.</th>
+                <th>Member ID</th>
+                <th>Effectivity Date</th>
+                <th>Expiry Date</th>
+                <th>Particular Location</th>
+                <th>Location Category</th>
+                <th>Municipality</th>
+                <th>District</th>
+                <th>OR Number</th>
+                <th>OR Date</th>
+                <th>Paid</th>
+                <th>Remarks</th>
+                <th>Origin</th>
+                <th>Count in Group</th>
+                <th>ID Received</th>
+                <th>Declared</th>
+                <th>Tags</th>
+                <th>Declaration Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1001</td>
+                <td>2025</td>
+                <td>MAAB001</td>
+                <td>M1234</td>
+                <td>2025-01-10</td>
+                <td>2026-01-10</td>
+                <td>Location A</td>
+                <td>Urban</td>
+                <td>City A</td>
+                <td>D1</td>
+                <td>123456</td>
+                <td>2025-01-15</td>
+                <td>Yes</td>
+                <td>Active Member</td>
+                <td>Branch 1</td>
+                <td>3</td>
+                <td>Yes</td>
+                <td>Yes</td>
+                <td>Renewal</td>
+                <td>2025-01-10</td>
+              </tr>
+              <tr>
+                <td>1002</td>
+                <td>2025</td>
+                <td>MAAB002</td>
+                <td>M1235</td>
+                <td>2025-02-05</td>
+                <td>2026-02-05</td>
+                <td>Location B</td>
+                <td>Rural</td>
+                <td>City B</td>
+                <td>D2</td>
+                <td>123457</td>
+                <td>2025-02-07</td>
+                <td>Yes</td>
+                <td>Pending Update</td>
+                <td>Branch 2</td>
+                <td>2</td>
+                <td>Yes</td>
+                <td>No</td>
+                <td>New Member</td>
+                <td>2025-02-05</td>
+              </tr>
+        </tbody>
+    </table>
+  </div>
 
 <!-- Print Button -->
 <div class="form-buttons">

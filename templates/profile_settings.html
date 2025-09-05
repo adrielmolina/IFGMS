@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/profile.css') }}">
 
 
-
+<!-- TODO fix the session references and use the current_user. -->
 <div class="main-container">
     <div class="module_name">
         <h1>Profile Information</h1>
@@ -18,8 +18,8 @@
 
         <button>Edit Profile Picture</button>
 
-        <h5 class="name">{{ session['full_name'] }}</h5>
-        <p class="level">{{ session['user_level'] }}</p>
+        <h5 class="name">{{ current_user.first_name }} {{ current_user.middle_name }} {{ current_user.last_name }}</h5>
+        <p class="level">{{ current_user.user_level }}</p>
     </div>
 
     <div class="profile-container">
@@ -29,28 +29,28 @@
             <!-- USER DETAILS -->
             <div class="form-group">
                 <label for="full_name">Full Name:</label>
-                <input type="text" id="full_name" name="full_name" placeholder="Full Name" value="{{ user_details.first_name }} {{ user_details.middle_name }} {{ user_details.last_name }}" readonly disabled />
+                <input type="text" id="full_name" name="full_name" placeholder="Full Name" value="{{ current_user.first_name }} {{ current_user.middle_name }} {{ current_user.last_name }}" readonly disabled />
             </div>
 
             <div class="form-group">
                 <label for="username">Username:</label>
-                <input type="text" id="username" name="username" placeholder="Username" value="{{ user_details.username }}" readonly disabled />
+                <input type="text" id="username" name="username" placeholder="Username" value="{{ current_user.username }}" readonly disabled />
             </div>
 
             <div class="form-group ">
                 <label for="birthdate">Birthdate:</label>
-                <input type="date" id="birthdate" name="birthdate" value="{{ user_details.birth_date }}" readonly disabled />
+                <input type="date" id="birthdate" name="birthdate" value="{{ current_user.birth_date }}" readonly disabled />
             </div>
 
             <!-- CONTACT INFO -->
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" placeholder="Email Address" value="{{ user_details.email }}" readonly disabled />
+                <input type="email" id="email" name="email" placeholder="Email Address" value="{{ current_user.email }}" readonly disabled />
             </div>
 
             <div class="form-group">
                 <label for="phone">Phone number:</label>
-                <input type="tel" id="phone" name="phone" placeholder="Phone number" value="{{ user_details.contact_no }}" readonly disabled />
+                <input type="tel" id="phone" name="phone" placeholder="Phone number" value="{{ current_user.contact_no }}" readonly disabled />
             </div>
         </form>
     </div>

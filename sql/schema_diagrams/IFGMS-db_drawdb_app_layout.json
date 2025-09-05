@@ -3,7 +3,7 @@
     {
       "name": "members_info",
       "comment": "",
-      "color": "#175e7a",
+      "color": "#f0eae9",
       "fields": [
         {
           "name": "member_id",
@@ -184,13 +184,13 @@
       ],
       "indices": [],
       "id": 0,
-      "x": 917.5671824387045,
-      "y": 1249.2822390600818
+      "x": 824.6762662258161,
+      "y": 993.9531451657663
     },
     {
       "name": "accounts",
       "comment": "",
-      "color": "#175e7a",
+      "color": "#f70531",
       "fields": [
         {
           "name": "account_id",
@@ -409,8 +409,8 @@
       ],
       "indices": [],
       "id": 1,
-      "x": 261.0075969708034,
-      "y": 180.65047214908859
+      "x": 19.125101192275736,
+      "y": 425.75806787133
     },
     {
       "name": "membership_records",
@@ -700,13 +700,13 @@
       ],
       "indices": [],
       "id": 2,
-      "x": 829.1248796047081,
-      "y": 358.09858416934253
+      "x": 800.098980111285,
+      "y": 67.83958923510932
     },
     {
       "name": "inventory",
       "comment": "",
-      "color": "#175e7a",
+      "color": "#ebbf3d",
       "fields": [
         {
           "name": "inv_id",
@@ -800,13 +800,13 @@
       ],
       "indices": [],
       "id": 3,
-      "x": 567.5734166160909,
-      "y": 510.08439119623824
+      "x": 0.5701312736630371,
+      "y": 1072.7875432803812
     },
     {
       "name": "maab_claims",
       "comment": "",
-      "color": "#175e7a",
+      "color": "#469e47",
       "fields": [
         {
           "name": "claim_id",
@@ -1441,14 +1441,14 @@
       ],
       "indices": [],
       "id": 4,
-      "x": 566.862025,
-      "y": 821,
+      "x": 527.5158056866927,
+      "y": 425.118981909143,
       "locked": false
     },
     {
       "name": "maab_claims_archive",
       "comment": "",
-      "color": "#175e7a",
+      "color": "#bd7a2d",
       "fields": [
         {
           "id": "Eoqrrb8qQqsZw8mepMmbn",
@@ -2097,14 +2097,14 @@
       ],
       "indices": [],
       "id": "8x6fOUHHZ96y-wzHJpm7T",
-      "x": 306.0800812500001,
-      "y": 1087.7477687500004,
+      "x": 276.9571020104494,
+      "y": 425.9645764994053,
       "locked": false
     },
     {
       "name": "otp_verifications",
       "comment": "",
-      "color": "#175e7a",
+      "color": "#20d626",
       "fields": [
         {
           "name": "id",
@@ -2171,13 +2171,13 @@
       ],
       "indices": [],
       "id": 5,
-      "x": 308,
-      "y": 821
+      "x": -438.39486773809506,
+      "y": 485.17161217915987
     },
     {
       "name": "audit_logs",
       "comment": "",
-      "color": "#175e7a",
+      "color": "#8628eb",
       "fields": [
         {
           "name": "action_id",
@@ -2273,14 +2273,14 @@
       ],
       "indices": [],
       "id": 6,
-      "x": 45.02071836988932,
-      "y": 813.8165746959115
+      "x": -469.76666312193595,
+      "y": 896.5941399178965
     },
     {
       "id": 7,
       "name": "entry_contents",
-      "x": 1433.3165208122123,
-      "y": 713.221552267545,
+      "x": 1394.6153214876476,
+      "y": 622.9187538435614,
       "fields": [
         {
           "name": "entry_id",
@@ -2496,8 +2496,289 @@
       ],
       "comment": "table for contents of an entry",
       "indices": [],
-      "color": "#175e7a",
+      "color": "#b56995",
       "key": 1745258803230
+    },
+    {
+      "id": "TkGZjqzOc7mlS6coH22pg",
+      "name": "dispatch",
+      "x": 1121.0405608028868,
+      "y": 1230.9278679924166,
+      "locked": false,
+      "fields": [
+        {
+          "name": "dispatch_id",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": true,
+          "notNull": true,
+          "increment": true,
+          "comment": "",
+          "id": "dkIOgrwMvH2yusSGWZ49N"
+        },
+        {
+          "id": "wBDLFpNKWV_bio3zPYFHC",
+          "name": "dispatch_type",
+          "type": "ENUM",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "values": [
+            "declaration",
+            "transmission"
+          ]
+        },
+        {
+          "id": "NttFBhuHv8HM0U9s2yNHP",
+          "name": "dispatch_origin",
+          "type": "ENUM",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "values": [
+            "chapter",
+            "dasma",
+            "silang"
+          ]
+        },
+        {
+          "id": "emiytzpWPZkhJTrvG0Q32",
+          "name": "dispatch_year",
+          "type": "YEAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "k68-L5MfZdDNHCh5u_1Wz",
+          "name": "dispatch_cutoff",
+          "type": "DATE",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "4uBaDpm6UeTbf9t3GC0-p",
+          "name": "date_dispatched",
+          "type": "DATE",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "f_jMWgDJAkCxnxYf1DQa_",
+          "name": "dispatch_total",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "_EU6wMHDLRaCsDs_gJMU4",
+          "name": "late_declare",
+          "type": "BOOLEAN",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "9dmLaGeQWsdWhHRIPeRx2",
+          "name": "dispatch_remarks",
+          "type": "TEXT",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": 65535
+        }
+      ],
+      "comment": "",
+      "indices": [],
+      "color": "#4f4f4e"
+    },
+    {
+      "id": "vfZTwlg4sFIz2Eo82_THi",
+      "name": "dispatch_contents",
+      "x": 1405.6425044274954,
+      "y": 1266.9665125904912,
+      "locked": false,
+      "fields": [
+        {
+          "name": "dispatch_content_id",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": true,
+          "notNull": true,
+          "increment": true,
+          "comment": "",
+          "id": "jV0oUbZeqmKHYyWj4Gmie"
+        },
+        {
+          "id": "ZabT9_MBizLABRRe9hoRs",
+          "name": "entry_id",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": true,
+          "notNull": true,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "HYSI26S_VbPfpCSHV8tgR",
+          "name": "maab_category",
+          "type": "ENUM",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "values": [
+            "classic",
+            "bronze",
+            "silver",
+            "gold",
+            "platinum",
+            "safe card",
+            "senior",
+            "senior+"
+          ]
+        },
+        {
+          "id": "yBC3FZ9T2cYiAnjYTPOqs",
+          "name": "maab_no",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": true,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        },
+        {
+          "id": "-neGrHL-WNvd_62HKfM6S",
+          "name": "member_name",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        },
+        {
+          "id": "OMpYjuu2-yc-SAd43edPA",
+          "name": "member_birth_date",
+          "type": "DATE",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "h5KHrom3wMEnSrfV8rjmm",
+          "name": "effectivity_date",
+          "type": "DATE",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "mKqAGFKu3h2iqzNYs4dN8",
+          "name": "location_particular",
+          "type": "VARCHAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": 255
+        },
+        {
+          "id": "6IxNTzEe8KhdwadHjeasa",
+          "name": "late_declare",
+          "type": "BOOLEAN",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        }
+      ],
+      "comment": "",
+      "indices": [],
+      "color": "#c597e8"
     }
   ],
   "relationships": [
