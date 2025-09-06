@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import cryptography
 from datetime import date, datetime, timedelta, timezone
 from py_scripts import tools
-from py_scripts import models
+import py_scripts.models as models
 from random import randint
 import smtplib
 from email.mime.text import MIMEText
@@ -33,7 +33,8 @@ SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 
 # todo remove on deployment
-print(f'SQL CONNECTION DEBUG\nHost={SQL_HOST}\nUser={SQL_USER}\nPass={SQL_PASS}\nDB={SQL_DB}')
+# print(f'SQL CONNECTION DEBUG\nHost={SQL_HOST}\nUser={SQL_USER}\nPass={SQL_PASS}\nDB={SQL_DB}')
+
 
 def conn_init():
     try:
@@ -290,10 +291,103 @@ def get_member_records():
         result = conn.execute(query)
         records = result.fetchall()
         return records
+    
+def get_entry_contents():
+    pass
 
 
-if __name__ == '__main__':
-    conn_init()
+def add_new_record():
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        new_record = models.Records(
+            year=datetime.now().year,
+            id_received=None,
+            declared=None,
+            declaration_date=None,
+            effectivity_date=None,
+            location_particular=None,
+            location_category=None,
+            municipality=None,
+            district=None,
+            paid=None,
+            origin=None,
+            remarks=None,
+            tags=None
+        )
+        session.add(new_record)
+        session.commit()
+        return new_record.record_id
+
+
+def save_record_details(data):
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        record = session.query(models.Records).filter_by(record_id=data['record_id']).first()
+        if not record:
+            return False  # Or raise an exception
+
+        # Update fields if present in data
+        for field in [
+            'year', 'id_received', 'declared', 'declaration_date', 'effectivity_date',
+            'location_particular', 'location_category', 'municipality', 'district',
+            'paid', 'origin', 'remarks', 'tags'
+        ]:
+            if field in data:
+                value = data[field]
+                # Convert empty string to None for ENUM/NULL columns
+                if value == '':
+                    value = None
+                setattr(record, field, value)
+
+        session.commit()
+        return True
+
+
+def get_entries(record_id):
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        # Join Entries and Members on member_id
+        results = (
+            session.query(
+                models.Entries.entry_id,
+                models.Entries.maab_category,
+                models.Entries.maab_no,
+                models.Members.first_name,
+                models.Members.middle_name,
+                models.Members.last_name,
+                models.Members.suffix,
+                models.Members.birth_date,
+                models.Members.age,
+                models.Members.sex,
+                models.Members.contact_no,
+                models.Members.email,
+                models.Members.address,
+                models.Members.blood_type,
+                models.Entries.id_received,
+                models.Entries.declared,
+                models.Entries.declaration_date,
+                models.Entries.paid,
+                models.Entries.OR_num,
+                models.Entries.OR_date,
+                models.Entries.remarks,
+                models.Entries.tags
+            )
+            .join(models.Members, models.Entries.member_id == models.Members.member_id)
+            .filter(models.Entries.record_id == record_id)
+            .all()
+        )
+
+        # Convert results to list of dicts
+        col_names = [
+            'entry_id', 'maab_category', 'maab_no', 'first_name', 'middle_name', 'last_name', 'suffix',
+            'birth_date', 'age', 'sex', 'contact_no', 'email', 'address', 'blood_type', 'id_received',
+            'declared', 'declaration_date', 'paid', 'OR_num', 'OR_date', 'remarks', 'tags'
+        ]
+        return [dict(zip(col_names, row)) for row in results]
+
 
 def get_user_details_by_username(username):
     """
@@ -327,3 +421,9 @@ def get_user_details_by_username(username):
     else:
         print(f"No user found with username: {username}")
         return None
+
+
+if __name__ == '__main__':
+    conn_init()
+    
+    

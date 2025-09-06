@@ -11,8 +11,6 @@ CREATE TABLE `members_info` (
 	`email` VARCHAR(255),
 	`address` VARCHAR(255) COMMENT 'not sure yet how to use this field',
 	`blood_type` ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'),
-	`remarks` TEXT(65535),
-	`tags` VARCHAR(255),
 	PRIMARY KEY(`member_id`)
 );
 

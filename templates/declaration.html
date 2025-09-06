@@ -14,15 +14,20 @@
     <h1>Declaration</h1>
   </div>
 
+  <form action="/generate_report" method="POST">
+  <div class="module_name">
+    <h1>Declaration</h1>
+  </div>
+
   <div class="main-content">
     <div class="entry">
       <div class="date-filter">
         <label class="entry_label" for="fromdate">From Date:</label>
-        <input class="date_input" type="date" id="fromdate">
+        <input class="date_input" type="date" id="fromdate" name="fromdate" required>
       </div>
       <div class="date-filter">
         <label class="entry_label" for="todate">To Date:</label>
-        <input class="date_input" type="date" id="todate">
+        <input class="date_input" type="date" id="todate" name="todate" required>
       </div>
     </div>
   </div>
@@ -30,6 +35,7 @@
   <div class="gen-buttons">
     <button type="submit" class="gen-btn">Generate Report</button>
   </div>
+</form>
 
   <div class="ID_table">
     <table>

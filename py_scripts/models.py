@@ -21,6 +21,7 @@ class Accounts(Base):
     birth_date = Column(Date)
     password = Column(String(255))
 
+
 class Records(Base):
     __tablename__ = 'membership_records'
 
@@ -57,6 +58,7 @@ class Entries(Base):
     remarks = Column(Text)
     tags = Column(String(255))
 
+
 class Members(Base):
     __tablename__ = 'members_info'
 
@@ -72,8 +74,6 @@ class Members(Base):
     email = Column(String(255))
     address = Column(String(255))
     blood_type = Column(String(255))
-    remarks = Column(Text)
-    tags = Column(String(255))
 
  
 

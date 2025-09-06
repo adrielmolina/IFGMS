@@ -9,27 +9,72 @@ VALUES
 
 INSERT INTO membership_records
 VALUES
-    (NULL, 2025, FALSE, FALSE, NULL, NULL, 'CVSU', 'Public College', 'Cavite City', '1', FALSE, 'Chapter', NULL, NULL),
-    (NULL, 2024, TRUE, FALSE, NULL, NULL, 'CNHS', 'Public High School', 'Cavite City', '1', FALSE, 'Chapter', NULL, NULL),
-    (NULL, 2023, FALSE, TRUE, '2025-04-20', '2023-01-01', 'NCST', 'Private College', 'Dasmarinas', '1', FALSE, 'Dasmarinas', 'test', 'late-declare'),
-    (NULL, 2022, TRUE, FALSE, NULL, NULL, 'San Sebastian College Recoletos', 'Private College', 'Cavite City', '1', FALSE, 'Chapter', NULL, NULL),
-    (NULL, 2021, TRUE, FALSE, NULL, NULL, 'CVSU', 'Public College', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL)
+    (NULL, 2025, TRUE, TRUE, '2025-04-10', '2025-04-10', 'CVSU', 'Public College', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL),
+    (NULL, 2024, TRUE, TRUE, '2025-11-10', '2024-11-04', 'CNHS', 'Public High School', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL),
+    (NULL, 2023, FALSE, TRUE, '2025-02-25', '2023-02-12', 'NCST', 'Private College', 'Dasmarinas', '1', TRUE, 'Dasmarinas', NULL, 'late-declare'),
+    (NULL, 2022, TRUE, TRUE, '2025-05-25', '2022-05-22', 'San Sebastian College Recoletos', 'Private College', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL),
+    (NULL, 2021, TRUE, FALSE, NULL, '2021-01-13', 'LDES', 'Public Elementary School', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL)
 ;
 
 INSERT INTO members_info
 VALUES
-    (NULL, 'adriel', 'robert', 'molina', 'NA', '1995-12-30', 24, 'male', '9845661321', 'adrielmolina99@gmail.com', 'cavite city', 'B+', 'test', NULL),
-    (NULL, 'john', 'louis', 'sanorjo', 'NA', '2001-11-29', 23, 'male', '9845661321', 'sanorjo.louis111@gmail.com', 'cavite city', 'A+', 'test', NULL),
-    (NULL, 'abegail', 'jane', 'montejo', 'NA', '2002-10-28', 22, 'female', '9845661321', 'abegailmontejo9@gmail.com', 'noveleta', 'B-', 'test', NULL),
-    (NULL, 'john', 'benedict', 'custodio', 'NA', '2003-09-27', 21, 'male', '9845661321', 'johnbenedictcustodio8@gmail.com', 'cavite city', 'A-', 'test', NULL),
-    (NULL, 'josh', 'gobres', 'crisostomo', 'NA', '2004-08-26', 20, 'male', '9845661321', 'crisostomojosh23@gmail.com', 'cavite city', 'O+', 'test', NULL)
+    (NULL, 'ADRIEL', 'ROBERT', 'MOLINA', 'NA', '1995-12-30', 24, 'male', '9845661321', 'ADRIELMOLINA99@GMAIL.COM', 'CAVITE CITY', 'B+'),
+    (NULL, 'JOHN', 'LOUIS', 'SANORJO', 'NA', '2001-11-29', 23, 'male', '9845661321', 'SANORJO.LOUIS111@GMAIL.COM', 'CAVITE CITY', 'A+'),
+    (NULL, 'ABEGAIL', 'JANE', 'MONTEJO', 'NA', '2002-10-28', 22, 'female', '9845661321', 'ABEGAILMONTEJO9@GMAIL.COM', 'NOVELETA', 'B-'),
+    (NULL, 'JOHN', 'BENEDICT', 'CUSTODIO', 'NA', '2003-09-27', 21, 'male', '9845661321', 'JOHNBENEDICTCUSTODIO8@GMAIL.COM', 'CAVITE CITY', 'A-'),
+    (NULL, 'JOSH', 'GOBRES', 'CRISOSTOMO', 'NA', '2004-08-26', 20, 'male', '9845661321', 'CRISOSTOMOJOSH23@GMAIL.COM', 'CAVITE CITY', 'O+'),
+    (NULL, 'MARIA', 'LUISA', 'RAMOS', 'NA', '1998-03-15', 27, 'female', '9123456789', 'LUISARAMOS@GMAIL.COM', 'BACOOR', 'A+'),
+    (NULL, 'CARLOS', 'ANDRES', 'SANTOS', 'JR', '1997-07-22', 28, 'male', '9234567890', 'CARLOSSANTOS@GMAIL.COM', 'IMUS', 'B+'),
+    (NULL, 'PATRICIA', 'MAE', 'DELA CRUZ', 'NA', '1999-01-10', 26, 'female', '9345678901', 'PATRICIADCRUZ@GMAIL.COM', 'DASMARINAS', 'O-'),
+    (NULL, 'MICHAEL', 'ANGELO', 'REYES', 'NA', '2000-05-05', 25, 'male', '9456789012', 'MICHAELREYES@GMAIL.COM', 'NOVELETA', 'AB+'),
+    (NULL, 'JENNIFER', 'ROSE', 'GARCIA', 'NA', '1996-09-18', 29, 'female', '9567890123', 'JENNIFERGARCIA@GMAIL.COM', 'CAVITE CITY', 'A-'),
+    (NULL, 'ANTONIO', 'MIGUEL', 'FERNANDEZ', 'NA', '1995-12-01', 30, 'male', '9678901234', 'ANTONIOFERNANDEZ@GMAIL.COM', 'IMUS', 'B-'),
+    (NULL, 'KATRINA', 'JOY', 'TORRES', 'NA', '1998-04-12', 27, 'female', '9789012345', 'KATRINATORRES@GMAIL.COM', 'BACOOR', 'O+'),
+    (NULL, 'DANIEL', 'JOSEPH', 'MENDOZA', 'NA', '1997-08-23', 28, 'male', '9890123456', 'DANIELMENDOZA@GMAIL.COM', 'DASMARINAS', 'A+'),
+    (NULL, 'SOPHIA', 'GRACE', 'LOPEZ', 'NA', '1999-11-30', 25, 'female', '9901234567', 'SOPHIALOPEZ@GMAIL.COM', 'NOVELETA', 'B+'),
+    (NULL, 'GABRIEL', 'ENRIQUE', 'CRUZ', 'NA', '2001-02-14', 24, 'male', '9012345678', 'GABRIELCRUZ@GMAIL.COM', 'IMUS', 'O-'),
+    (NULL, 'ISABELLA', 'MARIE', 'RODRIGUEZ', 'NA', '2002-06-25', 23, 'female', '9123456790', 'ISABELLARODRIGUEZ@GMAIL.COM', 'CAVITE CITY', 'AB-'),
+    (NULL, 'MIGUEL', 'ANTHONY', 'RAMIREZ', 'NA', '1996-10-08', 29, 'male', '9234567891', 'MIGUELRAMIREZ@GMAIL.COM', 'BACOOR', 'A+'),
+    (NULL, 'ANGELA', 'NICOLE', 'SANTIAGO', 'NA', '1998-12-19', 27, 'female', '9345678902', 'ANGELASANTIAGO@GMAIL.COM', 'DASMARINAS', 'B-'),
+    (NULL, 'JUAN', 'CARLO', 'DE GUZMAN', 'NA', '1997-03-03', 28, 'male', '9456789013', 'JUANDEGUZMAN@GMAIL.COM', 'NOVELETA', 'O+'),
+    (NULL, 'CHRISTINE', 'JOY', 'BAUTISTA', 'NA', '1995-07-27', 30, 'female', '9567890124', 'CHRISTINEBAUTISTA@GMAIL.COM', 'IMUS', 'A-'),
+    (NULL, 'ALFRED', 'JAMES', 'CASTILLO', 'NA', '1999-05-16', 26, 'male', '9678901235', 'ALFREDCASTILLO@GMAIL.COM', 'BACOOR', 'B+'),
+    (NULL, 'MA. CLARA', 'LUISA', 'MARTINEZ', 'NA', '2000-08-09', 25, 'female', '9789012346', 'CLARAMARTINEZ@GMAIL.COM', 'CAVITE CITY', 'O-'),
+    (NULL, 'EDUARDO', 'PAUL', 'RIVERA', 'NA', '2001-11-11', 24, 'male', '9890123457', 'EDUARDORIVERA@GMAIL.COM', 'DASMARINAS', 'AB+'),
+    (NULL, 'PAULA', 'MAE', 'DOMINGO', 'NA', '1998-02-28', 27, 'female', '9901234568', 'PAULADOMINGO@GMAIL.COM', 'NOVELETA', 'A+'),
+    (NULL, 'MARK', 'ANDREW', 'SALAZAR', 'NA', '1997-06-17', 28, 'male', '9012345679', 'MARKSALAZAR@GMAIL.COM', 'IMUS', 'B-'),
+    (NULL, 'JULIA', 'ANNE', 'REYES', 'NA', '1996-09-21', 29, 'female', '9123456791', 'JULIAREYES@GMAIL.COM', 'BACOOR', 'O+')
 ;
 
 INSERT INTO entry_contents
 VALUES
-    (NULL, 1, 'Gold', 'PG0369786', 1, TRUE, TRUE, '2025-04-20', TRUE, 10223, '2025-04-01', NULL, NULL),
-    (NULL, 2, 'Bronze', 'PB4344789', 2, TRUE, TRUE, '2025-04-20', TRUE, 10224, '2025-04-01', NULL, NULL),
-    (NULL, 3, 'Silver', 'PS0082478', 3, TRUE, TRUE, '2025-04-20', TRUE, 10225, '2025-04-01', NULL, NULL),
-    (NULL, 4, 'Bronze', 'PB4344788', 4, TRUE, TRUE, '2025-04-20', TRUE, 10226, '2025-04-01', NULL, NULL),
-    (NULL, 5, 'Silver', 'PS0082477', 5, TRUE, TRUE, '2025-04-20', TRUE, 10227, '2025-04-01', NULL, NULL)
+    (NULL, 1, 'Gold', 'PG1000001', 1, TRUE, TRUE, '2025-04-20', TRUE, 10223, '2025-04-01', NULL, NULL),
+    (NULL, 1, 'Silver', 'PS1000002', 2, TRUE, FALSE, '2025-04-21', FALSE, 10224, '2025-04-02', NULL, NULL),
+    (NULL, 1, 'Bronze', 'PB1000003', 3, FALSE, TRUE, '2025-04-22', TRUE, 10225, '2025-04-03', NULL, NULL),
+    (NULL, 1, 'Classic', '1000004', 4, TRUE, TRUE, '2025-04-23', FALSE, 10226, '2025-04-04', NULL, NULL),
+    (NULL, 1, 'Platinum', 'PP1000005', 5, FALSE, TRUE, '2025-04-24', TRUE, 10227, '2025-04-05', NULL, NULL),
+
+    (NULL, 2, 'Enhanced Platinum', 'EP2000006', 6, TRUE, TRUE, '2025-05-10', TRUE, 20223, '2025-05-01', NULL, NULL),
+    (NULL, 2, 'Senior', 'S02000007', 7, FALSE, TRUE, '2025-05-11', FALSE, 20224, '2025-05-02', NULL, NULL),
+    (NULL, 2, 'Senior+', 'SP2000008', 8, TRUE, FALSE, '2025-05-12', TRUE, 20225, '2025-05-03', NULL, NULL),
+    (NULL, 2, 'Gold', 'PG2000009', 9, TRUE, TRUE, '2025-05-13', FALSE, 20226, '2025-05-04', NULL, NULL),
+    (NULL, 2, 'Silver', 'PS2000010', 10, FALSE, TRUE, '2025-05-14', TRUE, 20227, '2025-05-05', NULL, NULL),
+
+    (NULL, 3, 'Bronze', 'PB3000011', 11, TRUE, TRUE, '2025-06-10', TRUE, 30223, '2025-06-01', NULL, NULL),
+    (NULL, 3, 'Classic', '3000012', 12, TRUE, FALSE, '2025-06-11', FALSE, 30224, '2025-06-02', NULL, NULL),
+    (NULL, 3, 'Platinum', 'PP3000013', 13, FALSE, TRUE, '2025-06-12', TRUE, 30225, '2025-06-03', NULL, NULL),
+    (NULL, 3, 'Enhanced Platinum', 'EP3000014', 14, TRUE, TRUE, '2025-06-13', FALSE, 30226, '2025-06-04', NULL, NULL),
+    (NULL, 3, 'Senior', 'S03000015', 15, FALSE, TRUE, '2025-06-14', TRUE, 30227, '2025-06-05', NULL, NULL),
+
+    (NULL, 4, 'Senior+', 'SP4000016', 16, TRUE, TRUE, '2025-07-10', TRUE, 40223, '2025-07-01', NULL, NULL),
+    (NULL, 4, 'Gold', 'PG4000017', 17, FALSE, TRUE, '2025-07-11', FALSE, 40224, '2025-07-02', NULL, NULL),
+    (NULL, 4, 'Silver', 'PS4000018', 18, TRUE, FALSE, '2025-07-12', TRUE, 40225, '2025-07-03', NULL, NULL),
+    (NULL, 4, 'Bronze', 'PB4000019', 19, TRUE, TRUE, '2025-07-13', FALSE, 40226, '2025-07-04', NULL, NULL),
+    (NULL, 4, 'Classic', '4000020', 20, FALSE, TRUE, '2025-07-14', TRUE, 40227, '2025-07-05', NULL, NULL),
+
+    (NULL, 5, 'Platinum', 'PP5000021', 21, TRUE, TRUE, '2025-08-10', TRUE, 50223, '2025-08-01', NULL, NULL),
+    (NULL, 5, 'Enhanced Platinum', 'EP5000022', 22, TRUE, FALSE, '2025-08-11', FALSE, 50224, '2025-08-02', NULL, NULL),
+    (NULL, 5, 'Senior', 'S05000023', 23, FALSE, TRUE, '2025-08-12', TRUE, 50225, '2025-08-03', NULL, NULL),
+    (NULL, 5, 'Senior+', 'SP5000024', 24, TRUE, TRUE, '2025-08-13', FALSE, 50226, '2025-08-04', NULL, NULL),
+    (NULL, 5, 'Gold', 'PG5000025', 25, FALSE, TRUE, '2025-08-14', TRUE, 50227, '2025-08-05', NULL, NULL)
 ;
