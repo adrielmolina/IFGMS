@@ -11,7 +11,7 @@ INSERT INTO membership_records
 VALUES
     (NULL, 2025, TRUE, TRUE, '2025-04-10', '2025-04-10', 'CVSU', 'Public College', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL),
     (NULL, 2024, TRUE, TRUE, '2025-11-10', '2024-11-04', 'CNHS', 'Public High School', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL),
-    (NULL, 2023, FALSE, TRUE, '2025-02-25', '2023-02-12', 'NCST', 'Private College', 'Dasmarinas', '1', TRUE, 'Dasmarinas', NULL, 'late-declare'),
+    (NULL, 2023, FALSE, TRUE, '2025-02-25', '2023-02-12', 'NCST', 'Private College', 'Dasmariñas', '1', TRUE, 'Dasmarinas', NULL, 'late-declare'),
     (NULL, 2022, TRUE, TRUE, '2025-05-25', '2022-05-22', 'San Sebastian College Recoletos', 'Private College', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL),
     (NULL, 2021, TRUE, FALSE, NULL, '2021-01-13', 'LDES', 'Public Elementary School', 'Cavite City', '1', TRUE, 'Chapter', NULL, NULL)
 ;
@@ -78,3 +78,60 @@ VALUES
     (NULL, 5, 'Senior+', 'SP5000024', 24, TRUE, TRUE, '2025-08-13', FALSE, 50226, '2025-08-04', NULL, NULL),
     (NULL, 5, 'Gold', 'PG5000025', 25, FALSE, TRUE, '2025-08-14', TRUE, 50227, '2025-08-05', NULL, NULL)
 ;
+
+INSERT INTO ifgms.maab_claims (
+    date_filed, received_by, claim_origin, date_of_loss, maab_no,
+    same_as_insured, claimant_first_name, claimant_middle_name, claimant_last_name,
+    claimant_suffix, relation_to_insured, claimant_contact_no, claimant_email,
+    claim_remarks, status, date_released, chinabank_check_no, chinabank_amount,
+    bpi_check_no, bpi_amount, release_remarks, scanned_docs, prm_file,
+    quit_claim_file, picked_up, date_picked_up, req_claim_form, req_prc_id,
+    req_med_cert, req_hos_bill_or, req_state_of_acc, req_doctor_pres,
+    req_purchased_meds, req_med_records, req_incident_rep, req_police_rep,
+    req_drivers_lic, sent_advanced_notice
+) VALUES
+-- 1 : PG1000001
+('2025-05-10', 'abby', 'chapter', '2025-05-05', 'PG1000001',
+ TRUE, 'Juan', 'Santos', 'Dela Cruz', NULL, 'Self', '09171234567', 'juan.delacruz@email.com',
+ 'Minor injury claim', 'approved', '2025-05-20', '12001', 5000.00,
+ NULL, NULL, 'Released to claimant', TRUE, TRUE,
+ TRUE, TRUE, '2025-05-22', TRUE, TRUE,
+ TRUE, FALSE, TRUE, FALSE,
+ TRUE, TRUE, FALSE, FALSE,
+ FALSE, TRUE),
+-- 2 : PS1000002
+('2025-06-02', 'jb', 'dasma', '2025-05-30', 'PS1000002',
+ FALSE, 'Maria', 'Reyes', 'Lopez', NULL, 'Spouse', '09182345678', 'maria.lopez@email.com',
+ 'Pending verification', 'pending', NULL, NULL, NULL,
+ NULL, NULL, NULL, FALSE, FALSE,
+ FALSE, FALSE, NULL, TRUE, TRUE,
+ FALSE, FALSE, FALSE, FALSE,
+ FALSE, FALSE, FALSE, FALSE,
+ FALSE, FALSE),
+-- 3 : PB1000003
+('2025-04-18', 'adriel', 'silang', '2025-04-15', 'PB1000003',
+ TRUE, 'Pedro', 'Gomez', 'Santos', 'Jr', 'Parent', '09193456789', 'pedro.santos@email.com',
+ 'Claim denied - insufficient documents', 'denied', NULL, NULL, NULL,
+ NULL, NULL, 'Lacks medical certificate', FALSE, TRUE,
+ FALSE, FALSE, NULL, TRUE, TRUE,
+ FALSE, FALSE, FALSE, FALSE,
+ FALSE, FALSE, FALSE, FALSE,
+ FALSE, FALSE),
+-- 4 : 1000004
+('2025-07-07', 'louis', 'chapter', '2025-07-03', '1000004',
+ FALSE, 'Luz', 'Castillo', 'Marquez', NULL, 'Child', '09204567891', 'luz.marquez@email.com',
+ 'Fracture treatment claim', 'approved', '2025-07-15', NULL, NULL,
+ '453001', 8000.00, 'Released to spouse', TRUE, TRUE,
+ TRUE, TRUE, '2025-07-18', TRUE, TRUE,
+ TRUE, TRUE, FALSE, TRUE,
+ TRUE, FALSE, FALSE, FALSE,
+ FALSE, TRUE),
+-- 5 : PP1000005
+('2025-08-01', 'josh', 'dasma', '2025-07-29', 'PP1000005',
+ TRUE, 'Jose', 'Martinez', 'Villanueva', NULL, 'Self', '09215678912', 'jose.villanueva@email.com',
+ 'Awaiting PRC ID', 'pending', NULL, NULL, NULL,
+ NULL, NULL, NULL, FALSE, FALSE,
+ FALSE, FALSE, NULL, TRUE, FALSE,
+ FALSE, FALSE, FALSE, FALSE,
+ FALSE, FALSE, FALSE, FALSE,
+ FALSE, FALSE);

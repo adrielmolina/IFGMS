@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/members.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/members.css') }}">
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
@@ -14,14 +14,29 @@
 
 
 {% block content %}
-    <!-- TODO add sort button and filters on column; add search bar -->
+    <!-- TODO add sort button  -->
      <!-- TODO make the scrollbars always visible -->
       <!-- TODO add auto district number based on municipality selected -->
        <!-- TODO add select options for accepted tags -->
         <!-- TODO add origin select options -->
          <!-- TODO add js function to set location particular to all caps while typing -->
-    <h4>Member Records</h4>
-    <button>Add Record</button>
+            <!-- TODO center the title -->
+             <!-- TODO add flat list of members -->
+    <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
+        <h3 style="margin: 0; font-weight: bolder;">M E M B E R&nbsp;&nbsp;&nbsp;&nbsp;R E C O R D S</h3>                
+    </span>
+
+    <div class="controls_box">
+        <button>Add Record</button>
+        <button>Add to Declaration</button>
+    </div>
+    
+    <!-- TODO declaration/transmission: automate this with js- check the location of the person signed in  -->
+
+    <br>
+    <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
+    <button id="search_clear">Clear</button>
+
     <div id="members_table" class="ht-theme-main"></div>
 
     <div id="overlay" class="overlay">
@@ -31,16 +46,22 @@
                 <!-- Dynamic content goes here -->
 
                 <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
-                    <h4 style="margin: 0;">Record Details</h4>
-                    <button id="save_record_details" class="save_record_details" style="margin-right: auto;">Save</button>
+                    <h3 style="margin: 0; font-weight: bolder;">R E C O R D&nbsp;&nbsp;&nbsp;&nbsp;D E T A I L S</h3>                
                 </span>
 
-                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                    <label class="switch">
-                        <input type="checkbox" id="record_details_check" checked>
-                        <span class="slider"></span>
-                    </label>
+                <div class="controls_box">
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <label class="switch">
+                            <input type="checkbox" id="record_details_check" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <button id="save_record_details" class="save_record_details">Save</button>
+                    <button id="delete_record" class="delete_record">Delete Record</button>
+                    <!-- TODO add delete record function -->
                 </div>
+
 
                 <div id="record_details" class="record_details">
                     <form action="/api/get_entries" method="POST" id="record_entries">                 
@@ -194,8 +215,13 @@
                     </form>
                 </div>
                 
-                <h4>Entry Details</h4>
+                <!-- TODO fix the visual bug where the entry details table is compressed at the center when first opening the overlay -->
 
+                <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
+                    <h3 style="margin: 0; font-weight: bolder;">E N T R Y&nbsp;&nbsp;&nbsp;&nbsp;D E T A I L S</h3>                
+                </span>
+
+                <div class="controls_box">
                 <!-- TODO add js function make all cells readonly when form editor is on -->
                 <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                     <p>Live Editor</p>
@@ -204,6 +230,7 @@
                         <span class="slider"></span>
                     </label>
                     <p>Form Editor</p>
+                </div>
                 </div>
                 
                 <div class="second_row">
@@ -536,9 +563,28 @@
                 autoWrapRow: false,
                 autoWrapCol: false,
                 readOnly: true,
+                search: true,
+                filters: true,
+                dropdownMenu: true,
                 licenseKey: 'non-commercial-and-evaluation'
             });
+            const searchPlugin = hotInstance.getPlugin('search');
+            document.getElementById('search_input').addEventListener('input', function() {
+            const query = this.value;
+
+            searchPlugin.query(query);
+            hotInstance.render(); // refresh the table to show highlights
+            });
+
         });
+    
+    //search input clear button function
+    document.getElementById('search_clear').addEventListener('click', function() {
+        document.getElementById('search_input').value = '';
+        const searchPlugin = hotInstance.getPlugin('search');
+        searchPlugin.query('');
+        hotInstance.render(); // refresh the table to clear highlights
+    });
         
     // Record Details Box Switch
     const record_details_check = document.getElementById('record_details_check');
@@ -637,6 +683,7 @@
         });
     });
 
+    // save function
     document.getElementById('save_record_details').addEventListener('click', function () {
         // Gather data from the form fields
         const payload = {

@@ -1,0 +1,34 @@
+body {
+
+}
+
+.ht_master .wtHolder {
+    padding-bottom: 1%; /* adjust this value */
+}
+
+.ht_clone_top {
+    z-index: 1 !important; /* Lower the table header clone z-index */
+}
+
+.ht_clone_left {
+    z-index: 1 !important; /* Lower the table header clone z-index */
+}
+
+.ht_clone_top_left_corner {
+    z-index: 1 !important; /* or any value lower than your navbar */
+}
+
+/* bold for the headers */
+.ht_master th, .ht_clone_top th, .ht_clone_top_left_corner th {
+    font-weight: bold !important;
+}
+
+.handsontable td, 
+.handsontable th {
+    border: 1px solid #22222287 !important; /* Thicker, darker gridlines */
+}
+
+h1 {
+    border: 2px solid;
+    margin: 5px;
+}
