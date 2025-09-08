@@ -13,7 +13,11 @@
     
     {% block head %}{% endblock %}
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/global.css') }}">
+
+
 </head>
+
 <body>
     <!-- TODO download all assets instead of loading from google api -->
     <!-- Sidebar Navigation -->
@@ -118,6 +122,18 @@
     </script>
 
     {% block extra_scripts %} {% endblock %}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Apply saved font preferences globally
+            if (localStorage.getItem("appFont")) {
+                document.documentElement.style.setProperty("--app-font", localStorage.getItem("appFont"));
+            }
+            if (localStorage.getItem("appFontSize")) {
+                document.documentElement.style.setProperty("--app-font-size", localStorage.getItem("appFontSize"));
+            }
+        });
+    </script>
 
 </body>
 </html>
