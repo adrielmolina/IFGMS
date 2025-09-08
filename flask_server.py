@@ -595,10 +595,14 @@ def generate_report():
 
 ###? MISC ROUTES ?###
 
-# TODO make a 4040 page
 @server.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
+
+# TODO make a 403 page
+@server.errorhandler(403)
+def page_not_found(e):
+    return render_template("403.html"), 403
 
 ROOT_STATIC_FILES = {
     "robots.txt",
