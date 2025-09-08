@@ -86,26 +86,66 @@
     
     <div class="setting-row">
         <span>Font Style</span>
-        <select>
-            <option>Default</option>
-            <option>Sans-serif</option>
-            <option>Serif</option>
-            <option>Monospace</option>
+        <select id="fontStyleSelect">
+            <option value="default">Default</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="serif">Serif</option>
+            <option value="monospace">Monospace</option>
         </select>
     </div>
 
     <div class="setting-row">
         <span>Font Size</span>
-        <select>
-            <option>Small</option>
-            <option>Medium</option>
-            <option>Large</option>
+        <select id="fontSizeSelect">
+            <option value="small">Small</option>
+            <option value="medium" selected>Medium</option>
+            <option value="large">Large</option>
         </select>
-    </div>
-</div>
+    </div>  
 
 {% endblock %}
 
 {% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const fontStyleSelect = document.getElementById("fontStyleSelect");
+    const fontSizeSelect = document.getElementById("fontSizeSelect");
 
+    // Restore UI dropdown states
+    if (localStorage.getItem("appFontKey")) {
+        fontStyleSelect.value = localStorage.getItem("appFontKey");
+    }
+    if (localStorage.getItem("appFontSizeKey")) {
+        fontSizeSelect.value = localStorage.getItem("appFontSizeKey");
+    }
+
+    // Font style change
+    fontStyleSelect.addEventListener("change", function() {
+        let fontFamily;
+        switch (this.value) {
+            case "sans-serif": fontFamily = "Arial, sans-serif"; break;
+            case "serif": fontFamily = "'Times New Roman', serif"; break;
+            case "monospace": fontFamily = "'Courier New', monospace"; break;
+            default: fontFamily = "Arial, sans-serif";
+        }
+        document.documentElement.style.setProperty("--app-font", fontFamily);
+        localStorage.setItem("appFont", fontFamily);
+        localStorage.setItem("appFontKey", this.value);
+    });
+
+    // Font size change
+    fontSizeSelect.addEventListener("change", function() {
+        let size;
+        switch (this.value) {
+            case "small": size = "14px"; break;
+            case "medium": size = "16px"; break;
+            case "large": size = "18px"; break;
+            default: size = "16px";
+        }
+        document.documentElement.style.setProperty("--app-font-size", size);
+        localStorage.setItem("appFontSize", size);
+        localStorage.setItem("appFontSizeKey", this.value);
+    });
+});
+</script>
 {% endblock %}
