@@ -297,16 +297,30 @@ def get_pending_claims_count():
 
 
 def get_member_records():
-    conn = conn_init()
-
-    with conn:
+    db_session = SessionLocal()
+    try:
+        records = db_session.query(models.Members).all()
+        return records
+    except Exception as e:
+        return "Error fetching member records: {e}"
+    '''
         query = text("SELECT * FROM membership_records")
         result = conn.execute(query)
         records = result.fetchall()
         return records
-
+    '''
 
 def get_claim_records():
+    db_session = SessionLocal()
+    try:
+        records = db_session.query(models.Claims).all()
+        return records
+    except Exception as e:
+        return "Error fetching claim records: {e}"
+    
+    
+    
+    '''
     conn = conn_init()
     with conn:
         query = text("""
@@ -327,7 +341,7 @@ def get_claim_records():
         result = conn.execute(query)
         records = result.fetchall()
         return records
-
+    '''
 
 def add_new_record():
     conn = conn_init()
@@ -521,12 +535,11 @@ def delete_claim_record(claim_id):
 
 
 def get_entries(record_id):
-    conn = conn_init()
-    Session = sessionmaker(bind=conn)
-    with Session() as session:
+    db_session = SessionLocal()
+    try:
         # Join Entries and Members on member_id
         results = (
-            session.query(
+            db_session.query(
                 models.Entries.entry_id,
                 models.Entries.maab_category,
                 models.Entries.maab_no,
@@ -562,6 +575,9 @@ def get_entries(record_id):
             'declared', 'declaration_date', 'paid', 'OR_num', 'OR_date', 'remarks', 'tags'
         ]
         return [dict(zip(col_names, row)) for row in results]
+    
+    except Exception as e:
+        return "Error fetching entries: {e}"
 
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
