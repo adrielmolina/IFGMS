@@ -1,0 +1,11 @@
+:root {
+    --app-font: "Arial", sans-serif;  /* default */
+    --app-font-size: 16px;           /* default */
+}
+
+/* Apply ONLY to content area, not navbar */
+.content, 
+.content * {
+    font-family: var(--app-font) !important;
+    font-size: var(--app-font-size) !important;
+}
