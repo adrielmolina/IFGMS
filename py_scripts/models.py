@@ -45,7 +45,33 @@ class Records(Base):
     origin = Column(String(255))
     remarks = Column(Text)
     tags = Column(String(255))
+    
+    @property
+    def declaration_date_YMD(self):
+        return self.declaration_date.strftime('%Y-%m-%d') if self.declaration_date else None
 
+    @property
+    def effectivity_date_YMD(self):
+        return self.effectivity_date.strftime('%Y-%m-%d') if self.effectivity_date else None
+    
+    def to_dict(self):
+        return {
+            'record_id': self.record_id,
+            'year': self.year,
+            'id_received': self.id_received,
+            'declared': self.declared,
+            'declaration_date': self.declaration_date_YMD,
+            'effectivity_date': self.effectivity_date_YMD,
+            'location_particular': self.location_particular,
+            'location_category': self.location_category,
+            'municipality': self.municipality,
+            'district': self.district,
+            'paid': self.paid,
+            'origin': self.origin,
+            'remarks': self.remarks,
+            'tags': self.tags
+        }
+    
 
 class Entries(Base):
     __tablename__ = 'entry_contents'
@@ -63,6 +89,14 @@ class Entries(Base):
     OR_date = Column(Date)
     remarks = Column(Text)
     tags = Column(String(255))
+    
+    @property
+    def declaration_date_YMD(self):
+        return self.declaration_date.strftime('%Y-%m-%d') if self.declaration_date else None
+    
+    @property
+    def or_date_YMD(self):
+        return self.OR_date.strftime('%Y-%m-%d') if self.OR_date else None
 
 
 class Members(Base):
@@ -145,6 +179,72 @@ class Claims(Base):
     sent_advanced_notice = Column(Boolean)
     claim_type = Column(Enum('ACCIDENT', 'DEATH'))
     
+    @property
+    def date_filed_YMD(self):
+        return self.date_filed.strftime('%Y-%m-%d') if self.date_filed else None
+
+    @property
+    def date_of_loss_YMD(self):
+        return self.date_of_loss.strftime('%Y-%m-%d') if self.date_of_loss else None
+    
+    @property
+    def date_released_YMD(self):
+        return self.date_released.strftime('%Y-%m-%d') if self.date_released else None
+    
+    @property
+    def date_picked_up_YMD(self):   
+        return self.date_picked_up.strftime('%Y-%m-%d') if self.date_picked_up else None
+    
+    def to_dict(self):
+        return {
+            'claim_id': self.claim_id,
+            'date_filed': self.date_filed_YMD,
+            'received_by': self.received_by,
+            'claim_origin': self.claim_origin,
+            'date_of_loss': self.date_of_loss_YMD,
+            'maab_no': self.maab_no,
+            'same_as_insured': self.same_as_insured,
+            'claimant_first_name': self.claimant_first_name,
+            'claimant_middle_name': self.claimant_middle_name,
+            'claimant_last_name': self.claimant_last_name,
+            'claimant_suffix': self.claimant_suffix,
+            'relation_to_insured': self.relation_to_insured,
+            'claimant_contact_no': self.claimant_contact_no,
+            'claimant_email': self.claimant_email,
+            'claim_remarks': self.claim_remarks,
+            'status': self.status,
+            'date_released': self.date_released_YMD,
+            'chinabank_check_no': self.chinabank_check_no,
+            'chinabank_amount': float(self.chinabank_amount) if self.chinabank_amount is not None else None,
+            'bpi_check_no': self.bpi_check_no,
+            'bpi_amount': float(self.bpi_amount) if self.bpi_amount is not None else None,
+            'release_remarks': self.release_remarks,
+            'scanned_docs': self.scanned_docs,
+            'prm_file': self.prm_file,
+            'quit_claim_file': self.quit_claim_file,
+            'picked_up': self.picked_up,
+            'date_picked_up': self.date_picked_up_YMD,
+            'req_claim_form': self.req_claim_form,
+            'req_prc_id': self.req_prc_id,
+            'req_med_cert': self.req_med_cert,
+            'req_hos_bill_or': self.req_hos_bill_or,
+            'req_state_of_acc': self.req_state_of_acc,
+            'req_doctor_pres': self.req_doctor_pres,
+            'req_purchased_meds': self.req_purchased_meds,
+            'req_med_records': self.req_med_records,
+            'req_animal_bite_treat_rec': self.req_animal_bite_treat_rec,
+            'req_incident_rep': self.req_incident_rep,
+            'req_police_rep': self.req_police_rep,
+            'req_brgy_rep': self.req_brgy_rep,
+            'req_drivers_lic': self.req_drivers_lic,
+            'req_birth_cert': self.req_birth_cert,
+            'req_marriage_cert': self.req_marriage_cert,
+            'req_death_cert': self.req_death_cert,
+            'req_burial_receipts': self.req_burial_receipts,
+            'sent_advanced_notice': self.sent_advanced_notice,
+            'claim_type': self.claim_type
+        }
+        
 
 class Claims_Archive(Base):
     __tablename__ = 'maab_claims_archive'

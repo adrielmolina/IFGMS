@@ -1,1 +1,1 @@
-cloudflared tunnel --url http://localhost:5500
+cloudflared tunnel --url http://localhost:5000

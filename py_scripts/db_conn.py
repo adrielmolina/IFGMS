@@ -299,7 +299,7 @@ def get_pending_claims_count():
 def get_member_records():
     db_session = SessionLocal()
     try:
-        records = db_session.query(models.Members).all()
+        records = db_session.query(models.Records).all()
         return records
     except Exception as e:
         return "Error fetching member records: {e}"
@@ -313,12 +313,47 @@ def get_member_records():
 def get_claim_records():
     db_session = SessionLocal()
     try:
-        records = db_session.query(models.Claims).all()
-        return records
+        # records = db_session.query(models.Claims).all()
+        
+        mc = models.Claims
+        ec = models.Entries
+        mr = models.Records
+        mi = models.Members
+
+        records = (
+            db_session.query(
+                mc,
+                mr.effectivity_date,
+                mi.first_name,
+                mi.middle_name,
+                mi.last_name,
+                mi.suffix,
+                mi.contact_no,
+                mi.email,
+            )
+            .outerjoin(ec, mc.maab_no == ec.maab_no)
+            .outerjoin(mr, ec.record_id == mr.record_id)
+            .outerjoin(mi, ec.member_id == mi.member_id)
+            .all()
+        )
+        
+        results = []
+        for mc_obj, effectivity_date, first_name, middle_name, last_name, suffix, contact_no, email in records:
+            data = mc_obj.to_dict()
+            data.update({
+                "effectivity_date": effectivity_date.strftime("%Y-%m-%d") if effectivity_date else None,
+                "first_name": first_name,
+                "middle_name": middle_name,
+                "last_name": last_name,
+                "suffix": suffix,
+                "contact_no": contact_no,
+                "email": email,
+            })
+            results.append(data)
+        
+        return results
     except Exception as e:
         return "Error fetching claim records: {e}"
-    
-    
     
     '''
     conn = conn_init()
@@ -577,7 +612,7 @@ def get_entries(record_id):
         return [dict(zip(col_names, row)) for row in results]
     
     except Exception as e:
-        return "Error fetching entries: {e}"
+        return ["Error fetching entries: {e}"]
 
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):

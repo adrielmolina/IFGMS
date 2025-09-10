@@ -56,6 +56,16 @@ def roles_required(*roles):
 # ?TODO LIST-------------------------------
 # TODO add the summary per month to the module list or wherever
 
+# TODO disable this before deployment
+@server.before_request
+def auto_login():
+    ''' Auto-login for development purposes. Remove or disable in production. '''
+    db_session = db_conn.SessionLocal()
+    if server.config.get("DEBUG_BYPASS_LOGIN", True):
+        if not current_user.is_authenticated:
+            test_user = db_session.query(db_conn.models.Accounts).filter_by(username="adriel").first()
+            login_user(test_user)
+
 
 # <------------ NAVIGATIONS ------------>
 
@@ -383,9 +393,13 @@ def get_pending_claims_count():
 
 # API FOR MEMBERS PAGE
 
+# TODO fix api route names ex. /api/members/get_records
 
-@server.route('/api/get_records')
+@server.route('/api/members/records')
 def get_members():
+    member_records = db_conn.get_member_records()
+    return jsonify([record.to_dict() for record in member_records])
+    '''
     records = db_conn.get_member_records()
     members_list = []
 
@@ -403,8 +417,8 @@ def get_members():
         members_list.append(record)
 
     return jsonify(members_list)
-
-
+    '''
+    
 @server.route('/api/add_record', methods=['POST'])
 def add_new_record():
     new_record_id = db_conn.add_new_record()
@@ -418,17 +432,18 @@ def save_record_details():
         return jsonify({"success": True})
 
 
-@server.route('/api/get_entries', methods=['POST'])
-def get_entries():
-    data = request.get_json()
-    record_id = data.get('record_id')
-    # Use record_id to filter your SQL query
+@server.route('/api/members/<int:record_id>/entries', methods=['GET'])
+def get_entries(record_id):
     entries = db_conn.get_entries(record_id)
     return jsonify(entries)
 
 
 @server.route('/api/get_claim_records')
 def get_claim_records():
+    claim_records = db_conn.get_claim_records()
+    return jsonify(claim_records)
+
+    '''
     records = db_conn.get_claim_records()
     claims_list = []
 
@@ -445,6 +460,7 @@ def get_claim_records():
 
         claims_list.append(record)
     return jsonify(claims_list)
+    '''
 
 
 @server.route('/api/add_claim_record', methods=['POST'])
