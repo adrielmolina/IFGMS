@@ -410,7 +410,7 @@
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='/js/entries_table.js')}}"></script>
+<script src="{{ url_for('static', filename='js/entries_table.js')}}"></script>
 
 <script>
     let hotInstance = null;
@@ -464,9 +464,11 @@
 
         document.getElementById('overlay').style.display = 'flex';
 
+        console.log(rowData.record_id);
         fetch(`/api/members/${rowData.record_id}/entries`)
         .then(response => response.json())
         .then(data => {
+            
             data.forEach(row => {
                 if (row.birth_date) {
                     const date = new Date(row.birth_date);

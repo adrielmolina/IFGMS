@@ -74,6 +74,7 @@ def landing_page():
     return render_template('index.html')
 
 
+# TODO add the usernamee and pass to the route address
 @server.route('/login', methods=['POST'])
 def login():
     username = request.form.get("username")
@@ -86,13 +87,16 @@ def login():
         # print({c.name: getattr(user, c.name) for c in user.__table__.columns})# Debugging line. remove after testing
         if user.acct_status == 'approved':
             login_user(user)
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Login Attempt', 'Success', current_user.account_id)
             return redirect(url_for('dashboard'))
+
         elif user.acct_status == 'pending':
             flash({
                 "title": "Login Error!",
                 "text": "Account not approved yet. Contact admin.",
                 "redirect_url": url_for('landing_page')
             },"error")
+            db_conn.POST_action_log(username, None, 'Login Attempt', 'Fail. Account status pending', None)
             return render_template('index.html')
     else:
         flash({
@@ -100,6 +104,7 @@ def login():
             "text": "Wrong username or password. Try again.",
             "redirect_url": url_for('landing_page')
         }, "error")
+        db_conn.POST_action_log(username, None, 'Login Attempt', 'Fail. Wrong username/password', None)
         return render_template('index.html')
     
     '''
@@ -235,7 +240,10 @@ def bud_v_exp():
 @login_required
 @roles_required('admin', 'superadmin')
 def audit_trails():
-    return render_template('audit_trails.html')
+    logs = db_conn.GET_audit_logs()
+    
+    return render_template('audit_trails.html', logs=logs)
+
 
 
 @server.route('/accounts')
@@ -260,7 +268,7 @@ def settings():
 @server.route('/create_acc_submit', methods=['POST'])
 def create_acc_submit():
     user = request.form.get('username')
-    passw = request.form.get('password')
+    password = request.form.get('password')
     email = request.form.get('email')
 
     fname = request.form.get('fname').upper()
@@ -274,21 +282,31 @@ def create_acc_submit():
     acct_created = date.today().strftime("%Y-%m-%d")
     branch = request.form.get('branch')
 
-    if (fname, mname, lname, suffix, bdate, contact, email, user, passw, branch):
-        #print(fname, mname, lname, suffix, bdate, contact, email, user, passw, branch) #todo remove afer development
-        hashed_pass = tools.hash_password(passw)
-
-        db_conn.create_account(user=user, hashed_pass=hashed_pass, email=email, fname=fname, mname=mname, lname=lname,
-                               suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
+    if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
+        create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
+                            suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
+    
+    if not create_new_acc == True:
+        flash({
+            "title": "Account creation failed!",
+            "text": f"{create_new_acc}. Please try again.",
+            "redirect_url": url_for('create_acc')
+        }, "error")
+        return render_template('create_account.html')
     else:
-        pass
-
-    flash({
+        flash({
         "title": "Account created successfully!",
         "text": "Click continue to go back to login screen.",
         "redirect_url": url_for('landing_page')
-    }, "success")
-    return render_template('create_account.html')
+        }, "success")
+        return render_template('create_account.html')
+
+
+    # TODO add condition to check if the username already exists
+    # TODO fix condition to check if account creation succeeded
+    # TODO fix duplicate email/username error flash message not showing up
+
+    
 
 
 
@@ -299,7 +317,7 @@ def forgot_password_otp():
     if request.method == "POST":
         email = request.form.get("email")
 
-        otp = db_conn.generate_otp()  # Generate OTP
+        otp = tools.generate_otp()  # Generate OTP
         db_conn.save_otp(email, otp)  # Save OTP in otp_verifications table
         db_conn.send_otp_email(email, otp)  # Send OTP to user's
 
@@ -609,13 +627,12 @@ def generate_report():
         return render_template('error_page.html')  # Render an error page
 
 
-###? MISC ROUTES ?###
+#? -------------------- MISC ROUTES -------------------- ?#
 
 @server.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
 
-# TODO make a 403 page
 @server.errorhandler(403)
 def page_not_found(e):
     return render_template("403.html"), 403
@@ -636,7 +653,8 @@ def root_static_files(filename):
 def favicon():
     return send_from_directory(server.static_folder, 'assets/favicon.ico')
 
-###? MISC ROUTES ?#################################################
+#? -------------------- END -------------------- ?#
+
 
 if __name__ == '__main__':
     flask_server = Server(server.wsgi_app)

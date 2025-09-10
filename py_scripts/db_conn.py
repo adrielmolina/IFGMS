@@ -78,27 +78,6 @@ def shutdown_session():
     """Remove session (for Flask teardown)"""
     SessionLocal.remove()
 
-
-def load_user(user_id):
-    db_session = SessionLocal()
-    return db_session.query(models.Accounts).get(int(user_id))
-
-
-def create_account(**kwargs):
-    """ arguments must be the same name as in the sql query """
-    conn = conn_init()
-
-    try:
-        with conn.begin():
-            query = text(f"INSERT INTO accounts VALUES"
-                         " (NULL, :user, :hashed_pass, :email, :fname, :mname, :lname, :suffix,"
-                         " :bdate, :contact, :acct_created, :branch, DEFAULT, DEFAULT, NULL)")
-            conn.execute(query, kwargs)
-            conn.commit()
-    except Exception as e:
-        print(f"Error: {e}")
-
-
 def sign_in(username=None, password=None):    
     db_session = SessionLocal()
 
@@ -111,9 +90,183 @@ def sign_in(username=None, password=None):
         return user  # return full user object instead of "success/pending/fail"
     return None
     
+# TODO make the generated id current year + 0000 + last inserted id
+def create_account(**kwargs):
+    """ arguments must be the same name as in the sql query """
+    
+    db_session = SessionLocal()
+    
+    hashed_pass = tools.hash_password(kwargs.get('password'))
+    try:
+        new_account = models.Accounts(
+            username=kwargs.get('user'),
+            password=hashed_pass,
+            email=kwargs.get('email'),
+            first_name=kwargs.get('fname'),
+            middle_name=kwargs.get('mname'),
+            last_name=kwargs.get('lname'),
+            suffix=kwargs.get('suffix'),
+            birth_date=kwargs.get('bdate'),
+            contact_no=kwargs.get('contact'),
+            acct_created=kwargs.get('acct_created'),
+            office_location=kwargs.get('branch'),
+            user_level='staff',  # default user level
+            acct_status='pending',  # default status
+            acct_review_date=None  # default review date
+        )
+        db_session.add(new_account)
+        db_session.commit()
+        return True
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error creating account: {e}")
+        return str(e)
+    
+    
+# TODO move the otp functions to tools.py
+# ? RESET PASS START
+# !!!!!!!!!!!!!!!!!!!!!!!! SAVE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# TODO add otp_used column to the table
+def save_otp(email, otp):
+    """Save OTP in the database with expiration time."""
+    
+    db_session = SessionLocal()
+    
+    expires_at = datetime.now() + timedelta(minutes=5)
+    created_at = datetime.now()
+
+    try:
+        new_otp = models.OTPs(
+            email=email,
+            otp=otp,
+            expires_at=expires_at,
+            created_at=created_at,
+            otp_used=False  # default value, but explicit for clarity
+        )
+        db_session.add(new_otp)
+        db_session.commit()
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving OTP: {e}")
+        raise
+    
+    '''
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    expires_at = datetime.now() + timedelta(minutes=5)
+    created_at = datetime.now()  # Capture the time when OTP is generated
+    
+    with Session() as session:
+        query = text("""
+            INSERT INTO otp_verifications (email, otp, expires_at, created_at) 
+            VALUES (:email, :otp, :expires_at, :created_at)
+        """)
+        session.execute(query, {
+            "email": email,
+            "otp": otp,
+            "expires_at": expires_at,
+            "created_at": created_at
+        })
+        session.commit()
+    '''
+
+# !!!!!!!!!!!!!!!!!!!!!!!! SEND OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+def send_otp_email(email, otp):
+    """Send OTP to the user's email."""
+    subject = "Your OTP Code"
+    body = f"Your OTP code is: {otp}. It will expire in 5 minutes."
+
+    message = MIMEMultipart()
+    message['From'] = SENDER_EMAIL
+    message['To'] = email
+    message['Subject'] = subject
+    message.attach(MIMEText(body, 'plain'))
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.sendmail(SENDER_EMAIL, email, message.as_string())
+        print("OTP sent successfully!")
+    except Exception as e:
+        print(f"Failed to send OTP: {e}")
+
+
+# !!!!!!!!!!!!!!!!!!!!!!!! VERIFY OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+def verifying_otp(email, otp_input):
+    """Verify OTP against the database (original version with added debug prints)"""
+    #* TODO remove on production
+    print(f"[DEBUG] Starting OTP verification for {email}")
+    print(f"[DEBUG] Input OTP: {otp_input} (type: {type(otp_input)})")
+    
+    conn = conn_init()
+    if not conn:
+        print("[ERROR] Connection failed!")
+        return "fail"
+
+    Session = sessionmaker(bind=conn)
+
+    with Session() as session:
+        query = text("SELECT otp, expires_at FROM otp_verifications WHERE email = :email ORDER BY created_at DESC LIMIT 1")
+        result = session.execute(query, {"email": email}).fetchone()
+        print(f"[DEBUG] Database query result: {result}")
+
+    if result:
+        otp, expires_at = result
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+        current_time = datetime.now(timezone.utc)
+        print(f"[DEBUG] Stored OTP: {otp} (type: {type(otp)})")
+        print(f"[DEBUG] Expires at: {expires_at}")
+        print(f"[DEBUG] Current time: {current_time}")
+
+        if current_time > expires_at:
+            print("[DEBUG] OTP expired")
+            return "expired"
+        
+        if str(otp_input) == str(otp):
+            print("[DEBUG] OTP matched")
+            delete_query = text("DELETE FROM otp_verifications WHERE email = :email")
+            with Session() as session:
+                session.execute(delete_query, {"email": email})
+                session.commit()
+            return "success"
+        else:
+            print("[DEBUG] OTP mismatch")
+            return "fail"
+    else:
+        print("[DEBUG] No OTP found for this email")
+        return "fail"
+    
+    
+def update_password(email, new_password):
+    """Update the password in the database."""
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+
+    salted_pass = tools.hash_password(new_password)
+
+    with Session() as session:
+        query = text("UPDATE accounts SET password = :new_password WHERE email = :email")
+        session.execute(query, {"new_password": salted_pass, "email": email})
+        session.commit()
+
+# ? RESET PASS END    
     
 
+
+
+
+
+
+
+
+
+
+
+
 def get_user_accounts(status):
+    ''' for account module '''
+    
     db_session = SessionLocal()
     try:
         accounts = (
@@ -170,116 +323,9 @@ def account_action(selected_ids, action):
     finally:
         session.close
     return None
-    
-# ? RESET PASS START
-# !!!!!!!!!!!!!!!!!!!!!!!! GENERATE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def generate_otp():
-    """Generate a random 6-digit OTP."""
-    return str(randint(100000, 999999))
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!! SAVE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def save_otp(email, otp):
-    """Save OTP in the database with expiration time."""
-    conn = conn_init()
-    Session = sessionmaker(bind=conn)
-    expires_at = datetime.now() + timedelta(minutes=5)
-    created_at = datetime.now()  # Capture the time when OTP is generated
-    
-    with Session() as session:
-        query = text("""
-            INSERT INTO otp_verifications (email, otp, expires_at, created_at) 
-            VALUES (:email, :otp, :expires_at, :created_at)
-        """)
-        session.execute(query, {
-            "email": email,
-            "otp": otp,
-            "expires_at": expires_at,
-            "created_at": created_at
-        })
-        session.commit()
 
-
-# !!!!!!!!!!!!!!!!!!!!!!!! SEND OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def send_otp_email(email, otp):
-    """Send OTP to the user's email."""
-    subject = "Your OTP Code"
-    body = f"Your OTP code is: {otp}. It will expire in 5 minutes."
-
-    message = MIMEMultipart()
-    message['From'] = SENDER_EMAIL
-    message['To'] = email
-    message['Subject'] = subject
-    message.attach(MIMEText(body, 'plain'))
-
-    try:
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.sendmail(SENDER_EMAIL, email, message.as_string())
-        print("OTP sent successfully!")
-    except Exception as e:
-        print(f"Failed to send OTP: {e}")
-
-
-# !!!!!!!!!!!!!!!!!!!!!!!! VERIFY OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def verifying_otp(email, otp_input):
-    """Verify OTP against the database (original version with added debug prints)"""
-    print(f"[DEBUG] Starting OTP verification for {email}")
-    print(f"[DEBUG] Input OTP: {otp_input} (type: {type(otp_input)})")
-    
-    conn = conn_init()
-    if not conn:
-        print("[ERROR] Connection failed!")
-        return "fail"
-
-    Session = sessionmaker(bind=conn)
-
-    with Session() as session:
-        query = text("SELECT otp, expires_at FROM otp_verifications WHERE email = :email ORDER BY created_at DESC LIMIT 1")
-        result = session.execute(query, {"email": email}).fetchone()
-        print(f"[DEBUG] Database query result: {result}")
-
-    if result:
-        otp, expires_at = result
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-        current_time = datetime.now(timezone.utc)
-        print(f"[DEBUG] Stored OTP: {otp} (type: {type(otp)})")
-        print(f"[DEBUG] Expires at: {expires_at}")
-        print(f"[DEBUG] Current time: {current_time}")
-
-        if current_time > expires_at:
-            print("[DEBUG] OTP expired")
-            return "expired"
-        
-        if str(otp_input) == str(otp):
-            print("[DEBUG] OTP matched")
-            delete_query = text("DELETE FROM otp_verifications WHERE email = :email")
-            with Session() as session:
-                session.execute(delete_query, {"email": email})
-                session.commit()
-            return "success"
-        else:
-            print("[DEBUG] OTP mismatch")
-            return "fail"
-    else:
-        print("[DEBUG] No OTP found for this email")
-        return "fail"
-    
-    
-def update_password(email, new_password):
-    """Update the password in the database."""
-    conn = conn_init()
-    Session = sessionmaker(bind=conn)
-
-    salted_pass = tools.hash_password(new_password)
-
-    with Session() as session:
-        query = text("UPDATE accounts SET password = :new_password WHERE email = :email")
-        session.execute(query, {"new_password": salted_pass, "email": email})
-        session.commit()
-
-# ? RESET PASS END
 
 
 def get_pending_claims_count():
@@ -683,6 +729,52 @@ def get_inventory_entries(allocated_to=None):
         ]
         return [dict(zip(col_names, row)) for row in results]
 
+
+def GET_audit_logs():
+    db_session = SessionLocal()
+    try:
+        logs = db_session.query(models.Logs).order_by(models.Logs.date.desc()).all()
+        return logs
+    except Exception as e:
+        print(f"Error fetching audit logs: {e}")
+        return []
+    
+
+
+def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=None, current_user_id=None):
+    """ for logging actions on audit_trails table """
+    
+    db_session = SessionLocal()
+    
+    try:
+        audit_log = models.Logs(
+            date=datetime.now(),
+            staff_name=current_user,
+            user_level=current_user_lvl,
+            action_name=action,
+            description=desc,
+            account_id=current_user_id
+        )
+        print(audit_log)
+        
+        db_session.add(audit_log)
+        db_session.commit()
+        print("Action logged successfully.")
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error logging action: {e}")    
+    
+    '''
+    now = datetime.now()
+    current_date_time = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    
+    
+    with conn.cursor() as cursor:
+        cursor.execute('INSERT INTO audit_trails VALUES (%s, %s, %s, %s, %s, %s)',
+                       (None, current_date_time, current_user, current_user_lvl, action, desc))
+        conn.commit()
+    '''
 
 if __name__ == '__main__':
     print('do no run this module directly lol')
