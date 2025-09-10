@@ -20,7 +20,13 @@
     <h1>Inventory</h1>
 </div>
 
+  <div class="top-bar">
     <button id="openFormBtn1">Add ID Stock</button>
+    <div class="search-container">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search...">
+    </div>
+  </div>
 
 <div id="popupForm1" class="popup-form">
     <div class="form-container1">
@@ -496,6 +502,35 @@ exampleCarousel.mounted();
     selectCategory('Classic');
 
 
+    const searchInput = document.getElementById('searchInput');
+
+  // Function to filter the inventory data
+  function filterInventory(query) {
+    // Loop through each category (Classic, Bronze, etc.)
+    categories.forEach(cat => {
+      const container = document.getElementById('hot-' + cat.replace(/ /g, '_'));
+      
+      if (container && hotInstances[cat]) {
+        // Filter the data for the current category
+        const filteredData = inventoryData.filter(item => {
+          return (
+            item.maab_category.toLowerCase().includes(query.toLowerCase()) || 
+            item.inv_id.toLowerCase().includes(query.toLowerCase()) ||
+            item.maab_no.toLowerCase().includes(query.toLowerCase())
+          );
+        });
+
+        // Update the Handsontable instance with the filtered data
+        hotInstances[cat].loadData(filteredData);
+      }
+    });
+  }
+
+  // Add an event listener for the search input field
+  searchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    filterInventory(query);
+  });
         
     </script>
 {% endblock %}
