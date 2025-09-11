@@ -364,15 +364,15 @@
           "type": "ENUM",
           "values": [
             "admin",
-            "user",
-            "superadmin"
+            "superadmin",
+            "staff"
           ],
           "comment": "",
           "unique": false,
           "increment": false,
           "notNull": false,
           "primary": false,
-          "default": "user",
+          "default": "staff",
           "check": "",
           "id": 12
         },
@@ -2220,13 +2220,14 @@
           "name": "user_level",
           "type": "ENUM",
           "values": [
-            "staff",
-            "admin"
+            "admin",
+            "superadmin",
+            "staff"
           ],
           "comment": "",
           "unique": false,
           "increment": false,
-          "notNull": true,
+          "notNull": false,
           "primary": false,
           "default": "",
           "check": "",
@@ -2262,9 +2263,9 @@
           "name": "account_id",
           "type": "INTEGER",
           "comment": "",
-          "unique": true,
+          "unique": false,
           "increment": false,
-          "notNull": true,
+          "notNull": false,
           "primary": false,
           "default": "",
           "check": "",
@@ -2494,7 +2495,7 @@
           ]
         }
       ],
-      "comment": "table for contents of an entry",
+      "comment": "table for contents of a membership_record entry",
       "indices": [],
       "color": "#b56995",
       "key": 1745258803230
