@@ -262,8 +262,11 @@ def settings():
     return render_template('settings.html')
 
 
-# <------------ /NAVIGATIONS ------------>
+@server.route('/membership_register')
+def membership_register():
+    return render_template('membership_register.html')
 
+# <------------ /NAVIGATIONS ------------>
 
 @server.route('/create_acc_submit', methods=['POST'])
 def create_acc_submit():
