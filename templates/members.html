@@ -64,7 +64,7 @@
 
 
                 <div id="record_details" class="record_details">
-                    <form action="/api/get_entries" method="POST" id="record_entries">                 
+                    <form action="/api/members/entries" method="POST" id="record_entries">                 
                         <table class="record_details_table">
                             <tr>
                                 <td>
@@ -410,7 +410,7 @@
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='/js/entries_table.js')}}"></script>
+<script src="{{ url_for('static', filename='js/entries_table.js')}}"></script>
 
 <script>
     let hotInstance = null;
@@ -464,13 +464,11 @@
 
         document.getElementById('overlay').style.display = 'flex';
 
-        fetch("/api/get_entries", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ record_id: rowData.record_id }) // or whatever variable holds the record id
-        })
+        console.log(rowData.record_id);
+        fetch(`/api/members/${rowData.record_id}/entries`)
         .then(response => response.json())
         .then(data => {
+            
             data.forEach(row => {
                 if (row.birth_date) {
                     const date = new Date(row.birth_date);
@@ -506,7 +504,7 @@
     });
 
     // for records table
-    fetch("/api/get_records")
+    fetch("/api/members/records")
         .then(response => response.json())
         .then(data => {
             // date formats for the handsontable rows
@@ -611,7 +609,7 @@
 
     // reload table data
     function refreshMembersTable() {
-        fetch("/api/get_records")
+        fetch("/api/members/records")
             .then(response => response.json())
             .then(data => {
                 data.forEach(row => {
@@ -643,7 +641,7 @@
             // After adding, refresh the table data
             
             // open the new record entry window
-            fetch("/api/get_records")
+            fetch("/api/members/records")
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(row => {
