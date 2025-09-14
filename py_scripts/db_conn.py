@@ -1,13 +1,13 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, func
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, scoped_session
 import cryptography
 from datetime import date, datetime, timedelta, timezone
 from py_scripts import tools
-from py_scripts import models
+import py_scripts.models as models
 from random import randint
 import smtplib
 from email.mime.text import MIMEText
@@ -22,6 +22,12 @@ print("ENV File Location:", env_loc)
 
 load_dotenv(env_loc)
 
+DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'local').lower()
+
+# FOR AIVEN DB CONNECTION
+AIVEN_URI = os.getenv('AIVEN_URI')
+
+# FOR LOCAL DB CONNECTION
 SQL_HOST = os.getenv('SQL_HOST')
 SQL_USER = os.getenv('SQL_USER')
 SQL_PASS = os.getenv('SQL_PASS')
@@ -33,98 +39,290 @@ SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 
 # todo remove on deployment
-print(f'SQL CONNECTION DEBUG\nHost={SQL_HOST}\nUser={SQL_USER}\nPass={SQL_PASS}\nDB={SQL_DB}')
+# print(f'SQL CONNECTION DEBUG\nHost={SQL_HOST}\nUser={SQL_USER}\nPass={SQL_PASS}\nDB={SQL_DB}')
+
 
 def conn_init():
     try:
-        db_url = f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}/{SQL_DB}"
-        engine = create_engine(db_url)
-        conn = engine.connect()
-
+        if DB_CONNECTION_MODE == "aiven":
+            ca_path = Path(__file__).resolve().parent.parent / "sql" / "aiven" / "ca.pem"
+            if not ca_path.exists():
+                raise FileNotFoundError(f"SSL certificate not found: {ca_path}")
+            
+            db_url = f"{AIVEN_URI}&ssl_ca={ca_path}"
+            print(f"Connecting to Aiven DB")
+        
+        else:  # local connection
+            db_url = f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}/{SQL_DB}"
+            print(f"Connecting to local DB")
+            
+        engine = create_engine(db_url, pool_pre_ping=True)
         print('Database Connection Success')
-        return conn
-    except OperationalError:
-        try:
-            print('Database doesn\'t exist. Creating one...')
-            engine = create_engine(f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}")
-            db_init_script = Path(parent_dir/'sql/ifgms_db.sql')
-            init_val_script = Path(parent_dir/'sql/init_data.sql')
+        return engine
+    
+    except OperationalError as e:
+        print(f"Database Connection Failed: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected Error: {e}")
+        return None
+    
 
-            with engine.connect() as conn:
-                conn.execute(text(f"CREATE DATABASE {SQL_DB};"))
-                print(f"Database '{SQL_DB}' created successfully!")
-
-                # Function to execute SQL scripts
-                def execute_sql_script(script_path, engine):
-                    if script_path.exists():
-                        with open(script_path, "r") as file:
-                            sql_script = file.read()
-
-                        print(f"Executing {script_path.name}...")
-                        with engine.connect() as conn:
-                            for statement in sql_script.split(";"):  # Split script into individual statements
-                                statement = statement.strip()
-                                if statement:  # Ignore empty statements
-                                    conn.execute(text(statement))
-                            conn.commit()
-                        print(f"{script_path.name} executed successfully!")
-                    else:
-                        print(f"SQL script '{script_path}' not found!")
-
-                # Reconnect with the new database
-                db_url_with_db = f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}/{SQL_DB}"
-                engine_with_db = create_engine(db_url_with_db)
-
-                # Execute both SQL scripts
-                execute_sql_script(db_init_script, engine_with_db)
-                execute_sql_script(init_val_script, engine_with_db)
-
-                # Final connection
-                conn = engine_with_db.connect()
-                print("Database connection successful!")
-                return conn
-        except Exception as e:
-            print(f"Error: {e}")
+# TODO replace all session binds with SessionLocal
+conn = conn_init()
+SessionLocal = scoped_session(sessionmaker(bind=conn))
+# db_session = SessionLocal() # Use this for queries
 
 
+def shutdown_session():
+    """Remove session (for Flask teardown)"""
+    SessionLocal.remove()
+
+def sign_in(username=None, password=None):    
+    db_session = SessionLocal()
+
+    user = db_session.query(models.Accounts).filter(
+        models.Accounts.username == username,
+        models.Accounts.acct_status.in_(["approved", "pending"])
+    ).first()
+
+    if user and tools.check_password(password, user.password):
+        return user  # return full user object instead of "success/pending/fail"
+    return None
+    
+# TODO make the generated id current year + 0000 + last inserted id
 def create_account(**kwargs):
     """ arguments must be the same name as in the sql query """
-    conn = conn_init()
+    
+    db_session = SessionLocal()
+    
+    hashed_pass = tools.hash_password(kwargs.get('password'))
+    try:
+        new_account = models.Accounts(
+            username=kwargs.get('user'),
+            password=hashed_pass,
+            email=kwargs.get('email'),
+            first_name=kwargs.get('fname'),
+            middle_name=kwargs.get('mname'),
+            last_name=kwargs.get('lname'),
+            suffix=kwargs.get('suffix'),
+            birth_date=kwargs.get('bdate'),
+            contact_no=kwargs.get('contact'),
+            acct_created=kwargs.get('acct_created'),
+            office_location=kwargs.get('branch'),
+            user_level='staff',  # default user level
+            acct_status='pending',  # default status
+            acct_review_date=None  # default review date
+        )
+        db_session.add(new_account)
+        db_session.commit()
+        return True
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error creating account: {e}")
+        return str(e)
+    
+    
+# TODO move the otp functions to tools.py
+# ? RESET PASS START
+# !!!!!!!!!!!!!!!!!!!!!!!! SAVE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# TODO add otp_used column to the table
+def save_otp(email, otp):
+    """Save OTP in the database with expiration time."""
+    
+    db_session = SessionLocal()
+    
+    expires_at = datetime.now() + timedelta(minutes=5)
+    created_at = datetime.now()
 
     try:
-        with conn.begin():
-            query = text(f"INSERT INTO accounts VALUES"
-                         " (NULL, :user, :hashed_pass, :email, :fname, :mname, :lname, :suffix,"
-                         " :bdate, :contact, :acct_created, :branch, DEFAULT, DEFAULT, NULL)")
-            conn.execute(query, kwargs)
-            conn.commit()
+        new_otp = models.OTPs(
+            email=email,
+            otp=otp,
+            expires_at=expires_at,
+            created_at=created_at,
+            otp_used=False  # default value, but explicit for clarity
+        )
+        db_session.add(new_otp)
+        db_session.commit()
+        return 'success'
     except Exception as e:
-        print(f"Error: {e}")
-
-
-def sign_in(username=None, password=None):
+        db_session.rollback()
+        print(f"Error saving OTP: {e}")
+        raise
+    
+    '''
     conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    expires_at = datetime.now() + timedelta(minutes=5)
+    created_at = datetime.now()  # Capture the time when OTP is generated
+    
+    with Session() as session:
+        query = text("""
+            INSERT INTO otp_verifications (email, otp, expires_at, created_at) 
+            VALUES (:email, :otp, :expires_at, :created_at)
+        """)
+        session.execute(query, {
+            "email": email,
+            "otp": otp,
+            "expires_at": expires_at,
+            "created_at": created_at
+        })
+        session.commit()
+    '''
+
+def send_otp_email(email, otp):
+    """Send OTP to the user's email."""
+    subject = "Your OTP Code"
+    body = f"Your OTP code FGMS is: {otp}. This will expire in 5 minutes."
+
+    message = MIMEMultipart()
+    message['From'] = SENDER_EMAIL
+    message['To'] = email
+    message['Subject'] = subject
+    message.attach(MIMEText(body, 'plain'))
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.sendmail(SENDER_EMAIL, email, message.as_string())
+        print("OTP sent successfully!")
+    except Exception as e:
+        print(f"Failed to send OTP: {e}")
+
+
+def verifying_otp(email, otp_input):
+    """Verify OTP against the database (original version with added debug prints)"""
+    print(f"[DEBUG] Starting OTP verification for {email}")
+    print(f"[DEBUG] Input OTP: {otp_input} (type: {type(otp_input)})")
+    db_session = SessionLocal()
+    
+    try:
+        # Get the most recent OTP for this email
+        latest_otp = (
+            db_session.query(models.OTPs)
+            .filter_by(email=email)
+            .order_by(models.OTPs.created_at.desc())
+            .first()
+        )
+        
+        if not latest_otp:
+            print("[DEBUG] No OTP found for this email")
+            return "email_not_found"
+        
+        # Check if OTP is already used
+        if latest_otp.otp_used:
+            print("[DEBUG] OTP already used")
+            return "already_used"
+
+        print(f"[DEBUG] Stored OTP: {latest_otp.otp}")
+        print(f"[DEBUG] Expires at: {latest_otp.expires_at}")
+        print(f"[DEBUG] Current time: {datetime.now(timezone.utc)}")
+
+        # Check if expired
+        if datetime.now(timezone.utc) > latest_otp.expires_at.replace(tzinfo=timezone.utc):
+            print("[DEBUG] OTP expired")
+            return "expired"
+
+        # Check if matches
+        if str(otp_input) == str(latest_otp.otp):
+            print("[DEBUG] OTP matched")
+
+            # Delete all OTPs for this email
+            db_session.query(models.OTPs).filter_by(email=email).update({models.OTPs.otp_used: 1})
+            db_session.commit()
+            return "success"
+        else:
+            print("[DEBUG] OTP mismatch")
+            return "fail"
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"[ERROR] verifying_otp: {e}")
+        return "fail"
+        
+    
+    '''
+    conn = conn_init()
+    if not conn:
+        print("[ERROR] Connection failed!")
+        return "fail"
+
     Session = sessionmaker(bind=conn)
 
     with Session() as session:
-        query = text("SELECT password, acct_status FROM accounts WHERE username = :username AND (acct_status = 'approved' OR acct_status = 'pending')")
-        result = session.execute(query, {"username": username}).fetchone()
+        query = text("SELECT otp, expires_at FROM otp_verifications WHERE email = :email ORDER BY created_at DESC LIMIT 1")
+        result = session.execute(query, {"email": email}).fetchone()
+        print(f"[DEBUG] Database query result: {result}")
 
-    if result and tools.check_password(password, result[0]) and result[1] == 'approved':
-        return 'success'
-    elif result and tools.check_password(password, result[0]) and result[1] == 'pending':
-        return 'pending'
+    if result:
+        otp, expires_at = result
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+        current_time = datetime.now(timezone.utc)
+        print(f"[DEBUG] Stored OTP: {otp} (type: {type(otp)})")
+        print(f"[DEBUG] Expires at: {expires_at}")
+        print(f"[DEBUG] Current time: {current_time}")
+
+        if current_time > expires_at:
+            print("[DEBUG] OTP expired")
+            return "expired"
+        
+        if str(otp_input) == str(otp):
+            print("[DEBUG] OTP matched")
+            delete_query = text("DELETE FROM otp_verifications WHERE email = :email")
+            with Session() as session:
+                session.execute(delete_query, {"email": email})
+                session.commit()
+            return "success"
+        else:
+            print("[DEBUG] OTP mismatch")
+            return "fail"
     else:
-        return 'fail'
+        print("[DEBUG] No OTP found for this email")
+        return "fail"
+    '''
+    
+# TODO continue the ORM syntax update from here    
+def update_password(email, new_password):
+    """Update the password in the database."""
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+
+    salted_pass = tools.hash_password(new_password)
+
+    with Session() as session:
+        query = text("UPDATE accounts SET password = :new_password WHERE email = :email")
+        session.execute(query, {"new_password": salted_pass, "email": email})
+        session.commit()
+
+# ? RESET PASS END    
+    
+
+
+
+
+
+
+
+
+
+
+
 
 def get_user_accounts(status):
-    conn = conn_init()
-
-    with conn:
-        query = text("SELECT * FROM accounts WHERE acct_status IN :status")
-        result = conn.execute(query, {'status': tuple(status)})
-        accounts = result.fetchall()
+    ''' for account module '''
+    
+    db_session = SessionLocal()
+    try:
+        accounts = (
+            db_session.query(models.Accounts)
+            .filter(models.Accounts.acct_status.in_(status))
+            .all()
+        )
         return accounts
+    finally:
+        db_session.close()
 
 def account_action(selected_ids, action):    
     Session = sessionmaker(bind=conn_init())
@@ -171,125 +369,344 @@ def account_action(selected_ids, action):
     finally:
         session.close
     return None
-    
-# ? RESET PASS START
-# !!!!!!!!!!!!!!!!!!!!!!!! GENERATE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def generate_otp():
-    """Generate a random 6-digit OTP."""
-    return str(randint(100000, 999999))
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!! SAVE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def save_otp(email, otp):
-    """Save OTP in the database with expiration time."""
+
+
+
+def get_pending_claims_count():
     conn = conn_init()
     Session = sessionmaker(bind=conn)
-    expires_at = datetime.now() + timedelta(minutes=5)
-    created_at = datetime.now()  # Capture the time when OTP is generated
-    
     with Session() as session:
-        query = text("""
-            INSERT INTO otp_verifications (email, otp, expires_at, created_at) 
-            VALUES (:email, :otp, :expires_at, :created_at)
-        """)
-        session.execute(query, {
-            "email": email,
-            "otp": otp,
-            "expires_at": expires_at,
-            "created_at": created_at
-        })
-        session.commit()
+        count_pending = (
+            session.query(func.count(models.Claims.claim_id))
+            .filter(models.Claims.status == "pending")
+            .scalar()
+        )
+
+    return count_pending
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!! SEND OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def send_otp_email(email, otp):
-    """Send OTP to the user's email."""
-    subject = "Your OTP Code"
-    body = f"Your OTP code is: {otp}. It will expire in 5 minutes."
 
-    message = MIMEMultipart()
-    message['From'] = SENDER_EMAIL
-    message['To'] = email
-    message['Subject'] = subject
-    message.attach(MIMEText(body, 'plain'))
-
+def get_member_records():
+    db_session = SessionLocal()
     try:
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.sendmail(SENDER_EMAIL, email, message.as_string())
-        print("OTP sent successfully!")
+        records = db_session.query(models.Records).all()
+        return records
     except Exception as e:
-        print(f"Failed to send OTP: {e}")
+        return "Error fetching member records: {e}"
+    '''
+        query = text("SELECT * FROM membership_records")
+        result = conn.execute(query)
+        records = result.fetchall()
+        return records
+    '''
 
-
-# !!!!!!!!!!!!!!!!!!!!!!!! VERIFY OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def verifying_otp(email, otp_input):
-    """Verify OTP against the database (original version with added debug prints)"""
-    print(f"[DEBUG] Starting OTP verification for {email}")
-    print(f"[DEBUG] Input OTP: {otp_input} (type: {type(otp_input)})")
-    
-    conn = conn_init()
-    if not conn:
-        print("[ERROR] Connection failed!")
-        return "fail"
-
-    Session = sessionmaker(bind=conn)
-
-    with Session() as session:
-        query = text("SELECT otp, expires_at FROM otp_verifications WHERE email = :email ORDER BY created_at DESC LIMIT 1")
-        result = session.execute(query, {"email": email}).fetchone()
-        print(f"[DEBUG] Database query result: {result}")
-
-    if result:
-        otp, expires_at = result
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-        current_time = datetime.now(timezone.utc)
-        print(f"[DEBUG] Stored OTP: {otp} (type: {type(otp)})")
-        print(f"[DEBUG] Expires at: {expires_at}")
-        print(f"[DEBUG] Current time: {current_time}")
-
-        if current_time > expires_at:
-            print("[DEBUG] OTP expired")
-            return "expired"
+def get_claim_records():
+    db_session = SessionLocal()
+    try:
+        # records = db_session.query(models.Claims).all()
         
-        if str(otp_input) == str(otp):
-            print("[DEBUG] OTP matched")
-            delete_query = text("DELETE FROM otp_verifications WHERE email = :email")
-            with Session() as session:
-                session.execute(delete_query, {"email": email})
-                session.commit()
-            return "success"
-        else:
-            print("[DEBUG] OTP mismatch")
-            return "fail"
-    else:
-        print("[DEBUG] No OTP found for this email")
-        return "fail"
+        mc = models.Claims
+        ec = models.Entries
+        mr = models.Records
+        mi = models.Members
+
+        records = (
+            db_session.query(
+                mc,
+                mr.effectivity_date,
+                mi.first_name,
+                mi.middle_name,
+                mi.last_name,
+                mi.suffix,
+                mi.contact_no,
+                mi.email,
+            )
+            .outerjoin(ec, mc.maab_no == ec.maab_no)
+            .outerjoin(mr, ec.record_id == mr.record_id)
+            .outerjoin(mi, ec.member_id == mi.member_id)
+            .all()
+        )
+        
+        results = []
+        for mc_obj, effectivity_date, first_name, middle_name, last_name, suffix, contact_no, email in records:
+            data = mc_obj.to_dict()
+            data.update({
+                "effectivity_date": effectivity_date.strftime("%Y-%m-%d") if effectivity_date else None,
+                "first_name": first_name,
+                "middle_name": middle_name,
+                "last_name": last_name,
+                "suffix": suffix,
+                "contact_no": contact_no,
+                "email": email,
+            })
+            results.append(data)
+        
+        return results
+    except Exception as e:
+        return "Error fetching claim records: {e}"
     
-    
-def update_password(email, new_password):
-    """Update the password in the database."""
+    '''
+    conn = conn_init()
+    with conn:
+        query = text("""
+            SELECT
+                mc.*,
+                mr.effectivity_date,
+                mi.first_name,
+                mi.middle_name,
+                mi.last_name,
+                mi.suffix,
+                mi.contact_no,
+                mi.email
+            FROM maab_claims mc
+            LEFT JOIN entry_contents ec ON mc.maab_no = ec.maab_no
+            LEFT JOIN membership_records mr ON ec.record_id = mr.record_id
+            LEFT JOIN members_info mi ON ec.member_id = mi.member_id
+        """)
+        result = conn.execute(query)
+        records = result.fetchall()
+        return records
+    '''
+
+def add_new_record():
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        new_record = models.Records(
+            year=datetime.now().year,
+            id_received=None,
+            declared=None,
+            declaration_date=None,
+            effectivity_date=None,
+            location_particular=None,
+            location_category=None,
+            municipality=None,
+            district=None,
+            paid=None,
+            origin=None,
+            remarks=None,
+            tags=None
+        )
+        session.add(new_record)
+        session.commit()
+        return new_record.record_id
+
+
+def add_claim_record():
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        new_claim_record = models.Claims(
+            status='pending'
+        )
+        session.add(new_claim_record)
+        session.commit()
+        return new_claim_record.claim_id
+
+
+def verify_maab_no(maab_no):
     conn = conn_init()
     Session = sessionmaker(bind=conn)
 
-    salted_pass = tools.hash_password(new_password)
-
     with Session() as session:
-        query = text("UPDATE accounts SET password = :new_password WHERE email = :email")
-        session.execute(query, {"new_password": salted_pass, "email": email})
-        session.commit()
+        # Check if maab_no exists and get member_id
+        query = text("SELECT member_id, record_id FROM entry_contents WHERE maab_no = :maab_no")
+        result = session.execute(query, {"maab_no": maab_no}).fetchone()
 
-# ? RESET PASS END
+        if not result:
+            return None  # maab_no does not exist
+        else:
+            record_id = result[1]
+            query = text("SELECT effectivity_date FROM membership_records WHERE record_id = :record_id")
+            record = session.execute(query, {"record_id": record_id}).fetchone()
+            effectivity_date = record[0] if record else None
 
-def get_member_entries():
+        member_id = result[0]
+
+        # Get name fields from members_info
+        query = text("""
+            SELECT first_name, middle_name, last_name, suffix, contact_no, email
+            FROM members_info
+            WHERE member_id = :member_id
+        """)
+        member = session.execute(query, {"member_id": member_id}).fetchone()
+
+        if member:
+            return {
+                "exists": True,
+                "effectivity_date": effectivity_date.isoformat() if effectivity_date else None,
+                "first_name": member[0],
+                "middle_name": member[1],
+                "last_name": member[2],
+                "suffix": member[3],
+                "contact_no": member[4],
+                "email": member[5]
+            }
+        else:
+            return {"exists": False, "effectivity_date": None, "first_name": None, "middle_name": None, "last_name": None, "suffix": None}
+
+# TODO add indexes on fields that are frequently queried
+def save_record_details(data):
     conn = conn_init()
-    cursor = conn.cursor(dictionary=True)
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        record = session.query(models.Records).filter_by(record_id=data['record_id']).first()
+        if not record:
+            return False  # Or raise an exception
+
+        # Update fields if present in data
+        for field in [
+            'year', 'id_received', 'declared', 'declaration_date', 'effectivity_date',
+            'location_particular', 'location_category', 'municipality', 'district',
+            'paid', 'origin', 'remarks', 'tags'
+        ]:
+            if field in data:
+                value = data[field]
+                # Convert empty string to None for ENUM/NULL columns
+                if value == '':
+                    value = None
+                setattr(record, field, value)
+
+        session.commit()
+        return True
+
+# TODO add the new fields here to update
+# TODO change the column 'status' to claim_status
+# TODO change all instance of enhanced platinum to safe card
+def save_claim_record(data):
+    '''conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        claim = session.query(models.Claims).filter_by(claim_id=data['claim_id']).first()
+        if not claim:
+            return False  # Or raise an exception
+
+        # List of all fields to update
+        fields = [
+            'date_filed', 'received_by', 'claim_origin', 'date_of_loss', 'maab_no',
+            'same_as_insured', 'claimant_first_name', 'claimant_middle_name', 'claimant_last_name',
+            'claimant_suffix', 'relation_to_insured', 'claimant_contact_no', 'claimant_email',
+            'claim_remarks', 'status', 'date_released', 'chinabank_check_no', 'chinabank_amount',
+            'bpi_check_no', 'bpi_amount', 'release_remarks', 'scanned_docs', 'prm_file',
+            'quit_claim_file', 'picked_up', 'date_picked_up', 'req_claim_form', 'req_prc_id',
+            'req_med_cert', 'req_hos_bill_or', 'req_state_of_acc', 'req_doctor_pres',
+            'req_purchased_meds', 'req_med_records', 'req_incident_rep', 'req_police_rep',
+            'req_drivers_lic', 'sent_advanced_notice'
+        ]
+
+        for field in fields:
+            if field in data:
+                value = data[field]
+                # Convert empty string to None for nullable columns
+                if value == '':
+                    value = None
+                setattr(claim, field, value)
+
+        session.commit()
+        return True'''
+    # TODO check if this works properly then delete above code. check if each field is saving
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        claim = session.query(models.Claims).filter_by(claim_id=data.get('claim_id')).first()
+        if not claim:
+            return False  # or raise Exception("Claim not found")
+
+        # Get list of column names directly from the ORM model
+        model_columns = {col.name for col in models.Claims.__table__.columns}
+
+        for field, value in data.items():
+            if field in model_columns and field != "claim_id":  # don't overwrite PK
+                setattr(claim, field, value or None)  # empty string → None
+
+        session.commit()
+        return True
 
 
-if __name__ == '__main__':
-    conn_init()
+def delete_claim_record(claim_id):
+    conn = conn_init()
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        claim = session.query(models.Claims).get(claim_id)
+        if not claim:
+            return False
 
+        try:
+            # Get all column names from Claims_Archive except PK and extra columns
+            archive_columns = [
+                col.name for col in models.Claims_Archive.__table__.columns
+                if col.name != ("archived_claim_id",)  # Exclude PK or auto fields
+            ]
+
+            # Create a dict of column:value from the Claims record
+            claim_data = {
+                col: getattr(claim, col)
+                for col in archive_columns
+                if hasattr(claim, col)
+            }
+
+            # Create archive record dynamically
+            archived_claim = models.Claims_Archive(**claim_data)
+
+            session.add(archived_claim)
+            session.delete(claim)
+            session.commit()
+            return True
+
+        except Exception as e:
+            session.rollback()
+            print(f"Error deleting claim: {e}")
+            return False
+
+
+def get_entries(record_id):
+    db_session = SessionLocal()
+    try:
+        # Join Entries and Members on member_id
+        results = (
+            db_session.query(
+                models.Entries.entry_id,
+                models.Entries.maab_category,
+                models.Entries.maab_no,
+                models.Members.first_name,
+                models.Members.middle_name,
+                models.Members.last_name,
+                models.Members.suffix,
+                models.Members.birth_date,
+                models.Members.age,
+                models.Members.sex,
+                models.Members.contact_no,
+                models.Members.email,
+                models.Members.address,
+                models.Members.blood_type,
+                models.Entries.id_received,
+                models.Entries.declared,
+                models.Entries.declaration_date,
+                models.Entries.paid,
+                models.Entries.OR_num,
+                models.Entries.OR_date,
+                models.Entries.remarks,
+                models.Entries.tags
+            )
+            .join(models.Members, models.Entries.member_id == models.Members.member_id)
+            .filter(models.Entries.record_id == record_id)
+            .all()
+        )
+
+        # Convert results to list of dicts
+        col_names = [
+            'entry_id', 'maab_category', 'maab_no', 'first_name', 'middle_name', 'last_name', 'suffix',
+            'birth_date', 'age', 'sex', 'contact_no', 'email', 'address', 'blood_type', 'id_received',
+            'declared', 'declaration_date', 'paid', 'OR_num', 'OR_date', 'remarks', 'tags'
+        ]
+        return [dict(zip(col_names, row)) for row in results]
+    
+    except Exception as e:
+        return ["Error fetching entries: {e}"]
+
+# ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
     """
     Fetch user details from the database by username.
@@ -322,3 +739,91 @@ def get_user_details_by_username(username):
     else:
         print(f"No user found with username: {username}")
         return None
+
+
+def get_inventory_entries(allocated_to=None):
+    # Initialize connection
+    conn = conn_init()
+
+    # Create session
+    Session = sessionmaker(bind=conn)
+    with Session() as session:
+        # Query inventory table with optional filter on 'allocated_to'
+        query = session.query(
+            models.Inventory.inv_id,
+            models.Inventory.maab_category,
+            models.Inventory.maab_no,
+            models.Inventory.used,
+            models.Inventory.remarks,
+            models.Inventory.allocated_to
+        )
+
+        # Apply filter if 'allocated_to' is provided
+        if allocated_to:
+            query = query.filter(models.Inventory.allocated_to == allocated_to)
+
+        # Fetch all results
+        results = query.all()
+
+        # Check if any results were returned
+        if not results:
+            print("No inventory data found.")
+        
+        # Convert results to list of dictionaries
+        col_names = [
+            'inv_id', 'maab_category', 'maab_no', 'used', 'remarks', 'allocated_to'
+        ]
+        return [dict(zip(col_names, row)) for row in results]
+
+
+def GET_audit_logs():
+    db_session = SessionLocal()
+    try:
+        logs = db_session.query(models.Logs).order_by(models.Logs.date.desc()).all()
+        return logs
+    except Exception as e:
+        print(f"Error fetching audit logs: {e}")
+        return []
+    
+
+
+def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=None, current_user_id=None):
+    """ for logging actions on audit_trails table """
+    
+    db_session = SessionLocal()
+    
+    try:
+        audit_log = models.Logs(
+            date=datetime.now(),
+            staff_name=current_user,
+            user_level=current_user_lvl,
+            action_name=action,
+            description=desc,
+            account_id=current_user_id
+        )
+        print(audit_log)
+        
+        db_session.add(audit_log)
+        db_session.commit()
+        print("Action logged successfully.")
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error logging action: {e}")    
+    
+    '''
+    now = datetime.now()
+    current_date_time = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    
+    
+    with conn.cursor() as cursor:
+        cursor.execute('INSERT INTO audit_trails VALUES (%s, %s, %s, %s, %s, %s)',
+                       (None, current_date_time, current_user, current_user_lvl, action, desc))
+        conn.commit()
+    '''
+
+if __name__ == '__main__':
+    print('do no run this module directly lol')
+    print('use initialize_database.py')
+    
+    

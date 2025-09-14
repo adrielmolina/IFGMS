@@ -1,0 +1,46 @@
+!!! Read and study the whole document !!!
+!!! Read and study the whole document !!!
+!!! Read and study the whole document !!!
+
+
+Introduction - JB
+
+CHAPTER 1
+Intro - JB
+SOP- Louis
+Objectives - Louis
+Significance - Adriel
+Time and Place - Aby
+Scope - Aby
+DOT - JB
+Conceptual - Josh
+
+CHAPTER 2
+RRL 1 - Louis
+RRL 2- Louis
+RRL 3 - Aby
+RRL 4 - Jb
+RRL 5 - Josh
+RRL 6 - Adriel
+RRL 7 - Adriel
+
+CHAPTER 3
+Project Design - JB
+FDD - Josh
+Project and Dev. - Adriel
+Operation - Aby
+Evaluation - Louis
+
+GUI
+Login - Josh
+Dashboard - Josh
+Members - Aby
+Declaration - Aby
+Inventory - Louis
+Manage Claims - Louis 
+Budget Vs. Expenses - Adriel
+Target vs. Actual - Adriel
+Per District - Adriel
+Audit Trail -JB
+Accounts - JB
+Settings - JB

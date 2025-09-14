@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/accounts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -14,10 +14,13 @@
 
 
 {% block content %}
+      <div class="module_name">
+           <h1>Accounts</h1>
+      </div>
+
     <form action="/account_action" method="POST">
         <div class="accounts_table" spellcheck="false">
             <table class="editableTable">
-                <h2>Accounts</h2>
                 <thead>
                     <tr>
 <!--                        TODO add checkbox the checkbox header to select all entries-->
@@ -59,11 +62,13 @@
             </table>
         </div>
 
-        <div class="accounts_btns">
+        <div class="inventory_btns">
             <button type="submit" name="action" value="create">NEW ACCOUNT</button>
             <button type="submit" name="action" value="archive">ARCHIVE</button>
             <button type="submit" name="action" value="reset">RESET PASSWORD</button>
         </div>
+
+        <br> </br>
         
         <div class="pending_accounts_table" spellcheck="false">
             <table class="editableTable">
@@ -107,7 +112,7 @@
             </table>
         </div>
 
-        <div class="pending_accounts_btns">
+        <div class="inventory_btns">
             <button type="submit" name="action" value="approve">APPROVE</button>
             <button type="submit" name="action" value="decline">DECLINE</button>
         </div>

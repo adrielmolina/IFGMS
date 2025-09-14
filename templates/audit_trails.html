@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/accounts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -14,42 +14,44 @@
 
 <!--todo ADD COLOR CODING ON THE TABLE HEADER BASED ON MODULE IN CSS-->
 {% block content %}
-    <form action="/audit-tr_action" method="POST">
+<div class="module_name">
+    <h1>Audit Trail</h1>
+</div>
+    <form>
         <div class="audit-logs_table" spellcheck="false">
             <table class="editableTable">
-                <h2>Audit Logs</h2>
                 <thead>
                     <tr>
                         <th> </th>
                         <th>ID</th>
                         <th>DATE</th>
-                        <th>STAFF NAME</th>
+                        <th>USERNAME</th>
                         <th>USER LEVEL</th>
                         <th>ACTION NAME</th>
                         <th>DESCRIPTION</th>
+                        <th>ACCOUNT ID</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for account in active_accounts%}
+                    {% for log in logs%}
                     <tr>
                         <!-- TODO enlarge checkboxes / change to custom cell-->
-                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ account.account_id }}"></td>
-                        <td>{{ account.account_id }}</td>
-                        <td>{{ account.username }}</td>
-                        <td>{{ account.email }}</td>
-                        <td>{{ account.first_name }}</td>
-                        <td>{{ account.middle_name }}</td>
-                        <td>{{ account.last_name }}</td>
+                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ log.action_id }}"></td>
+                        <td>{{ log.action_id }}</td>
+                        <td>{{ log.date }}</td>
+                        <td>{{ log.staff_name }}</td>
+                        <td>{{ log.user_level }}</td>
+                        <td>{{ log.action_name }}</td>
+                        <td>{{ log.description }}</td>
+                        <td>{{ log.account_id }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <div class="audit-logs_btns">
-            <button type="submit" name="action" value="create">PLACEHOLDER</button>
-            <button type="submit" name="action" value="archive">PLACEHOLDER</button>
-            <button type="submit" name="action" value="reset">PLACEHOLDER</button>
+        <div class="inventory_btns">
+            <button type="submit" name="print_report">Print Report</button>
         </div>
     </form>
 {% endblock %}

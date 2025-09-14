@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/declaration.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
 {% endblock %}
 
 
@@ -14,15 +14,20 @@
     <h1>Declaration</h1>
   </div>
 
+  <form action="/generate_report" method="POST">
+  <div class="module_name">
+    <h1>Declaration</h1>
+  </div>
+
   <div class="main-content">
     <div class="entry">
       <div class="date-filter">
         <label class="entry_label" for="fromdate">From Date:</label>
-        <input class="date_input" type="date" id="fromdate">
+        <input class="date_input" type="date" id="fromdate" name="fromdate" required>
       </div>
       <div class="date-filter">
         <label class="entry_label" for="todate">To Date:</label>
-        <input class="date_input" type="date" id="todate">
+        <input class="date_input" type="date" id="todate" name="todate" required>
       </div>
     </div>
   </div>
@@ -30,31 +35,23 @@
   <div class="gen-buttons">
     <button type="submit" class="gen-btn">Generate Report</button>
   </div>
+</form>
 
   <div class="ID_table">
     <table>
         <thead>
             <tr>
-                <th>Transaction No.</th>
-                <th>Year</th>
-                <th>MAAB No.</th>
-                <th>Member ID</th>
-                <th>Effectivity Date</th>
-                <th>Expiry Date</th>
-                <th>Particular Location</th>
-                <th>Location Category</th>
-                <th>Municipality</th>
-                <th>District</th>
-                <th>OR Number</th>
-                <th>OR Date</th>
-                <th>Paid</th>
-                <th>Remarks</th>
-                <th>Origin</th>
-                <th>Count in Group</th>
-                <th>ID Received</th>
-                <th>Declared</th>
-                <th>Tags</th>
-                <th>Declaration Date</th>
+                <th>Open</th>
+                <th>Dispatch ID</th>
+                <th>Dispatch Type</th>
+                <th>Dispatch Origin</th>
+                <th>Dispatch Year</th>
+                <th>Dispatch Cutoff</th>
+                <th>Date Dispatched</th>
+                <th>Dispatch Total</th>
+                <th>Late Declare</th>
+                <th>Dispatch Remarks</th>
+                
             </tr>
         </thead>
         <tbody>

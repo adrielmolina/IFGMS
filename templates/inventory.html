@@ -5,74 +5,497 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/accounts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/inventory.css') }}">
 
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
 {% endblock %}
 
 <!--todo ADD COLOR CODING BASED ON CATEGORY IN CSS-->
 <!--todo ADD COLOR CODING ON THE TABLE HEADER BASED ON MODULE IN CSS-->
+
 {% block content %}
-    <form action="/inventory_action" method="POST">
-        <div class="inventory_table" spellcheck="false">
-            <table class="editableTable">
-                <h2>Inventory</h2>
-                <thead>
-                    <tr>
-                        <th> </th>
-                        <th>ID</th>
-                        <th>CATEGORY</th>
-                        <th>MAAB NO.</th>
-                        <th>USED</th>
-                        <th>REMARKS</th>
-                        <th>ALLOCATED TO</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for account in active_accounts%}
-                    <tr>
-                        <!-- TODO enlarge checkboxes / change to custom cell-->
-                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ account.account_id }}"></td>
-                        <td>{{ account.account_id }}</td>
-                        <td>{{ account.username }}</td>
-                        <td>{{ account.email }}</td>
-                        <td>{{ account.first_name }}</td>
-                        <td>{{ account.middle_name }}</td>
-                        <td>{{ account.last_name }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="module_name">
+    <h1>Inventory</h1>
+</div>
 
-        <div class="inventory_btns">
-            <button type="submit" name="action" value="create">PLACEHOLDER</button>
-            <button type="submit" name="action" value="archive">PLACEHOLDER</button>
-            <button type="submit" name="action" value="reset">PLACEHOLDER</button>
-        </div>
-    </form>
+    <button id="openFormBtn1">Add ID Stock</button>
+
+<div id="popupForm1" class="popup-form">
+    <div class="form-container1">
+        <span id="closeBtn1" class="close-btn">&times;</span>
+        <h2>Add ID</h2>
+        <form action="#">
+            <div class="form-row">
+                <Label for="ID_Number">Category:</Label>
+                <select name="cars" id="cars">
+                    <option value="Classic">Classic</option>
+                    <option value="Bronze">Bronze</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Platinum">Platinum</option>
+                    <option value="Enhanced Platinum">Enhanced Platinum</option>
+                    <option value="Senior">Senior</option>
+                    <option value="Senior+">Senior+</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <Label for="ID_Number">Series Start:</Label>
+                <input type="number" id="ID_Number" maxlength="5" name="ID_Number" placeholder="00000" required>
+            </div>
+
+            <div class="form-row">
+                <label for="numIds">ID Count:</label>
+                <input type="number" id="numIds" name="numIds" min="1" max="10" required>
+            </div>
+
+            <div class="form-row">
+                <label for="idNumberBox">Series End:</label>
+                <input type="text" id="idNumberBox" name="idNumberBox" placeholder="00000" readonly>
+            </div>
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</div>
+
+
+    <div id="inventory_table" class="inventory-table">
+    {% for cat in [
+        'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'
+    ] %}
+    <div class="category-table-section" id="table-{{ cat|replace(' ', '_') }}">
+        <div class="category-label">{{ cat }}</div>
+        <div id="hot-{{ cat|replace(' ', '_') }}"></div>
+    </div>
+    {% endfor %}
+    </div>
+
+    <div class="category-bar">
+        <button class="cat-btn" data-cat="Classic">Classic</button>
+        <button class="cat-btn" data-cat="Bronze">Bronze</button>
+        <button class="cat-btn" data-cat="Silver">Silver</button>
+        <button class="cat-btn" data-cat="Gold">Gold</button>
+        <button class="cat-btn" data-cat="Platinum">Platinum</button>
+        <button class="cat-btn" data-cat="Enhanced Platinum">Enhanced Platinum</button>
+        <button class="cat-btn" data-cat="Senior">Senior</button>
+        <button class="cat-btn" data-cat="Senior+">Senior+</button>
+        <button id="openFormBtn2">ID Desc</button>
+    </div>
+    
+<div id="popupForm2" class="popup-form">
+    <div class="form-container2">
+        <span id="closeBtn2" class="close-btn">&times;</span>
+        <h2>ID Descriptions</h2>
+        <form action="#">
+            <div class="carousel"></div>
+
+            <div class="desc_container">
+                <h2 id="description-title"></h2>
+                <p id="description-age"></p>
+                <br>
+                <ul id="description-list"></ul>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
-
 
 {% block extra_scripts %}
     <script>
-        $(document).ready(function() {
-            // Initialize DataTable for tables with the "editableTable" class
-            $('.editableTable').each(function() {
-                var table = $(this).DataTable(); // Initialize each table with the "editableTable" class
+      const inventoryData = JSON.parse('{{ inventory_data | tojson | safe }}');
+      console.log(inventoryData);
+        // Max limit for ID Number input
+        const numberInput = document.getElementById('ID_Number');
+    numberInput.addEventListener('input', function() {
+        if (this.value.length > 5) {
+            this.value = this.value.slice(0, 5);
+        }
+    });
 
-                // Add clear button next to the default search input field
-                $(this).closest('.dataTables_wrapper').find('.dataTables_filter').append('<button class="clearSearch" style="margin-left: 10px;">Clear</button>');
+// Get references to elements for Form 1
+const openFormBtn1 = document.getElementById('openFormBtn1');
+const popupForm1 = document.getElementById('popupForm1');
+const closeBtn1 = document.getElementById('closeBtn1');
 
-                // Clear search input when the clear button is clicked
-                $(this).closest('.dataTables_wrapper').find('.clearSearch').click(function() {
-                    $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').val('');  // Clear the search input field
-                    table.search('').draw();  // Reset the DataTable search
-                });
+// Open the popup form when the first button is clicked
+openFormBtn1.addEventListener('click', () => {
+    popupForm1.style.display = 'flex'; // Show the first popup
+});
+
+// Close the first popup form when the close button (X) is clicked
+closeBtn1.addEventListener('click', () => {
+    popupForm1.style.display = 'none'; // Hide the first popup
+});
+
+// Close the first popup form if user clicks outside the form
+window.addEventListener('click', (event) => {
+    if (event.target === popupForm1) {
+        popupForm1.style.display = 'none'; // Hide the first popup
+    }
+});
+
+// Get references to elements for Form 2
+const openFormBtn2 = document.getElementById('openFormBtn2');
+const popupForm2 = document.getElementById('popupForm2');
+const closeBtn2 = document.getElementById('closeBtn2');
+
+// Open the popup form when the second button is clicked
+openFormBtn2.addEventListener('click', () => {
+    popupForm2.style.display = 'flex'; // Show the second popup
+});
+
+// Close the second popup form when the close button (X) is clicked
+closeBtn2.addEventListener('click', () => {
+    popupForm2.style.display = 'none'; // Hide the second popup
+});
+
+// Close the second popup form if user clicks outside the form
+window.addEventListener('click', (event) => {
+    if (event.target === popupForm2) {
+        popupForm2.style.display = 'none'; // Hide the second popup
+    }
+});
+
+'use strict';
+
+class Carousel {
+  constructor(el) {
+    this.el = el;
+    this.carouselOptions = ['previous','next'];
+    this.carouselData = [
+      {
+        'id': '1',
+        'src': '/static/assets/senior+_id.png',
+        title: 'Senior+ ID - ₱350.00',
+        Age: '81-85 Years Old',
+        description: [
+            'Accidental Death, Disablement, and Dismemberment - ₱50,000.00',
+            'Unprovoked Murder and Assault - ₱50,000.00',
+            'Accidental Medical Reimbursement - ₱5,000.00',
+            'Accidental Burial Assistance - ₱5,000.00',
+            'Daily Hospital Allowance (Max 60 Days) - ₱100.00/Day'
+        ]
+      },
+      {
+        'id': '2',
+        'src': '/static/assets/classic_id.png',
+        title: 'Classic ID - ₱60.00',
+        Age: '5-25 Years Old',
+        description: [
+            'Accidental Death, Disablement, and Dismemberment - ₱12,000.00',
+            'Unprovoked Murder and Assault - ₱12,000.00',
+            'Accidental Medical Reimbursement - ₱5,000.00',
+            'Accidental Burial Assistance - ₱5,000.00',
+            'Daily Hospital Allowance (Max 60 Days) - ₱150.00/Day' 
+        ]
+      },
+      {
+        'id': '3',
+        'src': '/static/assets/bronze_id.png',
+        title: 'Premier Bronze ID - ₱150.00',
+        Age: '5-65 Years Old',
+        description: [
+            'Accidental Death, Disablement, and Dismemberment - ₱35,000.00',
+            'Unprovoked Murder and Assault - ₱35,000.00',
+            'Accidental Medical Reimbursement - ₱5,000.00',
+            'Accidental Burial Assistance - ₱5,000.00',
+            'Daily Hospital Allowance (Max 60 Days) - ₱150.00/Day'
+        ]
+      },
+      {
+        'id': '4',
+        'src': '/static/assets/silver_id.png',
+        title: 'Premier Silver ID - ₱300.00',
+        Age: '5-65 Years Old',
+        description: [
+            'Accidental Death, Disablement, and Dismemberment - ₱100,000.00',
+            'Unprovoked Murder and Assault - ₱100,000.00',
+            'Accidental Medical Reimbursement - ₱10,000.00',
+            'Accidental Burial Assistance - ₱5,000.00',
+            'Daily Hospital Allowance (Max 60 Days) - ₱200.00/Day'
+        ]
+      },
+      {
+        'id': '5',
+        'src': '/static/assets/gold_id.png',
+        title: 'Premier Gold ID - ₱500.00',
+        Age: '5-65 Years Old',
+        description: [
+            'Accidental Death, Disablement, and Dismemberment - ₱200,000.00',
+            'Unprovoked Murder and Assault - ₱200,000.00',
+            'Accidental Medical Reimbursement - ₱10,000.00',
+            'Accidental Burial Assistance - ₱5,000.00',
+            'Daily Hospital Allowance (Max 60 Days) - ₱200.00/Day'
+        ]
+      },
+      {
+        'id': '6',
+        'src': '/static/assets/platinum_id.png',
+        title: 'Premier Platinum ID - ₱1,00.00',
+        Age: '5-65 Years Old',
+        description: [
+            'Accidental Death, Disablement, and Dismemberment - ₱300,000.00',
+            'Unprovoked Murder and Assault - ₱300,000.00',
+            'Accidental Medical Reimbursement - ₱10,000.00',
+            'Accidental Burial Assistance - ₱5,000.00',
+            'Daily Hospital Allowance (Max 60 Days) - ₱200.00/Day'
+        ]
+      },
+      {
+        'id': '7',
+        'src': '/static/assets/enhanced_platinum_id.png',
+        title: 'Enhanced Platinum ID - ₱1,2000.00',
+        Age: '3-85 Years Old',
+        description: [
+            'Accidental Death, Disablement, and Dismemberment - ₱300,000.00',
+            'Unprovoked Murder and Assault - ₱300,000.00',
+            'Accidental Medical Reimbursement - ₱10,000.00',
+            'Accidental Burial Assistance - ₱5,000.00',
+            'Daily Hospital Allowance (Max 60 Days) - ₱200.00/Day',
+
+            'Free 1 Unit Ambulance Service due to Accident (Max 7km)',
+            'Free 1 Unit Blood due to Accident'
+        ]
+      },
+      {
+        'id': '8',
+        'src': '/static/assets/senior_id.png',
+        title: 'Senior ID - ₱300.00',
+        Age: '66-80 Years Old',
+        description: [
+            'Accidental Death, Disablement, and Dismemberment - ₱50,000.00',
+            'Unprovoked Murder and Assault - ₱50,000.00',
+            'Accidental Medical Reimbursement - ₱5,000.00',
+            'Accidental Burial Assistance - ₱5,000.00',
+            'Daily Hospital Allowance (Max 60 Days) - ₱100.00/Day'
+        ]
+      }
+    ];
+    this.carouselInView = [1, 2, 3];
+    this.carouselContainer;
+    this.carouselPlayState;
+  }
+  
+  updateDescription() {
+  const centerItem = this.carouselData[1];
+  const titleEl = document.getElementById('description-title');
+  const ageEl = document.getElementById('description-age');
+  const listEl = document.getElementById('description-list');
+
+  if (!centerItem) return;
+
+  titleEl.textContent = centerItem.title || '';
+  ageEl.textContent = centerItem.Age || '';
+
+  listEl.innerHTML = '';
+  (centerItem.description || []).forEach(desc => {
+    const li = document.createElement('li');
+    li.textContent = desc;
+    listEl.appendChild(li);
+  });
+}
+
+
+
+  mounted() {
+    this.setupCarousel();
+    this.updateDescription();
+
+  }
+
+  // Build carousel html
+  setupCarousel() {
+    const container = document.createElement('div');
+    const controls = document.createElement('div');
+
+    // Add container for carousel items and controls
+    this.el.append(container, controls);
+    container.className = 'carousel-container';
+    controls.className = 'carousel-controls';
+
+    // Take dataset array and append items to container
+    this.carouselData.forEach((item, index) => {
+      const carouselItem = item.src ? document.createElement('img') : document.createElement('div');
+
+      container.append(carouselItem);
+      
+      // Add item attributes
+      carouselItem.className = `carousel-item carousel-item-${index + 1}`;
+      carouselItem.src = item.src;
+      carouselItem.setAttribute('loading', 'lazy');
+      // Used to keep track of carousel items, infinite items possible in carousel however min 5 items required
+      carouselItem.setAttribute('data-index', `${index + 1}`);
+    });
+
+    this.carouselOptions.forEach((option) => {
+      const btn = document.createElement('button');
+      const axSpan = document.createElement('span');
+
+      // Add accessibilty spans to button
+      axSpan.innerText = option;
+      axSpan.className = 'ax-hidden';
+      btn.append(axSpan);
+
+      // Add button attributes
+      btn.className = `carousel-control carousel-control-${option}`;
+      btn.setAttribute('data-name', option);
+
+      // Add carousel control options
+      controls.append(btn);
+    });
+
+    // After rendering carousel to our DOM, setup carousel controls' event listeners
+    this.setControls([...controls.children]);
+
+    // Set container property
+    this.carouselContainer = container;
+  }
+
+  setControls(controls) {
+    controls.forEach(control => {
+      control.onclick = (event) => {
+        event.preventDefault();
+
+        // Manage control actions, update our carousel data first then with a callback update our DOM
+        this.controlManager(control.dataset.name);
+      };
+    });
+  }
+
+  controlManager(control) {
+    if (control === 'previous') return this.previous();
+    if (control === 'next') return this.next();
+
+    return;
+  }
+
+  previous() {
+    // Update order of items in data array to be shown in carousel
+    this.carouselData.unshift(this.carouselData.pop());
+
+    // Push the first item to the end of the array so that the previous item is front and center
+    this.carouselInView.push(this.carouselInView.shift());
+
+    // Update the css class for each carousel item in view
+    this.carouselInView.forEach((item, index) => {
+      this.carouselContainer.children[index].className = `carousel-item carousel-item-${item}`;
+    });
+
+    // Using the first 5 items in data array update content of carousel items in view
+    this.carouselData.slice(0, 3).forEach((data, index) => {
+      document.querySelector(`.carousel-item-${index + 1}`).src = data.src;
+    });
+    this.updateDescription();
+  }
+
+  next() {
+    // Update order of items in data array to be shown in carousel
+    this.carouselData.push(this.carouselData.shift());
+
+    // Take the last item and add it to the beginning of the array so that the next item is front and center
+    this.carouselInView.unshift(this.carouselInView.pop());
+
+    // Update the css class for each carousel item in view
+    this.carouselInView.forEach((item, index) => {
+      this.carouselContainer.children[index].className = `carousel-item carousel-item-${item}`;
+    });
+
+    // Using the first 5 items in data array update content of carousel items in view
+    this.carouselData.slice(0, 3).forEach((data, index) => {
+      document.querySelector(`.carousel-item-${index + 1}`).src = data.src;
+    });
+    this.updateDescription();
+  }
+}
+
+
+
+// Refers to the carousel root element you want to target, use specific class selectors if using multiple carousels
+const el = document.querySelector('.carousel');
+// Create a new carousel object
+const exampleCarousel = new Carousel(el);
+// Setup carousel and methods
+exampleCarousel.mounted();
+
+
+
+
+        // Handsontable columns
+        const hotColumns = [
+        {data: 'inv_id', type: 'text', title: 'ID'},
+        {data: 'maab_category', type: 'text', title: 'Maab Category'},
+        {data: 'maab_no', type: 'text', title: 'Maab No.'},
+        {data: 'used', type: 'text', title: 'Used'},
+        {data: 'allocated_to', type: 'text', title: 'Allocated To'},
+        {data: 'remarks', type: 'text', title: 'Remarks'}
+    ];
+
+    // Store Handsontable instances
+    const hotInstances = {};
+
+    // List of categories
+    const categories = [
+        'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'
+    ];
+
+    // Initialize a Handsontable for each category
+    categories.forEach(cat => {
+        const container = document.getElementById('hot-' + cat.replace(/ /g, '_'));
+        if (container) {
+            const filteredData = inventoryData.filter(item => item.maab_category === cat);
+
+            hotInstances[cat] = new Handsontable(container, {
+                data: filteredData,  // Filtered data based on category
+                colHeaders: hotColumns.map(col => col.title),
+                columns: hotColumns,
+                rowHeaders: true,
+                width: '100%',
+                stretchH: 'all',
+                height: 300,
+                licenseKey: 'non-commercial-and-evaluation'
             });
-        });
+        }
+    });
 
+    // Show only the selected category table
+    function showCategory(cat) {
+        categories.forEach(c => {
+            const el = document.getElementById('table-' + c.replace(/ /g, '_'));
+            if (el) {
+                el.classList.toggle('active', c === cat);
+            }
+        });
+    }
+
+    // Function to update the current selected category and UI
+    function selectCategory(cat) {
+        currentCategory = cat;
+        // Highlight the selected button
+        document.querySelectorAll('.category-bar .cat-btn').forEach(b => {
+            if (b.getAttribute('data-cat') === cat) {
+                b.classList.add('selected');
+            } else {
+                b.classList.remove('selected');
+            }
+        });
+        showCategory(cat);
+    }
+
+    // Button click logic
+    document.querySelectorAll('.category-bar .cat-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const cat = this.getAttribute('data-cat');
+            selectCategory(cat);
+        });
+    });
+
+    // Show the first category by default
+    selectCategory('Classic');
+
+
+        
     </script>
 {% endblock %}

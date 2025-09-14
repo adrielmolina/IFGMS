@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='/styles/members.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/members.css') }}">
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
@@ -14,103 +14,713 @@
 
 
 {% block content %}
+    <!-- TODO add sort button  -->
+     <!-- TODO make the scrollbars always visible -->
+      <!-- TODO add auto district number based on municipality selected -->
+       <!-- TODO add select options for accepted tags -->
+        <!-- TODO add origin select options -->
+         <!-- TODO add js function to set location particular to all caps while typing -->
+            <!-- TODO center the title -->
+             <!-- TODO add flat list of members -->
+    <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
+        <h3 style="margin: 0; font-weight: bolder;">M E M B E R&nbsp;&nbsp;&nbsp;&nbsp;R E C O R D S</h3>                
+    </span>
 
-    <div id="members_table" class="ht-theme-main-dark-auto"></div>
+    <div class="controls_box">
+        <button>Add Record</button>
+        <button>Add to Declaration</button>
+    </div>
+    
+    <!-- TODO declaration/transmission: automate this with js- check the location of the person signed in  -->
 
+    <br>
+    <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
+    <button id="search_clear">Clear</button>
+
+    <div id="members_table" class="ht-theme-main"></div>
+
+    <div id="overlay" class="overlay">
+        <div id="overlay-content" class="overlay-content">
+            <span id="close-overlay" class="close-overlay">&times;</span>
+            <div id="overlay-body" class="overlay-body">
+                <!-- Dynamic content goes here -->
+
+                <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
+                    <h3 style="margin: 0; font-weight: bolder;">R E C O R D&nbsp;&nbsp;&nbsp;&nbsp;D E T A I L S</h3>                
+                </span>
+
+                <div class="controls_box">
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <label class="switch">
+                            <input type="checkbox" id="record_details_check" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <button id="save_record_details" class="save_record_details">Save</button>
+                    <button id="delete_record" class="delete_record">Delete Record</button>
+                    <!-- TODO add delete record function -->
+                </div>
+
+
+                <div id="record_details" class="record_details">
+                    <form action="/api/members/entries" method="POST" id="record_entries">                 
+                        <table class="record_details_table">
+                            <tr>
+                                <td>
+                                    <label for="record_id">Record ID</label>
+                                    <br>
+                                    <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly>
+                                </td>
+
+                                <td>
+                                    <!-- TODO change to year only or remove the field completely -->
+                                    <label for="year">Year</label>
+                                    <br>
+                                    <input type="text" id="year" name="year" required autocomplete="off" readonly>
+                                </td>
+
+                                <td>
+                                    <label for="id_rcv">ID Received</label>
+                                    <br>
+                                    <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="paid">Paid</label>
+                                    <br>
+                                    <input type="checkbox" id="paid" name="paid" autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="declared">Declared</label>
+                                    <br>
+                                    <input type="checkbox" id="declared" name="declared" autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="dec_date">Declaration Date</label>
+                                    <br>
+                                    <input type="date" id="dec_date" name="dec_date" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="eff_date">Effectivity Date</label>
+                                    <br>
+                                    <input type="date" id="eff_date" name="eff_date" required autocomplete="off">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <label for="loc_par">Location Particular</label>
+                                    <br>
+                                    <input type="text" id="loc_par" name="loc_par" required autocomplete="off">
+                                </td>
+                                
+                                <td colspan="2">
+                                    <label for="loc_cat">Location Category</label>
+                                    <br>
+                                    <select name="loc_cat" id="loc_cat">
+                                        <option value="Public Nursery">Public Nursery</option>
+                                        <option value="Private Nursery">Private Nursery</option>
+                                        <option value="Public Kinder">Public Kinder</option>
+                                        <option value="Private Kinder">Private Kinder</option>
+                                        <option value="Public Elementary School">Public Elementary School</option>
+                                        <option value="Private Elementary School">Private Elementary School</option>
+                                        <option value="Public High School">Public High School</option>
+                                        <option value="Private High School">Private High School</option>
+                                        <option value="Public Senior High School">Public Senior High School</option>
+                                        <option value="Private Senior High School">Private Senior High School</option>
+                                        <option value="Public Integrated School">Public Integrated School</option>
+                                        <option value="Private Integrated School">Private Integrated School</option>
+                                        <option value="Public College">Public College</option>
+                                        <option value="Private College">Private College</option>
+                                        <option value="Government Company/Organization">Government Company/Organization</option>
+                                        <option value="Private Company/Organization">Private Company/Organization</option>
+                                        <option value="Church">Church</option>
+                                        <option value="Red Cross 143">Red Cross 143</option>
+                                        <option value="RCY">RCY</option>
+                                        <option value="Brgy">Brgy</option>
+                                        <option value="LGU">LGU</option>
+                                        <option value="MBD">MBD</option>
+                                        <option value="Events">Events</option>
+                                        <option value="Training">Training</option>
+                                        <option value="Company/Organization Training">Company/Organization Training</option>
+                                        <option value="Individual">Individual</option>
+                                        <option value="Walk-In">Walk-In</option>
+                                    </select>
+                                </td>
+
+                                <td colspan="2">
+                                    <label for="municipality">Municipality</label>
+                                    <br>
+                                    <select name="municipality" id="municipality">
+                                        <option value="Cavite City">Cavite City</option>
+                                        <option value="Kawit">Kawit</option>
+                                        <option value="Noveleta">Noveleta</option>
+                                        <option value="Rosario">Rosario</option>
+                                        <option value="Bacoor">Bacoor</option>
+                                        <option value="Imus">Imus</option>
+                                        <option value="Dasmariñas">Dasmariñas</option>
+                                        <option value="Carmona">Carmona</option>
+                                        <option value="General Mariano Alvarez (GMA)">General Mariano Alvarez (GMA)</option>
+                                        <option value="Silang">Silang</option>
+                                        <option value="General Trias">General Trias</option>
+                                        <option value="Amadeo">Amadeo</option>
+                                        <option value="Indang">Indang</option>
+                                        <option value="Tanza">Tanza</option>
+                                        <option value="Trece Martires">Trece Martires</option>
+                                        <option value="Alfonso">Alfonso</option>
+                                        <option value="Gen. Emilio Aguinaldo (Bailen)">Gen. Emilio Aguinaldo (Bailen)</option>
+                                        <option value="Magallanes">Magallanes</option>
+                                        <option value="Maragondon">Maragondon</option>
+                                        <option value="Mendez">Mendez</option>
+                                        <option value="Naic">Naic</option>
+                                        <option value="Tagaytay City">Tagaytay City</option>
+                                        <option value="Ternate">Ternate</option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <!-- TODO autofill after selecting municipality -->
+                                    <label for="district">District</label>
+                                    <br>
+                                    <input type="text" id="district" name="district" required autocomplete="off" readonly>
+                                </td>
+                                
+                                <td>
+                                    <!-- TODO autofill based on account logged in -->
+                                     <!-- TODO change this to select so it is still modifiable -->
+                                    <label for="origin">Origin</label>
+                                    <br>
+                                    <input type="text" id="origin" name="origin" required autocomplete="off">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td colspan="6">
+                                    <label for="remarks">Remarks</label>
+                                    <br>
+                                    <input type="text" id="remarks" name="remarks" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="tags">Tags</label>
+                                    <br>
+                                    <input type="text" id="tags" name="tags" required autocomplete="off">
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+                
+                <!-- TODO fix the visual bug where the entry details table is compressed at the center when first opening the overlay -->
+
+                <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
+                    <h3 style="margin: 0; font-weight: bolder;">E N T R Y&nbsp;&nbsp;&nbsp;&nbsp;D E T A I L S</h3>                
+                </span>
+
+                <div class="controls_box">
+                <!-- TODO add js function make all cells readonly when form editor is on -->
+                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                    <p>Live Editor</p>
+                    <label class="switch">
+                        <input type="checkbox" id="entry_details_check" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <p>Form Editor</p>
+                </div>
+                </div>
+                
+                <div class="second_row">
+                <div id="entry_details" class="entry_details">
+                    <form action="">
+                        <table>
+                            <tr>
+                                <td>
+                                    <label for="maab_cat">Category</label>
+                                    <br>
+                                    <select name="maab_cat" id="maab_cat">
+                                        <option value="Classic">Classic</option>
+                                        <option value="Bronze">Bronze</option>
+                                        <option value="Silver">Silver</option>
+                                        <option value="Gold">Gold</option>
+                                        <option value="Platinum">Platinum</option>
+                                        <option value="Enhanced Platinum">Enhanced Platinum</option>
+                                        <option value="Senior">Senior</option>
+                                        <option value="Senior+">Senior+</option>            
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <label for="maab_no">MAAB No.</label>
+                                    <br>
+                                    <input type="text" id="maab_no" name="maab_no" required autocomplete="off">
+                                </td>
+        
+                                <td>
+                                    <label for="fname">First Name</label>
+                                    <br>
+                                    <input type="text" id="fname" name="fname" required autocomplete="off">
+                                </td>
+                                
+                                <td>
+                                    <label for="mname">Middle Name</label>
+                                    <br>
+                                    <input type="text" id="mname" name="mname" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="lname">Last Name</label>
+                                    <br>
+                                    <input type="text" id="lname" name="lname" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="suffix">Suffix</label>
+                                    <br>
+                                    <select name="suffix" id="suffix">
+                                        <option value="NA">NA</option>
+                                        <option value="Jr">Jr</option>
+                                        <option value="Sr">Sr</option>
+                                        <option value="II">II</option>
+                                        <option value="III">III</option>
+                                        <option value="IV">IV</option>
+                                        <option value="V">V</option>
+                                        <option value="VI">VI</option>
+                                        <option value="VII">VII</option>
+                                    </select>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <label for="bdate">Birthdate</label>
+                                    <br>
+                                    <input type="date" id="bdate" name="bdate" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="sex">Sex</label>
+                                    <br>
+                                    <select name="sex" id="sex">
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <label for="contact">Contact No</label>
+                                    <br>
+                                    <input type="text" id="contact" name="contact" required autocomplete="off">
+                                </td>                               
+
+                                <td>
+                                    <label for="email">Email</label>
+                                    <br>
+                                    <input type="text" id="email" name="email" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="address">Address</label>
+                                    <br>
+                                    <input type="text" id="address" name="address" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="blood_type">Blood Type</label>
+                                    <br>
+                                    <select name="blood_type" id="blood_type">
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                    </select>
+                                </td>                              
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <label for="id_received">ID Reveived</label>
+                                    <br>
+                                    <input type="checkbox" id="id_received" name="id_received" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="entry_declared">Declared</label>
+                                    <br>
+                                    <input type="checkbox" id="entry_declared" name="entry_declared" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="declare_date">Declaration Date</label>
+                                    <br>
+                                    <input type="date" id="declare_date" name="declare_date" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="entry_paid">Paid</label>
+                                    <br>
+                                    <input type="checkbox" id="entry_paid" name="entry_paid" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="entry_or_no">OR No</label>
+                                    <br>
+                                    <input type="text" id="entry_or_no" name="entry_or_no" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="entry_or_date">OR Date</label>
+                                    <br>
+                                    <input type="text" id="entry_or_date" name="entry_or_date" required autocomplete="off">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td colspan="5">
+                                    <label for="entry_remarks">Remarks</label>
+                                    <br>
+                                    <input type="text" id="entry_remarks" name="entry_remarks" required autocomplete="off">
+                                </td>
+
+                                <td>
+                                    <label for="entry_tags">Tags</label>
+                                    <br>
+                                    <input type="text" id="entry_tags" name="entry_tags" required autocomplete="off">
+                                </td>
+                            </tr>
+                        </table>
+                        <button>Add</button>
+                    </form>
+                </div>
+                <div id="entries_table" class="ht-theme-main"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/entries_table.js')}}"></script>
+
 <script>
-    const container = document.querySelector('#members_table');
+    let hotInstance = null;
+    function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
+    Handsontable.renderers.TextRenderer.apply(this, arguments); // Use default text renderer
+    td.innerHTML = '<a href="javascript:void(0);" class="open-link">Open</a>';
 
-    const data = [
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test'],
-        [false, '1', '2025', 'false', 'false', '4/19/2025', '4/1/2025', 'CVSU','Public College', 'Cavite City', '1', false, 'chapter', 'none', 'test']
-    ];
+    td.querySelector('.open-link').addEventListener('click', function () {
+        const rowData = instance.getSourceDataAtRow(row);
 
-    new Handsontable(container, {
-        data,
-        colHeaders: [
-            'Select', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
-            'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
-        ],
-        columns: [
-        {type: 'checkbox'},
-        {},
-        {},
-        {type: 'checkbox'},
-        {type: 'checkbox'},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {type: 'checkbox'},
-        {},
-        {},
-        {}
-        ],
-        rowHeaders: true,
-        stretchH: 'all',
-        autoWrapRow: false,
-        autoWrapCol: false,
-        licenseKey: 'non-commercial-and-evaluation' // for non-commercial use only
+        // sets the date format for the HTML date input field
+        function convertToYYYYMMDD(dateStr) {
+            const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
+        
+            if (parts.length === 3) {
+                let [month, day, year] = parts;
+        
+                // Pad month and day with leading zeros if necessary
+                month = month.padStart(2, '0');
+                day = day.padStart(2, '0');
+        
+                return `${year}-${month}-${day}`;
+            }
+        
+            return ''; // Return empty if format is unrecognized
+        }
+    
+        // Check and format the dates if they exist
+        if (rowData.declaration_date) {
+            rowData.declaration_date = convertToYYYYMMDD(rowData.declaration_date);
+        }
+        if (rowData.effectivity_date) {
+            rowData.effectivity_date = convertToYYYYMMDD(rowData.effectivity_date);
+        }
+    
+
+        document.getElementById(`record_id`).value = rowData.record_id;
+        document.getElementById(`year`).value = rowData.year;
+        document.getElementById(`id_rcv`).value = rowData.id_received;
+        document.getElementById(`paid`).value = rowData.paid;
+        document.getElementById(`declared`).value = rowData.declared;
+        document.getElementById(`dec_date`).value = rowData.declaration_date;
+        document.getElementById(`eff_date`).value = rowData.effectivity_date;
+        document.getElementById(`loc_par`).value = rowData.location_particular;
+        document.getElementById(`loc_cat`).value = rowData.location_category;
+        document.getElementById(`municipality`).value = rowData.municipality;
+        document.getElementById(`district`).value = rowData.district;
+        document.getElementById(`origin`).value = rowData.origin;
+        document.getElementById(`remarks`).value = rowData.remarks;
+        document.getElementById(`tags`).value = rowData.tags;
+
+        document.getElementById('overlay').style.display = 'flex';
+
+        console.log(rowData.record_id);
+        fetch(`/api/members/${rowData.record_id}/entries`)
+        .then(response => response.json())
+        .then(data => {
+            
+            data.forEach(row => {
+                if (row.birth_date) {
+                    const date = new Date(row.birth_date);
+                    row.birth_date = date.toLocaleDateString('en-US');
+                }
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.OR_date) {
+                    const date = new Date(row.OR_date);
+                    row.OR_date = date.toLocaleDateString('en-US');
+                }
+            });
+
+            window.renderEntriesTable(data);
+        });
+
+
     });
+
+    return td;
+    }
+    // for x button in overlay
+    document.getElementById('close-overlay').addEventListener('click', function () {
+        document.getElementById('overlay').style.display = 'none';
+    });
+    // close overlay on ESC key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+            document.getElementById('overlay').style.display = 'none';
+        }
+    });
+
+    // for records table
+    fetch("/api/members/records")
+        .then(response => response.json())
+        .then(data => {
+            // date formats for the handsontable rows
+            data.forEach(row => {
+                if (row.declaration_date) {
+                    // Format the date to MM-DD-YYYY
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                }
+                if (row.effectivity_date) {
+                    // Format the date to MM-DD-YYYY
+                    const date = new Date(row.effectivity_date);
+                    row.effectivity_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
+                }
+            });   
+
+            const container = document.getElementById('members_table');
+
+            hotInstance = new Handsontable(container, {
+                data,
+                colHeaders: [
+                    'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
+                    'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
+                ],
+                columns: [
+                { renderer: openLinkRenderer },
+                { data: 'record_id', readOnly: true},
+                { data: 'year' },
+                { data: 'id_received', type: 'checkbox' },
+                { data: 'declared', type: 'checkbox' },
+                { data: 'declaration_date',
+                    type: 'date',
+                    dateFormat: 'MM-DD-YYYY',
+                    correctFormat: true,
+                    allowInvalid: false
+                },
+                { data: 'effectivity_date',
+                    type: 'date',
+                    dateFormat: 'MM-DD-YYYY',
+                    correctFormat: true,
+                    allowInvalid: false
+                },
+                { data: 'location_particular' },
+                { data: 'location_category' },
+                { data: 'municipality' },
+                { data: 'district' },
+                { data: 'paid', type: 'checkbox' },
+                { data: 'origin' },
+                { data: 'remarks' },
+                { data: 'tags' }
+                ],
+                rowHeaders: true,
+                stretchH: 'all',
+                autoWrapRow: false,
+                autoWrapCol: false,
+                readOnly: true,
+                search: true,
+                filters: true,
+                dropdownMenu: true,
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+            const searchPlugin = hotInstance.getPlugin('search');
+            document.getElementById('search_input').addEventListener('input', function() {
+            const query = this.value;
+
+            searchPlugin.query(query);
+            hotInstance.render(); // refresh the table to show highlights
+            });
+
+        });
+    
+    //search input clear button function
+    document.getElementById('search_clear').addEventListener('click', function() {
+        document.getElementById('search_input').value = '';
+        const searchPlugin = hotInstance.getPlugin('search');
+        searchPlugin.query('');
+        hotInstance.render(); // refresh the table to clear highlights
+    });
+        
+    // Record Details Box Switch
+    const record_details_check = document.getElementById('record_details_check');
+    const record_details = document.getElementById('record_details');
+
+    record_details_check.addEventListener('change', function() {
+        if (this.checked) {
+            record_details.style.display = 'block';  // Show div
+        } else {
+            record_details.style.display = 'none';   // Hide div
+        }
+    });
+    // Entry Details Box Switch
+    const entry_details_check = document.getElementById('entry_details_check');
+    const entry_details = document.getElementById('entry_details');
+
+    entry_details_check.addEventListener('change', function() {
+        if (this.checked) {
+            entry_details.style.display = 'block';  // Show div
+        } else {
+            entry_details.style.display = 'none';   // Hide div
+        }
+    });
+
+    // reload table data
+    function refreshMembersTable() {
+        fetch("/api/members/records")
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(row => {
+                    if (row.declaration_date) {
+                        const date = new Date(row.declaration_date);
+                        row.declaration_date = date.toLocaleDateString('en-US');
+                    }
+                    if (row.effectivity_date) {
+                        const date = new Date(row.effectivity_date);
+                        row.effectivity_date = date.toLocaleDateString('en-US');
+                    }
+                });
+                if (hotInstance) {
+                    hotInstance.loadData(data);
+                }
+            });
+    }
+
+    // Add Record button logic
+    document.querySelector('button').addEventListener('click', function () {
+        // Call backend to add a new record
+        fetch('/api/add_record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+            // Optionally, send default values here if needed
+        })
+        .then(response => response.json())
+        .then(result => {
+            // After adding, refresh the table data
+            
+            // open the new record entry window
+            fetch("/api/members/records")
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(row => {
+                        if (row.declaration_date) {
+                            const date = new Date(row.declaration_date);
+                            row.declaration_date = date.toLocaleDateString('en-US');
+                        }
+                        if (row.effectivity_date) {
+                            const date = new Date(row.effectivity_date);
+                            row.effectivity_date = date.toLocaleDateString('en-US');
+                        }
+                    });
+                    if (hotInstance) {
+                        hotInstance.loadData(data);
+
+                        // find index of the new record
+                        const rowIndex = data.findIndex(row => row.record_id == result.record_id);
+                        if (rowIndex !== -1) {
+                            // Wait for Handsontable to render, then trigger the open link
+                            setTimeout(() => {
+                                const cell = hotInstance.getCell(rowIndex, 0); // 0 = "Open" column
+                                if (cell) {
+                                    const openLink = cell.querySelector('.open-link');
+                                    if (openLink) openLink.click();
+                                }
+                            }, 100); // Adjust timeout if needed
+                        }
+                    }
+                });
+
+                // refreshMembersTable();
+
+        })
+        .catch(error => {
+            alert('Error adding record');
+            console.error(error);
+        });
+    });
+
+    // save function
+    document.getElementById('save_record_details').addEventListener('click', function () {
+        // Gather data from the form fields
+        const payload = {
+            record_id: document.getElementById('record_id').value,
+            year: document.getElementById('year').value,
+            id_received: document.getElementById('id_rcv').checked,
+            paid: document.getElementById('paid').checked,
+            declared: document.getElementById('declared').checked,
+            declaration_date: document.getElementById('dec_date').value,
+            effectivity_date: document.getElementById('eff_date').value,
+            location_particular: document.getElementById('loc_par').value,
+            location_category: document.getElementById('loc_cat').value,
+            municipality: document.getElementById('municipality').value,
+            district: document.getElementById('district').value,
+            origin: document.getElementById('origin').value,
+            remarks: document.getElementById('remarks').value,
+            tags: document.getElementById('tags').value
+        };
+
+        // Send data to backend
+        fetch('/api/save_record_details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Record details saved!');
+                refreshMembersTable()
+            } else {
+                alert('Failed to save record details.');
+            }
+        })
+        .catch(error => {
+            alert('Error saving record details.');
+            console.error(error);
+        });
+    });
+
 </script>
 {% endblock %}

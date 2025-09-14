@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+
+{% block title %}Reports{% endblock %}
+
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/reports.css') }}">
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
+{% endblock %}
+
+
+{% block content %}
+    <div id="bud_v_exp" class="bud_v_exp">
+        <h1>BUDGET VS EXPENSES</h1>
+        <div id="budget_v_expense_table" class="ht-theme-main"></div>
+    </div>
+
+    <div id="trg_v_act" class="trg_v_act">
+        <h1>TARGET VS ACTUAL</h1>
+        <div id="target_v_actual_table" class="ht-theme-main"></div>
+    </div>
+    
+    <div id="per_dist" class="per_dist">
+        <h1>PER DISTRICT</h1>
+        <div id="per_district_table" class="ht-theme-main"></div>
+    </div>
+{% endblock %}
+
+
+{% block extra_scripts %}
+    <script>
+
+        // BUDGET VS EXPENSES TABLE ---------------------------------------------
+        const budget_v_expense_sample_data = [
+            // TODO set sample data here
+        ];
+        const container1 = document.getElementById('budget_v_expense_table');
+            hotInstance1 = new Handsontable(container1, {
+                data: budget_v_expense_sample_data,
+                colHeaders: [
+                    // TODO set headers here
+                ],
+                rowHeaders: true,
+                stretchH: 'all',
+                autoWrapRow: false,
+                autoWrapCol: false,
+                readOnly: true,
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+        
+        // TARGET VS ACTUAL TABLE ---------------------------------------------
+        const target_v_actual_sample_data = [
+            // TODO set sample data here
+        ];
+        const container2 = document.getElementById('target_v_actual_table');
+            hotInstance2 = new Handsontable(container2, {
+                data: target_v_actual_sample_data,
+                colHeaders: [
+                    // TODO set headers here
+                ],
+                rowHeaders: true,
+                stretchH: 'all',
+                autoWrapRow: false,
+                autoWrapCol: false,
+                readOnly: true,
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+            hotInstance2 = new Handsontable(container2, {
+                data: target_v_actual_sample_data,
+                colHeaders: [
+                    // TODO set headers here
+                    'TEST'
+                ],
+                rowHeaders: true,
+                stretchH: 'all',
+                autoWrapRow: false,
+                autoWrapCol: false,
+                readOnly: true,
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+
+        // PER DISTRICT TABLE ---------------------------------------------
+        /*const per_district_sample_data = [
+            [1, 'Cavite City', 'Public School', 100, 50, 30, 20, 10, 5, 2, 1],
+            [2, 'Imus City', 'Public School', 120, 60, 40, 30, 20, 10, 5, 2],
+            [3, 'Dasmariñas City', 'Public School', 150, 70, 50, 40, 30, 15, 7, 3],
+            [4, 'Bacoor City', 'Public School', 130, 65, 45, 35, 25, 12, 6, 3]
+        ];*/
+
+        const districtMunicipalities = [
+            { districtNo: 1, municipality: 'Cavite City' },
+            { districtNo: 1, municipality: 'Kawit' },
+            { districtNo: 1, municipality: 'Noveleta' },
+            { districtNo: 1, municipality: 'Rosario' },
+            
+            { districtNo: 2, municipality: 'Bacoor' },
+
+            { districtNo: 3, municipality: 'Imus' },
+
+            { districtNo: 4, municipality: 'Dasmariñas' },
+
+            { districtNo: 5, municipality: 'Carmona' },
+            { districtNo: 5, municipality: 'General Mariano Alvarez (GMA)' },
+            { districtNo: 5, municipality: 'Silang' },
+
+            { districtNo: 6, municipality: 'General Trias' },
+
+            { districtNo: 7, municipality: 'Amadeo' },
+            { districtNo: 7, municipality: 'Indang' },
+            { districtNo: 7, municipality: 'Tanza' },
+            { districtNo: 7, municipality: 'Trece Martires' },
+
+            { districtNo: 8, municipality: 'Alfonso' },
+            { districtNo: 8, municipality: 'Gen. Emilio Aguinaldo (Bailen)' },
+            { districtNo: 8, municipality: 'Magallanes' },
+            { districtNo: 8, municipality: 'Maragondon' },
+            { districtNo: 8, municipality: 'Mendez' },
+            { districtNo: 8, municipality: 'Naic' },
+            { districtNo: 8, municipality: 'Tagaytay City' },
+            { districtNo: 8, municipality: 'Ternate' }
+            ];
+
+            const classifications = [
+            'Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder',
+            'Public Elementary School', 'Private Elementary School',
+            'Public High School', 'Private High School',
+            'Public Senior High School', 'Private Senior High School',
+            'Public Integrated School', 'Private Integrated School',
+            'Public College', 'Private College',
+            'Government Company/Organization', 'Private Company/Organization',
+            'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events',
+            'Training', 'Company/Organization Training', 'Individual', 'Walk-In'
+            ];
+
+            // Build the data
+            const per_district_sample_data = [];
+            districtMunicipalities.forEach(entry => {
+            classifications.forEach(classification => {
+                per_district_sample_data.push([
+                entry.districtNo, // TODO MERGE DISTRICT ROWS
+                entry.municipality, // TODO MERGE MUNICIPALITY ROWS
+                classification,
+                10,20,30,40,50,60,70,80,360 // TODO REPLACE WITH ACTUAL DATA
+                ]);
+            });
+            // Add a blank row (same number of columns as your data)
+            per_district_sample_data.push([
+                '', '', '', '', '', '', '', '', '', '', '', ''
+            ]);
+        });
+
+        const container3 = document.getElementById('per_district_table');
+            hotInstance3 = new Handsontable(container3, {
+                data: per_district_sample_data,
+                colHeaders: [
+                    "District", 'Municipality', 'Classification', 'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+', 'Total Per Classification'
+                ],
+                rowHeaders: true,
+                mergeCells: [
+                    {row: 0, col: 0, rowspan: 111, colspan: 1}, //district 1
+                    {row: 112, col: 0, rowspan: 27, colspan: 1}, //district 2
+                    {row: 140, col: 0, rowspan: 27, colspan: 1}, //district 3
+                    {row: 168, col: 0, rowspan: 27, colspan: 1}, //district 4
+                    {row: 196, col: 0, rowspan: 83, colspan: 1}, //district 5
+                    {row: 280, col: 0, rowspan: 27, colspan: 1}, //district 6
+                    {row: 308, col: 0, rowspan: 111, colspan: 1}, //district 7
+                    {row: 420, col: 0, rowspan: 223, colspan: 1}, //district 8
+
+                    {row: 0, col: 1, rowspan: 27, colspan: 1}, // cavite city
+                    {row: 28, col: 1, rowspan: 27, colspan: 1}, // kawit
+                    {row: 56, col: 1, rowspan: 27, colspan: 1}, // noveleta
+                    {row: 84, col: 1, rowspan: 27, colspan: 1}, // rosario
+                    {row: 112, col: 1, rowspan: 27, colspan: 1}, // bacoor
+                    {row: 140, col: 1, rowspan: 27, colspan: 1}, // imus
+                    {row: 168, col: 1, rowspan: 27, colspan: 1}, // dasma
+                    {row: 196, col: 1, rowspan: 27, colspan: 1}, // carmona
+                    {row: 224, col: 1, rowspan: 27, colspan: 1}, // gma
+                    {row: 252, col: 1, rowspan: 27, colspan: 1}, // silang
+                    {row: 280, col: 1, rowspan: 27, colspan: 1}, // gentri
+                    // TODO CONTINUE WITH AMADEO
+                ],
+                cells: function (row, col) { 
+                    const cellProperties = {};
+                    if (col >= 0 && col <= 11) {
+                    cellProperties.className = 'htCenter';
+                    //cellProperties.className = 'htMiddle';
+                    cellProperties.renderer = function (instance, td, row, col, prop, value, cellProperties) {
+                        Handsontable.renderers.TextRenderer.apply(this, arguments);
+                        //td.style.fontWeight = 'bold';
+                        td.style.color = '#000000';
+                        // Special backgrounds for certain row ranges
+                        if (col === 0 || col === 1 || col === 2) {
+                            td.style.fontWeight = 'bold';
+                            
+                            if (row >= 0 && row <= 110) {
+                                td.style.background = '#e3f2fd';
+                            } else if (row >= 112 && row <= 138) {
+                                td.style.background = '#d0e0e3';
+                            }
+                        }
+                    };
+                }
+                    return cellProperties;
+                },
+                stretchH: 'all',
+                autoWrapRow: false,
+                autoWrapCol: false,
+                readOnly: true,
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+    </script>
+{% endblock %}
