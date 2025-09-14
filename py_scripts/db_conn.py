@@ -145,6 +145,7 @@ def save_otp(email, otp):
         )
         db_session.add(new_otp)
         db_session.commit()
+        return 'success'
     except Exception as e:
         db_session.rollback()
         print(f"Error saving OTP: {e}")
@@ -170,11 +171,10 @@ def save_otp(email, otp):
         session.commit()
     '''
 
-# !!!!!!!!!!!!!!!!!!!!!!!! SEND OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def send_otp_email(email, otp):
     """Send OTP to the user's email."""
     subject = "Your OTP Code"
-    body = f"Your OTP code is: {otp}. It will expire in 5 minutes."
+    body = f"Your OTP code FGMS is: {otp}. This will expire in 5 minutes."
 
     message = MIMEMultipart()
     message['From'] = SENDER_EMAIL
@@ -192,13 +192,58 @@ def send_otp_email(email, otp):
         print(f"Failed to send OTP: {e}")
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!! VERIFY OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def verifying_otp(email, otp_input):
     """Verify OTP against the database (original version with added debug prints)"""
-    #* TODO remove on production
     print(f"[DEBUG] Starting OTP verification for {email}")
     print(f"[DEBUG] Input OTP: {otp_input} (type: {type(otp_input)})")
+    db_session = SessionLocal()
     
+    try:
+        # Get the most recent OTP for this email
+        latest_otp = (
+            db_session.query(models.OTPs)
+            .filter_by(email=email)
+            .order_by(models.OTPs.created_at.desc())
+            .first()
+        )
+        
+        if not latest_otp:
+            print("[DEBUG] No OTP found for this email")
+            return "email_not_found"
+        
+        # Check if OTP is already used
+        if latest_otp.otp_used:
+            print("[DEBUG] OTP already used")
+            return "already_used"
+
+        print(f"[DEBUG] Stored OTP: {latest_otp.otp}")
+        print(f"[DEBUG] Expires at: {latest_otp.expires_at}")
+        print(f"[DEBUG] Current time: {datetime.now(timezone.utc)}")
+
+        # Check if expired
+        if datetime.now(timezone.utc) > latest_otp.expires_at.replace(tzinfo=timezone.utc):
+            print("[DEBUG] OTP expired")
+            return "expired"
+
+        # Check if matches
+        if str(otp_input) == str(latest_otp.otp):
+            print("[DEBUG] OTP matched")
+
+            # Delete all OTPs for this email
+            db_session.query(models.OTPs).filter_by(email=email).update({models.OTPs.otp_used: 1})
+            db_session.commit()
+            return "success"
+        else:
+            print("[DEBUG] OTP mismatch")
+            return "fail"
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"[ERROR] verifying_otp: {e}")
+        return "fail"
+        
+    
+    '''
     conn = conn_init()
     if not conn:
         print("[ERROR] Connection failed!")
@@ -236,8 +281,9 @@ def verifying_otp(email, otp_input):
     else:
         print("[DEBUG] No OTP found for this email")
         return "fail"
+    '''
     
-    
+# TODO continue the ORM syntax update from here    
 def update_password(email, new_password):
     """Update the password in the database."""
     conn = conn_init()

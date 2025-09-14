@@ -264,8 +264,11 @@ def settings():
     return render_template('settings.html', user_details=user_details)
 
 
-# <------------ /NAVIGATIONS ------------>
+@server.route('/membership_register')
+def membership_register():
+    return render_template('membership_register.html')
 
+# <------------ /NAVIGATIONS ------------>
 
 @server.route('/create_acc_submit', methods=['POST'])
 def create_acc_submit():
@@ -320,9 +323,11 @@ def forgot_password_otp():
         email = request.form.get("email")
 
         otp = tools.generate_otp()  # Generate OTP
-        db_conn.save_otp(email, otp)  # Save OTP in otp_verifications table
-        db_conn.send_otp_email(email, otp)  # Send OTP to user's
-
+        save_otp = db_conn.save_otp(email, otp)  # Save OTP in otp_verifications table
+        
+        if save_otp:
+            db_conn.send_otp_email(email, otp)  # Send OTP to user's
+        # TODO add error handling if email sending fails
         session["email"] = email
         flash({
             "title": "OTP Sent!",
@@ -357,6 +362,14 @@ def verify_otp():
                 "redirect_url": url_for('forgot_password')
             }, "error")
 
+        elif result == "already_used":
+            flash({
+                "title": "OTP has already been used",
+                "text": " Please try again.",
+                "redirect_url": url_for('forgot_password')
+            }, "error")
+        
+        # TODO fix this check the email should be checked at the first page. this should be just a check if the otp matches or not
         elif result == "email_not_found":
             flash({
                 "title": "Email is not registered",
@@ -376,6 +389,7 @@ def verify_otp():
 
 
 # ========================== RESET PASSWORD ==========================
+# TODO continue the ORM syntax update from here
 @server.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
     email = session.get("email")
