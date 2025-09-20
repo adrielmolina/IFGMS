@@ -77,7 +77,7 @@ button:hover, .clearSearch:hover {
 
 /* TODO remove when done styling the form */
 #overlay {
-    display: flex !important;
+    /* display: flex !important; */
 }
 
 .overlay {
