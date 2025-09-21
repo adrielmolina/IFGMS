@@ -29,6 +29,35 @@ class Accounts(Base, UserMixin):
         # (default is id, so override it for account_id)
         return str(self.account_id)
 
+    @property
+    def birth_date_YMD(self):
+        return self.birth_date.strftime('%Y-%m-%d') if self.birth_date else None
+    
+    @property
+    def acct_created_YMD(self):
+        return self.acct_created.strftime('%Y-%m-%d') if self.acct_created else None
+    
+    @property
+    def acct_review_date_YMD(self):
+        return self.acct_review_date.strftime('%Y-%m-%d') if self.acct_review_date else None
+    
+    def to_dict(self):
+        return {
+            'account_id': self.account_id,
+            'username': self.username,
+            'email': self.email,
+            'first_name': self.first_name,
+            'middle_name': self.middle_name,
+            'last_name': self.last_name,
+            'suffix': self.suffix,
+            'birth_date': self.birth_date.strftime('%Y-%m-%d') if self.birth_date else None,
+            'contact_no': self.contact_no,
+            'acct_created': self.acct_created.strftime('%Y-%m-%d') if self.acct_created else None,
+            'office_location': self.office_location,
+            'user_level': self.user_level,
+            'acct_status': self.acct_status,
+            'acct_review_date': self.acct_review_date.strftime('%Y-%m-%d') if self.acct_review_date else None
+        }
 
 class OTPs(Base):
     __tablename__ = 'otp_verifications'
