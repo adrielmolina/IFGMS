@@ -10,12 +10,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Merriweather&family=Source+Sans+Pro&family=Fira+Code&family=Roboto&family=Noto+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/global.css') }}">
     
     {% block head %}{% endblock %}
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/global.css') }}">
-
-
 </head>
 
 <body>
@@ -127,13 +125,14 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             // Apply saved font preferences globally
-            if (localStorage.getItem("appFont")) {
-                document.documentElement.style.setProperty("--app-font", localStorage.getItem("appFont"));
+            if (localStorage.getItem("appFontFamily")) {
+                document.documentElement.style.setProperty("--app-font-family", localStorage.getItem("appFontFamily"));
             }
             if (localStorage.getItem("appFontSize")) {
                 document.documentElement.style.setProperty("--app-font-size", localStorage.getItem("appFontSize"));
             }
         });
+
     </script>
 
 </body>
