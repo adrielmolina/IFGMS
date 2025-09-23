@@ -7,136 +7,424 @@
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
 
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <!-- Tabulator CSS -->
+    <link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator.min.css" rel="stylesheet">
+    <!-- Tabulator JS -->
+    <script src="https://unpkg.com/tabulator-tables@6.2.1/dist/js/tabulator.min.js"></script>
 {% endblock %}
 
 
 {% block content %}
-      <div class="module_name">
-           <h1>Accounts</h1>
-      </div>
+    <div class="module_name">
+        <h1>Accounts</h1>
+    </div>
 
-    <form action="/account_action" method="POST">
-        <div class="accounts_table" spellcheck="false">
-            <table class="editableTable">
-                <thead>
-                    <tr>
-<!--                        TODO add checkbox the checkbox header to select all entries-->
-                        <th> </th>
-                        <th>ID</th>
-                        <th>USERNAME</th>
-                        <th>EMAIL</th>
-                        <th>FIRST NAME</th>
-                        <th>MIDDLE NAME</th>
-                        <th>LAST NAME</th>
-                        <th>CONTACT NO.</th>
-                        <th>ACCOUNT CREATED</th>
-                        <th>OFFICE</th>
-                        <th>USER LEVEL</th>
-                        <th>STATUS</th>
-                        <th>ACCOUNT REVIEW</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for account in active_accounts%}
-                    <tr>
-                        <!-- TODO enlarge checkboxes / change to custom cell-->
-                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ account.account_id }}"></td>
-                        <td>{{ account.account_id }}</td>
-                        <td>{{ account.username }}</td>
-                        <td>{{ account.email }}</td>
-                        <td>{{ account.first_name }}</td>
-                        <td>{{ account.middle_name }}</td>
-                        <td>{{ account.last_name }}</td>
-                        <td>{{ account.contact_no }}</td>
-                        <td>{{ account.acct_created }}</td>
-                        <td>{{ account.office_location }}</td>
-                        <td>{{ account.user_level }}</td>
-                        <td>{{ account.acct_status }}</td>
-                        <td>{{ account.acct_review_date }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <h2>Pending Account Requests</h2>
+    <input id="pending_search" placeholder="Search...">
+    <button id="pending_clear_search" onclick="clearSearch()">Clear Search</button>
+    <div id="pending_table"></div>
+    
 
-        <div class="inventory_btns">
-            <button type="submit" name="action" value="create">NEW ACCOUNT</button>
-            <button type="submit" name="action" value="archive">ARCHIVE</button>
-            <button type="submit" name="action" value="reset">RESET PASSWORD</button>
-        </div>
+    <div id="btn_row_pending" class="btn_row">
+        <button id="approve" name="action" value="approve">APPROVE</button>
+        <button id="decline" name="action" value="decline">DECLINE</button>
+    </div>
+    
 
-        <br> </br>
-        
-        <div class="pending_accounts_table" spellcheck="false">
-            <table class="editableTable">
-                <h2>Pending Account Requests</h2>
-                <thead>
-                    <tr>
-                        <th> </th>
-                        <th>ID</th>
-                        <th>USERNAME</th>
-                        <th>EMAIL</th>
-                        <th>FIRST NAME</th>
-                        <th>MIDDLE NAME</th>
-                        <th>LAST NAME</th>
-                        <th>CONTACT NO.</th>
-                        <th>ACCOUNT CREATED</th>
-                        <th>OFFICE</th>
-                        <th>USER LEVEL</th>
-                        <th>STATUS</th>
-                        <th>ACCOUNT REVIEW</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for account in pending_accounts%}
-                    <tr>
-                        <td><input type="checkbox" name="pending_checkbox" id="pending_checkbox" value="{{ account.account_id }}"></td>
-                        <td>{{ account.account_id }}</td>
-                        <td>{{ account.username }}</td>
-                        <td>{{ account.email }}</td>
-                        <td>{{ account.first_name }}</td>
-                        <td>{{ account.middle_name }}</td>
-                        <td>{{ account.last_name }}</td>
-                        <td>{{ account.contact_no }}</td>
-                        <td>{{ account.acct_created }}</td>
-                        <td>{{ account.office_location }}</td>
-                        <td>{{ account.user_level }}</td>
-                        <td>{{ account.acct_status }}</td>
-                        <td>{{ account.acct_review_date }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <h2>Active Accounts</h2>
+    <input id="active_search" placeholder="Search...">
+    <button id="active_clear_search" onclick="clearSearch()">Clear Search</button>
+    <div id="active_table"></div>
 
-        <div class="inventory_btns">
-            <button type="submit" name="action" value="approve">APPROVE</button>
-            <button type="submit" name="action" value="decline">DECLINE</button>
+    <div id="btn_row_active" class="btn_row">
+        <button id="create" name="action" value="create">NEW ACCOUNT</button>
+        <button id="archive" name="archive" value="archive">ARCHIVE</button>
+        <button id="reset" name="reset" value="reset" title="This will set the password to the user's Birthdate(YYYYMMDD)+initials">RESET PASSWORD ⓘ</button>
+    </div>
+    
+    <div id="overlay" class="overlay">
+        <div id="overlay-content" class="overlay-content">
+            <span id="close-overlay" class="close-overlay">&times;</span>
+            <div id="overlay-body" class="overlay-body">
+                <!-- TODO disable autocomplte in all fields -  autocomplete="off" -->
+                <!-- TODO set all input field as required -->
+                <!-- TODO fix the route address for ID -->
+                <form action="/api/account/<id>/create" method="POST" id="account_info">
+                    <fieldset>
+                        <legend>&nbsp;CREATE ACCOUNT&nbsp;</legend>
+
+
+                        <div class="parent">
+                            <div class="div1">
+                                <label for="fname">First Name</label>
+                                <input type="text" id="fname" name="fname" required autocomplete="off">
+                            </div>
+                            <div class="div2">
+                                <label for="mname">Middle Name</label>
+                                <input type="text" id="mname" name="mname" required autocomplete="off">
+                            </div>
+                            <div class="div3">
+                                <label for="lname">Last Name</label>
+                                <input type="text" id="lname" name="lname" required autocomplete="off">
+                            </div>
+                            <div class="div4">
+                                <label for="suffix">Suffix</label>
+                                <select name="suffix" id="suffix">
+                                    <option value="NA">NA</option>
+                                    <option value="Jr">Jr</option>
+                                    <option value="Sr">Sr</option>
+                                    <option value="II">II</option>
+                                    <option value="III">III</option>
+                                    <option value="IV">IV</option>
+                                    <option value="V">V</option>
+                                    <option value="VI">VI</option>
+                                    <option value="VII">VII</option>
+                                </select>
+                            </div>
+                            <div class="div14">
+                                <label for="bdate">Birthdate</label>
+                                <input type="date" id="bdate" name="bdate" required>
+                            </div>
+                            <div class="div15">
+                                <label for="contact_no">Contact No.</label>
+
+                                <span>
+                                    <input type="text" value="+63" readonly
+                                        style="width: 20%;">
+                                    <input type="text" id="contact_no" name="contact_no"
+                                        pattern="\d{10}" maxlength="10" required autocomplete="off" style="width: 78%;">
+                                </span>
+                                <!-- TODO use javascript to enforce number only -->
+                            </div>
+                            <div class="div16">
+                                <label for="email">Email Address</label>
+                                <input type="text" id="email" name="email" required autocomplete="off">
+                            </div>
+                            <div class="div17">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" name="username" required autocomplete="off">
+                                <!-- TODO add check if username exists -->
+                            </div>
+                            <div class="div18">
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" required autocomplete="off">
+                            </div>
+                            <div class="div19">
+                                <label for="conf_password">Confirm Password</label>
+                                <input type="password" id="conf_password" name="conf_password" required autocomplete="off">
+                                <!-- TODO validate with js if the same password input -->
+                            </div>
+                            <div class="div20">
+                                <label for="branch">Office Branch</label>
+                                <select name="branch" id="branch">
+                                    <option value="chapter">Cavite Chapter</option>
+                                    <option value="dasma">Dasmariñas</option>
+                                    <option value="silang">Silang</option>
+                                </select>
+                            </div>
+                            <div class="div21">
+                                <button type="submit">CREATE ACCOUNT</button>   
+                            </div>
+                        </div>                         
+                    </fieldset>                               
+                </form>
+            </div>
         </div>
-    </form>
+    </div>
+
 {% endblock %}
 
 
 {% block extra_scripts %}
     <script>
-        $(document).ready(function() {
-            // Initialize DataTable for tables with the "editableTable" class
-            $('.editableTable').each(function() {
-                var table = $(this).DataTable(); // Initialize each table with the "editableTable" class
+        // page load functions
+        document.addEventListener('DOMContentLoaded', function () {
             
-                // Add clear button next to the default search input field
-                $(this).closest('.dataTables_wrapper').find('.dataTables_filter').append('<button class="clearSearch" style="margin-left: 10px;">Clear</button>');
-            
-                // Clear search input when the clear button is clicked
-                $(this).closest('.dataTables_wrapper').find('.clearSearch').click(function() {
-                    $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').val('');  // Clear the search input field
-                    table.search('').draw();  // Reset the DataTable search
-                });
-            });
         });
+
+        // SEARCH BUTTONS
+        const searchInputP = document.getElementById("pending_search");
+        searchInputP.addEventListener("input", () => {
+        const keyword = searchInputP.value.toLowerCase();
+
+        pendingTable.setFilter((data) => {
+            return Object.values(data)
+            .join(" ")
+            .toLowerCase()
+            .includes(keyword);
+        });
+        });
+        const searchInputA = document.getElementById("active_search");
+        searchInputA.addEventListener("input", () => {
+        const keyword = searchInputA.value.toLowerCase();
+
+        activeTable.setFilter((data) => {
+            return Object.values(data)
+            .join(" ")
+            .toLowerCase()
+            .includes(keyword);
+        });
+        });
+
+        // CLEAR SEARCH BUTTONS
+        function clearSearch() {
+            searchInputP.value = "";
+            pendingTable.clearFilter();
+
+            searchInputA.value = "";
+            activeTable.clearFilter();
+        }
+
+        // create column headers
+        const accountColumns = [
+        {formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 50},
+        {title: "ID", field: "account_id"},
+        {title: "USERNAME", field: "username"},
+        {title: "EMAIL", field: "email"},
+        {title: "FIRST NAME", field: "first_name"},
+        {title: "MIDDLE NAME", field: "middle_name"},
+        {title: "LAST NAME", field: "last_name"},
+        {title: "CONTACT NO.", field: "contact_no"},
+        {title: "ACCOUNT CREATED", field: "acct_created"},
+        {title: "OFFICE", field: "office_location", editor:"list", editorParams: {
+            values: {
+                'Chapter': 'Chapter',
+                'Dasmarinas': 'Dasmarinas',
+                'Silang': 'Silang' 
+            }
+        },
+        formatter: (cell) => {
+            return `${cell.getValue()} <span style="color:#3b3b3b;">✎</span>`;
+        }
+        },
+        {title: "USER LEVEL", field: "user_level", editor:"list", editorParams: {
+            values: {
+                'staff': 'staff',   
+                'admin': 'admin',   
+                'superadmin': 'superadmin',   
+            }
+        },
+        formatter: (cell) => {
+            return `${cell.getValue()} <span style="color:#3b3b3b;">✎</span>`;
+        }
+        },
+        {title: "STATUS", field: "acct_status"},
+        {title: "ACCOUNT REVIEW", field: "acct_review_date"},
+        ];
+        // Create both tables
+        const pendingTable = new Tabulator("#pending_table", {
+        layout: "fitColumns",
+        selectable: true,
+        reactiveData: true,
+        columns: accountColumns
+        });
+        const activeTable = new Tabulator("#active_table", {
+        layout: "fitColumns",
+        selectable: true,
+        reactiveData: true,
+        columns: accountColumns
+        });
+
+        // get account
+        function fetchAccounts() {
+            fetch('/api/accounts')
+            .then(res => res.json())
+            .then(data => {
+                pendingTable.setData(data.pending);
+                activeTable.setData(data.active);
+            });
+        }
+        fetchAccounts();
+
+        // create account overlay
+        document.getElementById('create').addEventListener('click', () => {
+            document.getElementById('overlay').style.display = 'flex';
+        });
+
+        // approve accounts
+        document.getElementById('approve').addEventListener('click', () => {
+            // Get selected rows from the pending table
+
+            //console.log(pendingTable.getSelectedData());
+
+            const selectedData = pendingTable.getSelectedData();
+            const ids = selectedData.map(row => row.account_id);
+
+            if (ids.length === 0) {
+                alert("No accounts selected.");
+                return;
+            }
+
+            // Send to backend
+            fetch('/api/accounts/approve', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Selected accounts approved!');
+                    fetchAccounts();
+                } else {
+                    alert('Error approving accounts.');
+                }
+            })
+            .catch(err => console.error(err));
+        });
+
+        // decline accounts
+        document.getElementById('decline').addEventListener('click', () => {
+            
+            //console.log(pendingTable.getSelectedData());
+
+            const selectedData = pendingTable.getSelectedData();
+            const ids = selectedData.map(row => row.account_id);
+
+            if (ids.length === 0) {
+                alert("No accounts selected.");
+                return;
+            }
+
+            fetch('/api/accounts/decline', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Selected accounts declined!');
+                    fetchAccounts();
+                } else {
+                    alert('Error declining accounts.');
+                }
+            })
+            .catch(err => console.error(err));
+        });
+            
         
+        // reset accounts password
+        document.getElementById('reset').addEventListener('click', () => {
+            
+            //console.log(activeTable.getSelectedData());
+
+            const selectedData = activeTable.getSelectedData();
+            const ids = selectedData.map(row => row.account_id);
+
+            if (ids.length === 0) {
+                alert("No accounts selected.");
+                return;
+            }
+
+            fetch('/api/accounts/reset', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                alert('Successfully reset password for selected accounts!');
+                    fetchAccounts();
+                } else {
+                    alert('Error resetting password for accounts.');
+                }
+            })
+            .catch(err => console.error(err));
+        });
+
+        // update user level
+        activeTable.on("cellEdited", function(cell) {
+            if (cell.getField() === "user_level") {
+                const rowData = cell.getRow().getData();
+
+                fetch('/api/accounts/update_userlvl', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: rowData.account_id,
+                        user_level: cell.getValue()
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Successfully updated ${rowData.account_id} to ${cell.getValue()}`);
+                        console.log(`Updated user ${rowData.account_id} to ${cell.getValue()}`);
+                        fetchAccounts();
+                    } else {
+                        alert(`Failed to update user_id ${rowData.account_id}`);
+                    }
+                });
+            }
+        });
+
+        // update office location
+        activeTable.on("cellEdited", function(cell) {
+            if (cell.getField() === "office_location") {
+                const rowData = cell.getRow().getData();
+
+                fetch('/api/accounts/update_ofc', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: rowData.account_id,
+                        office_location: cell.getValue()
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Successfully updated ${rowData.account_id} to ${cell.getValue()}`);
+                        console.log(`Updated user ${rowData.account_id} to ${cell.getValue()}`);
+                        fetchAccounts();
+                    } else {
+                        alert(`Failed to update user_id ${rowData.account_id}`);
+                    }
+                });
+            }
+        });
+
+        // archive accounts
+        document.getElementById('archive').addEventListener('click', () => {
+            
+            //console.log(activeTable.getSelectedData());
+
+            const selectedData = activeTable.getSelectedData();
+            const ids = selectedData.map(row => row.account_id);
+
+            if (ids.length === 0) {
+                alert("No accounts selected.");
+                return;
+            }
+
+            fetch('/api/accounts/archive', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Successfully archived selected account/s!');
+                    fetchAccounts();
+                } else {
+                    alert('Error archiving account/s.');
+                }
+            })
+            .catch(err => console.error(err));
+        });
+
+        // for x button in overlay
+        document.getElementById('close-overlay').addEventListener('click', function () {
+            document.getElementById('overlay').style.display = 'none';
+        });
+        // close overlay on ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                document.getElementById('overlay').style.display = 'none';
+            }
+        });
     </script>
 {% endblock %}
