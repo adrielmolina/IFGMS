@@ -1,18 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Membership Registration</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
-    </head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Membership Registration</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
+</head>
+<body>
 
-    <body>
-        TEST
-    </body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <img src="static/assets/prc_logo.png" alt="Red Cross Logo" class="logo">
+      <div class="header-title">Philippine Red Cross - Cavite Chapter</div>
 
-    <script>
+      <!-- Back Button inside header, top-right -->
+      <button class="btn back">Back</button>
+    </header>
 
-    </script>
+    <!-- Form -->
+    <main class="form-wrapper">
+      <h1>MAAB Membership Sign Up</h1>
 
+      <form class="form">
+
+        <!-- Full Name -->
+        <div class="row cols-4">
+          <div class="field">
+            <label for="firstName">First Name</label>
+            <input id="firstName" type="text" placeholder="First Name" />
+          </div>
+          <div class="field">
+            <label for="middleName">Middle Name</label>
+            <input id="middleName" type="text" placeholder="Middle Name" />
+          </div>
+          <div class="field">
+            <label for="lastName">Last Name</label>
+            <input id="lastName" type="text" placeholder="Last Name" />
+          </div>
+          <div class="field">
+            <label for="suffix">Suffix</label>
+            <select id="suffix">
+              <option value="">Select</option>
+              <option>Jr.</option>
+              <option>Sr.</option>
+              <option>III</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Birthdate, Gender, Blood Type -->
+        <div class="row cols-3">
+          <div class="field">
+            <label for="birthdate">Birthdate</label>
+            <input id="birthdate" type="date" />
+          </div>
+          <div class="field">
+            <label for="gender">Gender/Sex</label>
+            <select id="gender">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="bloodType">Blood Type</label>
+            <select id="bloodType">
+              <option value="">Select</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>O+</option><option>O-</option>
+              <option>AB+</option><option>AB-</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Contact & Email -->
+        <div class="row cols-2">
+          <div class="field">
+            <label for="contact">Contact Number</label>
+            <input id="contact" type="tel" placeholder="Enter contact number" />
+          </div>
+          <div class="field">
+            <label for="email">Email Address</label>
+            <input id="email" type="email" placeholder="Enter email" />
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="row cols-4">
+          <div class="field">
+            <label for="province">Province</label>
+            <select id="province">
+              <option value="">Select</option>
+              <option>Cavite</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="municipality">Municipality</label>
+            <select id="municipality">
+              <option value="">Select</option>
+              <option>Cavite City</option>
+              <option>Dasma</option>
+              <option>Silang</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="street">Street / Barangay</label>
+            <input id="street" type="text" placeholder="Street / Barangay" />
+          </div>
+          <div class="field">
+            <label for="city">City</label>
+            <select id="city">
+              <option value="">Select</option>
+              <option>City of Cavite</option>
+              <option>City of Dasmarinas</option>
+              <option>City of Silang</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Maab Category & Office -->
+        <div class="row cols-2">
+          <div class="field">
+            <label for="MAABCategory">MAAB Category</label>
+            <select id="MAABCategory">
+              <option value="">Select</option>
+              <option>Classic</option>
+              <option>Bronze</option>
+              <option>Silver</option>
+              <option>Gold</option>
+              <option>Platinum</option>
+              <option>Senior</option>
+              <option>Senior+</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="office">Office</label>
+            <select id="office">
+              <option value="">Select</option>
+              <option>Cavite Chapter</option>
+              <option>Silang Chapter</option>
+              <option>Dasma Chapter</option>
+            </select>
+          </div>
+        </div>
+
+      </form>
+
+            <!-- Buttons OUTSIDE form -->
+        <div class="form-actions">
+        <button type="reset" class="btn clear">Clear Form</button>
+        <button type="submit" form="form" class="btn submit">Submit</button>
+        </div>
+
+    </main>
+  </div>
+
+</body>
 </html>
