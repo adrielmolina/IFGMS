@@ -78,6 +78,7 @@ def shutdown_session():
     """Remove session (for Flask teardown)"""
     SessionLocal.remove()
 
+
 def sign_in(username=None, password=None):    
     db_session = SessionLocal()
 
@@ -89,6 +90,7 @@ def sign_in(username=None, password=None):
     if user and tools.check_password(password, user.password):
         return user  # return full user object instead of "success/pending/fail"
     return None
+    
     
 # TODO make the generated id current year + 0000 + last inserted id
 def create_account(**kwargs):
@@ -123,10 +125,6 @@ def create_account(**kwargs):
         return str(e)
     
     
-# TODO move the otp functions to tools.py
-# ? RESET PASS START
-# !!!!!!!!!!!!!!!!!!!!!!!! SAVE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# TODO add otp_used column to the table
 def save_otp(email, otp):
     """Save OTP in the database with expiration time."""
     
@@ -151,31 +149,13 @@ def save_otp(email, otp):
         print(f"Error saving OTP: {e}")
         raise
     
-    '''
-    conn = conn_init()
-    Session = sessionmaker(bind=conn)
-    expires_at = datetime.now() + timedelta(minutes=5)
-    created_at = datetime.now()  # Capture the time when OTP is generated
-    
-    with Session() as session:
-        query = text("""
-            INSERT INTO otp_verifications (email, otp, expires_at, created_at) 
-            VALUES (:email, :otp, :expires_at, :created_at)
-        """)
-        session.execute(query, {
-            "email": email,
-            "otp": otp,
-            "expires_at": expires_at,
-            "created_at": created_at
-        })
-        session.commit()
-    '''
-
+# TODO update email icon
 def send_otp_email(email, otp):
     """Send OTP to the user's email."""
     subject = "Your OTP Code"
-    body = f"Your OTP code FGMS is: {otp}. This will expire in 5 minutes."
+    body = f"Your OTP code for FGMS is: {otp}. This will expire in 5 minutes."
 
+    # TODO change the from with name of the organization
     message = MIMEMultipart()
     message['From'] = SENDER_EMAIL
     message['To'] = email
@@ -310,7 +290,7 @@ def update_password(email, new_password):
 
 
 
-def get_user_accounts(status):
+def get_accounts(status):
     ''' for account module '''
     
     db_session = SessionLocal()
@@ -321,8 +301,111 @@ def get_user_accounts(status):
             .all()
         )
         return accounts
-    finally:
-        db_session.close()
+    
+    except Exception as e:
+        print(f"Error fetching accounts: {e}")
+        return []
+
+
+def approve_account(id):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            account.acct_status = 'approved'
+            account.acct_review_date = datetime.now()
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+    
+
+def decline_account(id):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            account.acct_status = 'declined'
+            account.acct_review_date = datetime.now()
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
+def reset_account(id):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            print(f"Resetting password for account ID {id}")
+            initials = (account.first_name[:1] + account.middle_name[:1] + account.last_name[:1]).lower().strip()
+            bdate = str(account.birth_date).replace('-', '') if account.birth_date else '00000000'
+            
+            account.password = tools.hash_password(bdate + initials)
+            
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
+def update_userlvl(id, new_level):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            print(f"Updating user level for account ID {id} to {new_level}")
+            account.user_level = new_level
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
+def update_ofc(id, new_ofc):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            print(f"Updating office location for account ID {id} to {new_ofc}")
+            account.office_location = new_ofc
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
+def archive_account(id):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            account.acct_status = 'archived'
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
 
 def account_action(selected_ids, action):    
     Session = sessionmaker(bind=conn_init())
@@ -344,7 +427,7 @@ def account_action(selected_ids, action):
                 else:
                     bdate = '00000000'
                 initials = (account.first_name[:1] + account.middle_name[:1] + account.last_name[:1]).lower().strip()
-       
+
                 reset_pass = bdate + initials
                 print(reset_pass)
                 hashed_pass = tools.hash_password(reset_pass)
