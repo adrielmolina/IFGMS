@@ -88,9 +88,9 @@
         <span>Font Style</span>
         <select id="fontStyleSelect">
             <option value="default">Default</option>
-            <option value="sans-serif">Sans-serif</option>
-            <option value="serif">Serif</option>
-            <option value="monospace">Monospace</option>
+            <option value="georgia">Georgia</option>
+            <option value="century-gothic">Century Gothic</option>
+            <option value="jetbrains-mono">JetBrains Mono</option>
         </select>
     </div>
 
@@ -106,46 +106,48 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const fontStyleSelect = document.getElementById("fontStyleSelect");
-    const fontSizeSelect = document.getElementById("fontSizeSelect");
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fontStyleSelect = document.getElementById("fontStyleSelect");
+        const fontSizeSelect = document.getElementById("fontSizeSelect");
 
-    // Restore UI dropdown states
-    if (localStorage.getItem("appFontKey")) {
-        fontStyleSelect.value = localStorage.getItem("appFontKey");
-    }
-    if (localStorage.getItem("appFontSizeKey")) {
-        fontSizeSelect.value = localStorage.getItem("appFontSizeKey");
-    }
-
-    // Font style change
-    fontStyleSelect.addEventListener("change", function() {
-        let fontFamily;
-        switch (this.value) {
-            case "sans-serif": fontFamily = "Arial, sans-serif"; break;
-            case "serif": fontFamily = "'Times New Roman', serif"; break;
-            case "monospace": fontFamily = "'Courier New', monospace"; break;
-            default: fontFamily = "Arial, sans-serif";
+        // Restore UI dropdown states
+        if (localStorage.getItem("appFontKey")) {
+            fontStyleSelect.value = localStorage.getItem("appFontKey");
         }
-        document.documentElement.style.setProperty("--app-font", fontFamily);
-        localStorage.setItem("appFont", fontFamily);
-        localStorage.setItem("appFontKey", this.value);
-    });
-
-    // Font size change
-    fontSizeSelect.addEventListener("change", function() {
-        let size;
-        switch (this.value) {
-            case "small": size = "14px"; break;
-            case "medium": size = "16px"; break;
-            case "large": size = "18px"; break;
-            default: size = "16px";
+        if (localStorage.getItem("appFontSizeKey")) {
+            fontSizeSelect.value = localStorage.getItem("appFontSizeKey");
         }
-        document.documentElement.style.setProperty("--app-font-size", size);
-        localStorage.setItem("appFontSize", size);
-        localStorage.setItem("appFontSizeKey", this.value);
+
+        // Font style change
+        fontStyleSelect.addEventListener("change", function() {
+            let fontFamily;
+            switch (this.value) {
+                case "georgia": fontFamily = "Georgia, serif"; break;
+                case "century-gothic": fontFamily = "'Century Gothic', sans-serif"; break;
+                case "jetbrains-mono": fontFamily = "'JetBrains Mono', monospace"; break;
+                default: fontFamily = "Montserrat', sans-serif";
+                
+            }
+            document.documentElement.style.setProperty("--app-font", fontFamily);
+            localStorage.setItem("appFont", fontFamily);
+            localStorage.setItem("appFontKey", this.value);
+        });
+
+
+        // Font size change
+        fontSizeSelect.addEventListener("change", function() {
+            let size;
+            switch (this.value) {
+                case "small": size = "0.875rem"; break; // ~14px
+                case "medium": size = "1rem"; break;    // ~16px
+                case "large": size = "1.125rem"; break; // ~18px
+                default: size = "1rem";                 // fallback
+            }
+            document.documentElement.style.setProperty("--app-font-size", size);
+            localStorage.setItem("appFontSize", size);
+            localStorage.setItem("appFontSizeKey", this.value);
+        });
     });
-});
-</script>
+    </script>
 {% endblock %}
