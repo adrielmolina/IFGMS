@@ -32,3 +32,13 @@ h1 {
     border: 2px solid;
     margin: 5px;
 }
+
+/* Hide groups by default */
+.collapse_box_checkbox ~ .collapse_group {
+  display: none;
+}
+
+/* Show when checked */
+.collapse_box_checkbox:checked ~ .collapse_group {
+  display: block; /* or flex depending on your layout */
+}

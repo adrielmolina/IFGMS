@@ -124,16 +124,15 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Apply saved font preferences globally
-            if (localStorage.getItem("appFontFamily")) {
-                document.documentElement.style.setProperty("--app-font-family", localStorage.getItem("appFontFamily"));
+            if (localStorage.getItem("appFont")) {
+                document.documentElement.style.setProperty("--app-font", localStorage.getItem("appFont"));
             }
             if (localStorage.getItem("appFontSize")) {
                 document.documentElement.style.setProperty("--app-font-size", localStorage.getItem("appFontSize"));
             }
         });
-
     </script>
+
 
 </body>
 </html>

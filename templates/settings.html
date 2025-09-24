@@ -84,70 +84,78 @@
         </label>
     </div>
     
-    <div class="setting-row">
-        <span>Font Style</span>
-        <select id="fontStyleSelect">
-            <option value="default">Default</option>
-            <option value="georgia">Georgia</option>
-            <option value="century-gothic">Century Gothic</option>
-            <option value="jetbrains-mono">JetBrains Mono</option>
-        </select>
-    </div>
+<div class="setting-row">
+    <span>Font Style</span>
+    <select id="fontStyleSelect">
+        <option value="default">Default</option>
+        <option value="georgia">Georgia</option>
+        <option value="century-gothic">Century Gothic</option>
+        <option value="jetbrains-mono">JetBrains Mono</option>
+    </select>
+</div>
 
-    <div class="setting-row">
-        <span>Font Size</span>
-        <select id="fontSizeSelect">
-            <option value="small">Small</option>
-            <option value="medium" selected>Medium</option>
-            <option value="large">Large</option>
-        </select>
-    </div>  
+<div class="setting-row">
+    <span>Font Size</span>
+    <select id="fontSizeSelect">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium</option>
+        <option value="large">Large</option>
+    </select>
+</div>  
 
-{% endblock %}
 
 {% block extra_scripts %}
-    <script>
+<script>
     document.addEventListener("DOMContentLoaded", function() {
         const fontStyleSelect = document.getElementById("fontStyleSelect");
         const fontSizeSelect = document.getElementById("fontSizeSelect");
 
-        // Restore UI dropdown states
-        if (localStorage.getItem("appFontKey")) {
-            fontStyleSelect.value = localStorage.getItem("appFontKey");
-        }
-        if (localStorage.getItem("appFontSizeKey")) {
-            fontSizeSelect.value = localStorage.getItem("appFontSizeKey");
-        }
+        // Restore saved preferences (or defaults)
+        const savedFontKey = localStorage.getItem("appFontKey") || "default";
+        const savedSizeKey = localStorage.getItem("appFontSizeKey") || "medium";
 
-        // Font style change
-        fontStyleSelect.addEventListener("change", function() {
-            let fontFamily;
-            switch (this.value) {
-                case "georgia": fontFamily = "Georgia, serif"; break;
-                case "century-gothic": fontFamily = "'Century Gothic', sans-serif"; break;
-                case "jetbrains-mono": fontFamily = "'JetBrains Mono', monospace"; break;
-                default: fontFamily = "Montserrat', sans-serif";
-                
-            }
-            document.documentElement.style.setProperty("--app-font", fontFamily);
-            localStorage.setItem("appFont", fontFamily);
-            localStorage.setItem("appFontKey", this.value);
+        fontStyleSelect.value = savedFontKey;
+        fontSizeSelect.value = savedSizeKey;
+
+        // Apply preferences immediately
+        applyFontStyle(savedFontKey);
+        applyFontSize(savedSizeKey);
+
+        // Handlers
+        fontStyleSelect.addEventListener("change", e => {
+            applyFontStyle(e.target.value);
+            localStorage.setItem("appFontKey", e.target.value);
         });
 
-
-        // Font size change
-        fontSizeSelect.addEventListener("change", function() {
-            let size;
-            switch (this.value) {
-                case "small": size = "0.875rem"; break; // ~14px
-                case "medium": size = "1rem"; break;    // ~16px
-                case "large": size = "1.125rem"; break; // ~18px
-                default: size = "1rem";                 // fallback
-            }
-            document.documentElement.style.setProperty("--app-font-size", size);
-            localStorage.setItem("appFontSize", size);
-            localStorage.setItem("appFontSizeKey", this.value);
+        fontSizeSelect.addEventListener("change", e => {
+            applyFontSize(e.target.value);
+            localStorage.setItem("appFontSizeKey", e.target.value);
         });
+
+        // Helpers
+        function applyFontStyle(key) {
+            const map = {
+                "georgia": "Georgia, serif",
+                "century-gothic": "'Century Gothic', sans-serif",
+                "jetbrains-mono": "'JetBrains Mono', monospace",
+                "default": "'Montserrat', sans-serif"
+            };
+            document.documentElement.style.setProperty("--app-font", map[key] || map["default"]);
+            localStorage.setItem("appFontFamily", map[key] || map["default"]);
+        }
+
+        function applyFontSize(key) {
+            const map = {
+                "small": "0.875rem",   // ~14px
+                "medium": "1rem",      // ~16px
+                "large": "1.125rem"    // ~18px
+            };
+            document.documentElement.style.setProperty("--app-font-size", map[key] || map["medium"]);
+            localStorage.setItem("appFontSize", map[key] || map["medium"]);
+        }
     });
-    </script>
+</script>
+
+{% endblock %}
+
 {% endblock %}

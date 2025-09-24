@@ -1,34 +1,43 @@
 {% extends 'base.html' %}
 
-
 {% block title %}Reports{% endblock %}
-
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/reports.css') }}">
-
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
 {% endblock %}
 
-
 {% block content %}
-    <div id="bud_v_exp" class="bud_v_exp">
-        <h1>BUDGET VS EXPENSES</h1>
-        <div id="budget_v_expense_table" class="ht-theme-main"></div>
+    <!-- Budget vs Expenses -->
+    <div class="collapse_box">
+        <input id="bud_v_exp_check" class="collapse_box_checkbox" type="checkbox" checked>
+        <label for="bud_v_exp_check" class="collapse_box_label">BUDGET VS EXPENSES</label>
+        <div id="bud_v_exp" class="collapse_group">
+            <div id="budget_v_expense_table" class="ht-theme-main"></div>
+        </div>
     </div>
 
-    <div id="trg_v_act" class="trg_v_act">
-        <h1>TARGET VS ACTUAL</h1>
-        <div id="target_v_actual_table" class="ht-theme-main"></div>
+    <!-- Target vs Actual -->
+    <div class="collapse_box">
+        <input id="trg_v_act_check" class="collapse_box_checkbox" type="checkbox" checked>
+        <label for="trg_v_act_check" class="collapse_box_label">TARGET VS ACTUAL</label>
+        <div id="trg_v_act" class="collapse_group">
+            <div id="target_v_actual_table" class="ht-theme-main"></div>
+        </div>
     </div>
-    
-    <div id="per_dist" class="per_dist">
-        <h1>PER DISTRICT</h1>
-        <div id="per_district_table" class="ht-theme-main"></div>
+
+    <!-- Per District -->
+    <div class="collapse_box">
+        <input id="per_dist_check" class="collapse_box_checkbox" type="checkbox" checked>
+        <label for="per_dist_check" class="collapse_box_label">PER DISTRICT</label>
+        <div id="per_dist" class="collapse_group">
+            <div id="per_district_table" class="ht-theme-main"></div>
+        </div>
     </div>
 {% endblock %}
+
 
 
 {% block extra_scripts %}
