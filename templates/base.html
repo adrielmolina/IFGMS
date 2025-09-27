@@ -117,12 +117,8 @@
                 document.getElementById("accounts").removeAttribute("hidden");
             }
 
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
             if (localStorage.getItem("appFont")) {
                 document.documentElement.style.setProperty("--app-font", localStorage.getItem("appFont"));
-
             }
             if (localStorage.getItem("appFontSize")) {
                 document.documentElement.style.setProperty("--app-font-size", localStorage.getItem("appFontSize"));
