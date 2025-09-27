@@ -26,6 +26,7 @@ body {
   min-height: 100vh;
   margin-left: 5vw;
 }
+
 /* TODO highlight currently selected module */
 /* Sidebar base with glassmorphism effect */
 .sidebar {
