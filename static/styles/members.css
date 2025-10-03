@@ -3,8 +3,6 @@ body {
     padding: 10px;
     display: flex;
     flex-direction: column;
-    /* justify-content: center; */
-    /* align-items: center; */
 }
 
 label {
@@ -12,33 +10,116 @@ label {
 }
 
 .ht_master .wtHolder {
-    padding-bottom: 1%; /* adjust this value */
+    padding-bottom: 1%;
 }
 
-.ht_clone_top {
-    z-index: 1 !important; /* Lower the table header clone z-index */
-}
-
-.ht_clone_left {
-    z-index: 1 !important; /* Lower the table header clone z-index */
-}
-
-.ht_clone_top_left_corner {
-    z-index: 1 !important; /* or any value lower than your navbar */
+.ht_clone_top, .ht_clone_left, .ht_clone_top_left_corner {
+    z-index: 1 !important;
 }
 
 .handsontable .ht_master {
-    background-color: #f9f9f9;  /* light grey, change as needed */
+    background-color: #f9f9f9;
 }
+
 #members_table .htSearchResult {
     background-color: #c7db14a5 !important;
     color: #000000;
 }
 
-/* TODO remove when done styling the form */
-#overlay {
-  /* display: flex !important; */
+.page-container {
+  padding-top: 10px; 
 }
+
+/* Search bar for Members */
+.search-bar {
+  text-align: left;
+  margin: 10px 0;
+  margin-left: 25px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-bar input {
+  width: 30%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  font-size: 16px;
+}
+
+#search_clear {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  background-color: #f5f5f5;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#search_clear:hover {
+  background-color: #e0e0e0;
+}
+
+/* Filters section for Members */
+.filters {
+  gap: 15px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+  margin-left: 25px;
+  align-items: center;
+}
+
+.filter {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter label {
+  font-weight: bold;
+}
+
+.filter select {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+}
+
+.clear-filters {
+  background: #d9534f;
+  color: white;
+  margin-left: auto;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+}
+
+.clear-filters:hover {
+  background: #c9302c;
+}
+
+
+.members-header {
+  text-align: center;
+  padding-bottom: 50px;
+}
+
+.members-header h1 {
+  color: rgb(232, 57, 57);
+  font-size: 32px;
+  margin-top: 10px;
+}
+
+
+#overlay { }
 
 .overlay {
     display: none;
@@ -47,12 +128,7 @@ label {
     width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.6);
     z-index: 9999;
-
-    /* disable highlighting */
     user-select: none;
-    -webkit-user-select: none; /* Safari */
-    -moz-user-select: none;    /* Firefox */
-    -ms-user-select: none;
 }
 
 .overlay-content {
@@ -78,35 +154,23 @@ label {
     flex-direction: column;
     align-items: center;
     justify-items: center;
-
     width: 100%;
-    height: 100%;           /* Set a fixed height, not max-height */
+    height: 100%;
     overflow: auto;
     box-sizing: border-box;
 }
 
-.record_details {
+.record_details, .entry_details {
     display: block;
     flex-direction: column;
     align-items: center;
-    /* justify-content: center; */
     width: 100%;
-    /* height: 100%; */
-}
-.entry_details {
-    display: block;
-    flex-direction: column;
-    align-items: center;
-    /* justify-content: center; */
-    width: 100%;
-    /* height: 100%; */
 }
 
 table {
     width: 100%;
 }
 
-/* TODO add alternating gray/white color to rows */
 table, th, tr, td {
     border: 1px solid black;
     border-collapse: collapse;
@@ -114,15 +178,10 @@ table, th, tr, td {
 }
 
 th {
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    padding: 5px 10px;
     background-color: #2d1d52;
     color: white;
-    border-color: white;
     font-size: 14px;
-    /*TODO set the headers to center*/
 }
 
 td {
@@ -147,7 +206,7 @@ td select {
     height: 100%;  
 }
 
-/* SWITCH BUTTON STYLE */
+
 .switch {
     position: relative;
     display: inline-block;
@@ -188,12 +247,9 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(16px);
 }
-/* SWITCH BUTTON STYLE END */
 
-
-
+/* ----------------- Controls Box ----------------- */
 .controls_box {
-    /* border: #000000 1px solid; */
     border-bottom: 1px solid black;
     width: 99%;
     height: fit-content;
@@ -201,8 +257,9 @@ input:checked + .slider:before {
     margin: 5px;
     display: flex;
     flex-direction: row;
-    gap: 15px;;
+    gap: 15px;
 }
+
 .controls_box button {
     background-color: #4e4747;
     color: white;
@@ -211,6 +268,401 @@ input:checked + .slider:before {
     border-radius: 5px;
     cursor: pointer;
 }
+
 .controls_box button:hover {
     background-color: #3c3c3c;
 }
+
+/* ----------------- Filled Text Field (Material Design) ----------------- */
+.input-field {
+    position: relative;
+    margin: 16px 0;
+    width: 100%;
+}
+
+.input-field input,
+.input-field select,
+.input-field textarea {
+    width: 100%;
+    padding: 16px 12px 6px;        
+    font-size: 14px;
+    border: none;
+    border-bottom: 2px solid #9ca3af; 
+    background: #f3f4f6;             
+    border-radius: 4px 4px 0 0;       
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+/* Focus effect */
+.input-field input:focus,
+.input-field select:focus,
+.input-field textarea:focus {
+    border-bottom-color: #3b82f6;  /* accent underline */
+    background: #fff;
+}
+
+/* Label inside the field */
+.input-field label {
+    position: absolute;
+    top: 16px;
+    left: 12px;
+    font-size: 14px;
+    color: #6b7280;
+    pointer-events: none;
+    transition: 0.2s ease all;
+}
+
+/* Floating effect */
+.input-field.filled label,
+.input-field input:focus + label,
+.input-field textarea:focus + label,
+.input-field select:focus + label {
+    transform: translateY(-35px);
+    font-size: 12px;
+    color: #3b82f6;
+}
+
+/* Checkbox fix */
+.input-field input[type="checkbox"] {
+    width: auto;              
+    margin-right: 6px;        
+}
+
+.input-field input[type="checkbox"] + label {
+    position: relative;
+    top: 0;
+    left: 0;
+    transform: none !important;
+    font-size: 14px;
+    color: #000;
+    background: none;
+    padding: 0;
+    transition: none;
+}
+
+
+.input-field input[type="date"] {
+     padding: 16px 12px 4px;  
+}
+
+.input-field input[type="date"] + label {
+    top: -8px;                   
+    font-size: 12px;
+    color: #3b82f6;
+    transform: none !important;  
+}
+
+/* Optional helper text under input */
+.helper-text {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+    padding-left: 12px;
+}
+
+.member_records #entries_table {
+    max-height: 500px;   /* adjust kung gaano kataas lang dapat */
+    overflow: auto;      /* scroll inside instead of expanding */
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+}
+
+/* Section Cards */
+.record_details, 
+.entry_details, 
+.member_records {
+    background: #ffffff;
+    padding: 25px;
+    margin: 20px 0;
+    border-radius: 12px;
+    border: 1.5px solid #e0e0e0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    border-left-width: 6px;
+    display: flex;
+    flex-direction: column;
+}
+.record_details { border-left-color: #3b82f6; }
+.entry_details { border-left-color: #22c55e; }
+.member_records { border-left-color: #a855f7; background: #fcfaff; }
+
+/* Fieldset */
+fieldset {
+    border: 2px solid #212C62;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+fieldset legend {
+    font-weight: bold;
+    padding: 0 10px;
+    font-size: 16px;
+}
+.record_details fieldset { border-color: #3b82f6; }
+.record_details fieldset legend { color: #3b82f6; }
+.entry_details fieldset { border-color: #22c55e; }
+.entry_details fieldset legend { color: #22c55e; }
+.member_records fieldset { border-color: #a855f7; }
+.member_records fieldset legend { color: #a855f7; }
+
+
+/* ----------------- Buttons inside cards ----------------- */
+.controls_box {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;   
+    border: none;
+    justify-content: flex-start;
+}
+
+.controls_box button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+
+.record_details .controls_box button:first-child,
+.entry_details .controls_box button:first-child {
+    background: #22c55e;
+    color: #fff;
+}
+.record_details .controls_box button:first-child:hover,
+.entry_details .controls_box button:first-child:hover {
+    background: #16a34a;
+}
+
+.record_details .controls_box button:last-child,
+.entry_details .controls_box button:last-child {
+    background: #ef4444;
+    color: #fff;
+}
+.record_details .controls_box button:last-child:hover,
+.entry_details .controls_box button:last-child:hover {
+    background: #dc2626;
+}
+
+.entry_details .controls_box .add-entry {
+    background: #a855f7;
+    color: #fff;
+}
+.entry_details .controls_box .add-entry:hover {
+    background: #9333ea;
+}
+
+/* ----------------- Inputs match section accent ----------------- */
+.record_details .input-field input,
+.record_details .input-field select,
+.record_details .input-field textarea {
+    border-color: #3b82f6;
+}
+
+.entry_details .input-field input,
+.entry_details .input-field select,
+.entry_details .input-field textarea {
+    border-color: #22c55e;
+}
+
+.member_records table {
+    border-left: 4px solid #a855f7; 
+}
+
+/* ----------------- Input Tables ----------------- */
+.record_details table,
+.entry_details table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 12px;
+}
+
+.record_details td,
+.entry_details td {
+    vertical-align: top;
+    padding: 0;
+    border: none; 
+}
+
+.record_details table,
+.entry_details table {
+    border: none;
+}
+
+/* Float labels when input has a value, even without focus */
+.input-field input:not(:placeholder-shown) + label,
+.input-field textarea:not(:placeholder-shown) + label,
+.input-field select:valid + label,
+.input-field input[type="date"]:not(:invalid) + label {
+    transform: translateY(-35px);
+    font-size: 12px;
+    color: #3b82f6;
+}
+
+
+/* ========================================================= */
+/* COLOR-CODED FIELDSET + LABELS PER SECTION                 */
+/* ========================================================= */
+
+.record_details fieldset {
+    border-color: #3b82f6;
+}
+.record_details fieldset legend {
+    color: #3b82f6;
+}
+.record_details .input-field label,
+.record_details .input-field input:focus + label,
+.record_details .input-field select:focus + label,
+.record_details .input-field textarea:focus + label,
+.record_details .input-field input:not(:placeholder-shown) + label {
+    color: #3b82f6;
+}
+.record_details .input-field input:focus,
+.record_details .input-field select:focus,
+.record_details .input-field textarea:focus {
+    border-bottom-color: #3b82f6;
+}
+
+.entry_details fieldset {
+    border-color: #22c55e;
+}
+.entry_details fieldset legend {
+    color: #22c55e;
+}
+.entry_details .input-field label,
+.entry_details .input-field input:focus + label,
+.entry_details .input-field select:focus + label,
+.entry_details .input-field textarea:focus + label,
+.entry_details .input-field input:not(:placeholder-shown) + label {
+    color: #22c55e;
+}
+.entry_details .input-field input:focus,
+.entry_details .input-field select:focus,
+.entry_details .input-field textarea:focus {
+    border-bottom-color: #22c55e;
+}
+
+.member_records fieldset {
+    border-color: #a855f7;
+}
+.member_records fieldset legend {
+    color: #a855f7;
+}
+.member_records .input-field label,
+.member_records .input-field input:focus + label,
+.member_records .input-field select:focus + label,
+.member_records .input-field textarea:focus + label,
+.member_records .input-field input:not(:placeholder-shown) + label {
+    color: #a855f7;
+}
+.member_records .input-field input:focus,
+.member_records .input-field select:focus,
+.member_records .input-field textarea:focus {
+    border-bottom-color: #a855f7;
+}
+
+.handsontable {
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.handsontable th {
+    background: #f8d7da;
+    color: #231818 !important;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1px solid #e5e7eb !important;
+    text-align: center;
+    padding: 10px;
+}
+
+.handsontable .ht_master tr:nth-child(even) td {
+    background: #f9fafb;
+}
+.handsontable .ht_master tr:nth-child(odd) td {
+    background: #fff;
+}
+
+.handsontable td {
+    border: 1px solid #e5e7eb !important; 
+    padding: 8px 10px;
+    text-align: center;
+    color: #111827; 
+    background: #fff;
+}
+
+.handsontable .ht_master tr:hover td {
+    background: #eef2ff !important;
+}
+
+.handsontable td.current {
+    background: #dbeafe !important;
+    box-shadow: inset 0 0 0 2px #3b82f6;
+}
+
+.handsontable td.area {
+    background: #e0f2fe !important;
+}
+
+#members_table .htSearchResult {
+    background-color: #fef08a !important;
+    color: #000;
+    font-weight: bold;
+}
+
+#entries_table {
+    height: 350px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+#entries_table .handsontable {
+    font-size: 14px;
+    color: #333;
+    border: none;
+    box-shadow: none;
+    height: auto !important;
+    min-height: 100%;
+}
+
+#entries_table .handsontable th {
+    background: #ab52ff;
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1px solid #e5e7eb !important; 
+    text-align: center;
+    padding: 10px;
+}
+
+#entries_table .handsontable .ht_master tr:nth-child(even) td { background: #f9fafb; }
+#entries_table .handsontable .ht_master tr:nth-child(odd) td { background: #fff; }
+
+#entries_table .handsontable td {
+    border: 1px solid #e5e7eb !important;
+    padding: 8px 10px;
+    text-align: center;
+    color: #111827;
+    background: #fff;
+}
+
+
+#entries_table .handsontable td.current {
+    background: #f3e8ff !important;
+    box-shadow: inset 0 0 0 2px #a855f7;
+}
+
+#entries_table .handsontable td.area { background: #ede9fe !important; }
