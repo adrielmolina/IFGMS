@@ -868,6 +868,33 @@ def GET_audit_logs():
         print(f"Error fetching audit logs: {e}")
         return []
     
+def update_user_details(account_id, first_name, middle_name, last_name, birth_date, contact_no, email):
+    # Find the user by their account_id
+    session = SessionLocal()  # create a session instance
+    user = session.query(models.Accounts).filter(models.Accounts.account_id == account_id).first()
+
+    # If user is found, update the fields
+    if user:
+        user.first_name = first_name
+        user.middle_name = middle_name
+        user.last_name = last_name
+        user.birth_date = birth_date
+        user.contact_no = contact_no
+        user.email = email
+
+        try:
+            # Commit the changes to the database
+            session.commit()
+            print(f"User {account_id} details updated successfully.")
+            return True
+        except Exception as e:
+            # If there is an error, roll back the changes
+            session.rollback()
+            print(f"Error updating user details: {e}")
+            return False
+    else:
+        print(f"User with account_id {account_id} not found.")
+        return False
 
 
 def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=None, current_user_id=None):
