@@ -30,7 +30,7 @@
     </div>
 
     <div class="profile-container">
-    <form action="#" method="POST" class="profile-form">
+    <form action="{{ url_for('settings_save_changes') }}" method="POST" class="profile-form">
     <!-- USER DETAILS -->
     <div class="form-group">
         <label for="full_name">Full Name:</label>
@@ -39,6 +39,7 @@
             <span class="edit-icon" onclick="toggleEditable('full_name')">&#9998;</span>
         </div>
     </div>
+</div>
 
     <div class="form-group">
         <label for="username">Username:</label>
@@ -47,6 +48,15 @@
             <span class="edit-icon" onclick="toggleEditable('username')">&#9998;</span>
         </div>
     </div>
+</div>
+
+<div class="form-group">
+    <label for="last_name">Last Name:</label>
+    <div class="input-wrapper">
+        <input type="text" id="last_name" name="last_name" value="{{ user_details.last_name }}" readonly disabled />
+    </div>
+</div>
+
 
     <div class="form-group">
         <label for="birthdate">Birthdate:</label>
@@ -74,29 +84,13 @@
     </div>
 </form>
 
-</div>
+<div class="form-buttons" id="formButtons">
+        <button type="button" onclick="saveChanges()">Save</button>
+        <button type="button" onclick="cancelChanges()">Cancel</button>
+    </div>
+    <button type="button" id="editButton" onclick="enableEditMode()">Edit</button>
 
-</div>
-
-    <div class="section1">
-        <h2>Account Settings</h2>
-
-        <div class="setting-row">
-            <span>Change Password</span>
-            <button>Change</button>
-        </div>
-
-        <div class="setting-row">
-            <span>Update Email / Phone</span>
-            <button>Update</button>
-        </div>
-
-        <div class="setting-row">
-            <span>Enable Two-Factor Authentication (2FA)</span>
-            <button>Enable</button>
-        </div>
-
-        <div class="setting-row">
+<div class="setting-row">
             <span>View Login History</span>
             <button onclick="toggleLoginHistory()">View</button>
         </div>
@@ -124,9 +118,11 @@
                 </tbody>
             </table>
         </div>
-    </div>
+</div>
 
-<div class="section">
+</div>
+
+<div class="section1">
     <h2>Display & Accessibility</h2>
     
     <div class="setting-row">
@@ -215,6 +211,53 @@
             localStorage.setItem("appFontSize", map[key] || map["medium"]);
         }
     });
+
+    let originalValues = {};
+
+    function enableEditMode() {
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.removeAttribute('readonly');
+        input.removeAttribute('disabled');
+        input.classList.add('editable'); // Add class here
+        originalValues[input.id] = input.value;
+    });
+
+    document.getElementById('formButtons').style.display = 'flex';
+    document.getElementById('editButton').style.display = 'none';
+}
+
+function saveChanges() {
+    // Submit the form programmatically
+    document.querySelector('.profile-form').submit();
+
+    // After submitting, reset the form to readonly and disabled
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.setAttribute('readonly', true);
+        input.setAttribute('disabled', true);
+        input.classList.remove('editable'); // Remove class here
+    });
+
+    document.getElementById('formButtons').style.display = 'none';
+    document.getElementById('editButton').style.display = 'inline-block';
+}
+
+
+function cancelChanges() {
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.value = originalValues[input.id];
+        input.setAttribute('readonly', true);
+        input.setAttribute('disabled', true);
+        input.classList.remove('editable'); // Remove class here
+    });
+
+    document.getElementById('formButtons').style.display = 'none';
+    document.getElementById('editButton').style.display = 'inline-block';
+}
+
+    function toggleLoginHistory() {
+        const history = document.getElementById('loginHistory');
+        history.style.display = (history.style.display === 'none') ? 'block' : 'none';
+    }
 </script>
 
 {% endblock %}
