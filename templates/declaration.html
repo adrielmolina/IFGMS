@@ -1,61 +1,94 @@
 {% extends 'base.html' %}
 
-
 {% block title %}Declaration{% endblock %}
-
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
 {% endblock %}
 
-
 {% block content %}
-  <div class="module_name">
+<div class="page-container">
+  <div class="declaration-header">
+    <div class="logo"></div>
     <h1>Declaration</h1>
   </div>
 
-  <form action="/generate_report" method="POST">
-  <div class="module_name">
-    <h1>Declaration</h1>
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search declarations...">
   </div>
 
-  <div class="main-content">
-    <div class="entry">
-      <div class="date-filter">
-        <label class="entry_label" for="fromdate">From Date:</label>
-        <input class="date_input" type="date" id="fromdate" name="fromdate" required>
-      </div>
-      <div class="date-filter">
-        <label class="entry_label" for="todate">To Date:</label>
-        <input class="date_input" type="date" id="todate" name="todate" required>
-      </div>
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter">
+      <label for="filterCategory">Category:</label>
+      <select id="filterCategory">
+        <option value="all">All Categories</option>
+        <option>Gold</option>
+        <option>Silver</option>
+        <option>Bronze</option>
+        <option>Platinum</option>
+        <option>Safecard</option>
+        <option>Senior</option>
+        <option>Senior Plus</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label for="filterLocation">Location:</label>
+      <select id="filterLocation">
+        <option value="all">All Locations</option>
+        <option>Cavite State University</option>
+        <option>De La Salle University Dasmarinas</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label for="filterLate">Late Declare:</label>
+      <select id="filterLate">
+        <option value="all">All</option>
+        <option>Yes</option>
+        <option>No</option>
+      </select>
     </div>
   </div>
 
-  <div class="gen-buttons">
-    <button type="submit" class="gen-btn">Generate Report</button>
+  <!-- Action Buttons (above table) -->
+  <div class="action-buttons">
+    <button type="button" class="btn transmit" disabled>Transmit (0)</button>
+    <button type="button" class="btn history" disabled>History (0)</button>
+    <button type="button" class="btn select-all">Select All</button>
+    <button type="button" class="btn archive">Archive</button>
   </div>
-</form>
 
   <div class="ID_table">
-    <table>
+    <table id="dataTable">
         <thead>
             <tr>
-                <th>Open</th>
-                <th>Dispatch ID</th>
-                <th>Dispatch Type</th>
-                <th>Dispatch Origin</th>
-                <th>Dispatch Year</th>
-                <th>Dispatch Cutoff</th>
-                <th>Date Dispatched</th>
-                <th>Dispatch Total</th>
-                <th>Late Declare</th>
-                <th>Dispatch Remarks</th>
-                
+                <th><input type="checkbox" id="selectAll"></th>
+                <th>Transaction No.</th>
+                <th>Year</th>
+                <th>MAAB No.</th>
+                <th>Member ID</th>
+                <th>Effectivity Date</th>
+                <th>Expiry Date</th>
+                <th>Particular Location</th>
+                <th>Location Category</th>
+                <th>Municipality</th>
+                <th>District</th>
+                <th>OR Number</th>
+                <th>OR Date</th>
+                <th>Paid</th>
+                <th>Remarks</th>
+                <th>Origin</th>
+                <th>Count in Group</th>
+                <th>ID Received</th>
+                <th>Declared</th>
+                <th>Tags</th>
+                <th>Declaration Date</th>
             </tr>
         </thead>
         <tbody>
             <tr>
+                <td><input type="checkbox" class="row-check"></td>
                 <td>1001</td>
                 <td>2025</td>
                 <td>MAAB001</td>
@@ -78,6 +111,7 @@
                 <td>2025-01-10</td>
               </tr>
               <tr>
+                <td><input type="checkbox" class="row-check"></td>
                 <td>1002</td>
                 <td>2025</td>
                 <td>MAAB002</td>
@@ -103,12 +137,86 @@
     </table>
   </div>
 
+  <!-- Print Button -->
   <div class="form-buttons">
-  <button type="submit" class="save-btn">Print Report</button>
+    <button type="button" class="btn print">Print Report</button>
   </div>
+
+  <!-- Summary -->
+  <div class="summary">
+    <p id="summaryText">Showing 2 of 2 declarations • 0 selected</p>
+  </div>
+</div>
 {% endblock %}
 
-
 {% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const rowChecks = document.querySelectorAll(".row-check");
+  const selectAllCheckbox = document.getElementById("selectAll");
+  const transmitBtn = document.querySelector(".btn.transmit");
+  const historyBtn = document.querySelector(".btn.history");
+  const selectAllBtn = document.querySelector(".btn.select-all");
+  const summaryText = document.getElementById("summaryText");
+  const tableRows = document.querySelectorAll("#dataTable tbody tr");
 
+  function updateSelection() {
+    const checkedCount = document.querySelectorAll(".row-check:checked").length;
+    const totalCount = tableRows.length;
+
+    transmitBtn.disabled = checkedCount === 0;
+    historyBtn.disabled = checkedCount === 0;
+
+    transmitBtn.textContent = `Transmit (${checkedCount})`;
+    historyBtn.textContent = `History (${checkedCount})`;
+
+    summaryText.textContent = `Showing ${totalCount} of ${totalCount} declarations • ${checkedCount} selected`;
+
+    selectAllCheckbox.checked = checkedCount === totalCount;
+  }
+
+  rowChecks.forEach(cb => cb.addEventListener("change", updateSelection));
+
+  selectAllCheckbox.addEventListener("change", () => {
+    rowChecks.forEach(cb => cb.checked = selectAllCheckbox.checked);
+    updateSelection();
+  });
+
+  selectAllBtn.addEventListener("click", () => {
+    const isSelecting = selectAllBtn.textContent === "Select All";
+    rowChecks.forEach(cb => cb.checked = isSelecting);
+    selectAllCheckbox.checked = isSelecting;
+    selectAllBtn.textContent = isSelecting ? "Deselect All" : "Select All";
+    updateSelection();
+  });
+
+  updateSelection();
+});
+</script>
+
+<!-- 🔎 Search functionality -->
+<script>
+const searchInput = document.getElementById('searchInput');
+const table = document.getElementById('dataTable');
+const rows = table.getElementsByTagName('tr');
+
+searchInput.addEventListener('keyup', function () {
+  const filter = searchInput.value.toLowerCase();
+
+  for (let i = 1; i < rows.length; i++) { // Start from 1 to skip the header row
+    let cells = rows[i].getElementsByTagName('td');
+    let rowText = '';
+
+    for (let j = 0; j < cells.length; j++) {
+      rowText += cells[j].textContent.toLowerCase();
+    }
+
+    if (rowText.indexOf(filter) > -1) {
+      rows[i].style.display = '';
+    } else {
+      rows[i].style.display = 'none';
+    }
+  }
+});
+</script>
 {% endblock %}

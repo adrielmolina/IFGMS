@@ -10,10 +10,12 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Merriweather&family=Source+Sans+Pro&family=Fira+Code&family=Roboto&family=Noto+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/global.css') }}">
     
     {% block head %}{% endblock %}
-
 </head>
+
 <body>
     <!-- TODO download all assets instead of loading from google api -->
     <!-- Sidebar Navigation -->
@@ -29,21 +31,21 @@
             <br>
 
             <div class="user-account">
-              <div class="user-profile">
-                  <img src="/static/assets/prc_logo.png" alt="Profile Image" />
-                  
-                  <div class="user-detail">
-                      {% if current_user.is_authenticated %}
-                          <a href="{{ url_for('profile_settings') }}">
-                              <h5>{{ current_user.first_name }} {{ current_user.last_name }}</h5>
-                          </a>
-                      {% else %}
-                          <a href="{{ url_for('landing_page') }}">
-                              <h3>Please Login</h3>
-                          </a>
-                      {% endif %}
-                  </div>
-              </div>
+                <div class="user-profile">
+                    <img src="/static/assets/prc_logo.png" alt="Profile Image" />
+                    
+                    <div class="user-detail">
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('profile_settings') }}">
+                                <h5>{{ current_user.first_name }} {{ current_user.last_name }}</h5>
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('landing_page') }}">
+                                <h3>Please Login</h3>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
 
             <ul class="sidebar-links">
@@ -114,10 +116,18 @@
                 document.getElementById("audit_trails").removeAttribute("hidden");
                 document.getElementById("accounts").removeAttribute("hidden");
             }
-        });
+
+            if (localStorage.getItem("appFont")) {
+                document.documentElement.style.setProperty("--app-font", localStorage.getItem("appFont"));
+            }
+            if (localStorage.getItem("appFontSize")) {
+                document.documentElement.style.setProperty("--app-font-size", localStorage.getItem("appFontSize"));
+            }
+        });        
     </script>
 
     {% block extra_scripts %} {% endblock %}
+
 
 </body>
 </html>

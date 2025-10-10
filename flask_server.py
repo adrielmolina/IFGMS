@@ -38,7 +38,7 @@ def load_user(user_id):
     db_session = db_conn.SessionLocal()
     return db_session.query(db_conn.models.Accounts).get(int(user_id))
 
-    
+
 def roles_required(*roles):
     '''  Decorator to restrict access to users with a specific role.'''
     def wrapper(fn):
@@ -56,14 +56,20 @@ def roles_required(*roles):
 # ?TODO LIST-------------------------------
 # TODO add the summary per month to the module list or wherever
 
+# TODO disable this before deployment
+@server.before_request
+def auto_login():
+    ''' Auto-login for development purposes. Remove or disable in production. '''
+    db_session = db_conn.SessionLocal()
+    if server.config.get("DEBUG_BYPASS_LOGIN", True):
+        if not current_user.is_authenticated:
+            test_user = db_session.query(db_conn.models.Accounts).filter_by(username="adriel").first()
+            login_user(test_user)
 
-# <------------ NAVIGATIONS ------------>
 
-@server.route('/')
-def landing_page():
-    return render_template('index.html')
+#? -------------------- LOGIN / LOGOUT -------------------- ?#
 
-
+# TODO add the usernamee and pass to the route address
 @server.route('/login', methods=['POST'])
 def login():
     username = request.form.get("username")
@@ -76,13 +82,16 @@ def login():
         # print({c.name: getattr(user, c.name) for c in user.__table__.columns})# Debugging line. remove after testing
         if user.acct_status == 'approved':
             login_user(user)
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Login Attempt', 'Success', current_user.account_id)
             return redirect(url_for('dashboard'))
+
         elif user.acct_status == 'pending':
             flash({
                 "title": "Login Error!",
                 "text": "Account not approved yet. Contact admin.",
                 "redirect_url": url_for('landing_page')
             },"error")
+            db_conn.POST_action_log(username, None, 'Login Attempt', 'Fail. Account status pending', None)
             return render_template('index.html')
     else:
         flash({
@@ -90,46 +99,9 @@ def login():
             "text": "Wrong username or password. Try again.",
             "redirect_url": url_for('landing_page')
         }, "error")
+        db_conn.POST_action_log(username, None, 'Login Attempt', 'Fail. Wrong username/password', None)
         return render_template('index.html')
-    
-    '''
-    if sign_in == 'success':
-        user_details = db_conn.get_user_details_by_username(username)
 
-        if user_details:
-            session['username'] = username
-            session['full_name'] = f"{user_details['first_name']} {user_details['middle_name']} {user_details['last_name']}"
-            session['email'] = user_details['email']
-            session['phone'] = user_details['contact_no']
-            session['birthdate'] = user_details['birth_date']
-            session['password'] = user_details['password']
-            session['user_level'] = user_details['user_level']
-            
-            return redirect(url_for('home'))  # success redirect
-        else:
-            flash({
-                "title": "Login Error!",
-                "text": "User details could not be fetched.",
-                "redirect_url": url_for('landing_page')
-            }, "error")
-            return render_template('index.html')
-    
-    elif sign_in == 'pending':
-        flash({
-            "title": "Login Error!",
-            "text": "Account not approved yet. Contact admin.",
-            "redirect_url": url_for('landing_page')
-        }, "error")
-        return render_template('index.html')
-    
-    else:
-        flash({
-            "title": "Login Error!",
-            "text": "Wrong username or password. Try again.",
-            "redirect_url": url_for('landing_page')
-        }, "error")
-        return render_template('index.html')
-    '''
 
 @server.route('/logout')
 @login_required
@@ -138,24 +110,13 @@ def logout():
     session.clear()
     return redirect(url_for("landing_page"))
 
+#? -------------------- END -------------------- ?#
 
-@server.route('/profile_settings')
-@login_required
-def profile_settings():
-    '''
-    if 'username' not in session:
-        flash({
-            "title": "Not Logged In",
-            "text": "Please log in to access your profile.",
-            "redirect_url": url_for('landing_page')
-        }, "error")
-        return redirect(url_for('landing_page'))
+#? -------------------- NAVIGATIONS -------------------- ?#
 
-    username = session['username']
-    user_details = db_conn.get_user_details_by_username(username)
-    '''
-    
-    return render_template('profile_settings.html')
+@server.route('/')
+def landing_page():
+    return render_template('index.html')
 
 
 @server.route('/create_account')
@@ -168,6 +129,18 @@ def forgot_password():
     return render_template('forgot_password.html')
 
 
+@server.route('/membership_register')
+def membership_register():
+    return render_template('membership_register.html')
+
+
+@server.route('/profile_settings')
+@login_required
+def profile_settings():    
+    return render_template('profile_settings.html')
+
+
+# TODO UNUSED. REMOVE IF NOT NEEDED
 @server.route('/profile')
 @login_required
 def profile():
@@ -184,9 +157,6 @@ def dashboard():
 @login_required
 def members_page():
     return render_template('members.html')
-    
-    # return render_template('test_row_editor.html')
-    # remove this when done testing
 
 
 @server.route('/declaration')
@@ -199,6 +169,7 @@ def declaration_page():
 @server.route('/inventory')
 @login_required
 def inventory():
+    # TODO move to a fetch at page load
     # Fetch inventory entries from the database
     inventory_data = db_conn.get_inventory_entries()  # Ensure this returns data correctly
     
@@ -207,6 +178,7 @@ def inventory():
     
     # Pass data to the template
     return render_template('inventory.html', inventory_data=inventory_data)
+
 
 @server.route('/claims')
 @login_required
@@ -225,17 +197,17 @@ def bud_v_exp():
 @login_required
 @roles_required('admin', 'superadmin')
 def audit_trails():
-    return render_template('audit_trails.html')
+    # TODO move to a fetch at page load
+    logs = db_conn.GET_audit_logs()
+    
+    return render_template('audit_trails.html', logs=logs)
 
 
 @server.route('/accounts')
 @login_required
 @roles_required('admin', 'superadmin')
 def show_user_accounts():
-    active_accounts = db_conn.get_user_accounts(status=['approved', 'archived', 'declined'])
-    pending_accounts = db_conn.get_user_accounts(status=['pending'])
-
-    return render_template('accounts.html', active_accounts=active_accounts, pending_accounts=pending_accounts)
+    return render_template('accounts.html')
 
 
 @server.route('/settings')
@@ -246,13 +218,15 @@ def settings():
     return render_template('settings.html', user_details=user_details)
 
 
-# <------------ /NAVIGATIONS ------------>
+#? -------------------- END -------------------- ?#
 
+#? -------------------- API ROUTES -------------------- ?#
 
+# TODO move to accounts api routes section
 @server.route('/create_acc_submit', methods=['POST'])
 def create_acc_submit():
     user = request.form.get('username')
-    passw = request.form.get('password')
+    password = request.form.get('password')
     email = request.form.get('email')
 
     fname = request.form.get('fname').upper()
@@ -266,21 +240,29 @@ def create_acc_submit():
     acct_created = date.today().strftime("%Y-%m-%d")
     branch = request.form.get('branch')
 
-    if (fname, mname, lname, suffix, bdate, contact, email, user, passw, branch):
-        #print(fname, mname, lname, suffix, bdate, contact, email, user, passw, branch) #todo remove afer development
-        hashed_pass = tools.hash_password(passw)
-
-        db_conn.create_account(user=user, hashed_pass=hashed_pass, email=email, fname=fname, mname=mname, lname=lname,
-                               suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
+    if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
+        create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
+                            suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
+    
+    if not create_new_acc == True:
+        flash({
+            "title": "Account creation failed!",
+            "text": f"{create_new_acc}. Please try again.",
+            "redirect_url": url_for('create_acc')
+        }, "error")
+        return render_template('create_account.html')
     else:
-        pass
-
-    flash({
+        flash({
         "title": "Account created successfully!",
         "text": "Click continue to go back to login screen.",
         "redirect_url": url_for('landing_page')
-    }, "success")
-    return render_template('create_account.html')
+        }, "success")
+        return render_template('create_account.html')
+
+
+    # TODO add condition to check if the username already exists
+    # TODO fix condition to check if account creation succeeded
+    # TODO fix duplicate email/username error flash message not showing up
 
 
 
@@ -291,10 +273,12 @@ def forgot_password_otp():
     if request.method == "POST":
         email = request.form.get("email")
 
-        otp = db_conn.generate_otp()  # Generate OTP
-        db_conn.save_otp(email, otp)  # Save OTP in otp_verifications table
-        db_conn.send_otp_email(email, otp)  # Send OTP to user's
-
+        otp = tools.generate_otp()  # Generate OTP
+        save_otp = db_conn.save_otp(email, otp)  # Save OTP in otp_verifications table
+        
+        if save_otp:
+            db_conn.send_otp_email(email, otp)  # Send OTP to user's
+        # TODO add error handling if email sending fails
         session["email"] = email
         flash({
             "title": "OTP Sent!",
@@ -329,6 +313,14 @@ def verify_otp():
                 "redirect_url": url_for('forgot_password')
             }, "error")
 
+        elif result == "already_used":
+            flash({
+                "title": "OTP has already been used",
+                "text": " Please try again.",
+                "redirect_url": url_for('forgot_password')
+            }, "error")
+        
+        # TODO fix this check the email should be checked at the first page. this should be just a check if the otp matches or not
         elif result == "email_not_found":
             flash({
                 "title": "Email is not registered",
@@ -348,6 +340,7 @@ def verify_otp():
 
 
 # ========================== RESET PASSWORD ==========================
+# TODO continue the ORM syntax update from here
 @server.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
     email = session.get("email")
@@ -425,9 +418,13 @@ def get_pending_claims_count():
 
 # API FOR MEMBERS PAGE
 
+# TODO fix api route names ex. /api/members/get_records
 
-@server.route('/api/get_records')
+@server.route('/api/members/records')
 def get_members():
+    member_records = db_conn.get_member_records()
+    return jsonify([record.to_dict() for record in member_records])
+    '''
     records = db_conn.get_member_records()
     members_list = []
 
@@ -445,8 +442,8 @@ def get_members():
         members_list.append(record)
 
     return jsonify(members_list)
-
-
+    '''
+    
 @server.route('/api/add_record', methods=['POST'])
 def add_new_record():
     new_record_id = db_conn.add_new_record()
@@ -460,17 +457,18 @@ def save_record_details():
         return jsonify({"success": True})
 
 
-@server.route('/api/get_entries', methods=['POST'])
-def get_entries():
-    data = request.get_json()
-    record_id = data.get('record_id')
-    # Use record_id to filter your SQL query
+@server.route('/api/members/<int:record_id>/entries', methods=['GET'])
+def get_entries(record_id):
     entries = db_conn.get_entries(record_id)
     return jsonify(entries)
 
 
 @server.route('/api/get_claim_records')
 def get_claim_records():
+    claim_records = db_conn.get_claim_records()
+    return jsonify(claim_records)
+
+    '''
     records = db_conn.get_claim_records()
     claims_list = []
 
@@ -487,6 +485,7 @@ def get_claim_records():
 
         claims_list.append(record)
     return jsonify(claims_list)
+    '''
 
 
 @server.route('/api/add_claim_record', methods=['POST'])
@@ -530,39 +529,131 @@ def delete_claim_record():
         return jsonify({"success": False, "error": "Failed to delete claim record"}), 500
 
 
+#* -------------------- ACCOUNTS API ROUTES -------------------- *#
 
-@server.route('/account_action', methods=['POST'])
-def account_action():
-    action = request.form.get('action')
-    
-    if action == 'create':
-        selected_ids = request.form.getlist('active_checkbox')
-        print("create:", selected_ids)
-        db_conn.account_action(selected_ids, action)
+@server.route('/api/accounts', methods=['GET'])
+@login_required
+@roles_required('admin', 'superadmin')
+def get_accounts():
+    active_accounts = db_conn.get_accounts(status=['approved', 'archived', 'declined'])
+    pending_accounts = db_conn.get_accounts(status=['pending'])
+
+    return jsonify({"active": [acc.to_dict() for acc in active_accounts],
+                    "pending": [acc.to_dict() for acc in pending_accounts]})
+
+@server.route('/api/accounts/<id>/create', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def create_account(id):
+    pass
+
+
+@server.route('/api/accounts/approve', methods=['PATCH'])
+@login_required
+@roles_required('admin', 'superadmin')
+def approve_account():
+    data = request.get_json()
+    ids = data.get('ids', [])
+
+    for acc_id in ids:
+        success = db_conn.approve_account(acc_id)
+
+        if not success:
+            return jsonify({"success": False, "error": f"Failed to approve account ID {acc_id}"}), 500
+
+    return jsonify({"success": True})
+
+@server.route('/api/accounts/decline', methods=['PATCH'])
+@login_required
+@roles_required('admin', 'superadmin')
+def decline_account():
+    data = request.get_json()
+    ids = data.get('ids', [])
+
+    for acc_id in ids:
+        success = db_conn.decline_account(acc_id)
         
-        return redirect(url_for('create_acc'))
-        # TODO redirect to the create account page but the admin version(auto approve)
-        # TODO add batch account creation (tickbox + toast message)
-        # TODO set default password format (bdate + initials)
-        # TODO fix the back button to go back to accounts instead when clicked from there
-    elif action == 'archive':
-        selected_ids = request.form.getlist('active_checkbox')
-        print("archive:", selected_ids)
-        db_conn.account_action(selected_ids, action)
-    elif action == 'reset':
-        selected_ids = request.form.getlist('active_checkbox')
-        print("reset:", selected_ids)
-        db_conn.account_action(selected_ids, action)
-    elif action == 'approve':
-        selected_ids = request.form.getlist('pending_checkbox')
-        print("approve:", selected_ids)
-        db_conn.account_action(selected_ids, action)
-    elif action == 'decline':
-        selected_ids = request.form.getlist('pending_checkbox')
-        print("decline:", selected_ids)
-        db_conn.account_action(selected_ids, action)
+        if not success:
+            return jsonify({"success": False, "error": f"Failed to decline account ID {acc_id}"}), 500
+
+    return jsonify({"success": True})
+
+@server.route('/api/accounts/reset', methods=['PATCH'])
+@login_required
+@roles_required('admin', 'superadmin')
+def reset_account():
+    data = request.get_json()
+    ids = data.get('ids', [])
+
+    for acc_id in ids:
+        success = db_conn.reset_account(acc_id)
+
+        if not success:
+            return jsonify({"success": False, "error": f"Failed to reset password of account ID {acc_id}"}), 500
+        
+    return jsonify({"success": True})
+
+@server.route('/api/accounts/update_userlvl', methods=['PATCH'])
+@login_required
+@roles_required('admin', 'superadmin')
+def update_userlvl():
+    try:
+        data = request.get_json()
+        id = data.get('id')
+        user_level = data.get('user_level')
     
-    return redirect(url_for('show_user_accounts'))
+        success = db_conn.update_userlvl(id, user_level)
+
+        if success:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Failed to update user level"}), 500
+        
+    except Exception as e:
+        print(f"Error updating user level: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@server.route('/api/accounts/update_ofc', methods=['PATCH'])
+@login_required
+@roles_required('admin', 'superadmin')
+def update_ofc():
+    try:
+        data = request.get_json()
+        id = data.get('id')
+        location = data.get('office_location')
+    
+        success = db_conn.update_ofc(id, location)
+
+        if success:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Failed to update office location"}), 500
+        
+    except Exception as e:
+        print(f"Error updating office location: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@server.route('/api/accounts/archive', methods=['PATCH'])
+@login_required
+@roles_required('admin', 'superadmin')
+def archive_account():
+    data = request.get_json()
+    ids = data.get('ids', [])
+
+    for acc_id in ids:
+        success = db_conn.archive_account(acc_id)
+        
+        if not success:
+            return jsonify({"success": False, "error": f"Failed to archive account ID {acc_id}"}), 500
+
+    return jsonify({"success": True})
+
+# TODO add batch account creation (tickbox + toast message)
+# TODO set default password format (bdate + initials)
+# TODO make an overlay page for creating accounts on the accounts page and make it auto approved
+#* -------------------- END ACCOUNTS API ROUTES -------------------- *#
 
 
 @server.route('/inventory_action', methods=['POST'])
@@ -635,12 +726,15 @@ def generate_report():
         return render_template('error_page.html')  # Render an error page
 
 
-###? MISC ROUTES ?###
+#? -------------------- MISC ROUTES -------------------- ?#
 
-# TODO make a 4040 page
 @server.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
+
+@server.errorhandler(403)
+def page_not_found(e):
+    return render_template("403.html"), 403
 
 ROOT_STATIC_FILES = {
     "robots.txt",
@@ -658,7 +752,8 @@ def root_static_files(filename):
 def favicon():
     return send_from_directory(server.static_folder, 'assets/favicon.ico')
 
-###? MISC ROUTES ?#################################################
+#? -------------------- END -------------------- ?#
+
 
 if __name__ == '__main__':
     flask_server = Server(server.wsgi_app)

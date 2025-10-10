@@ -79,26 +79,6 @@ def shutdown_session():
     SessionLocal.remove()
 
 
-def load_user(user_id):
-    db_session = SessionLocal()
-    return db_session.query(models.Accounts).get(int(user_id))
-
-
-def create_account(**kwargs):
-    """ arguments must be the same name as in the sql query """
-    conn = conn_init()
-
-    try:
-        with conn.begin():
-            query = text(f"INSERT INTO accounts VALUES"
-                         " (NULL, :user, :hashed_pass, :email, :fname, :mname, :lname, :suffix,"
-                         " :bdate, :contact, :acct_created, :branch, DEFAULT, DEFAULT, NULL)")
-            conn.execute(query, kwargs)
-            conn.commit()
-    except Exception as e:
-        print(f"Error: {e}")
-
-
 def sign_in(username=None, password=None):    
     db_session = SessionLocal()
 
@@ -112,100 +92,70 @@ def sign_in(username=None, password=None):
     return None
     
     
-
-def get_user_accounts(status):
+# TODO make the generated id current year + 0000 + last inserted id
+def create_account(**kwargs):
+    """ arguments must be the same name as in the sql query """
+    
     db_session = SessionLocal()
+    
+    hashed_pass = tools.hash_password(kwargs.get('password'))
     try:
-        accounts = (
-            db_session.query(models.Accounts)
-            .filter(models.Accounts.acct_status.in_(status))
-            .all()
+        new_account = models.Accounts(
+            username=kwargs.get('user'),
+            password=hashed_pass,
+            email=kwargs.get('email'),
+            first_name=kwargs.get('fname'),
+            middle_name=kwargs.get('mname'),
+            last_name=kwargs.get('lname'),
+            suffix=kwargs.get('suffix'),
+            birth_date=kwargs.get('bdate'),
+            contact_no=kwargs.get('contact'),
+            acct_created=kwargs.get('acct_created'),
+            office_location=kwargs.get('branch'),
+            user_level='staff',  # default user level
+            acct_status='pending',  # default status
+            acct_review_date=None  # default review date
         )
-        return accounts
-    finally:
-        db_session.close()
-
-def account_action(selected_ids, action):    
-    Session = sessionmaker(bind=conn_init())
-    session = Session()
-    
-    try:
-        affected_accounts = session.query(models.Accounts).filter(models.Accounts.account_id.in_(selected_ids)).all()
-        
-        if action == 'create':
-            pass
-        elif action == 'archive':
-            for account in affected_accounts:
-                account.acct_status = 'archived'
-                session.add(account)
-        elif action == 'reset':
-            for account in affected_accounts:          
-                if account.birth_date:
-                    bdate = str(account.birth_date).replace('-', '')
-                else:
-                    bdate = '00000000'
-                initials = (account.first_name[:1] + account.middle_name[:1] + account.last_name[:1]).lower().strip()
-       
-                reset_pass = bdate + initials
-                print(reset_pass)
-                hashed_pass = tools.hash_password(reset_pass)
-                    
-                account.password = hashed_pass
-                session.add(account)            
-        elif action == 'approve':
-            for account in affected_accounts:
-                account.acct_status = 'approved'
-                session.add(account)
-        elif action == 'decline':
-            for account in affected_accounts:
-                account.acct_status = 'declined'
-                session.add(account)
-            
-            
-            
-        session.commit()
+        db_session.add(new_account)
+        db_session.commit()
+        return True
     except Exception as e:
-        session.rollback()
-        raise e
-    finally:
-        session.close
-    return None
+        db_session.rollback()
+        print(f"Error creating account: {e}")
+        return str(e)
     
-# ? RESET PASS START
-# !!!!!!!!!!!!!!!!!!!!!!!! GENERATE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def generate_otp():
-    """Generate a random 6-digit OTP."""
-    return str(randint(100000, 999999))
-
-
-# !!!!!!!!!!!!!!!!!!!!!!!! SAVE OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
 def save_otp(email, otp):
     """Save OTP in the database with expiration time."""
-    conn = conn_init()
-    Session = sessionmaker(bind=conn)
-    expires_at = datetime.now() + timedelta(minutes=5)
-    created_at = datetime.now()  # Capture the time when OTP is generated
     
-    with Session() as session:
-        query = text("""
-            INSERT INTO otp_verifications (email, otp, expires_at, created_at) 
-            VALUES (:email, :otp, :expires_at, :created_at)
-        """)
-        session.execute(query, {
-            "email": email,
-            "otp": otp,
-            "expires_at": expires_at,
-            "created_at": created_at
-        })
-        session.commit()
+    db_session = SessionLocal()
+    
+    expires_at = datetime.now() + timedelta(minutes=5)
+    created_at = datetime.now()
 
-
-# !!!!!!!!!!!!!!!!!!!!!!!! SEND OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    try:
+        new_otp = models.OTPs(
+            email=email,
+            otp=otp,
+            expires_at=expires_at,
+            created_at=created_at,
+            otp_used=False  # default value, but explicit for clarity
+        )
+        db_session.add(new_otp)
+        db_session.commit()
+        return 'success'
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving OTP: {e}")
+        raise
+    
+# TODO update email icon
 def send_otp_email(email, otp):
     """Send OTP to the user's email."""
     subject = "Your OTP Code"
-    body = f"Your OTP code is: {otp}. It will expire in 5 minutes."
+    body = f"Your OTP code for FGMS is: {otp}. This will expire in 5 minutes."
 
+    # TODO change the from with name of the organization
     message = MIMEMultipart()
     message['From'] = SENDER_EMAIL
     message['To'] = email
@@ -222,12 +172,58 @@ def send_otp_email(email, otp):
         print(f"Failed to send OTP: {e}")
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!! VERIFY OTP !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def verifying_otp(email, otp_input):
     """Verify OTP against the database (original version with added debug prints)"""
     print(f"[DEBUG] Starting OTP verification for {email}")
     print(f"[DEBUG] Input OTP: {otp_input} (type: {type(otp_input)})")
+    db_session = SessionLocal()
     
+    try:
+        # Get the most recent OTP for this email
+        latest_otp = (
+            db_session.query(models.OTPs)
+            .filter_by(email=email)
+            .order_by(models.OTPs.created_at.desc())
+            .first()
+        )
+        
+        if not latest_otp:
+            print("[DEBUG] No OTP found for this email")
+            return "email_not_found"
+        
+        # Check if OTP is already used
+        if latest_otp.otp_used:
+            print("[DEBUG] OTP already used")
+            return "already_used"
+
+        print(f"[DEBUG] Stored OTP: {latest_otp.otp}")
+        print(f"[DEBUG] Expires at: {latest_otp.expires_at}")
+        print(f"[DEBUG] Current time: {datetime.now(timezone.utc)}")
+
+        # Check if expired
+        if datetime.now(timezone.utc) > latest_otp.expires_at.replace(tzinfo=timezone.utc):
+            print("[DEBUG] OTP expired")
+            return "expired"
+
+        # Check if matches
+        if str(otp_input) == str(latest_otp.otp):
+            print("[DEBUG] OTP matched")
+
+            # Delete all OTPs for this email
+            db_session.query(models.OTPs).filter_by(email=email).update({models.OTPs.otp_used: 1})
+            db_session.commit()
+            return "success"
+        else:
+            print("[DEBUG] OTP mismatch")
+            return "fail"
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"[ERROR] verifying_otp: {e}")
+        return "fail"
+        
+    
+    '''
     conn = conn_init()
     if not conn:
         print("[ERROR] Connection failed!")
@@ -265,8 +261,9 @@ def verifying_otp(email, otp_input):
     else:
         print("[DEBUG] No OTP found for this email")
         return "fail"
+    '''
     
-    
+# TODO continue the ORM syntax update from here    
 def update_password(email, new_password):
     """Update the password in the database."""
     conn = conn_init()
@@ -279,7 +276,185 @@ def update_password(email, new_password):
         session.execute(query, {"new_password": salted_pass, "email": email})
         session.commit()
 
-# ? RESET PASS END
+# ? RESET PASS END    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+def get_accounts(status):
+    ''' for account module '''
+    
+    db_session = SessionLocal()
+    try:
+        accounts = (
+            db_session.query(models.Accounts)
+            .filter(models.Accounts.acct_status.in_(status))
+            .all()
+        )
+        return accounts
+    
+    except Exception as e:
+        print(f"Error fetching accounts: {e}")
+        return []
+
+
+def approve_account(id):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            account.acct_status = 'approved'
+            account.acct_review_date = datetime.now()
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+    
+
+def decline_account(id):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            account.acct_status = 'declined'
+            account.acct_review_date = datetime.now()
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
+def reset_account(id):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            print(f"Resetting password for account ID {id}")
+            initials = (account.first_name[:1] + account.middle_name[:1] + account.last_name[:1]).lower().strip()
+            bdate = str(account.birth_date).replace('-', '') if account.birth_date else '00000000'
+            
+            account.password = tools.hash_password(bdate + initials)
+            
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
+def update_userlvl(id, new_level):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            print(f"Updating user level for account ID {id} to {new_level}")
+            account.user_level = new_level
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
+def update_ofc(id, new_ofc):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            print(f"Updating office location for account ID {id} to {new_ofc}")
+            account.office_location = new_ofc
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
+def archive_account(id):
+    db_session = SessionLocal()
+    try:
+        account = db_session.query(models.Accounts).filter_by(account_id=id).first()
+        if account:
+            account.acct_status = 'archived'
+            db_session.commit()
+            return True
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error approving account: {e}")
+        return False
+
+
+
+def account_action(selected_ids, action):    
+    Session = sessionmaker(bind=conn_init())
+    session = Session()
+    
+    try:
+        affected_accounts = session.query(models.Accounts).filter(models.Accounts.account_id.in_(selected_ids)).all()
+        
+        if action == 'create':
+            pass
+        elif action == 'archive':
+            for account in affected_accounts:
+                account.acct_status = 'archived'
+                session.add(account)
+        elif action == 'reset':
+            for account in affected_accounts:          
+                if account.birth_date:
+                    bdate = str(account.birth_date).replace('-', '')
+                else:
+                    bdate = '00000000'
+                initials = (account.first_name[:1] + account.middle_name[:1] + account.last_name[:1]).lower().strip()
+
+                reset_pass = bdate + initials
+                print(reset_pass)
+                hashed_pass = tools.hash_password(reset_pass)
+                    
+                account.password = hashed_pass
+                session.add(account)            
+        elif action == 'approve':
+            for account in affected_accounts:
+                account.acct_status = 'approved'
+                session.add(account)
+        elif action == 'decline':
+            for account in affected_accounts:
+                account.acct_status = 'declined'
+                session.add(account)
+            
+            
+            
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close
+    return None
+
+
+
 
 
 def get_pending_claims_count():
@@ -297,16 +472,65 @@ def get_pending_claims_count():
 
 
 def get_member_records():
-    conn = conn_init()
-
-    with conn:
+    db_session = SessionLocal()
+    try:
+        records = db_session.query(models.Records).all()
+        return records
+    except Exception as e:
+        return "Error fetching member records: {e}"
+    '''
         query = text("SELECT * FROM membership_records")
         result = conn.execute(query)
         records = result.fetchall()
         return records
-
+    '''
 
 def get_claim_records():
+    db_session = SessionLocal()
+    try:
+        # records = db_session.query(models.Claims).all()
+        
+        mc = models.Claims
+        ec = models.Entries
+        mr = models.Records
+        mi = models.Members
+
+        records = (
+            db_session.query(
+                mc,
+                mr.effectivity_date,
+                mi.first_name,
+                mi.middle_name,
+                mi.last_name,
+                mi.suffix,
+                mi.contact_no,
+                mi.email,
+            )
+            .outerjoin(ec, mc.maab_no == ec.maab_no)
+            .outerjoin(mr, ec.record_id == mr.record_id)
+            .outerjoin(mi, ec.member_id == mi.member_id)
+            .all()
+        )
+        
+        results = []
+        for mc_obj, effectivity_date, first_name, middle_name, last_name, suffix, contact_no, email in records:
+            data = mc_obj.to_dict()
+            data.update({
+                "effectivity_date": effectivity_date.strftime("%Y-%m-%d") if effectivity_date else None,
+                "first_name": first_name,
+                "middle_name": middle_name,
+                "last_name": last_name,
+                "suffix": suffix,
+                "contact_no": contact_no,
+                "email": email,
+            })
+            results.append(data)
+        
+        return results
+    except Exception as e:
+        return "Error fetching claim records: {e}"
+    
+    '''
     conn = conn_init()
     with conn:
         query = text("""
@@ -327,7 +551,7 @@ def get_claim_records():
         result = conn.execute(query)
         records = result.fetchall()
         return records
-
+    '''
 
 def add_new_record():
     conn = conn_init()
@@ -521,12 +745,11 @@ def delete_claim_record(claim_id):
 
 
 def get_entries(record_id):
-    conn = conn_init()
-    Session = sessionmaker(bind=conn)
-    with Session() as session:
+    db_session = SessionLocal()
+    try:
         # Join Entries and Members on member_id
         results = (
-            session.query(
+            db_session.query(
                 models.Entries.entry_id,
                 models.Entries.maab_category,
                 models.Entries.maab_no,
@@ -562,6 +785,9 @@ def get_entries(record_id):
             'declared', 'declaration_date', 'paid', 'OR_num', 'OR_date', 'remarks', 'tags'
         ]
         return [dict(zip(col_names, row)) for row in results]
+    
+    except Exception as e:
+        return ["Error fetching entries: {e}"]
 
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
@@ -705,7 +931,7 @@ def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=
                        (None, current_date_time, current_user, current_user_lvl, action, desc))
         conn.commit()
     '''
-    
+
 if __name__ == '__main__':
     print('do no run this module directly lol')
     print('use initialize_database.py')

@@ -22,9 +22,36 @@
          <!-- TODO add js function to set location particular to all caps while typing -->
             <!-- TODO center the title -->
              <!-- TODO add flat list of members -->
-    <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
-        <h3 style="margin: 0; font-weight: bolder;">M E M B E R&nbsp;&nbsp;&nbsp;&nbsp;R E C O R D S</h3>                
-    </span>
+    <div class="members-header">
+     <h1>Declaration</h1>
+    </div>
+<div class="search-bar">
+  <input type="text" id="member_search" placeholder="Search members...">
+  <button id="search_clear">Clear</button>
+</div>
+
+<div class="filters">
+  <div class="filter">
+    <label for="filter_year">Year:</label>
+    <select id="filter_year">
+      <option value="">All</option>
+      <option value="2025">2025</option>
+      <option value="2024">2024</option>
+      <option value="2023">2023</option>
+      <option value="2022">2022</option>
+    </select>
+  </div>
+
+  <div class="filter">
+    <label for="filter_location">Location:</label>
+    <select id="filter_location">
+      <option value="">All</option>
+      <option value="CVSU">CVSU</option>
+      <option value="CNHS">CNHS</option>
+      <option value="NCST">NCST</option>
+    </select>
+  </div>
+
 
     <div class="controls_box">
         <button>Add Record</button>
@@ -33,95 +60,98 @@
     
     <!-- TODO declaration/transmission: automate this with js- check the location of the person signed in  -->
 
-    <br>
-    <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
-    <button id="search_clear">Clear</button>
+<div id="members_table" class="ht-theme-main"></div>
 
-    <div id="members_table" class="ht-theme-main"></div>
+<div id="overlay" class="overlay">
+    <div id="overlay-content" class="overlay-content">
+        <span id="close-overlay" class="close-overlay">&times;</span>
+        <div id="overlay-body" class="overlay-body">
+            <!-- Dynamic content goes here -->
 
-    <div id="overlay" class="overlay">
-        <div id="overlay-content" class="overlay-content">
-            <span id="close-overlay" class="close-overlay">&times;</span>
-            <div id="overlay-body" class="overlay-body">
-                <!-- Dynamic content goes here -->
 
-                <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
-                    <h3 style="margin: 0; font-weight: bolder;">R E C O R D&nbsp;&nbsp;&nbsp;&nbsp;D E T A I L S</h3>                
-                </span>
-
-                <div class="controls_box">
-                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                        <label class="switch">
-                            <input type="checkbox" id="record_details_check" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <button id="save_record_details" class="save_record_details">Save</button>
-                    <button id="delete_record" class="delete_record">Delete Record</button>
-                    <!-- TODO add delete record function -->
+            <div class="controls_box">
+                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                      <p>Live Editor</p>
+                    <label class="switch">
+                        <input type="checkbox" id="record_details_check" checked>
+                        <span class="slider"></span>
+                     </label>
+                        <p>Form Editor</p>
                 </div>
 
+              
+            </div>
 
-                <div id="record_details" class="record_details">
-                    <form action="/api/get_entries" method="POST" id="record_entries">                 
-                        <table class="record_details_table">
-                            <tr>
-                                <td>
+            <div id="record_details" class="record_details section-card">
+                <form action="/api/members/entries" method="POST" id="record_entries">
+                     <fieldset>
+                        <legend>&nbsp;RECORD DETAILS&nbsp;</legend>                 
+                    <table class="record_details_table">
+                        <tr>
+                            <td>
+                                <div class="input-field">
+                                    <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly placeholder=" ">
                                     <label for="record_id">Record ID</label>
-                                    <br>
-                                    <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly>
-                                </td>
+                                </div>
+                            </td>
+                              <!-- TODO add delete record function -->
 
-                                <td>
-                                    <!-- TODO change to year only or remove the field completely -->
+                            <td>
+                                <!-- TODO change to year only or remove the field completely -->
+                                <div class="input-field">
+                                    <input type="text" id="year" name="year" required autocomplete="off" readonly placeholder=" ">
                                     <label for="year">Year</label>
-                                    <br>
-                                    <input type="text" id="year" name="year" required autocomplete="off" readonly>
-                                </td>
+                                </div>
+                            </td>
 
-                                <td>
-                                    <label for="id_rcv">ID Received</label>
-                                    <br>
+                            <td>
+                                <div class="input-field">
                                     <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
-                                </td>
+                                    <label for="id_rcv">ID Received</label>
+                                </div>
+                            </td>
 
-                                <td>
-                                    <label for="paid">Paid</label>
-                                    <br>
+                            <td>
+                                <div class="input-field">
                                     <input type="checkbox" id="paid" name="paid" autocomplete="off">
-                                </td>
+                                    <label for="paid">Paid</label>
+                                </div>
+                            </td>
 
-                                <td>
-                                    <label for="declared">Declared</label>
-                                    <br>
+                            <td>
+                                <div class="input-field">
                                     <input type="checkbox" id="declared" name="declared" autocomplete="off">
-                                </td>
+                                    <label for="declared">Declared</label>
+                                </div>
+                            </td>
 
-                                <td>
+                            <td>
+                                <div class="input-field">
+                                    <input type="date" id="dec_date" name="dec_date" required autocomplete="off" placeholder=" ">
                                     <label for="dec_date">Declaration Date</label>
-                                    <br>
-                                    <input type="date" id="dec_date" name="dec_date" required autocomplete="off">
-                                </td>
+                                </div>
+                            </td>
 
-                                <td>
+                            <td>
+                                <div class="input-field">
+                                    <input type="date" id="eff_date" name="eff_date" required autocomplete="off" placeholder=" ">
                                     <label for="eff_date">Effectivity Date</label>
-                                    <br>
-                                    <input type="date" id="eff_date" name="eff_date" required autocomplete="off">
-                                </td>
-                            </tr>
+                                </div>
+                            </td>
+                        </tr>
 
-                            <tr>
-                                <td>
+                        <tr>
+                            <td>
+                                <div class="input-field">
+                                    <input type="text" id="loc_par" name="loc_par" required autocomplete="off" placeholder=" ">
                                     <label for="loc_par">Location Particular</label>
-                                    <br>
-                                    <input type="text" id="loc_par" name="loc_par" required autocomplete="off">
-                                </td>
-                                
-                                <td colspan="2">
-                                    <label for="loc_cat">Location Category</label>
-                                    <br>
+                                </div>
+                            </td>
+                            
+                            <td colspan="2">
+                                <div class="input-field">
                                     <select name="loc_cat" id="loc_cat">
+                                        <option value="" disabled selected hidden></option>
                                         <option value="Public Nursery">Public Nursery</option>
                                         <option value="Private Nursery">Private Nursery</option>
                                         <option value="Public Kinder">Public Kinder</option>
@@ -150,12 +180,14 @@
                                         <option value="Individual">Individual</option>
                                         <option value="Walk-In">Walk-In</option>
                                     </select>
-                                </td>
+                                    <label for="loc_cat">Location Category</label>
+                                </div>
+                            </td>
 
-                                <td colspan="2">
-                                    <label for="municipality">Municipality</label>
-                                    <br>
+                            <td colspan="2">
+                                <div class="input-field">
                                     <select name="municipality" id="municipality">
+                                        <option value="" disabled selected hidden></option>
                                         <option value="Cavite City">Cavite City</option>
                                         <option value="Kawit">Kawit</option>
                                         <option value="Noveleta">Noveleta</option>
@@ -180,237 +212,281 @@
                                         <option value="Tagaytay City">Tagaytay City</option>
                                         <option value="Ternate">Ternate</option>
                                     </select>
-                                </td>
+                                    <label for="municipality">Municipality</label>
+                                </div>
+                            </td>
 
-                                <td>
-                                    <!-- TODO autofill after selecting municipality -->
+                            <td>
+                                <!-- TODO autofill after selecting municipality -->
+                                <div class="input-field">
+                                    <input type="text" id="district" name="district" required autocomplete="off" readonly placeholder=" ">
                                     <label for="district">District</label>
-                                    <br>
-                                    <input type="text" id="district" name="district" required autocomplete="off" readonly>
-                                </td>
-                                
-                                <td>
-                                    <!-- TODO autofill based on account logged in -->
-                                     <!-- TODO change this to select so it is still modifiable -->
+                                </div>
+                            </td>
+                            
+                            <td>
+                                <!-- TODO autofill based on account logged in -->
+                                 <!-- TODO change this to select so it is still modifiable -->
+                                <div class="input-field">
+                                    <input type="text" id="origin" name="origin" required autocomplete="off" placeholder=" ">
                                     <label for="origin">Origin</label>
-                                    <br>
-                                    <input type="text" id="origin" name="origin" required autocomplete="off">
-                                </td>
-                            </tr>
+                                </div>
+                            </td>
+                        </tr>
 
-                            <tr>
-                                <td colspan="6">
+                        <tr>
+                            <td colspan="6">
+                                <div class="input-field">
+                                    <input type="text" id="remarks" name="remarks" required autocomplete="off" placeholder=" ">
                                     <label for="remarks">Remarks</label>
-                                    <br>
-                                    <input type="text" id="remarks" name="remarks" required autocomplete="off">
-                                </td>
+                                </div>
+                            </td>
 
-                                <td>
+                            <td>
+                                <div class="input-field">
+                                    <input type="text" id="tags" name="tags" required autocomplete="off" placeholder=" ">
                                     <label for="tags">Tags</label>
-                                    <br>
-                                    <input type="text" id="tags" name="tags" required autocomplete="off">
-                                </td>
-                            </tr>
-                        </table>
-                    </form>
-                </div>
+                                </div>
+                                <!-- TODO add delete record function -->
+                                <div class="controls_box">
+                                     <button id="save_record_details" class="save_record_details">Save</button>
+                                    <button id="delete_record" class="delete_record">Delete Record</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
                 
                 <!-- TODO fix the visual bug where the entry details table is compressed at the center when first opening the overlay -->
 
-                <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
-                    <h3 style="margin: 0; font-weight: bolder;">E N T R Y&nbsp;&nbsp;&nbsp;&nbsp;D E T A I L S</h3>                
-                </span>
+                 
 
                 <div class="controls_box">
-                <!-- TODO add js function make all cells readonly when form editor is on -->
-                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                    <p>Live Editor</p>
-                    <label class="switch">
-                        <input type="checkbox" id="entry_details_check" checked>
-                        <span class="slider"></span>
-                    </label>
-                    <p>Form Editor</p>
+                    <!-- TODO add js function make all cells readonly when form editor is on -->
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <p>Live Editor</p>
+                        <label class="switch">
+                            <input type="checkbox" id="entry_details_check" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <p>Form Editor</p>
+                    </div>
                 </div>
-                </div>
-                
+
                 <div class="second_row">
-                <div id="entry_details" class="entry_details">
-                    <form action="">
-                        <table>
-                            <tr>
-                                <td>
-                                    <label for="maab_cat">Category</label>
-                                    <br>
-                                    <select name="maab_cat" id="maab_cat">
-                                        <option value="Classic">Classic</option>
-                                        <option value="Bronze">Bronze</option>
-                                        <option value="Silver">Silver</option>
-                                        <option value="Gold">Gold</option>
-                                        <option value="Platinum">Platinum</option>
-                                        <option value="Enhanced Platinum">Enhanced Platinum</option>
-                                        <option value="Senior">Senior</option>
-                                        <option value="Senior+">Senior+</option>            
-                                    </select>
-                                </td>
+                    <div id="entry_details" class="entry_details section-card">
+                        <form action="">
+                            <fieldset>
+                               <legend>&nbsp;ENTRY DETAILS&nbsp;</legend>   
+                            <table>
+                                <tr>
+                                    <td>
+                                        <div class="input-field">
+                                            <select name="maab_cat" id="maab_cat">
+                                                <option value="" disabled selected hidden></option>
+                                                <option value="Classic">Classic</option>
+                                                <option value="Bronze">Bronze</option>
+                                                <option value="Silver">Silver</option>
+                                                <option value="Gold">Gold</option>
+                                                <option value="Platinum">Platinum</option>
+                                                <option value="Enhanced Platinum">Enhanced Platinum</option>
+                                                <option value="Senior">Senior</option>
+                                                <option value="Senior+">Senior+</option>            
+                                            </select>
+                                            <label for="maab_cat">Category</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="maab_no">MAAB No.</label>
-                                    <br>
-                                    <input type="text" id="maab_no" name="maab_no" required autocomplete="off">
-                                </td>
-        
-                                <td>
-                                    <label for="fname">First Name</label>
-                                    <br>
-                                    <input type="text" id="fname" name="fname" required autocomplete="off">
-                                </td>
-                                
-                                <td>
-                                    <label for="mname">Middle Name</label>
-                                    <br>
-                                    <input type="text" id="mname" name="mname" required autocomplete="off">
-                                </td>
 
-                                <td>
-                                    <label for="lname">Last Name</label>
-                                    <br>
-                                    <input type="text" id="lname" name="lname" required autocomplete="off">
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="maab_no" name="maab_no" required autocomplete="off" placeholder=" ">
+                                            <label for="maab_no">MAAB No.</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="suffix">Suffix</label>
-                                    <br>
-                                    <select name="suffix" id="suffix">
-                                        <option value="NA">NA</option>
-                                        <option value="Jr">Jr</option>
-                                        <option value="Sr">Sr</option>
-                                        <option value="II">II</option>
-                                        <option value="III">III</option>
-                                        <option value="IV">IV</option>
-                                        <option value="V">V</option>
-                                        <option value="VI">VI</option>
-                                        <option value="VII">VII</option>
-                                    </select>
-                                </td>
-                            </tr>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="fname" name="fname" required autocomplete="off" placeholder=" ">
+                                            <label for="fname">First Name</label>
+                                        </div>
+                                    </td>
+                                    
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="mname" name="mname" required autocomplete="off" placeholder=" ">
+                                            <label for="mname">Middle Name</label>
+                                        </div>
+                                    </td>
 
-                            <tr>
-                                <td>
-                                    <label for="bdate">Birthdate</label>
-                                    <br>
-                                    <input type="date" id="bdate" name="bdate" required autocomplete="off">
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="lname" name="lname" required autocomplete="off" placeholder=" ">
+                                            <label for="lname">Last Name</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="sex">Sex</label>
-                                    <br>
-                                    <select name="sex" id="sex">
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                    </select>
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <select name="suffix" id="suffix">
+                                                <option value="" disabled selected hidden></option>
+                                                <option value="NA">NA</option>
+                                                <option value="Jr">Jr</option>
+                                                <option value="Sr">Sr</option>
+                                                <option value="II">II</option>
+                                                <option value="III">III</option>
+                                                <option value="IV">IV</option>
+                                                <option value="V">V</option>
+                                                <option value="VI">VI</option>
+                                                <option value="VII">VII</option>
+                                            </select>
+                                            <label for="suffix">Suffix</label>
+                                        </div>
+                                    </td>
+                                </tr>
 
-                                <td>
-                                    <label for="contact">Contact No</label>
-                                    <br>
-                                    <input type="text" id="contact" name="contact" required autocomplete="off">
-                                </td>                               
+                                <tr>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="date" id="bdate" name="bdate" required autocomplete="off" placeholder=" ">
+                                            <label for="bdate">Birthdate</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="email">Email</label>
-                                    <br>
-                                    <input type="text" id="email" name="email" required autocomplete="off">
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <select name="sex" id="sex">
+                                                <option value="" disabled selected hidden></option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                            </select>
+                                            <label for="sex">Sex</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="address">Address</label>
-                                    <br>
-                                    <input type="text" id="address" name="address" required autocomplete="off">
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="contact" name="contact" required autocomplete="off" placeholder=" ">
+                                            <label for="contact">Contact No</label>
+                                        </div>
+                                    </td>                               
 
-                                <td>
-                                    <label for="blood_type">Blood Type</label>
-                                    <br>
-                                    <select name="blood_type" id="blood_type">
-                                        <option value="A+">A+</option>
-                                        <option value="A-">A-</option>
-                                        <option value="B+">B+</option>
-                                        <option value="B-">B-</option>
-                                        <option value="AB+">AB+</option>
-                                        <option value="AB-">AB-</option>
-                                        <option value="O+">O+</option>
-                                        <option value="O-">O-</option>
-                                    </select>
-                                </td>                              
-                            </tr>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="email" name="email" required autocomplete="off" placeholder=" ">
+                                            <label for="email">Email</label>
+                                        </div>
+                                    </td>
 
-                            <tr>
-                                <td>
-                                    <label for="id_received">ID Reveived</label>
-                                    <br>
-                                    <input type="checkbox" id="id_received" name="id_received" required autocomplete="off">
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="address" name="address" required autocomplete="off" placeholder=" ">
+                                            <label for="address">Address</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="entry_declared">Declared</label>
-                                    <br>
-                                    <input type="checkbox" id="entry_declared" name="entry_declared" required autocomplete="off">
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <select name="blood_type" id="blood_type">
+                                                <option value="" disabled selected hidden></option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                            </select>
+                                            <label for="blood_type">Blood Type</label>
+                                        </div>
+                                    </td>                              
+                                </tr>
 
-                                <td>
-                                    <label for="declare_date">Declaration Date</label>
-                                    <br>
-                                    <input type="date" id="declare_date" name="declare_date" required autocomplete="off">
-                                </td>
+                                <tr>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="checkbox" id="id_received" name="id_received" required autocomplete="off">
+                                            <label for="id_received">ID Received</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="entry_paid">Paid</label>
-                                    <br>
-                                    <input type="checkbox" id="entry_paid" name="entry_paid" required autocomplete="off">
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="checkbox" id="entry_declared" name="entry_declared" required autocomplete="off">
+                                            <label for="entry_declared">Declared</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="entry_or_no">OR No</label>
-                                    <br>
-                                    <input type="text" id="entry_or_no" name="entry_or_no" required autocomplete="off">
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="date" id="declare_date" name="declare_date" required autocomplete="off" placeholder=" ">
+                                            <label for="declare_date">Declaration Date</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="entry_or_date">OR Date</label>
-                                    <br>
-                                    <input type="text" id="entry_or_date" name="entry_or_date" required autocomplete="off">
-                                </td>
-                            </tr>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="checkbox" id="entry_paid" name="entry_paid" required autocomplete="off">
+                                            <label for="entry_paid">Paid</label>
+                                        </div>
+                                    </td>
 
-                            <tr>
-                                <td colspan="5">
-                                    <label for="entry_remarks">Remarks</label>
-                                    <br>
-                                    <input type="text" id="entry_remarks" name="entry_remarks" required autocomplete="off">
-                                </td>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="entry_or_no" name="entry_or_no" required autocomplete="off" placeholder=" ">
+                                            <label for="entry_or_no">OR No</label>
+                                        </div>
+                                    </td>
 
-                                <td>
-                                    <label for="entry_tags">Tags</label>
-                                    <br>
-                                    <input type="text" id="entry_tags" name="entry_tags" required autocomplete="off">
-                                </td>
-                            </tr>
-                        </table>
-                        <button>Add</button>
-                    </form>
-                </div>
-                <div id="entries_table" class="ht-theme-main"></div>
-                </div>
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="entry_or_date" name="entry_or_date" required autocomplete="off" placeholder=" ">
+                                            <label for="entry_or_date">OR Date</label>
+                                        </div>
+                                    </td>
+                                </tr>
 
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="input-field">
+                                            <input type="text" id="entry_remarks" name="entry_remarks" required autocomplete="off" placeholder=" ">
+                                            <label for="entry_remarks">Remarks</label>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-field">
+                                            <input type="text" id="entry_tags" name="entry_tags" required autocomplete="off" placeholder=" ">
+                                            <label for="entry_tags">Tags</label>
+                                        </div>
+
+                                         <div class="controls_box">
+                                            <button type="button" class="save_entry">Save</button>
+                                            <button type="button" class="delete_entry">Delete Entry</button>
+                                            <button type="button" class="add-entry">+ Add Entry</button>
+                                       </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </form>
+                    </div>
+                <div class="member_records">
+                      <fieldset>
+                            <legend>Member Records</legend>
+                <div id="entries_table"></div>
+               </div>
             </div>
         </div>
     </div>
 {% endblock %}
 
+
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='/js/entries_table.js')}}"></script>
+<script src="{{ url_for('static', filename='js/entries_table.js')}}"></script>
 
 <script>
     let hotInstance = null;
@@ -464,13 +540,11 @@
 
         document.getElementById('overlay').style.display = 'flex';
 
-        fetch("/api/get_entries", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ record_id: rowData.record_id }) // or whatever variable holds the record id
-        })
+        console.log(rowData.record_id);
+        fetch(`/api/members/${rowData.record_id}/entries`)
         .then(response => response.json())
         .then(data => {
+            
             data.forEach(row => {
                 if (row.birth_date) {
                     const date = new Date(row.birth_date);
@@ -506,7 +580,7 @@
     });
 
     // for records table
-    fetch("/api/get_records")
+    fetch("/api/members/records")
         .then(response => response.json())
         .then(data => {
             // date formats for the handsontable rows
@@ -611,7 +685,7 @@
 
     // reload table data
     function refreshMembersTable() {
-        fetch("/api/get_records")
+        fetch("/api/members/records")
             .then(response => response.json())
             .then(data => {
                 data.forEach(row => {
@@ -643,7 +717,7 @@
             // After adding, refresh the table data
             
             // open the new record entry window
-            fetch("/api/get_records")
+            fetch("/api/members/records")
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(row => {
@@ -797,4 +871,29 @@
     });
     });
 </script>
+
+<script>
+document.querySelectorAll('.input-field input, .input-field textarea, .input-field select')
+  .forEach(input => {
+    const parent = input.closest('.input-field');
+
+    function checkValue() {
+      if (input.value.trim() !== "") {
+        parent.classList.add('filled');
+      } else {
+        parent.classList.remove('filled');
+      }
+    }
+
+    // Run once on load
+    checkValue();
+
+    // Update on input/focus/blur
+    input.addEventListener('input', checkValue);
+    input.addEventListener('blur', checkValue);
+    input.addEventListener('focus', checkValue);
+});
+</script>
+
+
 {% endblock %}

@@ -28,7 +28,7 @@ CREATE TABLE `accounts` (
 	`contact_no` VARCHAR(255),
 	`acct_created` DATE,
 	`office_location` ENUM('Chapter', 'Dasmarinas', 'Silang'),
-	`user_level` ENUM('admin', 'user', 'superadmin') DEFAULT 'user',
+	`user_level` ENUM('admin', 'superadmin', 'staff') DEFAULT 'staff',
 	`acct_status` ENUM('pending', 'approved', 'declined', 'archived') DEFAULT 'pending',
 	`acct_review_date` DATE,
 	PRIMARY KEY(`account_id`)
@@ -175,6 +175,7 @@ CREATE TABLE `otp_verifications` (
 	`otp` VARCHAR(6) NOT NULL,
 	`expires_at` DATETIME NOT NULL,
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	`otp_used` BOOLEAN DEFAULT 0,
 	PRIMARY KEY(`id`)
 );
 
@@ -183,10 +184,10 @@ CREATE TABLE `audit_logs` (
 	`action_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`date` DATETIME NOT NULL,
 	`staff_name` VARCHAR(255) NOT NULL,
-	`user_level` ENUM('staff', 'admin') NOT NULL,
+	`user_level` ENUM('admin', 'superadmin', 'staff'),
 	`action_name` VARCHAR(255) NOT NULL,
 	`description` TEXT(65535) NOT NULL,
-	`account_id` INTEGER NOT NULL UNIQUE,
+	`account_id` INTEGER,
 	PRIMARY KEY(`action_id`)
 );
 
