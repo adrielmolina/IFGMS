@@ -724,5 +724,77 @@
         });
     });
 
+    //Input Text Restrictions
+    document.addEventListener("DOMContentLoaded", () => {
+    const nameFields = ["fname", "mname", "lname"];
+
+    nameFields.forEach(id => {
+        const input = document.getElementById(id);
+
+        if (!input) return;
+
+        // Allowed characters: letters, apostrophe, hyphen, space
+        const allowedPattern = /^[a-zA-Z' -]$/;
+
+        // Allow specific keys like backspace, arrows, etc.
+        const allowedKeys = [
+            "Backspace", "Tab", "Escape", "Delete",
+            "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+            "Home", "End"
+        ];
+
+        // Block typing invalid characters
+        input.addEventListener("keydown", function (event) {
+            // Allow navigation and control keys
+            if (allowedKeys.includes(event.key)) return;
+
+            // Allow only valid characters
+            if (!allowedPattern.test(event.key)) {
+                event.preventDefault();
+            }
+        });
+
+        // Block pasting invalid characters
+        input.addEventListener("paste", function (event) {
+            const pasted = (event.clipboardData || window.clipboardData).getData("text");
+
+            // If any character in the pasted text is invalid, block the paste
+            if ([...pasted].some(char => !allowedPattern.test(char))) {
+                event.preventDefault();
+            }
+        });
+    });
+});
+
+    // Input Number Restriction
+    document.addEventListener("DOMContentLoaded", () => {
+    const contactInput = document.getElementById("contact");
+
+    if (!contactInput) return;
+
+    // Block non-digit keys
+    contactInput.addEventListener("keydown", function (event) {
+        const allowedKeys = [
+        "Backspace", "Tab", "Escape", "Delete",
+        "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+        "Home", "End"
+        ];
+
+        if (allowedKeys.includes(event.key)) return;
+
+        // Block everything except digits
+        if (!/^\d$/.test(event.key)) {
+        event.preventDefault();
+        }
+    });
+
+    // Block pasting non-digit content
+    contactInput.addEventListener("paste", function (event) {
+        const pasted = (event.clipboardData || window.clipboardData).getData("text");
+        if (!/^\d+$/.test(pasted)) {
+        event.preventDefault();
+        }
+    });
+    });
 </script>
 {% endblock %}

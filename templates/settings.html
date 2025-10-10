@@ -3,12 +3,8 @@
 {% block title %}Settings{% endblock %}
 
 {% block head %}
-<<<<<<< HEAD
     <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/settings.css') }}">
 
-=======
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/settings.css') }}">
->>>>>>> 0203894a932625bb150ae984f1f006c0732ccfc8
     <script>
         function toggleLoginHistory() {
             const history = document.getElementById("loginHistory");
@@ -29,34 +25,39 @@
 
         <button class="profile-button">Edit Profile Picture</button>
 
-        <h5 class="name">{{ session['full_name'] }}</h5>
-        <p class="level">{{ session['user_level'] }}</p>
+        <h5 class="name">{{ current_user.first_name }} {{ current_user.middle_name }} {{ current_user.last_name }}</h5>
+        <p class="level">{{ current_user.user_level }}</p>
     </div>
 
     <div class="profile-container">
-    <form action="#" method="POST" class="profile-form">
+    <form action="{{ url_for('settings_save_changes') }}" method="POST" class="profile-form">
     <!-- USER DETAILS -->
     <div class="form-group">
-        <label for="full_name">Full Name:</label>
-        <div class="input-wrapper">
-            <input type="text" id="full_name" name="full_name" value="{{ user_details.first_name }} {{ user_details.middle_name }} {{ user_details.last_name }}" readonly disabled />
-            <span class="edit-icon" onclick="toggleEditable('full_name')">&#9998;</span>
-        </div>
+    <label for="first_name">First Name:</label>
+    <div class="input-wrapper">
+        <input type="text" id="first_name" name="first_name" value="{{ user_details.first_name }}" readonly disabled />
     </div>
+</div>
 
-    <div class="form-group">
-        <label for="username">Username:</label>
-        <div class="input-wrapper">
-            <input type="text" id="username" name="username" value="{{ user_details.username }}" readonly disabled />
-            <span class="edit-icon" onclick="toggleEditable('username')">&#9998;</span>
-        </div>
+<div class="form-group">
+    <label for="middle_name">Middle Name:</label>
+    <div class="input-wrapper">
+        <input type="text" id="middle_name" name="middle_name" value="{{ user_details.middle_name }}" readonly disabled />
     </div>
+</div>
+
+<div class="form-group">
+    <label for="last_name">Last Name:</label>
+    <div class="input-wrapper">
+        <input type="text" id="last_name" name="last_name" value="{{ user_details.last_name }}" readonly disabled />
+    </div>
+</div>
+
 
     <div class="form-group">
         <label for="birthdate">Birthdate:</label>
         <div class="input-wrapper">
             <input type="date" id="birthdate" name="birthdate" value="{{ user_details.birth_date }}" readonly disabled />
-            <span class="edit-icon" onclick="toggleEditable('birthdate')">&#9998;</span>
         </div>
     </div>
 
@@ -65,7 +66,6 @@
         <label for="email">Email:</label>
         <div class="input-wrapper">
             <input type="email" id="email" name="email" value="{{ user_details.email }}" readonly disabled />
-            <span class="edit-icon" onclick="toggleEditable('email')">&#9998;</span>
         </div>
     </div>
 
@@ -73,34 +73,17 @@
         <label for="phone">Phone Number:</label>
         <div class="input-wrapper">
             <input type="tel" id="phone" name="phone" value="{{ user_details.contact_no }}" readonly disabled />
-            <span class="edit-icon" onclick="toggleEditable('phone')">&#9998;</span>
         </div>
     </div>
 </form>
 
-</div>
+<div class="form-buttons" id="formButtons">
+        <button type="button" onclick="saveChanges()">Save</button>
+        <button type="button" onclick="cancelChanges()">Cancel</button>
+    </div>
+    <button type="button" id="editButton" onclick="enableEditMode()">Edit</button>
 
-</div>
-
-    <div class="section1">
-        <h2>Account Settings</h2>
-
-        <div class="setting-row">
-            <span>Change Password</span>
-            <button>Change</button>
-        </div>
-
-        <div class="setting-row">
-            <span>Update Email / Phone</span>
-            <button>Update</button>
-        </div>
-
-        <div class="setting-row">
-            <span>Enable Two-Factor Authentication (2FA)</span>
-            <button>Enable</button>
-        </div>
-
-        <div class="setting-row">
+<div class="setting-row">
             <span>View Login History</span>
             <button onclick="toggleLoginHistory()">View</button>
         </div>
@@ -128,86 +111,148 @@
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <div class="section1">
-        <h2>Display & Accessibility</h2>
-        
-        <div class="setting-row">
-            <span>Theme Mode</span>
-            <input type="checkbox" id="darkmode-toggle">
-            <label id="darkmode" for="darkmode-toggle">
-                <svg class="sun" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"  viewBox="0 0 24 24">
-                    <path d="M 11 0 L 11 3 L 13 3 L 13 0 L 11 0 z M 4.2226562 2.8085938 L 2.8085938 4.2226562 L 4.9296875 6.34375 L 6.34375 4.9296875 L 4.2226562 2.8085938 z M 19.777344 2.8085938 L 17.65625 4.9296875 L 19.070312 6.34375 L 21.191406 4.2226562 L 19.777344 2.8085938 z M 12 5 C 8.1458514 5 5 8.1458514 5 12 C 5 15.854149 8.1458514 19 12 19 C 15.854149 19 19 15.854149 19 12 C 19 8.1458514 15.854149 5 12 5 z M 12 7 C 14.773268 7 17 9.2267316 17 12 C 17 14.773268 14.773268 17 12 17 C 9.2267316 17 7 14.773268 7 12 C 7 9.2267316 9.2267316 7 12 7 z M 0 11 L 0 13 L 3 13 L 3 11 L 0 11 z M 21 11 L 21 13 L 24 13 L 24 11 L 21 11 z M 4.9296875 17.65625 L 2.8085938 19.777344 L 4.2226562 21.191406 L 6.34375 19.070312 L 4.9296875 17.65625 z M 19.070312 17.65625 L 17.65625 19.070312 L 19.777344 21.191406 L 21.191406 19.777344 L 19.070312 17.65625 z M 11 21 L 11 24 L 13 24 L 13 21 L 11 21 z"></path>
-                    </svg>
-                    <?xml version="1.0" encoding="utf-8"?>
-    <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-    <svg fill="#000000" class="moon" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <title>moon-stars</title>
-    <path d="M29.201 24.121c-0.116-0.274-0.383-0.463-0.694-0.463-0.104 0-0.202 0.021-0.292 0.059l0.005-0.002c-1.272 0.542-2.752 0.857-4.306 0.857-6.213 0-11.25-5.037-11.25-11.25 0-4.66 2.833-8.658 6.871-10.366l0.074-0.028 0.211-0.089c0.267-0.118 0.45-0.381 0.45-0.687 0-0.375-0.276-0.686-0.635-0.74l-0.004-0.001c-0.653-0.103-1.407-0.161-2.174-0.161-8.145 0-14.748 6.603-14.748 14.748s6.603 14.748 14.748 14.748c4.748 0 8.973-2.244 11.67-5.73l0.025-0.034c0.097-0.125 0.155-0.285 0.155-0.458 0-0.127-0.031-0.246-0.086-0.351l0.002 0.004zM22.518 28.24c-1.497 0.637-3.238 1.007-5.066 1.007-7.317 0-13.249-5.932-13.249-13.249 0-7.074 5.543-12.853 12.523-13.23l0.034-0.001c-3.395 2.326-5.594 6.183-5.594 10.554 0 7.043 5.709 12.752 12.752 12.752 0.85 0 1.681-0.083 2.485-0.242l-0.081 0.013c-1.081 0.976-2.339 1.783-3.716 2.364l-0.087 0.033zM28.922 5.496h-3.498v-3.5c0-0.414-0.336-0.75-0.75-0.75s-0.75 0.336-0.75 0.75v0 3.5h-3.5c-0.414 0-0.75 0.336-0.75 0.75s0.336 0.75 0.75 0.75v0h3.5v3.499c0 0.414 0.336 0.75 0.75 0.75s0.75-0.336 0.75-0.75v0-3.499h3.498c0.414 0 0.75-0.336 0.75-0.75s-0.336-0.75-0.75-0.75v0zM20 10.25c-0.414 0-0.75 0.336-0.75 0.75v0 1.25h-1.25c-0.414 0-0.75 0.336-0.75 0.75s0.336 0.75 0.75 0.75v0h1.25v1.25c0 0.414 0.336 0.75 0.75 0.75s0.75-0.336 0.75-0.75v0-1.25h1.25c0.414 0 0.75-0.336 0.75-0.75s-0.336-0.75-0.75-0.75v0h-1.25v-1.25c-0-0.414-0.336-0.75-0.75-0.75v0z"></path>
-    </svg>
-            </label>
-        </div>
-        
-        <div class="setting-row">
-            <span>Font Style</span>
-            <select>
-                <option>Default</option>
-                <option>Sans-serif</option>
-                <option>Serif</option>
-                <option>Monospace</option>
-            </select>
-        </div>
-
-        <div class="setting-row">
-            <span>Font Size</span>
-            <select>
-                <option>Small</option>
-                <option>Medium</option>
-                <option>Large</option>
-            </select>
-        </div>
-
-        
-    </div>
 </div>
 
-{% endblock %}
+</div>
+
+<div class="section1">
+    <h2>Display & Accessibility</h2>
+    
+    <div class="setting-row">
+        <span>Theme Mode</span>
+        <input type="checkbox" id="darkmode-toggle">
+        <label for="darkmode-toggle">
+            <svg class="sun" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"  viewBox="0 0 24 24">
+                <path d="M 11 0 L 11 3 L 13 3 L 13 0 L 11 0 z M 4.2226562 2.8085938 L 2.8085938 4.2226562 L 4.9296875 6.34375 L 6.34375 4.9296875 L 4.2226562 2.8085938 z M 19.777344 2.8085938 L 17.65625 4.9296875 L 19.070312 6.34375 L 21.191406 4.2226562 L 19.777344 2.8085938 z M 12 5 C 8.1458514 5 5 8.1458514 5 12 C 5 15.854149 8.1458514 19 12 19 C 15.854149 19 19 15.854149 19 12 C 19 8.1458514 15.854149 5 12 5 z M 12 7 C 14.773268 7 17 9.2267316 17 12 C 17 14.773268 14.773268 17 12 17 C 9.2267316 17 7 14.773268 7 12 C 7 9.2267316 9.2267316 7 12 7 z M 0 11 L 0 13 L 3 13 L 3 11 L 0 11 z M 21 11 L 21 13 L 24 13 L 24 11 L 21 11 z M 4.9296875 17.65625 L 2.8085938 19.777344 L 4.2226562 21.191406 L 6.34375 19.070312 L 4.9296875 17.65625 z M 19.070312 17.65625 L 17.65625 19.070312 L 19.777344 21.191406 L 21.191406 19.777344 L 19.070312 17.65625 z M 11 21 L 11 24 L 13 24 L 13 21 L 11 21 z"></path>
+                </svg>
+                <?xml version="1.0" encoding="utf-8"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg fill="#000000" class="moon" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<title>moon-stars</title>
+<path d="M29.201 24.121c-0.116-0.274-0.383-0.463-0.694-0.463-0.104 0-0.202 0.021-0.292 0.059l0.005-0.002c-1.272 0.542-2.752 0.857-4.306 0.857-6.213 0-11.25-5.037-11.25-11.25 0-4.66 2.833-8.658 6.871-10.366l0.074-0.028 0.211-0.089c0.267-0.118 0.45-0.381 0.45-0.687 0-0.375-0.276-0.686-0.635-0.74l-0.004-0.001c-0.653-0.103-1.407-0.161-2.174-0.161-8.145 0-14.748 6.603-14.748 14.748s6.603 14.748 14.748 14.748c4.748 0 8.973-2.244 11.67-5.73l0.025-0.034c0.097-0.125 0.155-0.285 0.155-0.458 0-0.127-0.031-0.246-0.086-0.351l0.002 0.004zM22.518 28.24c-1.497 0.637-3.238 1.007-5.066 1.007-7.317 0-13.249-5.932-13.249-13.249 0-7.074 5.543-12.853 12.523-13.23l0.034-0.001c-3.395 2.326-5.594 6.183-5.594 10.554 0 7.043 5.709 12.752 12.752 12.752 0.85 0 1.681-0.083 2.485-0.242l-0.081 0.013c-1.081 0.976-2.339 1.783-3.716 2.364l-0.087 0.033zM28.922 5.496h-3.498v-3.5c0-0.414-0.336-0.75-0.75-0.75s-0.75 0.336-0.75 0.75v0 3.5h-3.5c-0.414 0-0.75 0.336-0.75 0.75s0.336 0.75 0.75 0.75v0h3.5v3.499c0 0.414 0.336 0.75 0.75 0.75s0.75-0.336 0.75-0.75v0-3.499h3.498c0.414 0 0.75-0.336 0.75-0.75s-0.336-0.75-0.75-0.75v0zM20 10.25c-0.414 0-0.75 0.336-0.75 0.75v0 1.25h-1.25c-0.414 0-0.75 0.336-0.75 0.75s0.336 0.75 0.75 0.75v0h1.25v1.25c0 0.414 0.336 0.75 0.75 0.75s0.75-0.336 0.75-0.75v0-1.25h1.25c0.414 0 0.75-0.336 0.75-0.75s-0.336-0.75-0.75-0.75v0h-1.25v-1.25c-0-0.414-0.336-0.75-0.75-0.75v0z"></path>
+</svg>
+        </label>
+    </div>
+    
+<div class="setting-row">
+    <span>Font Style</span>
+    <select id="fontStyleSelect">
+        <option value="default">Default</option>
+        <option value="georgia">Georgia</option>
+        <option value="century-gothic">Century Gothic</option>
+        <option value="jetbrains-mono">JetBrains Mono</option>
+    </select>
+</div>
+
+<div class="setting-row">
+    <span>Font Size</span>
+    <select id="fontSizeSelect">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium</option>
+        <option value="large">Large</option>
+    </select>
+</div>  
+
 
 {% block extra_scripts %}
 <script>
-function toggleEditable(id) {
-    const input = document.getElementById(id);
-    if (input.disabled) {
-        input.disabled = false;
-        input.readOnly = false;
-        input.focus();
-    } else {
-        input.disabled = true;
-        input.readOnly = true;
-    }
-}
+    document.addEventListener("DOMContentLoaded", function() {
+        const fontStyleSelect = document.getElementById("fontStyleSelect");
+        const fontSizeSelect = document.getElementById("fontSizeSelect");
 
-document.addEventListener("DOMContentLoaded", function () {
-    const toggle = document.getElementById("darkmode-toggle");
-    const themeLink = document.getElementById("theme-link");
+        // Restore saved preferences (or defaults)
+        const savedFontKey = localStorage.getItem("appFontKey") || "default";
+        const savedSizeKey = localStorage.getItem("appFontSizeKey") || "medium";
 
-    // Load stored theme
-    const savedTheme = localStorage.getItem("theme") || "light";
-    setTheme(savedTheme);
-    toggle.checked = savedTheme === "dark";
+        fontStyleSelect.value = savedFontKey;
+        fontSizeSelect.value = savedSizeKey;
 
-    // Listen for toggle
-    toggle.addEventListener("change", function () {
-        const newTheme = toggle.checked ? "dark" : "light";
-        setTheme(newTheme);
+        // Apply preferences immediately
+        applyFontStyle(savedFontKey);
+        applyFontSize(savedSizeKey);
+
+        // Handlers
+        fontStyleSelect.addEventListener("change", e => {
+            applyFontStyle(e.target.value);
+            localStorage.setItem("appFontKey", e.target.value);
+        });
+
+        fontSizeSelect.addEventListener("change", e => {
+            applyFontSize(e.target.value);
+            localStorage.setItem("appFontSizeKey", e.target.value);
+        });
+
+        // Helpers
+        function applyFontStyle(key) {
+            const map = {
+                "georgia": "Georgia, serif",
+                "century-gothic": "'Century Gothic', sans-serif",
+                "jetbrains-mono": "'JetBrains Mono', monospace",
+                "default": "'Montserrat', sans-serif"
+            };
+            document.documentElement.style.setProperty("--app-font", map[key] || map["default"]);
+            localStorage.setItem("appFontFamily", map[key] || map["default"]);
+        }
+
+        function applyFontSize(key) {
+            const map = {
+                "small": "0.875rem",   // ~14px
+                "medium": "1rem",      // ~16px
+                "large": "1.125rem"    // ~18px
+            };
+            document.documentElement.style.setProperty("--app-font-size", map[key] || map["medium"]);
+            localStorage.setItem("appFontSize", map[key] || map["medium"]);
+        }
     });
 
-    function setTheme(theme) {
-        const cssFile = theme === "dark" ? "styles/settings-dark.css" : "styles/settings.css";
-        themeLink.setAttribute("href", "{{ url_for('static', filename='') }}" + cssFile);
-        localStorage.setItem("theme", theme);
+    let originalValues = {};
+
+    function enableEditMode() {
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.removeAttribute('readonly');
+        input.removeAttribute('disabled');
+        input.classList.add('editable'); // Add class here
+        originalValues[input.id] = input.value;
+    });
+
+    document.getElementById('formButtons').style.display = 'flex';
+    document.getElementById('editButton').style.display = 'none';
+}
+
+function saveChanges() {
+    // Submit the form programmatically
+    document.querySelector('.profile-form').submit();
+
+    // After submitting, reset the form to readonly and disabled
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.setAttribute('readonly', true);
+        input.setAttribute('disabled', true);
+        input.classList.remove('editable'); // Remove class here
+    });
+
+    document.getElementById('formButtons').style.display = 'none';
+    document.getElementById('editButton').style.display = 'inline-block';
+}
+
+
+function cancelChanges() {
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.value = originalValues[input.id];
+        input.setAttribute('readonly', true);
+        input.setAttribute('disabled', true);
+        input.classList.remove('editable'); // Remove class here
+    });
+
+    document.getElementById('formButtons').style.display = 'none';
+    document.getElementById('editButton').style.display = 'inline-block';
+}
+
+    function toggleLoginHistory() {
+        const history = document.getElementById('loginHistory');
+        history.style.display = (history.style.display === 'none') ? 'block' : 'none';
     }
-});
 </script>
+
+{% endblock %}
+
 {% endblock %}

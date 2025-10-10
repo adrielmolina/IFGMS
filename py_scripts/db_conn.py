@@ -633,6 +633,79 @@ def get_inventory_entries(allocated_to=None):
         return [dict(zip(col_names, row)) for row in results]
 
 
+def GET_audit_logs():
+    db_session = SessionLocal()
+    try:
+        logs = db_session.query(models.Logs).order_by(models.Logs.date.desc()).all()
+        return logs
+    except Exception as e:
+        print(f"Error fetching audit logs: {e}")
+        return []
+    
+def update_user_details(account_id, first_name, middle_name, last_name, birth_date, contact_no, email):
+    # Find the user by their account_id
+    session = SessionLocal()  # create a session instance
+    user = session.query(models.Accounts).filter(models.Accounts.account_id == account_id).first()
+
+    # If user is found, update the fields
+    if user:
+        user.first_name = first_name
+        user.middle_name = middle_name
+        user.last_name = last_name
+        user.birth_date = birth_date
+        user.contact_no = contact_no
+        user.email = email
+
+        try:
+            # Commit the changes to the database
+            session.commit()
+            print(f"User {account_id} details updated successfully.")
+            return True
+        except Exception as e:
+            # If there is an error, roll back the changes
+            session.rollback()
+            print(f"Error updating user details: {e}")
+            return False
+    else:
+        print(f"User with account_id {account_id} not found.")
+        return False
+
+
+def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=None, current_user_id=None):
+    """ for logging actions on audit_trails table """
+    
+    db_session = SessionLocal()
+    
+    try:
+        audit_log = models.Logs(
+            date=datetime.now(),
+            staff_name=current_user,
+            user_level=current_user_lvl,
+            action_name=action,
+            description=desc,
+            account_id=current_user_id
+        )
+        print(audit_log)
+        
+        db_session.add(audit_log)
+        db_session.commit()
+        print("Action logged successfully.")
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error logging action: {e}")    
+    
+    '''
+    now = datetime.now()
+    current_date_time = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    
+    
+    with conn.cursor() as cursor:
+        cursor.execute('INSERT INTO audit_trails VALUES (%s, %s, %s, %s, %s, %s)',
+                       (None, current_date_time, current_user, current_user_lvl, action, desc))
+        conn.commit()
+    '''
+    
 if __name__ == '__main__':
     print('do no run this module directly lol')
     print('use initialize_database.py')

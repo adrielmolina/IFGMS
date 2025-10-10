@@ -66,52 +66,54 @@
   </div>
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      const intro = document.getElementById("introScreen");
-      const formContainer = document.querySelector(".form-container");
-  
-      if (!sessionStorage.getItem("introShown")) {
-        setTimeout(() => {
-          intro.classList.add("fade-out");
-        }, 1200);
-  
-        setTimeout(() => {
-          intro.style.display = "none";
-          formContainer.classList.add("slide-in-right");
-          sessionStorage.setItem("introShown", "true");
-        }, 2200);
-      } else {
-        intro.style.display = "none";
-        formContainer.classList.add("slide-in-right");
-      }
-  
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            let flashData = JSON.parse(`{{ message | tojson | safe }}`);
-            // TODO retire this and use javascript dialog box
-            Swal.fire({
-              icon: '{{ category }}',
-              title: flashData.title,
-              text: flashData.text,
-              showConfirmButton: true,
-              confirmButtonText: "Continue",
-              allowOutsideClick: false,
-              confirmButtonColor: '#891b19',
-              background: '#1e0b4ad8',
-              color: '#ffffff'
-            }).then((result) => {
-              if (result.isConfirmed) {
-                if (flashData.redirect_url) {
-                  window.location.href = flashData.redirect_url;
-                } else {
-                  window.location.href = "/"; // fallback
-                }
-              }
-            });
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
-    });
+  const intro = document.getElementById("introScreen");
+  const formContainer = document.querySelector(".form-container");
+
+  if (!sessionStorage.getItem("introShown")) {
+    setTimeout(() => {
+      intro.classList.add("fade-out");
+    }, 1200);
+
+    setTimeout(() => {
+      intro.style.display = "none";
+      formContainer.classList.add("slide-in-right");
+      document.getElementById("username").focus();
+      sessionStorage.setItem("introShown", "true");
+    }, 2200);
+  } else {
+    intro.style.display = "none";
+    formContainer.classList.add("slide-in-right");
+    document.getElementById("username").focus();
+  }
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        let flashData = JSON.parse(`{{ message | tojson | safe }}`);
+        // TODO retire this and use javascript dialog box
+        Swal.fire({
+          icon: '{{ category }}',
+          title: flashData.title,
+          text: flashData.text,
+          showConfirmButton: true,
+          confirmButtonText: "Continue",
+          allowOutsideClick: false,
+          confirmButtonColor: '#891b19',
+          background: '#1e0b4ad8',
+          color: '#ffffff'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            if (flashData.redirect_url) {
+              window.location.href = flashData.redirect_url;
+            } else {
+              window.location.href = "/"; // fallback
+            }
+          }
+        });
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+});
   
     function handleLogin(event) {
       event.preventDefault();
