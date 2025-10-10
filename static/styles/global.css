@@ -1,10 +1,17 @@
 :root {
-    --app-font: "Montserrat", sans-serif;  /* default */
+    --app-font: "Poppins";  /* default */
     --app-font-size: 16px;                 /* default */
 }
 
-/* Apply everywhere EXCEPT navbar */
-body, body *:not(.navbar):not(.navbar *) {
-    font-family: var(--app-font) !important;
-    font-size: var(--app-font-size) !important;
+body, 
+body *:not(.navbar):not(.navbar *):not(.module_name):not(.module_name *):not(h1):not(h2):not(h3) {
+    font-family: var(--app-font);
+    font-size: var(--app-font-size);
+}
+
+
+
+.module_name h1 {
+    font-size: 30px !important;
+    font-weight: 500;
 }

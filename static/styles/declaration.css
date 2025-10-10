@@ -1,7 +1,7 @@
 
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: "Poppins";
     margin: 20;
     padding: 1rem;
     background-color: #f3e8e8;
@@ -80,7 +80,7 @@ body {
 
 /* Search bar */
 .search-bar {
-  text-align: left;  /
+  text-align: left; 
   margin: 10px 0;
   margin-left: 25px;
 }

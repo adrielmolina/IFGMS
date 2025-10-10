@@ -4,19 +4,30 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/dashboard.css') }}">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 {% endblock %}
 
 {% block content %}
-<!-- TOP -->
-<div class="module_name">
-    <h1>D A S H B O A R D</h1>
-    <!-- <h1>DASHBOARD</h1> -->
+<div class="dashboard-container">
+<div class="top-header">
+    <div class="search-container">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" placeholder="Search anything here..." />
+    </div>
+
+    <div class="top-icons">
+        <button class="icon-btn"><i class="fa-regular fa-bell"></i></button>
+        <img src="profile.jpg" alt="Profile" class="profile-icon">
+    </div>
 </div>
-<div class="top-bar">
-    <div class="dropdown-group">
+
+<hr class="divider">
+
+<div class="module_name">
+    <h1>Dashboard</h1>
+
+    <div class="filter-group">
         <div class="dropdown-container">
             <label for="monthDropdown">Selected Month:</label>
             <select id="monthDropdown" onchange="updateMonthLabel()">
@@ -49,19 +60,14 @@
                 <option value="Senior">Senior</option>
                 <option value="Senior Plus">Senior Plus</option>
             </select>
-        </div>
-        
-    </div>
-    <div class="search-container">
-        <i class="fas fa-search"></i>
-        <input type="text" placeholder="Search...">
-    </div>
+          </div>
+       </div>
+   </div>
 </div>
+<hr class="divider">
 
-</div><!-- CARDS -->
 <div class="cards-container">
     <div class="card yellow">
-        <!-- Card Reference: Sales Overview -->
         <h3>Sales</h3>
         <h2 class="numbercount" id="salesCurrentTotal">100,000</h2> 
         <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p> 
@@ -69,25 +75,23 @@
     </div>
 
     <div class="card violet">
-        <!-- Card Reference: Member Count -->
         <h3>Total Member Count</h3>
         <h2 class="numbercount">8,000</h2>
     </div>
     
     <div class="card blue">
-        <!-- Card Reference: Monthly Sign-ups -->
         <h3>Expiring soon</h3>
         <h2 class="numbercount">100</h2>
     </div>
 
     <div class="card green" onclick="window.location.href='/claims?status=pending'">
-        <!-- Card Reference: Claims Awaiting Processing -->
         <h3>Pending Claims</h3>
         <h2 id="pending_claims_count" class="numbercount">0</h2>
     </div>
 </div>
 
-<!-- TABLE -->
+<hr class="divider">
+
 <div class="chart-container">
     <div class="chart-card">
         <div id="chart_div" style="width: 100%; height: 400px;"></div>
@@ -98,37 +102,20 @@
             <tr>
                 <td><b>ID TYPE</b></td><td><b>UNIT SOLD</b></td><td><b>TARGET</b></td>
             </tr>
-            <tr>
-                <td>Classic</td><td>1000</td><td>30,906</td>
-            </tr>
-            <tr>
-                <td>Premier Bronze</td><td>1000</td><td>32,266</td>
-            </tr>
-            <tr>
-                <td>Premier Silver</td><td>1000</td><td>12,300</td>
-            </tr>
-            <tr>
-                <td>Premier Gold</td><td>1000</td><td>15,000</td>
-            </tr>
-            <tr>
-                <td>Premier Platinum</td><td>1000</td><td>9,000</td>
-            </tr>
-            <tr>
-                <td>Enhanced Platinum</td><td>1000</td><td>5,000</td>
-            </tr>
-            <tr>
-                <td>Senior</td><td>1000</td><td>12000</td>
-            </tr>
-            <tr>
-                <td>Senior Plus</td><td>1000</td><td>14,000</td>
-            </tr>
+            <tr><td>Classic</td><td>1000</td><td>30,906</td></tr>
+            <tr><td>Premier Bronze</td><td>1000</td><td>32,266</td></tr>
+            <tr><td>Premier Silver</td><td>1000</td><td>12,300</td></tr>
+            <tr><td>Premier Gold</td><td>1000</td><td>15,000</td></tr>
+            <tr><td>Premier Platinum</td><td>1000</td><td>9,000</td></tr>
+            <tr><td>Enhanced Platinum</td><td>1000</td><td>5,000</td></tr>
+            <tr><td>Senior</td><td>1000</td><td>12,000</td></tr>
+            <tr><td>Senior Plus</td><td>1000</td><td>14,000</td></tr>
         </table>
     </div>
 </div>
 
-<!-- GRAPH -->
+<hr class="divider">
 <div id="chart_div"></div>
-
 {% endblock %}
 
 {% block extra_scripts %}
