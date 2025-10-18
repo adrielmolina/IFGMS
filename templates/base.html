@@ -13,13 +13,13 @@
     <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Merriweather&family=Source+Sans+Pro&family=Fira+Code&family=Roboto&family=Noto+Sans&display=swap" rel="stylesheet">
     
-   
+    <!-- TODO convert all the icon assets into svg -->
 
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/CAVITE.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/prc_logo.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/dashboard.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/dashboard.svg') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/members.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/declaration.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/declaration.svg') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/inventory.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/claims.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/reports.png') }}">
@@ -71,7 +71,7 @@
                     <div class="menu-separator"></div>
                 </h4>
                 <li id="dashboard">
-                    <a href="/dashboard"><img class="icons" src="{{ url_for('static', filename='assets/dashboard.png') }}" alt="logo"/>Dashboard</a>
+                    <a href="/dashboard"><img class="icons" src="{{ url_for('static', filename='assets/dashboard.svg') }}" alt="logo"/>Dashboard</a>
                 </li>
 
                 <li id="members">
@@ -79,7 +79,7 @@
                 </li>
 
                 <li id="declaration" hidden>
-                    <a href="/declaration"><img class="icons" src="{{ url_for('static', filename='assets/declaration.png') }}" alt="logo"/>Declaration</a>
+                    <a href="/declaration"><img class="icons" src="{{ url_for('static', filename='assets/declaration.svg') }}" alt="logo"/>Declaration</a>
                 </li>
 
                 <li id="inventory">

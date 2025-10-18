@@ -12,6 +12,8 @@ from functools import wraps
 server = Flask(__name__)
 server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
+
+# CACHE CONTROL FOR STATIC FILES
 server.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
 
 login_manager = LoginManager()
