@@ -7,11 +7,29 @@
 
     <!-- imports for for nav bar -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/global.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Merriweather&family=Source+Sans+Pro&family=Fira+Code&family=Roboto&family=Noto+Sans&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/global.css') }}">
+    
+   
+
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/CAVITE.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/prc_logo.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/dashboard.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/members.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/declaration.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/inventory.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/claims.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/reports.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/audit trail.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/accounts.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/settings.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/logout.png') }}">
+
+
+
     
     {% block head %}{% endblock %}
 </head>
@@ -22,7 +40,7 @@
     <nav class="navbar">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <img src="\static\assets\CAVITE.png" alt="chapter_logo" />
+                <img src="{{ url_for('static', filename='assets/CAVITE.png') }}" alt="chapter_logo" />
             </div>
 
             <br>
@@ -53,27 +71,27 @@
                     <div class="menu-separator"></div>
                 </h4>
                 <li id="dashboard">
-                    <a href="/dashboard"><img class="icons" src="\static\assets\dashboard.png" alt="logo"/>Dashboard</a>
+                    <a href="/dashboard"><img class="icons" src="{{ url_for('static', filename='assets/dashboard.png') }}" alt="logo"/>Dashboard</a>
                 </li>
 
                 <li id="members">
-                    <a href="/members"><img class="icons" src="\static\assets\members.png" alt="logo"/>Members</a>
+                    <a href="/members"><img class="icons" src="{{ url_for('static', filename='assets/members.png') }}" alt="logo"/>Members</a>
                 </li>
 
                 <li id="declaration" hidden>
-                    <a href="/declaration"><img class="icons" src="\static\assets\declaration.png" alt="logo"/>Declaration</a>
+                    <a href="/declaration"><img class="icons" src="{{ url_for('static', filename='assets/declaration.png') }}" alt="logo"/>Declaration</a>
                 </li>
 
                 <li id="inventory">
-                    <a href="/inventory"><img class="icons" src="\static\assets\inventory.png" alt="logo"/>Inventory</a>
+                    <a href="/inventory"><img class="icons" src="{{ url_for('static', filename='assets/inventory.png') }}" alt="logo"/>Inventory</a>
                 </li>
             
                 <li id="claims">
-                    <a href="/claims"><img class="icons" src="\static\assets\claims.png" alt="logo"/>Manage Claims</a>
+                    <a href="/claims"><img class="icons" src="{{ url_for('static', filename='assets/claims.png') }}" alt="logo"/>Manage Claims</a>
                 </li>
 
                 <li id="reports" hidden>
-                    <a href="/reports"><img class="icons" src="\static\assets\reports.png" alt="logo"/>Reports</a>
+                    <a href="/reports"><img class="icons" src="{{ url_for('static', filename='assets/reports.png') }}" alt="logo"/>Reports</a>
                 </li>
 
                 <h4>
@@ -82,19 +100,19 @@
                 </h4>
 
                 <li id="audit_trails" hidden>
-                    <a href="/audit_trails"><img class="icons" src="\static\assets\audit trail.png" alt="logo"/>Audit Trail</a>
+                    <a href="/audit_trails"><img class="icons" src="{{ url_for('static', filename='assets/audit trail.png') }}" alt="logo"/>Audit Trail</a>
                 </li>
 
                 <li id="accounts" hidden>
-                    <a href="/accounts"><img class="icons" src="\static\assets\accounts.png" alt="logo"/>Accounts</a>
+                    <a href="/accounts"><img class="icons" src="{{ url_for('static', filename='assets/accounts.png') }}" alt="logo"/>Accounts</a>
                 </li>
 
                 <li id="settings">
-                    <a href="/settings"><img class="icons" src="\static\assets\settings.png" alt="logo"/>Settings</a>
+                    <a href="/settings"><img class="icons" src="{{ url_for('static', filename='assets/settings.png') }}" alt="logo"/>Settings</a>
                 </li>
 
                 <li id="logout">
-                    <a href="/logout"><img class="icons" src="\static\assets\logout.png" alt="logo"/>Logout</a>
+                    <a href="/logout"><img class="icons" src="{{ url_for('static', filename='assets/logout.png') }}" alt="logo"/>Logout</a>
                 </li>
             </ul>
         </aside>
@@ -105,7 +123,7 @@
         {% block content %} {% endblock %}
     </div>
 
-    <script>
+<script>
         document.addEventListener("DOMContentLoaded", function() {
             const current_userLevel = {{current_user.user_level|tojson}};
 
@@ -122,23 +140,67 @@
             if (localStorage.getItem("appFontSize")) {
                 document.documentElement.style.setProperty("--app-font-size", localStorage.getItem("appFontSize"));
             }
+
+            // Grab all sidebar links once
+            const sidebarLinks = document.querySelectorAll('.sidebar-links li a');
+            const currentPath = location.pathname;
+
+            // Set active link on page load
+            sidebarLinks.forEach(link => {
+            if (link.pathname === currentPath) {
+                link.classList.add('active');
+            }
+            });
+
+            // Add click listeners (no nested loops)
+            sidebarLinks.forEach(link => {
+            link.addEventListener('click', function () {
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+            });
+
+
         });
-        
-           document.querySelectorAll('.sidebar-links li a').forEach(link => {
-             link.addEventListener('click', function() {
-              // remove active class from all links
-          document.querySelectorAll('.sidebar-links li a').forEach(l => l.classList.remove('active'));
-             // add active class to the clicked one
-          this.classList.add('active');
-        });
-});
+
+    // TODO UNNEEDED DELETE LATER
+    /*    
+    document.querySelectorAll('.sidebar-links li a').forEach(link => {
+    // --- Sidebar Active Link Handler ---
+    const sidebarLinks = document.querySelectorAll('.sidebar-links li a');
+    const currentPath = location.pathname;
+
+    sidebarLinks.forEach(link => {
+        // On page load, find the link that matches the current URL and make it active.
+        if (link.pathname === currentPath) {
+            link.classList.add('active');
+        }
+
+        // Add a click listener to all links for immediate feedback.
+        link.addEventListener('click', function() {
+        // remove active class from all links
+            document.querySelectorAll('.sidebar-links li a').forEach(l => l.classList.remove('active'));
+                // add active class to the clicked one
+                this.classList.add('active');
+                });
+            });
 
      const current = location.pathname;
         document.querySelectorAll('.sidebar-links li a').forEach(link => {
           if (link.href.includes(current)) {
              link.classList.add('active');
              }
-});
+            // On click, remove 'active' from all links...
+            sidebarLinks.forEach(l => l.classList.remove('active'));
+            // ...and add it only to the one that was clicked.
+            this.classList.add('active');
+        });
+    });
+*/
+
+    
+    
+
 
 </script>
 
