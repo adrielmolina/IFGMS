@@ -213,9 +213,7 @@ def show_user_accounts():
 @server.route('/settings')
 @login_required
 def settings():
-    # Use Flask-Login’s current_user instead of session
-    user_details = db_conn.get_user_details_by_username(current_user.username)
-    return render_template('settings.html', user_details=user_details)
+    return render_template('settings.html')
 
 
 #? -------------------- END -------------------- ?#
@@ -367,6 +365,46 @@ def reset_password():
             }, "success")
         
     return render_template("reset_password.html")
+
+
+@server.route('/settings_save_changes', methods=['POST'])
+@login_required
+def settings_save_changes():
+    if request.method == 'POST':
+        print("=== FORM DATA RECEIVED ===")
+        print(request.form)
+        print("===========================")
+
+        first_name = request.form.get('first_name', '').upper()
+        middle_name = request.form.get('middle_name', '').upper()
+        last_name = request.form.get('last_name', '').upper()
+        birthdate = request.form.get('birthdate')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+
+        if all([first_name, middle_name, last_name, birthdate, email, phone]):
+            update_success = db_conn.update_user_details(
+    current_user.account_id,  # ✅ actual user ID
+    first_name,
+    middle_name,
+    last_name,
+    birthdate,
+    phone,
+    email
+)
+
+            if update_success:
+                flash("Details updated successfully!", "success")
+            else:
+                flash("Update failed!", "error")
+
+        else:
+            flash("Please fill out all fields.", "error")
+
+        return redirect(url_for('settings'))
+
+    return redirect(url_for('settings'))
+
 
 
 # API FOR DASHBOARD

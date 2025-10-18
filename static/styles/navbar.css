@@ -224,7 +224,7 @@ body {
 }
 
 /*------------ 3D ICONS --------------*/
-.material-symbols-outlined {
+.icons {
     font-size: 25px;
     color: #ffffff;
     padding: 10px;
@@ -242,7 +242,7 @@ body {
 
 
 /* 3D effect on hover */
-.material-symbols-outlined:hover {
+.icons:hover {
     background: linear-gradient(145deg, #ff3b30, #d02a1a);
     box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.4), -6px -6px 15px rgba(255, 255, 255, 0.3);
     transform: translateZ(5px) perspective(500px) rotateX(0deg) rotateY(0deg);
@@ -261,7 +261,7 @@ body {
     transition: 0.2s ease;
 }
 
-.sidebar-links li a:hover .material-symbols-outlined {
+.sidebar-links li a:hover .icons {
     background: linear-gradient(145deg, #ff3b30, #d02a1a);
     box-shadow: 
         0 8px 20px rgba(0, 0, 0, 0.5),

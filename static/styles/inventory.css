@@ -37,6 +37,53 @@ body {
     width: 100%;  
   }
 
+.top-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    justify-content: space-between;
+}
+
+.search-bar {
+    width: 200px;
+    padding: 10px;
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 25px;
+    padding: 5px 15px;
+    background: #ea5432;
+    backdrop-filter: blur(10px); 
+    -webkit-backdrop-filter: blur(10px);
+    color: #fff;
+    width: 220px;
+}
+
+.search-container input {
+    border: none;
+    outline: none;
+    font-size: 16px;
+    width: 100%;
+    padding: 8px;
+    border-radius: 25px;
+    background-color: transparent; 
+    color: #fff;
+}
+
+.search-container i {
+    color: #fff;;
+}
+
+.search-container input::placeholder {
+    color: white; 
+}
+
 #openFormBtn1 {
     position: relative;
     z-index: 10;

@@ -109,7 +109,7 @@
     },
     ];
 
-    const table = new Tabulator("#budget_v_expense_table", {
+    const budgetExpense = new Tabulator("#budget_v_expense_table", {
     data: tableData,
     layout: "fitColumns", 
     responsiveLayout: "collapse",
@@ -186,130 +186,135 @@
     });
 
 
-        // TABLE FOR PER DISTRICT
-        const districtMunicipalities = [
-            { districtNo: 1, municipality: 'Cavite City' },
-            { districtNo: 1, municipality: 'Kawit' },
-            { districtNo: 1, municipality: 'Noveleta' },
-            { districtNo: 1, municipality: 'Rosario' },
-            
-            { districtNo: 2, municipality: 'Bacoor' },
+     // TABLE FOR PER DISTRICT
+    const districtMunicipalities = [
+        { districtNo: 1, municipality: 'Cavite City' },
+        { districtNo: 1, municipality: 'Kawit' },
+        { districtNo: 1, municipality: 'Noveleta' },
+        { districtNo: 1, municipality: 'Rosario' },
 
-            { districtNo: 3, municipality: 'Imus' },
+        { districtNo: 2, municipality: 'Bacoor' },
+        { districtNo: 3, municipality: 'Imus' },
+        { districtNo: 4, municipality: 'Dasmariñas' },
 
-            { districtNo: 4, municipality: 'Dasmariñas' },
+        { districtNo: 5, municipality: 'Carmona' },
+        { districtNo: 5, municipality: 'General Mariano Alvarez (GMA)' },
+        { districtNo: 5, municipality: 'Silang' },
 
-            { districtNo: 5, municipality: 'Carmona' },
-            { districtNo: 5, municipality: 'General Mariano Alvarez (GMA)' },
-            { districtNo: 5, municipality: 'Silang' },
+        { districtNo: 6, municipality: 'General Trias' },
 
-            { districtNo: 6, municipality: 'General Trias' },
+        { districtNo: 7, municipality: 'Amadeo' },
+        { districtNo: 7, municipality: 'Indang' },
+        { districtNo: 7, municipality: 'Tanza' },
+        { districtNo: 7, municipality: 'Trece Martires' },
 
-            { districtNo: 7, municipality: 'Amadeo' },
-            { districtNo: 7, municipality: 'Indang' },
-            { districtNo: 7, municipality: 'Tanza' },
-            { districtNo: 7, municipality: 'Trece Martires' },
+        { districtNo: 8, municipality: 'Alfonso' },
+        { districtNo: 8, municipality: 'Gen. Emilio Aguinaldo (Bailen)' },
+        { districtNo: 8, municipality: 'Magallanes' },
+        { districtNo: 8, municipality: 'Maragondon' },
+        { districtNo: 8, municipality: 'Mendez' },
+        { districtNo: 8, municipality: 'Naic' },
+        { districtNo: 8, municipality: 'Tagaytay City' },
+        { districtNo: 8, municipality: 'Ternate' }
+    ];
 
-            { districtNo: 8, municipality: 'Alfonso' },
-            { districtNo: 8, municipality: 'Gen. Emilio Aguinaldo (Bailen)' },
-            { districtNo: 8, municipality: 'Magallanes' },
-            { districtNo: 8, municipality: 'Maragondon' },
-            { districtNo: 8, municipality: 'Mendez' },
-            { districtNo: 8, municipality: 'Naic' },
-            { districtNo: 8, municipality: 'Tagaytay City' },
-            { districtNo: 8, municipality: 'Ternate' }
-            ];
+    const classifications = [
+        'Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder',
+        'Public Elementary School', 'Private Elementary School',
+        'Public High School', 'Private High School',
+        'Public Senior High School', 'Private Senior High School',
+        'Public Integrated School', 'Private Integrated School',
+        'Public College', 'Private College',
+        'Government Company/Organization', 'Private Company/Organization',
+        'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events',
+        'Training', 'Company/Organization Training', 'Individual', 'Walk-In'
+    ];
 
-            const classifications = [
-            'Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder',
-            'Public Elementary School', 'Private Elementary School',
-            'Public High School', 'Private High School',
-            'Public Senior High School', 'Private Senior High School',
-            'Public Integrated School', 'Private Integrated School',
-            'Public College', 'Private College',
-            'Government Company/Organization', 'Private Company/Organization',
-            'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events',
-            'Training', 'Company/Organization Training', 'Individual', 'Walk-In'
-            ];
-
-            // Build the data
-            const per_district_sample_data = [];
-            districtMunicipalities.forEach(entry => {
-            classifications.forEach(classification => {
-                per_district_sample_data.push([
-                entry.districtNo, // TODO MERGE DISTRICT ROWS
-                entry.municipality, // TODO MERGE MUNICIPALITY ROWS
-                classification,
-                10,20,30,40,50,60,70,80,360 // TODO REPLACE WITH ACTUAL DATA
-                ]);
+    // Build Tabulator rows
+    const per_district_sample_data = [];
+    districtMunicipalities.forEach(entry => {
+        classifications.forEach(classification => {
+            per_district_sample_data.push({
+                district: entry.districtNo,
+                municipality: entry.municipality,
+                classification: classification,
+                classic: 10,
+                bronze: 20,
+                silver: 30,
+                gold: 40,
+                platinum: 50,
+                enhanced_platinum: 60,
+                senior: 70,
+                senior_plus: 80,
+                total: 360
             });
-            // Add a blank row (same number of columns as your data)
-            per_district_sample_data.push([
-                '', '', '', '', '', '', '', '', '', '', '', ''
-            ]);
         });
+    });
 
-        const container3 = document.getElementById('per_district_table');
-            hotInstance3 = new Handsontable(container3, {
-                data: per_district_sample_data,
-                colHeaders: [
-                    "District", 'Municipality', 'Classification', 'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+', 'Total Per Classification'
-                ],
-                rowHeaders: true,
-                mergeCells: [
-                    {row: 0, col: 0, rowspan: 111, colspan: 1}, //district 1
-                    {row: 112, col: 0, rowspan: 27, colspan: 1}, //district 2
-                    {row: 140, col: 0, rowspan: 27, colspan: 1}, //district 3
-                    {row: 168, col: 0, rowspan: 27, colspan: 1}, //district 4
-                    {row: 196, col: 0, rowspan: 83, colspan: 1}, //district 5
-                    {row: 280, col: 0, rowspan: 27, colspan: 1}, //district 6
-                    {row: 308, col: 0, rowspan: 111, colspan: 1}, //district 7
-                    {row: 420, col: 0, rowspan: 223, colspan: 1}, //district 8
+    // Create Tabulator
+    const table = new Tabulator("#per_district_table", {
+        data: per_district_sample_data,
+        layout: "fitColumns",
 
-                    {row: 0, col: 1, rowspan: 27, colspan: 1}, // cavite city
-                    {row: 28, col: 1, rowspan: 27, colspan: 1}, // kawit
-                    {row: 56, col: 1, rowspan: 27, colspan: 1}, // noveleta
-                    {row: 84, col: 1, rowspan: 27, colspan: 1}, // rosario
-                    {row: 112, col: 1, rowspan: 27, colspan: 1}, // bacoor
-                    {row: 140, col: 1, rowspan: 27, colspan: 1}, // imus
-                    {row: 168, col: 1, rowspan: 27, colspan: 1}, // dasma
-                    {row: 196, col: 1, rowspan: 27, colspan: 1}, // carmona
-                    {row: 224, col: 1, rowspan: 27, colspan: 1}, // gma
-                    {row: 252, col: 1, rowspan: 27, colspan: 1}, // silang
-                    {row: 280, col: 1, rowspan: 27, colspan: 1}, // gentri
-                    // TODO CONTINUE WITH AMADEO
-                ],
-                cells: function (row, col) { 
-                    const cellProperties = {};
-                    if (col >= 0 && col <= 11) {
-                    cellProperties.className = 'htCenter';
-                    //cellProperties.className = 'htMiddle';
-                    cellProperties.renderer = function (instance, td, row, col, prop, value, cellProperties) {
-                        Handsontable.renderers.TextRenderer.apply(this, arguments);
-                        //td.style.fontWeight = 'bold';
-                        td.style.color = '#000000';
-                        // Special backgrounds for certain row ranges
-                        if (col === 0 || col === 1 || col === 2) {
-                            td.style.fontWeight = 'bold';
-                            
-                            if (row >= 0 && row <= 110) {
-                                td.style.background = '#e3f2fd';
-                            } else if (row >= 112 && row <= 138) {
-                                td.style.background = '#d0e0e3';
-                            }
-                        }
-                    };
-                }
-                    return cellProperties;
-                },
-                stretchH: 'all',
-                autoWrapRow: false,
-                autoWrapCol: false,
-                readOnly: true,
-                licenseKey: 'non-commercial-and-evaluation'
-            });
+        pagination: "local",
+        paginationSize: 50,     // 50 rows per page
+        paginationSizeSelector: [25, 50, 100],
 
-            document.addEventListener('DOMContentLoaded', function () {
+        groupToggleElement: "header",
+
+    
+        columns: [
+            // Classification gets more space (weight = 2)
+            { title: "Classification", field: "classification", headerHozAlign:"center", widthGrow: 2, cssClass:"bold-text" },
+
+            // Other columns - equal share (weight = 1 each)
+            { title: "Classic", field: "classic", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+            { title: "Bronze", field: "bronze", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+            { title: "Silver", field: "silver", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+            { title: "Gold", field: "gold", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+            { title: "Platinum", field: "platinum", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+            { title: "E. Platinum", field: "enhanced_platinum", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+            { title: "Senior", field: "senior", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+            { title: "Senior+", field: "senior_plus", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+            { title: "Total Per Classification", field: "total", hozAlign:"center", headerHozAlign:"center", widthGrow: 1.2   },
+        ],
+
+    groupBy: ["district", "municipality"],
+
+    groupHeader: function(value, count, data, group){
+        // if(group.getField() === "district"){
+        //     // 8 matte shades (blue, green, red families)
+        //     let colors = [
+        //         "#E3F2FD", "#BBDEFB", "#90CAF9", // blues
+        //         "#E8F5E9", "#C8E6C9", "#A5D6A7", // greens
+        //         "#FFEBEE", "#FFCDD2"             // reds
+        //     ];
+        //     let bgColor = colors[(value - 1) % colors.length];
+
+        //     return `<div style="text-align:center; font-weight:bold; font-size:1.1em; 
+        //                         background:${bgColor}; padding:6px; border-radius:4px;">
+        //                 <span class="tabulator-arrow"></span> District ${value}
+        //             </div>`;
+        // }
+
+        // if(group.getField() === "municipality"){
+        //     return `<div style="text-align:center; font-weight:bold; background:#f5f5f5; padding:4px;">
+        //                 <span class="tabulator-arrow"></span> ${value}
+        //             </div>`;
+        // }        
+
+        if(group.getField() === "district"){
+            return "<div style='text-align:center; font-weight:bold; font-size:1.1em;'>District " + value + "</div>";
+        }
+        if(group.getField() === "municipality"){
+            return "<div style='text-align:center; font-weight:bold; background:#f0f0f0; padding:4px;'>" + value + "</div>";
+        }
+        return value;
+    },
+});
+
+    
+    document.addEventListener('DOMContentLoaded', function () {
     // Make headers clickable (toggle checkbox state)
     document.querySelectorAll('.collapse_box_header')
         .forEach(header => {
