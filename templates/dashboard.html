@@ -4,19 +4,15 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/dashboard.css') }}">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.6.0/css/all.min.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 {% endblock %}
 
 {% block content %}
-<!-- TOP -->
 <div class="module_name">
-    <h1>D A S H B O A R D</h1>
-    <!-- <h1>DASHBOARD</h1> -->
-</div>
-<div class="top-bar">
-    <div class="dropdown-group">
+    <h1>Dashboard</h1>
+     
+    <div class="filter-group">
         <div class="dropdown-container">
             <label for="monthDropdown">Selected Month:</label>
             <select id="monthDropdown" onchange="updateMonthLabel()">
@@ -49,82 +45,82 @@
                 <option value="Senior">Senior</option>
                 <option value="Senior Plus">Senior Plus</option>
             </select>
-        </div>
-        
-    </div>
+          </div>
+       </div>
+   </div>
 </div>
+<hr class="divider">
 
-</div><!-- CARDS -->
 <div class="cards-container">
     <div class="card yellow">
-        <!-- Card Reference: Sales Overview -->
-        <h3>Sales</h3>
+        <h3><i class="fa-solid fa-user card-icon"></i> Sales</h3>
         <h2 class="numbercount" id="salesCurrentTotal">100,000</h2> 
         <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p> 
         <p class="subtext">Target: <span id="targetTotalSubtext">1,000,000</span></p> 
     </div>
 
     <div class="card violet">
-        <!-- Card Reference: Member Count -->
-        <h3>Total Member Count</h3>
+        <h3><i class="fa-solid fa-users card-icon"></i> Total Member Count</h3>
         <h2 class="numbercount">8,000</h2>
     </div>
     
     <div class="card blue">
-        <!-- Card Reference: Monthly Sign-ups -->
-        <h3>Expiring soon</h3>
+        <h3><i class="fa-solid fa-hourglass-half card-icon"></i> Expiring soon</h3>
         <h2 class="numbercount">100</h2>
     </div>
 
     <div class="card green" onclick="window.location.href='/claims?status=pending'">
-        <!-- Card Reference: Claims Awaiting Processing -->
-        <h3>Pending Claims</h3>
+        <h3><i class="fa-solid fa-file-circle-exclamation card-icon"></i> Pending Claims</h3>
         <h2 id="pending_claims_count" class="numbercount">0</h2>
     </div>
 </div>
 
-<!-- TABLE -->
-<div class="chart-container">
-    <div class="chart-card">
-        <div id="chart_div" style="width: 100%; height: 400px;"></div>
+
+<hr class="divider">
+
+<div class="chart-container vertical">
+    <div class="chart-with-notif">
+        <div class="chart-card full">
+            <div id="chart_div" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <div class="notification-card">
+            <h4>Notifications</h4>
+            <p>No new notifications yet.</p>
+        </div>
     </div>
-    <div class="side-card">
+</div>
+
+<hr class="divider">
+    
+    <div class="side-card full">
         <h4>UNIT SOLD</h4>
-        <table>
+        <table id="unitTable" cellspacing="0" cellpadding="5">
             <tr>
-                <td><b>ID TYPE</b></td><td><b>UNIT SOLD</b></td><td><b>TARGET</b></td>
+                <th>ID TYPE</th>
+                <th>PRICE</th>
+                <th>UNIT SOLD</th>
+                <th>TARGET</th>
+                <th>ACTUAL (₱)</th>
             </tr>
-            <tr>
-                <td>Classic</td><td>1000</td><td>30,906</td>
-            </tr>
-            <tr>
-                <td>Premier Bronze</td><td>1000</td><td>32,266</td>
-            </tr>
-            <tr>
-                <td>Premier Silver</td><td>1000</td><td>12,300</td>
-            </tr>
-            <tr>
-                <td>Premier Gold</td><td>1000</td><td>15,000</td>
-            </tr>
-            <tr>
-                <td>Premier Platinum</td><td>1000</td><td>9,000</td>
-            </tr>
-            <tr>
-                <td>Enhanced Platinum</td><td>1000</td><td>5,000</td>
-            </tr>
-            <tr>
-                <td>Senior</td><td>1000</td><td>12000</td>
-            </tr>
-            <tr>
-                <td>Senior Plus</td><td>1000</td><td>14,000</td>
+            <tr><td>Classic</td><td>60</td><td>1000</td><td>30906</td><td></td></tr>
+            <tr><td>Premiere Bronze</td><td>150</td><td>1000</td><td>32266</td><td></td></tr>
+            <tr><td>Premiere Silver</td><td>300</td><td>1000</td><td>12300</td><td></td></tr>
+            <tr><td>Premiere Gold</td><td>500</td><td>1000</td><td>15000</td><td></td></tr>
+            <tr><td>Premiere Platinum</td><td>1000</td><td>1000</td><td>9000</td><td></td></tr>
+            <tr><td>Senior</td><td>300</td><td>1000</td><td>12000</td><td></td></tr>
+            <tr><td>Senior Plus</td><td>350</td><td>1000</td><td>14000</td><td></td></tr>
+            <!-- Total row -->
+            <tr style="font-weight:bold; background-color:#f5f5f5;">
+                <td colspan="4" style="text-align:right;">TOTAL:</td>
+                <td id="totalCell"></td>
             </tr>
         </table>
     </div>
 </div>
 
-<!-- GRAPH -->
+<hr class="divider">
 <div id="chart_div"></div>
-
 {% endblock %}
 
 {% block extra_scripts %}
@@ -139,10 +135,6 @@
         })
         .catch(err => console.error(err));
     });
-
-
-
-
 
     google.charts.load('current', {packages: ['corechart', 'bar']});
     google.charts.setOnLoadCallback(drawStacked);
@@ -165,19 +157,37 @@
         ]);
 
         var options = {
-            title: 'SALES PER ID CATEGORY',
-            isStacked: false,
-            chartArea: { width: '80%' }, 
-            width: 1000, 
-            height: 400,
-            backgroundColor: '#f4f4f4',
-            vAxis: {
-                viewWindow: {
-                    min: 0,
-                    max: 10000000
-                }
-            }
-        };
+    title: 'SALES PER ID CATEGORY',
+    isStacked: false,
+    chartArea: { width: '80%' }, 
+    width: 1000, 
+    height: 400,
+    backgroundColor: '#fff',
+    animation: {
+        startup: true,    
+        duration: 1200,   
+        easing: 'easeOutCubic'
+    },
+    bar: {
+        groupWidth: '60%',
+    },
+    colors: ['#e74c3c', '#3498db'],  // red & blue tones
+    vAxis: {
+        viewWindow: {
+            min: 0,
+            max: 10000000
+        }
+    },
+    series: {
+        0: { 
+            dataOpacity: 0.9 
+        },
+        1: { 
+            dataOpacity: 0.7 
+        }
+    }
+};
+
 
         var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
         chart.draw(data, options);
@@ -205,5 +215,24 @@
     }
 
         window.onload = setDefaultMonth;
+
+     // Compute Actual = Units Sold × Price
+    let total = 0;
+    const rows = document.querySelectorAll("#unitTable tr");
+    rows.forEach((row, index) => {
+        if (index === 0 || index === rows.length - 1) return; // skip header & total
+        const cells = row.querySelectorAll("td");
+        const price = parseFloat(cells[1].innerText);
+        const units = parseFloat(cells[2].innerText);
+        const actualCell = cells[4];
+        if (!isNaN(price) && !isNaN(units)) {
+            const actual = price * units;
+            actualCell.innerText = actual.toLocaleString();
+            total += actual;
+        }
+    });
+
+    // Display Total
+    document.getElementById("totalCell").innerText = total.toLocaleString();
     </script>
 {% endblock %}

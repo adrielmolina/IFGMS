@@ -1,134 +1,157 @@
 <!DOCTYPE html>
-    <html lang="en0">
-        <head>
-            <meta charset="UTF-8">
-<!--            <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
-            <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=no">
-            <title>IFGMS - Login</title>
-            <link rel="stylesheet" href="{{ url_for('static', filename='styles/login_style.css') }}">
-            <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        </head>
+<html lang="en0">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=no">
+    <title>IFGMS - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/login_style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
 
-<body style="background: linear-gradient(135deg, #fbefd5, #f5e0ea); overflow: hidden;">
+<body style="overflow: hidden;">
 
-  <!-- Intro Screen -->
-  <div class="intro-screen" id="introScreen">
+<!-- Intro Screen -->
+<div class="intro-screen" id="introScreen">
     <img src="/static/assets/IFGMS-login_logo.png" alt="Logo" class="intro-logo" />
-  </div>
+</div>
 
-  <!-- Loading Overlay -->
-  <div id="loadingOverlay">
+<!-- Loading Overlay -->
+<div id="loadingOverlay">
     <img src="/static/assets/favicon.ico" alt="Loading..." class="logo-loader" />
-  </div>
+</div>
 
-  <div class="wave-lines">
-    <div class="wave-line"></div>
-    <div class="wave-line"></div>
-    <div class="wave-line"></div>
-    <div class="wave-line"></div>
-    <div class="wave-line"></div>
-    <div class="wave-line"></div>
-  </div>
+<!-- Login Form -->
+ <div class="login-wrapper">
+   <div class="glass-card" id="loginForm">
+      <img src="/static/assets/favicon.ico" alt="logo" class="login_logo" />
 
-    <img src="/static/assets/wavy-lines.png" alt="Logo" class="blob"/>
-      <!-- Login ID Card -->
-      <div class="box">
-        <div class="text">
-          <p>Fund Generations Department</p>
-          <p>MAAB Management System</p>
-        </div>
-      </div>
-    
-    <div class="form-container">
-  <!-- Decorative Images -->
-    <img src="/static/assets/red.png" class="right-corner-img" alt="Corner Decoration" />
-    <img src="/static/assets/red.png" class="left-corner-img" alt="Corner Decoration" />
-    <img src="/static/assets/cross.png" class="top-corner-img" alt="Corner Decoration" />
+      <h1>FGMS <span>Login</span></h1>
+      <p>Please login to continue.</p>
 
-    <!-- Login Form -->
-      <div class="glass-card" id="loginForm">
-        <img src="/static/assets/favicon.ico" alt="logo" class="login_logo" />
-        <h1>FGMS <span>Login</span></h1>
-        <p>Please login to continue.</p>
-        <form action="/login" method="POST" onsubmit="return handleLogin(event)">
-          <input type="text" id="username" name="username" placeholder="Username" required autocomplete="off" />
-          <input type="password" id="password" name="password" placeholder="Password" required autocomplete="off" />
-          <button type="submit">Login</button>
-          <div class="divider"><span></span><span>oOo</span><span></span></div>
-          <div class="forgot-password">
-            <a href="/forgot_password">Forgot Password?</a>
-            <h2>|</h2> 
-            <a href="/create_account">Request Account</a>
-  
-            
+   <form action="/login" method="POST" onsubmit="return handleLogin(event)">
+    <input type="text" id="username" name="username" placeholder="Username" required autocomplete="off" autofocus />
+    <div class="password-container">
+        <input type="password" id="password" name="password" placeholder="Password" required autocomplete="off" />
+        <span class="toggle-password" onclick="togglePassword()">
+            <i id="eyeIcon" class="fa-solid fa-eye"></i>
+        </span>
+    </div>
+
+    <!-- Forgot Password under password field, right aligned -->
+    <div class="forgot-password">
+        <a href="/forgot_password">Forgot Password?</a>
+    </div>
+
+    <button type="submit">Login</button>
+
+    <!-- Divider -->
+    <div class="divider"><span></span><span>  or  </span><span></span></div>
+
+    <!-- Request Account -->
+           <div class="request-account">
+                <a href="/create_account">Request Account</a>
+            </div>
+              </form>
+            </div> <!-- end of glass-card -->
+
+            <div id="maab_reg" class="maab_reg">
+                 <p>Want to be a member?</p>
+                 <a ref="templates/membership_register.html">
+                 <img src="static/assets/click.png" alt="Click icon" class="click-icon">
+                    Click here to register for MAAB Membership
+                </a>
           </div>
-        </form>
+     </div>
+</div>
 
-        <div id="maab_reg" class="maab_reg">
-          <a href="/membership_register">Click here to register for MAAB Membership!</a>
-        </div>
-        
-      </div>
-  </div>
-  <script>
-    window.addEventListener("DOMContentLoaded", () => {
-  const intro = document.getElementById("introScreen");
-  const formContainer = document.querySelector(".form-container");
+<script>
 
-  if (!sessionStorage.getItem("introShown")) {
-    setTimeout(() => {
-      intro.classList.add("fade-out");
-    }, 1200);
+    // Rotate Background Images
+    const backgrounds = [
+        "/static/assets/prc_bg1.png",
+        "/static/assets/prc_bg2.png",
+        "/static/assets/prc_bg3.png"
+    ];
 
-    setTimeout(() => {
-      intro.style.display = "none";
-      formContainer.classList.add("slide-in-right");
-      document.getElementById("username").focus();
-      sessionStorage.setItem("introShown", "true");
-    }, 2200);
-  } else {
-    intro.style.display = "none";
-    formContainer.classList.add("slide-in-right");
-    document.getElementById("username").focus();
-  }
+    let current = 0;
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        let flashData = JSON.parse(`{{ message | tojson | safe }}`);
-        // TODO retire this and use javascript dialog box
-        Swal.fire({
-          icon: '{{ category }}',
-          title: flashData.title,
-          text: flashData.text,
-          showConfirmButton: true,
-          confirmButtonText: "Continue",
-          allowOutsideClick: false,
-          confirmButtonColor: '#891b19',
-          background: '#1e0b4ad8',
-          color: '#ffffff'
-        }).then((result) => {
-          if (result.isConfirmed) {
-            if (flashData.redirect_url) {
-              window.location.href = flashData.redirect_url;
-            } else {
-              window.location.href = "/"; // fallback
-            }
-          }
-        });
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
-});
-  
-    function handleLogin(event) {
-      event.preventDefault();
-      document.getElementById("loadingOverlay").style.display = "flex";
-      setTimeout(() => {
-        event.target.submit();
-      }, 300);
+    function changeBackground() {
+        document.body.style.background = `url('${backgrounds[current]}') no-repeat center center / cover`;
+        current = (current + 1) % backgrounds.length;
     }
-  </script>  
+
+    changeBackground();
+    setInterval(changeBackground, 5000);
+
+    // Intro and Flash Messages
+    window.addEventListener("DOMContentLoaded", () => {
+        const intro = document.getElementById("introScreen");
+        const formContainer = document.querySelector(".form-container");
+
+        if (!sessionStorage.getItem("introShown")) {
+            setTimeout(() => { intro.classList.add("fade-out"); }, 1200);
+            setTimeout(() => {
+                intro.style.display = "none";
+                if (formContainer) formContainer.classList.add("slide-in-right");
+                sessionStorage.setItem("introShown", "true");
+            }, 2200);
+        } else {
+            intro.style.display = "none";
+            if (formContainer) formContainer.classList.add("slide-in-right");
+        }
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    let flashData = JSON.parse(`{{ message | tojson | safe }}`);
+                    Swal.fire({
+                        icon: '{{ category }}',
+                        title: flashData.title,
+                        text: flashData.text,
+                        showConfirmButton: true,
+                        confirmButtonText: "Continue",
+                        allowOutsideClick: false,
+                        confirmButtonColor: '#891b19',
+                        background: '#1e0b4ad8',
+                        color: '#ffffff'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            if (flashData.redirect_url) {
+                                window.location.href = flashData.redirect_url;
+                            } else {
+                                window.location.href = "/";
+                            }
+                        }
+                    });
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    });
+
+    function handleLogin(event) {
+        event.preventDefault();
+        document.getElementById("loadingOverlay").style.display = "flex";
+        setTimeout(() => { event.target.submit(); }, 300);
+    }
+
+    function togglePassword() {
+        const passwordInput = document.getElementById("password");
+        const eyeIcon = document.getElementById("eyeIcon");
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            eyeIcon.classList.remove("fa-eye");
+            eyeIcon.classList.add("fa-eye-slash");
+        } else {
+            passwordInput.type = "password";
+            eyeIcon.classList.remove("fa-eye-slash");
+            eyeIcon.classList.add("fa-eye");
+        }
+    }
+</script>
+
 </body>
 </html>
