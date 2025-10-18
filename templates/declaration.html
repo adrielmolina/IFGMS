@@ -3,23 +3,27 @@
 {% block title %}Declaration{% endblock %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
 {% endblock %}
 
 {% block content %}
-<div class="page-container">
-  <div class="declaration-header">
-    <div class="logo"></div>
-    <h1>Declaration</h1>
-  </div>
+<div class="module_name">
+  <h1>Declaration</h1>
 
-  <!-- Search Bar -->
-  <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search declarations...">
+    <div class="search_box">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" id="search_input" placeholder="Search declarations..." autocomplete="off">
+    <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
   </div>
+</div>
 
-  <!-- Filters -->
-  <div class="filters">
+<div class="filter_search_container">
+  <div class="filters_box">
     <div class="filter">
       <label for="filterCategory">Category:</label>
       <select id="filterCategory">
@@ -33,6 +37,7 @@
         <option>Senior Plus</option>
       </select>
     </div>
+
     <div class="filter">
       <label for="filterLocation">Location:</label>
       <select id="filterLocation">
@@ -41,111 +46,109 @@
         <option>De La Salle University Dasmarinas</option>
       </select>
     </div>
-    <div class="filter">
-      <label for="filterLate">Late Declare:</label>
-      <select id="filterLate">
-        <option value="all">All</option>
-        <option>Yes</option>
-        <option>No</option>
-      </select>
+
+  </div>
+
+    <div class="action-buttons">
+        <button type="button" class="btn transmit" disabled>Transmit (0)</button>
+        <button type="button" class="btn history" disabled>History (0)</button>
+        <button type="button" class="btn select-all">Select All</button>
+        <button type="button" class="btn archive">Archive</button>
     </div>
   </div>
 
-  <!-- Action Buttons (above table) -->
-  <div class="action-buttons">
-    <button type="button" class="btn transmit" disabled>Transmit (0)</button>
-    <button type="button" class="btn history" disabled>History (0)</button>
-    <button type="button" class="btn select-all">Select All</button>
-    <button type="button" class="btn archive">Archive</button>
-  </div>
 
-  <div class="ID_table">
-    <table id="dataTable">
-        <thead>
-            <tr>
-                <th><input type="checkbox" id="selectAll"></th>
-                <th>Transaction No.</th>
-                <th>Year</th>
-                <th>MAAB No.</th>
-                <th>Member ID</th>
-                <th>Effectivity Date</th>
-                <th>Expiry Date</th>
-                <th>Particular Location</th>
-                <th>Location Category</th>
-                <th>Municipality</th>
-                <th>District</th>
-                <th>OR Number</th>
-                <th>OR Date</th>
-                <th>Paid</th>
-                <th>Remarks</th>
-                <th>Origin</th>
-                <th>Count in Group</th>
-                <th>ID Received</th>
-                <th>Declared</th>
-                <th>Tags</th>
-                <th>Declaration Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><input type="checkbox" class="row-check"></td>
-                <td>1001</td>
-                <td>2025</td>
-                <td>MAAB001</td>
-                <td>M1234</td>
-                <td>2025-01-10</td>
-                <td>2026-01-10</td>
-                <td>Location A</td>
-                <td>Urban</td>
-                <td>City A</td>
-                <td>D1</td>
-                <td>123456</td>
-                <td>2025-01-15</td>
-                <td>Yes</td>
-                <td>Active Member</td>
-                <td>Branch 1</td>
-                <td>3</td>
-                <td>Yes</td>
-                <td>Yes</td>
-                <td>Renewal</td>
-                <td>2025-01-10</td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-check"></td>
-                <td>1002</td>
-                <td>2025</td>
-                <td>MAAB002</td>
-                <td>M1235</td>
-                <td>2025-02-05</td>
-                <td>2026-02-05</td>
-                <td>Location B</td>
-                <td>Rural</td>
-                <td>City B</td>
-                <td>D2</td>
-                <td>123457</td>
-                <td>2025-02-07</td>
-                <td>Yes</td>
-                <td>Pending Update</td>
-                <td>Branch 2</td>
-                <td>2</td>
-                <td>Yes</td>
-                <td>No</td>
-                <td>New Member</td>
-                <td>2025-02-05</td>
-              </tr>
-        </tbody>
+<!-- ========================== -->
+<!-- DECLARATION TABLE SECTION -->
+<!-- ========================== -->
+<div class="declaration_table">
+  <div class="table_wrapper">
+    <table id="dataTable" class="styled_table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAll"></th>
+          <th>Transaction No.</th>
+          <th>Year</th>
+          <th>MAAB No.</th>
+          <th>Member ID</th>
+          <th>Effectivity Date</th>
+          <th>Expiry Date</th>
+          <th>Particular Location</th>
+          <th>Location Category</th>
+          <th>Municipality</th>
+          <th>District</th>
+          <th>OR Number</th>
+          <th>OR Date</th>
+          <th>Paid</th>
+          <th>Remarks</th>
+          <th>Origin</th>
+          <th>Count in Group</th>
+          <th>ID Received</th>
+          <th>Declared</th>
+          <th>Tags</th>
+          <th>Declaration Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="checkbox" class="row-check"></td>
+          <td>1001</td>
+          <td>2025</td>
+          <td>MAAB001</td>
+          <td>M1234</td>
+          <td>2025-01-10</td>
+          <td>2026-01-10</td>
+          <td>Location A</td>
+          <td>Urban</td>
+          <td>City A</td>
+          <td>D1</td>
+          <td>123456</td>
+          <td>2025-01-15</td>
+          <td>Yes</td>
+          <td>Active Member</td>
+          <td>Branch 1</td>
+          <td>3</td>
+          <td>Yes</td>
+          <td>Yes</td>
+          <td>Renewal</td>
+          <td>2025-01-10</td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" class="row-check"></td>
+          <td>1002</td>
+          <td>2025</td>
+          <td>MAAB002</td>
+          <td>M1235</td>
+          <td>2025-02-05</td>
+          <td>2026-02-05</td>
+          <td>Location B</td>
+          <td>Rural</td>
+          <td>City B</td>
+          <td>D2</td>
+          <td>123457</td>
+          <td>2025-02-07</td>
+          <td>Yes</td>
+          <td>Pending Update</td>
+          <td>Branch 2</td>
+          <td>2</td>
+          <td>Yes</td>
+          <td>No</td>
+          <td>New Member</td>
+          <td>2025-02-05</td>
+        </tr>
+      </tbody>
     </table>
   </div>
+</div>
 
-  <!-- Print Button -->
-  <div class="form-buttons">
-    <button type="button" class="btn print">Print Report</button>
-  </div>
+<!-- Print Button -->
+<div class="form-buttons">
+  <button type="button" class="btn print">Print Report</button>
+</div>
 
-  <!-- Summary -->
-  <div class="summary">
-    <p id="summaryText">Showing 2 of 2 declarations • 0 selected</p>
-  </div>
+<!-- Summary -->
+<div class="summary">
+  <p id="summaryText">Showing 2 of 2 declarations • 0 selected</p>
 </div>
 {% endblock %}
 
@@ -196,14 +199,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- 🔎 Search functionality -->
 <script>
-const searchInput = document.getElementById('searchInput');
+const searchInput = document.getElementById('search_input');
 const table = document.getElementById('dataTable');
 const rows = table.getElementsByTagName('tr');
 
 searchInput.addEventListener('keyup', function () {
   const filter = searchInput.value.toLowerCase();
 
-  for (let i = 1; i < rows.length; i++) { // Start from 1 to skip the header row
+  for (let i = 1; i < rows.length; i++) {
     let cells = rows[i].getElementsByTagName('td');
     let rowText = '';
 
@@ -211,11 +214,7 @@ searchInput.addEventListener('keyup', function () {
       rowText += cells[j].textContent.toLowerCase();
     }
 
-    if (rowText.indexOf(filter) > -1) {
-      rows[i].style.display = '';
-    } else {
-      rows[i].style.display = 'none';
-    }
+    rows[i].style.display = rowText.indexOf(filter) > -1 ? '' : 'none';
   }
 });
 </script>

@@ -22,8 +22,7 @@
     <nav class="navbar">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <img src="\static\assets\prc_logo.png" alt="logo" />
-                <h2>FGMS</h2>
+                <img src="\static\assets\CAVITE.png" alt="chapter_logo" />
             </div>
 
             <br>
@@ -123,8 +122,25 @@
             if (localStorage.getItem("appFontSize")) {
                 document.documentElement.style.setProperty("--app-font-size", localStorage.getItem("appFontSize"));
             }
-        });        
-    </script>
+        });
+        
+           document.querySelectorAll('.sidebar-links li a').forEach(link => {
+             link.addEventListener('click', function() {
+              // remove active class from all links
+          document.querySelectorAll('.sidebar-links li a').forEach(l => l.classList.remove('active'));
+             // add active class to the clicked one
+          this.classList.add('active');
+        });
+});
+
+     const current = location.pathname;
+        document.querySelectorAll('.sidebar-links li a').forEach(link => {
+          if (link.href.includes(current)) {
+             link.classList.add('active');
+             }
+});
+
+</script>
 
     {% block extra_scripts %} {% endblock %}
 

@@ -119,6 +119,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    backdrop-filter: blur(100px);
 }
 
 .glass-card h1 {
