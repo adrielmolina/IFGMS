@@ -18,14 +18,27 @@
 {% block content %}
 <div class="module_name">
     <h1>Inventory</h1>
+      <div class="search_box">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" id="search_input" placeholder="Search declarations..." autocomplete="off">
+    <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
+  </div>
 </div>
+
+    <div class="category-bar">
+        <button class="cat-btn" data-cat="Classic">Classic</button>
+        <button class="cat-btn" data-cat="Bronze">Bronze</button>
+        <button class="cat-btn" data-cat="Silver">Silver</button>
+        <button class="cat-btn" data-cat="Gold">Gold</button>
+        <button class="cat-btn" data-cat="Platinum">Platinum</button>
+        <button class="cat-btn" data-cat="Enhanced Platinum">Enhanced Platinum</button>
+        <button class="cat-btn" data-cat="Senior">Senior</button>
+        <button class="cat-btn" data-cat="Senior+">Senior+</button>
+        <button id="openFormBtn2">ID Desc</button>
+    </div>
 
   <div class="top-bar">
     <button id="openFormBtn1">Add ID Stock</button>
-    <div class="search-container">
-      <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="Search...">
-    </div>
   </div>
 
 <div id="popupForm1" class="popup-form">
@@ -79,17 +92,6 @@
     {% endfor %}
     </div>
 
-    <div class="category-bar">
-        <button class="cat-btn" data-cat="Classic">Classic</button>
-        <button class="cat-btn" data-cat="Bronze">Bronze</button>
-        <button class="cat-btn" data-cat="Silver">Silver</button>
-        <button class="cat-btn" data-cat="Gold">Gold</button>
-        <button class="cat-btn" data-cat="Platinum">Platinum</button>
-        <button class="cat-btn" data-cat="Enhanced Platinum">Enhanced Platinum</button>
-        <button class="cat-btn" data-cat="Senior">Senior</button>
-        <button class="cat-btn" data-cat="Senior+">Senior+</button>
-        <button id="openFormBtn2">ID Desc</button>
-    </div>
     
 <div id="popupForm2" class="popup-form">
     <div class="form-container2">

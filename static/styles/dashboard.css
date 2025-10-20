@@ -23,7 +23,8 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     background-color: #fff;
     margin-bottom: 10px;
-    color: #B92F2F
+    color: #B92F2F;
+    font-weight: 600 !important;
 }
 
 .filter-group {
@@ -125,7 +126,6 @@ body {
         0 8px 20px rgba(78, 37, 37, 0.4),           
         0 8px 15px rgba(199, 93, 93, 0.05) inset, 
         0 -4px 6px rgba(255, 255, 255, 0.1) inset;  
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
     color: #fff;
     transition: transform 0.35s ease, box-shadow 0.35s ease, filter 0.3s ease, color 0.3s ease;
     overflow: hidden;
@@ -179,10 +179,10 @@ h2.numbercount {
 }
 
 .card-icon {
-  color: #fff; 
-  margin-right: 8px;
-  font-size: 1.5em !important;
-  text-shadow: none;
+    color: #fff; 
+    margin-right: 8px;
+    font-size: 1.5em !important;
+    text-shadow: none;
 }
 
 .fa,
@@ -193,8 +193,8 @@ h2.numbercount {
 .fa-thin,
 .fa-duotone,
 .fa-brands {
-  font-family: "Font Awesome 6 Free" !important;
-  font-weight: 900; 
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900; 
 }
 
 

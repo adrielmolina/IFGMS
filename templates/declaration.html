@@ -15,7 +15,7 @@
 <div class="module_name">
   <h1>Declaration</h1>
 
-    <div class="search_box">
+  <div class="search_box">
     <i class="fa-solid fa-magnifying-glass"></i>
     <input type="text" id="search_input" placeholder="Search declarations..." autocomplete="off">
     <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
@@ -46,107 +46,82 @@
         <option>De La Salle University Dasmarinas</option>
       </select>
     </div>
-
   </div>
 
-    <div class="action-buttons">
-        <button type="button" class="btn transmit" disabled>Transmit (0)</button>
-        <button type="button" class="btn history" disabled>History (0)</button>
-        <button type="button" class="btn select-all">Select All</button>
-        <button type="button" class="btn archive">Archive</button>
-    </div>
+  <div class="action-buttons" id="defaultButtons">
+    <button type="button" class="btn transmit" disabled>Transmit (0)</button>
+    <button type="button" class="btn history" onclick="showHistory()">History</button>
+    <button type="button" class="btn select-all">Select All</button>
   </div>
 
+  <!-- Hidden alternate buttons for History view -->
+  <div class="action-buttons hidden" id="historyButtons">
+    <button type="button" class="btn export"><i class="fa-solid fa-file-export"></i> Export</button>
+  </div>
+</div>
 
-<!-- ========================== -->
-<!-- DECLARATION TABLE SECTION -->
-<!-- ========================== -->
 <div class="declaration_table">
+  <h4 id="tableTitle">
+    <i class="fa-solid fa-file-lines"></i> Dispatch Contents
+  </h4>
+
+  <!-- Back button shown only in History view -->
+  <button class="btn back hidden" id="backButton" onclick="backToMain()">
+    <i class="fa-solid fa-arrow-left"></i> Back
+  </button>
+
   <div class="table_wrapper">
     <table id="dataTable" class="styled_table">
       <thead>
         <tr>
           <th><input type="checkbox" id="selectAll"></th>
-          <th>Transaction No.</th>
-          <th>Year</th>
+          <th>Dispatch Content ID</th>
+          <th>Entry ID</th>
+          <th>MAAB Category</th>
           <th>MAAB No.</th>
-          <th>Member ID</th>
+          <th>Member Name</th>
+          <th>Member Birth Date</th>
           <th>Effectivity Date</th>
-          <th>Expiry Date</th>
-          <th>Particular Location</th>
-          <th>Location Category</th>
-          <th>Municipality</th>
-          <th>District</th>
-          <th>OR Number</th>
-          <th>OR Date</th>
-          <th>Paid</th>
-          <th>Remarks</th>
-          <th>Origin</th>
-          <th>Count in Group</th>
-          <th>ID Received</th>
-          <th>Declared</th>
-          <th>Tags</th>
-          <th>Declaration Date</th>
+          <th>Location Particular</th>
+          <th>Late Declare</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td><input type="checkbox" class="row-check"></td>
-          <td>1001</td>
-          <td>2025</td>
+          <td>DC001</td>
+          <td>EN001</td>
+          <td>Regular</td>
           <td>MAAB001</td>
-          <td>M1234</td>
+          <td>Juan Dela Cruz</td>
+          <td>1998-05-10</td>
           <td>2025-01-10</td>
-          <td>2026-01-10</td>
-          <td>Location A</td>
-          <td>Urban</td>
-          <td>City A</td>
-          <td>D1</td>
-          <td>123456</td>
-          <td>2025-01-15</td>
-          <td>Yes</td>
-          <td>Active Member</td>
-          <td>Branch 1</td>
-          <td>3</td>
-          <td>Yes</td>
-          <td>Yes</td>
-          <td>Renewal</td>
-          <td>2025-01-10</td>
+          <td>Cavite</td>
+          <td>No</td>
         </tr>
         <tr>
           <td><input type="checkbox" class="row-check"></td>
-          <td>1002</td>
-          <td>2025</td>
+          <td>DC002</td>
+          <td>EN002</td>
+          <td>Associate</td>
           <td>MAAB002</td>
-          <td>M1235</td>
+          <td>Maria Santos</td>
+          <td>1996-08-22</td>
           <td>2025-02-05</td>
-          <td>2026-02-05</td>
-          <td>Location B</td>
-          <td>Rural</td>
-          <td>City B</td>
-          <td>D2</td>
-          <td>123457</td>
-          <td>2025-02-07</td>
+          <td>Cavite</td>
           <td>Yes</td>
-          <td>Pending Update</td>
-          <td>Branch 2</td>
-          <td>2</td>
-          <td>Yes</td>
-          <td>No</td>
-          <td>New Member</td>
-          <td>2025-02-05</td>
         </tr>
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- Print Button -->
 <div class="form-buttons">
-  <button type="button" class="btn print">Print Report</button>
+  <button type="button" class="btn print">
+    <i class="fa-solid fa-print"></i> Print Report
+  </button>
 </div>
 
-<!-- Summary -->
 <div class="summary">
   <p id="summaryText">Showing 2 of 2 declarations • 0 selected</p>
 </div>
@@ -168,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const totalCount = tableRows.length;
 
     transmitBtn.disabled = checkedCount === 0;
-    historyBtn.disabled = checkedCount === 0;
+    historyBtn.disabled = false;
 
     transmitBtn.textContent = `Transmit (${checkedCount})`;
     historyBtn.textContent = `History (${checkedCount})`;
@@ -217,5 +192,22 @@ searchInput.addEventListener('keyup', function () {
     rows[i].style.display = rowText.indexOf(filter) > -1 ? '' : 'none';
   }
 });
+</script>
+
+<!-- 👇 Added for History and Back button toggle -->
+<script>
+function showHistory() {
+  document.getElementById("defaultButtons").classList.add("hidden");
+  document.getElementById("historyButtons").classList.remove("hidden");
+  document.getElementById("backButton").classList.remove("hidden");
+  document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Dispatch History';
+}
+
+function backToMain() {
+  document.getElementById("defaultButtons").classList.remove("hidden");
+  document.getElementById("historyButtons").classList.add("hidden");
+  document.getElementById("backButton").classList.add("hidden");
+  document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-file-lines"></i> Dispatch Contents';
+}
 </script>
 {% endblock %}
