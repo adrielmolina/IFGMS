@@ -24,7 +24,7 @@ body {
   margin-left: 5vw;
 }
 
-/* TODO DONE highlight currently selected module */
+/* TODO highlight currently selected module */
 .sidebar {
     position: fixed;
     top: 0;
@@ -145,6 +145,12 @@ body {
     padding: 15px 10px;
     text-decoration: none;
     transition: 0.2s ease;
+}
+
+.sidebar-links li a.active {
+    color: #fff;
+    background:  rgba(225, 96, 96, 0.9);
+    border-radius: 10px;
 }
 
 .sidebar-links li a:hover {
