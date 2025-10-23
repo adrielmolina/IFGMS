@@ -2,7 +2,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 20;
     padding: 1rem;
-    background: linear-gradient(135deg, #fbefd5, #f5e0ea); /* BACKGROUND */
+    background: linear-gradient(135deg, #0e0f31, #392e9c); /* BACKGROUND */
     display: flex;
     flex-direction: column;
     min-height: 100vh; 
@@ -35,7 +35,7 @@ h2 {
 
 /*------------------------------------- LEFT FORM -----------------------------*/
 .left-container {
-  width: 58vh;
+  width: 56.75368898978434vh;
   height: 58vh;
   background: rgba(255, 255, 255, 0.7); /* translucent white */
   border-radius: 12px;
@@ -138,7 +138,7 @@ button:hover {
 /*------------------------RIGHT FORM------------------------------*/
 
 .profile-container {
-  width: 130vh;
+  width: 120.88422247446084vh;
   height: 58vh;
   background: rgba(255, 255, 255, 0.7); /* translucent white */
   border-radius: 12px;
@@ -149,7 +149,7 @@ button:hover {
   border: 1px solid rgba(255, 255, 255, 0.18); /* subtle border */
   margin: 40px auto;
   padding: 30px;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .profile-container h2 {
@@ -209,44 +209,19 @@ button:hover {
     flex: 1;
 }
 
- .form-buttons,
-        #editButton {
-            margin-top: 20px;
-        }
-
-        .form-buttons {
-            display: flex;
-            gap: 15px;
-            display: none;
-        }
-
-        .form-buttons button,
-        #editButton {
-            padding: 10px 20px;
-            background-color: #e03e3e;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .form-buttons button:hover,
-        #editButton:hover {
-            opacity: 0.85;
-        }
-
-        .profile-form input.editable {
-  background: #fff; /* white background */
-  border: 2px solid #e03e3e; /* brighter red */
-  box-shadow: 0 0 8px rgba(224, 62, 62, 0.7); /* subtle glow */
-  color: #000; /* darker text */
-  pointer-events: auto; /* allow clicks */
-  user-select: auto; /* allow text select */
-  cursor: text; /* text cursor */
-  transition: all 0.3s ease;
+.edit-icon {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #e03e3e;
+    transition: transform 0.2s;
 }
+
+.edit-icon:hover {
+    transform: scale(1.2);
+}
+
 
 
 

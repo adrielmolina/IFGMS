@@ -15,8 +15,7 @@ body {
     width: 100%;  
 }
 
-
-
+/* ----------------- Table Styles ----------------- */
 table, th, tr, td {
     border: 1px solid #ccc;
     border-collapse: collapse;
@@ -54,8 +53,7 @@ input[type="checkbox"] {
     accent-color: #369144;
 }
 
-
-/* Buttons */
+/* ----------------- Buttons ----------------- */
 button, .clearSearch {
     color: #212C62; /* Updated to inventory-style */
     background-color: white;
@@ -75,11 +73,7 @@ button:hover, .clearSearch:hover {
     color: white;
 }
 
-/* TODO remove when done styling the form */
-#overlay {
-    /* display: flex !important; */
-}
-
+/* ----------------- Overlay ----------------- */
 .overlay {
     display: none;
     position: absolute;
@@ -90,13 +84,11 @@ button:hover, .clearSearch:hover {
     border-radius: 8px;
     box-shadow: #3a3a3a 10px 10px 20px;
     z-index: 9999;
-
 }
 
 .overlay-content {
     background: #f3e8e8;
     width: 100%;
-    /* margin: 1% 1%; */
     padding: 30px;
     border-radius: 10px;
     position: relative;
@@ -116,19 +108,18 @@ button:hover, .clearSearch:hover {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    
     width: 100%;
-    height: 100%;           /* Set a fixed height, not max-height */
+    height: 100%;
     overflow: auto;
 }
 
+/* ----------------- Fieldset ----------------- */
 fieldset {
     border: 2px solid #212C62;
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
     width: 100%;
-    
 }
 
 fieldset legend {
@@ -138,34 +129,108 @@ fieldset legend {
     font-size: 22px;
 }
 
-
+/* ----------------- Grid Parent Layout ----------------- */
 .parent {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(4, 1fr);
     gap: 10px;
 }
-    
 
 .parent > div {
     display: flex;
     flex-direction: column;
 }
 
-.parent label {
-    margin-bottom: 5px;
-    font-weight: bold;
-    text-align: center;
+/* ----------------- Material Design Input Fields ----------------- */
+.input-field {
+    position: relative;
+    margin: 16px 0;
+    width: 100%;
 }
 
-.parent input, .parent select {
-    padding: 10px;
-    border: 2px solid #212C62;
-    border-radius: 4px;
-    font-size: 20;
-    background-color: rgba(255, 255, 255, 0.5);
+.input-field input,
+.input-field select,
+.input-field textarea {
+    width: 100%;
+    padding: 16px 12px 6px;        
+    font-size: 14px;
+    border: none;
+    border-bottom: 2px solid #9ca3af; 
+    background: #f3f4f6;             
+    border-radius: 4px 4px 0 0;       
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
 }
 
+/* Focus effect */
+.input-field input:focus,
+.input-field select:focus,
+.input-field textarea:focus {
+    border-bottom-color: #212C62;  /* use account theme color */
+    background: #fff;
+}
+
+/* Label inside the field */
+.input-field label {
+    position: absolute;
+    top: 16px;
+    left: 12px;
+    font-size: 14px;
+    color: #6b7280;
+    pointer-events: none;
+    transition: 0.2s ease all;
+}
+
+/* Floating effect */
+.input-field.filled label,
+.input-field input:focus + label,
+.input-field textarea:focus + label,
+.input-field select:focus + label {
+    transform: translateY(-35px);
+    font-size: 12px;
+    color: #212C62;
+}
+
+/* Checkbox fix */
+.input-field input[type="checkbox"] {
+    width: auto;              
+    margin-right: 6px;        
+}
+
+.input-field input[type="checkbox"] + label {
+    position: relative;
+    top: 0;
+    left: 0;
+    transform: none !important;
+    font-size: 14px;
+    color: #000;
+    background: none;
+    padding: 0;
+    transition: none;
+}
+
+/* Date input */
+.input-field input[type="date"] {
+     padding: 16px 12px 4px;  
+}
+
+.input-field input[type="date"] + label {
+    top: -8px;                   
+    font-size: 12px;
+    color: #212C62;
+    transform: none !important;  
+}
+
+/* Optional helper text */
+.helper-text {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+    padding-left: 12px;
+}
+
+/* ----------------- Custom Grid Adjustments ----------------- */
 .div16 {
     grid-column: span 2 / span 2;
 }
@@ -190,8 +255,6 @@ fieldset legend {
     grid-column: span 2 / span 2;
     grid-column-start: 2;
     grid-row-start: 4;
-
     margin-top: 20px;
     margin-bottom: 20px;
 }
-        

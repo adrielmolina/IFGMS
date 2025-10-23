@@ -2,22 +2,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 
 * {
-    /* this will affect all pages */
-
+ 
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    /* font-family: "Poppins", sans-serif; */
-    font-family: "Montserrat", sans-serif;
+    font-family: "Poppins";
     font-optical-sizing: auto;
     font-weight: 500;
     font-style: normal;
 
 
-    /* disable highlighting */
     user-select: none;
-    -webkit-user-select: none; /* Safari */
-    -moz-user-select: none;    /* Firefox */
+    -webkit-user-select: none; 
+    -moz-user-select: none;    
     -ms-user-select: none;
     
 }
@@ -27,14 +24,14 @@ body {
   margin-left: 6vw;
   background: #F0F4FF;
 }
+
 /* TODO highlight currently selected module */
-/* Sidebar base with glassmorphism effect */
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
     height: 100%;
-    width: 85px;
+    width: 100px;
     display: flex;
     overflow-x: hidden;
     flex-direction: column;
@@ -151,6 +148,12 @@ body {
     transition: 0.2s ease;
 }
 
+.sidebar-links li a.active {
+    color: #fff;
+    background:  rgba(225, 96, 96, 0.9);
+    border-radius: 10px;
+}
+
 .sidebar-links li a:hover {
     color: #fff;
     background:  rgba(225, 96, 96, 0.9);
@@ -214,7 +217,7 @@ body {
 }
 
 /*------------ 3D ICONS --------------*/
-.material-symbols-outlined {
+.icons {
     font-size: 25px;
     color: #ffffff;
     padding: 10px;
@@ -232,7 +235,7 @@ body {
 
 
 /* 3D effect on hover */
-.material-symbols-outlined:hover {
+.icons:hover {
     background: linear-gradient(145deg, #ff3b30, #d02a1a);
     box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.4), -6px -6px 15px rgba(255, 255, 255, 0.3);
     transform: translateZ(5px) perspective(500px) rotateX(0deg) rotateY(0deg);
@@ -251,10 +254,51 @@ body {
     transition: 0.2s ease;
 }
 
-.sidebar-links li a:hover .material-symbols-outlined {
+.sidebar-links li a:hover .icons {
     background: linear-gradient(145deg, #ff3b30, #d02a1a);
     box-shadow:
         0 8px 20px rgba(0, 0, 0, 0.5),
         0 0 10px rgba(255, 255, 255, 0.2);
     transform: scale(1.2) translateY(-5px);
 }
+
+.sidebar-links li a.active .material-symbols-outlined {
+    background: linear-gradient(145deg, #ff3b30, #d02a1a);
+    box-shadow: none; 
+    transform: scale(1.1); 
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-links li a.active {
+    color: #fff;
+}
+
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 10px 0;
+    transition: all 0.4s ease;
+    overflow: visible;
+}
+
+/* 🧠 The trick: scale up the image beyond its natural box */
+.sidebar-header img {
+    width: 90%;               /* "zooms in" even if sidebar is 85px */
+    height: auto;
+    object-fit: contain;
+    transform: translateY(5px); /* center adjust */
+    transition: all 0.4s ease;
+    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.4));
+}
+
+/* ✨ On hover — shrink a bit, remove shadow */
+.sidebar:hover .sidebar-header img {
+    width: 90%;
+    filter: none;
+}
+

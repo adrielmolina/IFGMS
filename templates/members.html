@@ -6,6 +6,7 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/members.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
@@ -20,395 +21,459 @@
        <!-- TODO add select options for accepted tags -->
         <!-- TODO add origin select options -->
          <!-- TODO add js function to set location particular to all caps while typing -->
+            <!-- TODO center the title -->
+             <!-- TODO add flat list of members -->
+                <!-- TODO scroll to top of the overlay everytime a record is opened -->
+                 <!-- TODO separate the delete record button from save button -->
+        <div class="module_name">
+            <h1>Members</h1>
 
-            <!-- TODO center the title ---FIXEDDD-->
-          
-            <!-- TODO add flat list of members -->
-    <div class="module_name">
-        <h1>M E M B E R&nbsp;&nbsp;&nbsp;&nbsp;R E C O R D S</h1>
+        <div class="search_box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
+            <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
+        </div>
     </div>
 
-    <div class="controls_box">
-        <button>Add Record</button>
-        <button>Add to Declaration</button>
-    </div>
-    
+        <div class="filter_search_container">
+            <div class="filters_box">
+                <label for="filter_year">Filter by:</label>
+                <select id="filter_year">
+                    <option value="">Year</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                </select>
+
+                <select id="filter_category">
+                    <option value="">Category</option>
+                    <option value="Public">Public</option>
+                    <option value="Private">Private</option>
+                </select>
+            </div>
+
+            <div class="controls_box">
+                <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
+                <button class="btn-declare"><i class="fa-solid fa-list"></i> Add to Declaration</button>
+                <button class="btn-export"><i class="fa-solid fa-file-export"></i> Export to Excel</button>
+            </div>
+        </div>
+
     <!-- TODO declaration/transmission: automate this with js- check the location of the person signed in  -->
 
-    <br>
-    <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
-    <button id="search_clear">Clear</button>
-
-    <div id="members_table" class="ht-theme-main"></div>
+    <div class="table-container">
+        <div class="table-title"></div>
+        <div id="members_table" class="ht-theme-main"></div>
+    </div>
 
     <div id="overlay" class="overlay">
         <div id="overlay-content" class="overlay-content">
             <span id="close-overlay" class="close-overlay">&times;</span>
             <div id="overlay-body" class="overlay-body">
                 <!-- Dynamic content goes here -->
+    <div>
 
-                <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
-                    <h3 style="margin: 0; font-weight: bolder;">R E C O R D&nbsp;&nbsp;&nbsp;&nbsp;D E T A I L S</h3>                
-                </span>
+        <!-- RECORD DETAILS TOGGLE -->
+        <div class="record-radio-controls">
+                <input type="radio" id="showForm" name="record_input_mode" value="form" checked>
+            <label for="showForm">
+                <i class="fa-solid fa-pen-to-square"></i> Show Record Form
+            </label>
 
-                <div class="controls_box">
-                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                        <label class="switch">
-                            <input type="checkbox" id="record_details_check" checked>
-                            <span class="slider"></span>
-                        </label>
+                <input type="radio" id="hideForm" name="record_input_mode" value="table">
+            <label for="hideForm">
+                <i class="fa-solid fa-chevron-down"></i> Hide Record Form
+            </label>
+        </div>
+
+        <div id="record_details" class="record_details">
+            <form action="/api/members/entries" method="POST" id="record_entries">                 
+        <table class="record_details_table">
+            <tr>
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly placeholder=" ">
+                        <label for="record_id">Record ID</label>
                     </div>
+                </td>
 
-                    <button id="save_record_details" class="save_record_details">Save</button>
-                    <button id="delete_record" class="delete_record">Delete Record</button>
-                    <!-- TODO add delete record function -->
-                </div>
+                <td>
+                    <!-- TODO change to year only or remove the field completely -->
+                    <div class="input-container">
+                        <input type="text" id="year" name="year" required autocomplete="off" readonly placeholder=" ">
+                        <label for="year">Year</label>
+                    </div>
+                </td>
 
+                <td>
+                    <div class="input-container checkbox-container">
+                        <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
+                        <label for="id_rcv">ID Received</label>
+                    </div>
+                </td>
 
-                <div id="record_details" class="record_details">
-                    <form action="/api/members/entries" method="POST" id="record_entries">                 
-                        <table class="record_details_table">
-                            <tr>
-                                <td>
-                                    <label for="record_id">Record ID</label>
-                                    <br>
-                                    <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly>
-                                </td>
+                <td>
+                    <div class="input-container checkbox-container">
+                        <input type="checkbox" id="paid" name="paid" autocomplete="off">
+                        <label for="paid">Paid</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <!-- TODO change to year only or remove the field completely -->
-                                    <label for="year">Year</label>
-                                    <br>
-                                    <input type="text" id="year" name="year" required autocomplete="off" readonly>
-                                </td>
+                <td>
+                    <div class="input-container checkbox-container">
+                        <input type="checkbox" id="declared" name="declared" autocomplete="off">
+                        <label for="declared">Declared</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="id_rcv">ID Received</label>
-                                    <br>
-                                    <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <input type="date" id="dec_date" name="dec_date" required autocomplete="off">
+                        <label for="dec_date">Declaration Date</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="paid">Paid</label>
-                                    <br>
-                                    <input type="checkbox" id="paid" name="paid" autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <input type="date" id="eff_date" name="eff_date" required autocomplete="off">
+                        <label for="eff_date">Effectivity Date</label>
+                    </div>
+                </td>
+            </tr>
 
-                                <td>
-                                    <label for="declared">Declared</label>
-                                    <br>
-                                    <input type="checkbox" id="declared" name="declared" autocomplete="off">
-                                </td>
+            <tr>
+                <td>
+                    <!-- TODO add js function to set location particular to all caps while typing -->
+                    <div class="input-container">
+                        <input type="text" id="loc_par" name="loc_par" required autocomplete="off" placeholder=" ">
+                        <label for="loc_par">Location Particular</label>
+                    </div>
+                </td>
+                
+                <td colspan="2">
+                    <!-- TODO add select options for accepted tags -->
+                    <div class="input-container">
+                        <select name="loc_cat" id="loc_cat" required>
+                            <option value=""></option>
+                            <option value="Public Nursery">Public Nursery</option>
+                            <option value="Private Nursery">Private Nursery</option>
+                            <option value="Public Kinder">Public Kinder</option>
+                            <option value="Private Kinder">Private Kinder</option>
+                            <option value="Public Elementary School">Public Elementary School</option>
+                            <option value="Private Elementary School">Private Elementary School</option>
+                            <option value="Public High School">Public High School</option>
+                            <option value="Private High School">Private High School</option>
+                            <option value="Public Senior High School">Public Senior High School</option>
+                            <option value="Private Senior High School">Private Senior High School</option>
+                            <option value="Public Integrated School">Public Integrated School</option>
+                            <option value="Private Integrated School">Private Integrated School</option>
+                            <option value="Public College">Public College</option>
+                            <option value="Private College">Private College</option>
+                            <option value="Government Company/Organization">Government Company/Organization</option>
+                            <option value="Private Company/Organization">Private Company/Organization</option>
+                            <option value="Church">Church</option>
+                            <option value="Red Cross 143">Red Cross 143</option>
+                            <option value="RCY">RCY</option>
+                            <option value="Brgy">Brgy</option>
+                            <option value="LGU">LGU</option>
+                            <option value="MBD">MBD</option>
+                            <option value="Events">Events</option>
+                            <option value="Training">Training</option>
+                            <option value="Company/Organization Training">Company/Organization Training</option>
+                            <option value="Individual">Individual</option>
+                            <option value="Walk-In">Walk-In</option>
+                        </select>
+                        <label for="loc_cat">Location Category</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="dec_date">Declaration Date</label>
-                                    <br>
-                                    <input type="date" id="dec_date" name="dec_date" required autocomplete="off">
-                                </td>
+                <td colspan="2">
+                    <div class="input-container">
+                        <select name="municipality" id="municipality" required>
+                            <option value=""></option>
+                            <option value="Cavite City">Cavite City</option>
+                            <option value="Kawit">Kawit</option>
+                            <option value="Noveleta">Noveleta</option>
+                            <option value="Rosario">Rosario</option>
+                            <option value="Bacoor">Bacoor</option>
+                            <option value="Imus">Imus</option>
+                            <option value="Dasmariñas">Dasmariñas</option>
+                            <option value="Carmona">Carmona</option>
+                            <option value="General Mariano Alvarez (GMA)">General Mariano Alvarez (GMA)</option>
+                            <option value="Silang">Silang</option>
+                            <option value="General Trias">General Trias</option>
+                            <option value="Amadeo">Amadeo</option>
+                            <option value="Indang">Indang</option>
+                            <option value="Tanza">Tanza</option>
+                            <option value="Trece Martires">Trece Martires</option>
+                            <option value="Alfonso">Alfonso</option>
+                            <option value="Gen. Emilio Aguinaldo (Bailen)">Gen. Emilio Aguinaldo (Bailen)</option>
+                            <option value="Magallanes">Magallanes</option>
+                            <option value="Maragondon">Maragondon</option>
+                            <option value="Mendez">Mendez</option>
+                            <option value="Naic">Naic</option>
+                            <option value="Tagaytay City">Tagaytay City</option>
+                            <option value="Ternate">Ternate</option>
+                        </select>
+                        <label for="municipality">Municipality</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="eff_date">Effectivity Date</label>
-                                    <br>
-                                    <input type="date" id="eff_date" name="eff_date" required autocomplete="off">
-                                </td>
-                            </tr>
+                <td>
+                <!-- TODO add auto district number based on municipality selected -->
+                        <div class="input-container">
+                            <input type="text" id="district" name="district" required autocomplete="off" readonly placeholder=" ">
+                            <label for="district">District</label>
+                        </div>
+                </td>
+                
+                <td>
+                <!-- TODO add origin select options -->
+                <!-- TODO autofill based on account logged in -->
+                <!-- TODO change this to select so it is still modifiable -->
+                    <div class="input-container">
+                        <input type="text" id="origin" name="origin" required autocomplete="off" placeholder=" ">
+                        <label for="origin">Origin</label>
+                    </div>
+                </td>
+            </tr>
 
-                            <tr>
-                                <td>
-                                    <label for="loc_par">Location Particular</label>
-                                    <br>
-                                    <input type="text" id="loc_par" name="loc_par" required autocomplete="off">
-                                </td>
-                                
-                                <td colspan="2">
-                                    <label for="loc_cat">Location Category</label>
-                                    <br>
-                                    <select name="loc_cat" id="loc_cat">
-                                        <option value="Public Nursery">Public Nursery</option>
-                                        <option value="Private Nursery">Private Nursery</option>
-                                        <option value="Public Kinder">Public Kinder</option>
-                                        <option value="Private Kinder">Private Kinder</option>
-                                        <option value="Public Elementary School">Public Elementary School</option>
-                                        <option value="Private Elementary School">Private Elementary School</option>
-                                        <option value="Public High School">Public High School</option>
-                                        <option value="Private High School">Private High School</option>
-                                        <option value="Public Senior High School">Public Senior High School</option>
-                                        <option value="Private Senior High School">Private Senior High School</option>
-                                        <option value="Public Integrated School">Public Integrated School</option>
-                                        <option value="Private Integrated School">Private Integrated School</option>
-                                        <option value="Public College">Public College</option>
-                                        <option value="Private College">Private College</option>
-                                        <option value="Government Company/Organization">Government Company/Organization</option>
-                                        <option value="Private Company/Organization">Private Company/Organization</option>
-                                        <option value="Church">Church</option>
-                                        <option value="Red Cross 143">Red Cross 143</option>
-                                        <option value="RCY">RCY</option>
-                                        <option value="Brgy">Brgy</option>
-                                        <option value="LGU">LGU</option>
-                                        <option value="MBD">MBD</option>
-                                        <option value="Events">Events</option>
-                                        <option value="Training">Training</option>
-                                        <option value="Company/Organization Training">Company/Organization Training</option>
-                                        <option value="Individual">Individual</option>
-                                        <option value="Walk-In">Walk-In</option>
-                                    </select>
-                                </td>
+            <tr>
+                <td colspan="6">
+                    <div class="input-container">
+                        <input type="text" id="remarks" name="remarks" required autocomplete="off" placeholder=" ">
+                        <label for="remarks">Remarks</label>
+                    </div>
+                </td>
 
-                                <td colspan="2">
-                                    <label for="municipality">Municipality</label>
-                                    <br>
-                                    <select name="municipality" id="municipality">
-                                        <option value="Cavite City">Cavite City</option>
-                                        <option value="Kawit">Kawit</option>
-                                        <option value="Noveleta">Noveleta</option>
-                                        <option value="Rosario">Rosario</option>
-                                        <option value="Bacoor">Bacoor</option>
-                                        <option value="Imus">Imus</option>
-                                        <option value="Dasmariñas">Dasmariñas</option>
-                                        <option value="Carmona">Carmona</option>
-                                        <option value="General Mariano Alvarez (GMA)">General Mariano Alvarez (GMA)</option>
-                                        <option value="Silang">Silang</option>
-                                        <option value="General Trias">General Trias</option>
-                                        <option value="Amadeo">Amadeo</option>
-                                        <option value="Indang">Indang</option>
-                                        <option value="Tanza">Tanza</option>
-                                        <option value="Trece Martires">Trece Martires</option>
-                                        <option value="Alfonso">Alfonso</option>
-                                        <option value="Gen. Emilio Aguinaldo (Bailen)">Gen. Emilio Aguinaldo (Bailen)</option>
-                                        <option value="Magallanes">Magallanes</option>
-                                        <option value="Maragondon">Maragondon</option>
-                                        <option value="Mendez">Mendez</option>
-                                        <option value="Naic">Naic</option>
-                                        <option value="Tagaytay City">Tagaytay City</option>
-                                        <option value="Ternate">Ternate</option>
-                                    </select>
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="tags" name="tags" required autocomplete="off" placeholder=" ">
+                        <label for="tags">Tags</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
 
-                                <td>
-                                    <!-- TODO autofill after selecting municipality -->
-                                    <label for="district">District</label>
-                                    <br>
-                                    <input type="text" id="district" name="district" required autocomplete="off" readonly>
-                                </td>
-                                
-                                <td>
-                                    <!-- TODO autofill based on account logged in -->
-                                     <!-- TODO change this to select so it is still modifiable -->
-                                    <label for="origin">Origin</label>
-                                    <br>
-                                    <input type="text" id="origin" name="origin" required autocomplete="off">
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td colspan="6">
-                                    <label for="remarks">Remarks</label>
-                                    <br>
-                                    <input type="text" id="remarks" name="remarks" required autocomplete="off">
-                                </td>
-
-                                <td>
-                                    <label for="tags">Tags</label>
-                                    <br>
-                                    <input type="text" id="tags" name="tags" required autocomplete="off">
-                                </td>
-                            </tr>
-                        </table>
-                    </form>
-                </div>
+        <div class="controls_box" style="justify-content: flex-end; margin-top: 20px;">
+            <button id="save_record_details" class="save_record_details">Save</button>
+            <button id="delete_record" class="delete_record">Delete Record</button>
+            <!-- TODO add delete record function -->
+        </div>
+    </form>
+</div>
                 
                 <!-- TODO fix the visual bug where the entry details table is compressed at the center when first opening the overlay -->
-
-                <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
-                    <h3 style="margin: 0; font-weight: bolder;">E N T R Y&nbsp;&nbsp;&nbsp;&nbsp;D E T A I L S</h3>                
-                </span>
-
-                <div class="controls_box">
-                <!-- TODO add js function make all cells readonly when form editor is on -->
-                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                    <p>Live Editor</p>
-                    <label class="switch">
-                        <input type="checkbox" id="entry_details_check" checked>
-                        <span class="slider"></span>
+            <!-- ENTRY DETAILS TOGGLE -->
+            <div class="entry-radio-controls">
+                <input type="radio" id="showEntry" name="entry_input_mode" value="form" checked>
+                    <label for="showEntry">
+                        <i class="fa-solid fa-user-plus"></i> Show Entry Form
                     </label>
-                    <p>Form Editor</p>
-                </div>
-                </div>
+
+                <input type="radio" id="showTable" name="entry_input_mode" value="table">
+                    <label for="showTable">
+                        <i class="fa-solid fa-table"></i> Show Table Only
+                    </label>
+            </div>
                 
                 <div class="second_row">
                 <div id="entry_details" class="entry_details">
-                    <form action="">
-                        <table>
-                            <tr>
-                                <td>
-                                    <label for="maab_cat">Category</label>
-                                    <br>
-                                    <select name="maab_cat" id="maab_cat">
-                                        <option value="Classic">Classic</option>
-                                        <option value="Bronze">Bronze</option>
-                                        <option value="Silver">Silver</option>
-                                        <option value="Gold">Gold</option>
-                                        <option value="Platinum">Platinum</option>
-                                        <option value="Enhanced Platinum">Enhanced Platinum</option>
-                                        <option value="Senior">Senior</option>
-                                        <option value="Senior+">Senior+</option>            
-                                    </select>
-                                </td>
+                <form action="form action=/api/members/entries" method="POST" id="record_entries">
+        <table>
+            <tr>
+                <td>
+                    <div class="input-container">
+                        <select name="maab_cat" id="maab_cat" required>
+                            <option value=""></option>
+                            <option value="Classic">Classic</option>
+                            <option value="Bronze">Bronze</option>
+                            <option value="Silver">Silver</option>
+                            <option value="Gold">Gold</option>
+                            <option value="Platinum">Platinum</option>
+                            <option value="Enhanced Platinum">Enhanced Platinum</option>
+                            <option value="Senior">Senior</option>
+                            <option value="Senior+">Senior+</option>            
+                        </select>
+                        <label for="maab_cat">Category</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="maab_no">MAAB No.</label>
-                                    <br>
-                                    <input type="text" id="maab_no" name="maab_no" required autocomplete="off">
-                                </td>
-        
-                                <td>
-                                    <label for="fname">First Name</label>
-                                    <br>
-                                    <input type="text" id="fname" name="fname" required autocomplete="off">
-                                </td>
-                                
-                                <td>
-                                    <label for="mname">Middle Name</label>
-                                    <br>
-                                    <input type="text" id="mname" name="mname" required autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="maab_no" name="maab_no" required autocomplete="off" placeholder=" ">
+                        <label for="maab_no">MAAB No.</label>
+                    </div>
+                </td>
+    
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="fname" name="fname" required autocomplete="off" placeholder=" ">
+                        <label for="fname">First Name</label>
+                    </div>
+                </td>
+                
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="mname" name="mname" required autocomplete="off" placeholder=" ">
+                        <label for="mname">Middle Name</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="lname">Last Name</label>
-                                    <br>
-                                    <input type="text" id="lname" name="lname" required autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="lname" name="lname" required autocomplete="off" placeholder=" ">
+                        <label for="lname">Last Name</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="suffix">Suffix</label>
-                                    <br>
-                                    <select name="suffix" id="suffix">
-                                        <option value="NA">NA</option>
-                                        <option value="Jr">Jr</option>
-                                        <option value="Sr">Sr</option>
-                                        <option value="II">II</option>
-                                        <option value="III">III</option>
-                                        <option value="IV">IV</option>
-                                        <option value="V">V</option>
-                                        <option value="VI">VI</option>
-                                        <option value="VII">VII</option>
-                                    </select>
-                                </td>
-                            </tr>
+                <td>
+                    <div class="input-container">
+                        <select name="suffix" id="suffix" required>
+                            <option value=""></option>
+                            <option value="NA">NA</option>
+                            <option value="Jr">Jr</option>
+                            <option value="Sr">Sr</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                            <option value="V">V</option>
+                            <option value="VI">VI</option>
+                            <option value="VII">VII</option>
+                        </select>
+                        <label for="suffix">Suffix</label>
+                    </div>
+                </td>
+            </tr>
 
-                            <tr>
-                                <td>
-                                    <label for="bdate">Birthdate</label>
-                                    <br>
-                                    <input type="date" id="bdate" name="bdate" required autocomplete="off">
-                                </td>
+            <tr>
+                <td>
+                    <div class="input-container">
+                            <input type="date" id="bdate" name="bdate" required autocomplete="off">
+                            <label for="bdate">Birthdate</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="sex">Sex</label>
-                                    <br>
-                                    <select name="sex" id="sex">
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                    </select>
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <select name="sex" id="sex" required>
+                            <option value=""></option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                        <label for="sex">Sex</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="contact">Contact No</label>
-                                    <br>
-                                    <input type="text" id="contact" name="contact" required autocomplete="off">
-                                </td>                               
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="contact" name="contact" required autocomplete="off" placeholder=" ">
+                        <label for="contact">Contact No</label>
+                    </div>
+                </td>                               
 
-                                <td>
-                                    <label for="email">Email</label>
-                                    <br>
-                                    <input type="text" id="email" name="email" required autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="email" name="email" required autocomplete="off" placeholder=" ">
+                        <label for="email">Email</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="address">Address</label>
-                                    <br>
-                                    <input type="text" id="address" name="address" required autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="address" name="address" required autocomplete="off" placeholder=" ">
+                        <label for="address">Address</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="blood_type">Blood Type</label>
-                                    <br>
-                                    <select name="blood_type" id="blood_type">
-                                        <option value="A+">A+</option>
-                                        <option value="A-">A-</option>
-                                        <option value="B+">B+</option>
-                                        <option value="B-">B-</option>
-                                        <option value="AB+">AB+</option>
-                                        <option value="AB-">AB-</option>
-                                        <option value="O+">O+</option>
-                                        <option value="O-">O-</option>
-                                    </select>
-                                </td>                              
-                            </tr>
+                <td>
+                    <div class="input-container">
+                        <select name="blood_type" id="blood_type" required>
+                            <option value=""></option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                        <label for="blood_type">Blood Type</label>
+                    </div>
+                </td>                              
+            </tr>
 
-                            <tr>
-                                <td>
-                                    <label for="id_received">ID Reveived</label>
-                                    <br>
-                                    <input type="checkbox" id="id_received" name="id_received" required autocomplete="off">
-                                </td>
+            <tr>
+                <td>
+                    <div class="input-container checkbox-container">
+                        <input type="checkbox" id="id_received" name="id_received" autocomplete="off">
+                        <label for="id_received">ID Received</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="entry_declared">Declared</label>
-                                    <br>
-                                    <input type="checkbox" id="entry_declared" name="entry_declared" required autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container checkbox-container">
+                        <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
+                        <label for="entry_declared">Declared</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="declare_date">Declaration Date</label>
-                                    <br>
-                                    <input type="date" id="declare_date" name="declare_date" required autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <input type="date" id="declare_date" name="declare_date" autocomplete="off">
+                        <label for="declare_date">Declaration Date</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="entry_paid">Paid</label>
-                                    <br>
-                                    <input type="checkbox" id="entry_paid" name="entry_paid" required autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container checkbox-container">
+                        <input type="checkbox" id="entry_paid" name="entry_paid" autocomplete="off">
+                        <label for="entry_paid">Paid</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="entry_or_no">OR No</label>
-                                    <br>
-                                    <input type="text" id="entry_or_no" name="entry_or_no" required autocomplete="off">
-                                </td>
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="entry_or_no" name="entry_or_no" autocomplete="off" placeholder=" ">
+                        <label for="entry_or_no">OR No</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="entry_or_date">OR Date</label>
-                                    <br>
-                                    <input type="text" id="entry_or_date" name="entry_or_date" required autocomplete="off">
-                                </td>
-                            </tr>
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
+                        <label for="entry_or_date">OR Date</label>
+                    </div>
+                </td>
+            </tr>
 
-                            <tr>
-                                <td colspan="5">
-                                    <label for="entry_remarks">Remarks</label>
-                                    <br>
-                                    <input type="text" id="entry_remarks" name="entry_remarks" required autocomplete="off">
-                                </td>
+            <tr>
+                <td colspan="5">
+                    <div class="input-container">
+                        <input type="text" id="entry_remarks" name="entry_remarks" autocomplete="off" placeholder=" ">
+                        <label for="entry_remarks">Remarks</label>
+                    </div>
+                </td>
 
-                                <td>
-                                    <label for="entry_tags">Tags</label>
-                                    <br>
-                                    <input type="text" id="entry_tags" name="entry_tags" required autocomplete="off">
-                                </td>
-                            </tr>
-                        </table>
-                        <button>Add</button>
-                    </form>
-                </div>
+                <td>
+                    <div class="input-container">
+                        <input type="text" id="entry_tags" name="entry_tags" autocomplete="off" placeholder=" ">
+                        <label for="entry_tags">Tags</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <div class="controls_box";>
+            <button id="add_entry_details" class="add_entry_details">Add</button>
+        </div>
+    </form>
+</div>
                 <div id="entries_table" class="ht-theme-main"></div>
                 </div>
 
-            </div>
-        </div>
-    </div>
 {% endblock %}
-
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
@@ -494,8 +559,8 @@
 
     return td;
     }
-    // for x button in overlay
-    document.getElementById('close-overlay').addEventListener('click', function () {
+      // for x button in overlay
+        document.getElementById('close-overlay').addEventListener('click', function () {
         document.getElementById('overlay').style.display = 'none';
     });
     // close overlay on ESC key
@@ -631,7 +696,7 @@
     }
 
     // Add Record button logic
-    document.querySelector('button').addEventListener('click', function () {
+    document.querySelector('.btn-add').addEventListener('click', function () {
         // Call backend to add a new record
         fetch('/api/add_record', {
             method: 'POST',
@@ -669,7 +734,7 @@
                                     const openLink = cell.querySelector('.open-link');
                                     if (openLink) openLink.click();
                                 }
-                            }, 100); // Adjust timeout if needed
+                            }, 300); // Adjust timeout if needed
                         }
                     }
                 });
@@ -724,5 +789,126 @@
         });
     });
 
+    //Input Text Restrictions
+    document.addEventListener("DOMContentLoaded", () => {
+    const nameFields = ["fname", "mname", "lname"];
+
+    nameFields.forEach(id => {
+        const input = document.getElementById(id);
+
+        if (!input) return;
+
+        // Allowed characters: letters, apostrophe, hyphen, space
+        const allowedPattern = /^[a-zA-Z' -]$/;
+
+        // Allow specific keys like backspace, arrows, etc.
+        const allowedKeys = [
+            "Backspace", "Tab", "Escape", "Delete",
+            "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+            "Home", "End"
+        ];
+
+        // Block typing invalid characters
+        input.addEventListener("keydown", function (event) {
+            // Allow navigation and control keys
+            if (allowedKeys.includes(event.key)) return;
+
+            // Allow only valid characters
+            if (!allowedPattern.test(event.key)) {
+                event.preventDefault();
+            }
+        });
+
+        // Block pasting invalid characters
+        input.addEventListener("paste", function (event) {
+            const pasted = (event.clipboardData || window.clipboardData).getData("text");
+
+            // If any character in the pasted text is invalid, block the paste
+            if ([...pasted].some(char => !allowedPattern.test(char))) {
+                event.preventDefault();
+            }
+        });
+    });
+});
+
+    // Input Number Restriction
+    document.addEventListener("DOMContentLoaded", () => {
+    const contactInput = document.getElementById("contact");
+
+    if (!contactInput) return;
+
+    // Block non-digit keys
+    contactInput.addEventListener("keydown", function (event) {
+        const allowedKeys = [
+        "Backspace", "Tab", "Escape", "Delete",
+        "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+        "Home", "End"
+        ];
+
+        if (allowedKeys.includes(event.key)) return;
+
+        // Block everything except digits
+        if (!/^\d$/.test(event.key)) {
+        event.preventDefault();
+        }
+    });
+
+    // Block pasting non-digit content
+    contactInput.addEventListener("paste", function (event) {
+        const pasted = (event.clipboardData || window.clipboardData).getData("text");
+        if (!/^\d+$/.test(pasted)) {
+        event.preventDefault();
+        }
+    });
+    });
+
+    
 </script>
+
+<!-- Clear filters button logic -->
+ <script>
+           document.addEventListener('DOMContentLoaded', () => {
+               const searchInput = document.getElementById('search_input');
+               const clearButton = document.getElementById('search_clear');
+
+           searchInput.addEventListener('input', () => {
+                if (searchInput.value.trim() !== "") {
+                clearButton.classList.add('visible');
+                } else {
+                clearButton.classList.remove('visible');
+    }
+  });
+
+               clearButton.addEventListener('click', () => {
+               searchInput.value = "";
+               clearButton.classList.remove('visible');
+               searchInput.focus();
+  });
+});
+
+    // Toggle Record Details Form with Radio Buttons
+    document.querySelectorAll('input[name="record_input_mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const recordForm = document.querySelector('.record_details_table');
+            if (this.value === 'table') {
+                recordForm.style.display = 'none';
+            } else {
+                recordForm.style.display = 'table';
+            }
+        });
+    });
+
+    // Toggle Entry Details Form with Radio Buttons
+    document.querySelectorAll('input[name="entry_input_mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const entryForm = document.getElementById('entry_details');
+            if (this.value === 'table') {
+                entryForm.style.display = 'none';
+            } else {
+                entryForm.style.display = 'block';
+            }
+        });
+    });
+</script>
+
 {% endblock %}

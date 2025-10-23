@@ -3,7 +3,8 @@
 {% block title %}Settings{% endblock %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/settings.css') }}">
+    <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/settings.css') }}">
+
     <script>
         function toggleLoginHistory() {
             const history = document.getElementById("loginHistory");
@@ -17,55 +18,111 @@
 <div class="module_name">
     <h1>Settings</h1>
 </div>
-<div class="section">
-    <h2>Account Settings</h2>
+<div class="main-container">
+    <div class="left-container">
 
-    <div class="setting-row">
-        <span>Change Password</span>
-        <button>Change</button>
+        <img src="/static/assets/profile.png" class="prof" alt="Profile Image" />
+
+        <button class="profile-button">Edit Profile Picture</button>
+
+        <h5 class="name">{{ current_user.first_name }} {{ current_user.middle_name }} {{ current_user.last_name }}</h5>
+        <p class="level">{{ current_user.user_level }}</p>
     </div>
 
-    <div class="setting-row">
-        <span>Update Email / Phone</span>
-        <button>Update</button>
-    </div>
-
-    <div class="setting-row">
-        <span>Enable Two-Factor Authentication (2FA)</span>
-        <button>Enable</button>
-    </div>
-
-    <div class="setting-row">
-        <span>View Login History</span>
-        <button onclick="toggleLoginHistory()">View</button>
-    </div>
-
-    <div class="login-history" id="loginHistory" style="display: none;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Action</th>
-                    <th>Time</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Login</td>
-                    <td>10:23 AM</td>
-                    <td>2025-04-18</td>
-                </tr>
-                <tr>
-                    <td>Logout</td>
-                    <td>09:14 PM</td>
-                    <td>2025-04-17</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="profile-container">
+    <form action="{{ url_for('settings_save_changes') }}" method="POST" class="profile-form">
+    <!-- USER DETAILS -->
+    <div class="form-group">
+        <label for="full_name">Full Name:</label>
+        <div class="input-wrapper">
+            <input type="text" id="full_name" name="full_name" value="{{ current_user.first_name }} {{ current_user.middle_name }} {{ current_user.last_name }}" readonly disabled />
+            <span class="edit-icon" onclick="toggleEditable('full_name')">&#9998;</span>
+        </div>
     </div>
 </div>
 
-<div class="section">
+    <div class="form-group">
+        <label for="username">Username:</label>
+        <div class="input-wrapper">
+            <input type="text" id="username" name="username" value="{{ current_user.username }}" readonly disabled />
+            <span class="edit-icon" onclick="toggleEditable('username')">&#9998;</span>
+        </div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label for="last_name">Last Name:</label>
+    <div class="input-wrapper">
+        <input type="text" id="last_name" name="last_name" value="{{ current_user.last_name }}" readonly disabled />
+    </div>
+</div>
+
+
+    <div class="form-group">
+        <label for="birthdate">Birthdate:</label>
+        <div class="input-wrapper">
+            <input type="date" id="birthdate" name="birthdate" value="{{ current_user.birth_date }}" readonly disabled />
+            <span class="edit-icon" onclick="toggleEditable('birthdate')">&#9998;</span>
+        </div>
+    </div>
+
+    <!-- CONTACT INFO -->
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <div class="input-wrapper">
+            <input type="email" id="email" name="email" value="{{ current_user.email }}" readonly disabled />
+            <span class="edit-icon" onclick="toggleEditable('email')">&#9998;</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="phone">Phone Number:</label>
+        <div class="input-wrapper">
+            <input type="tel" id="phone" name="phone" value="{{ current_user.contact_no }}" readonly disabled />
+            <span class="edit-icon" onclick="toggleEditable('phone')">&#9998;</span>
+        </div>
+    </div>
+</form>
+
+<div class="form-buttons" id="formButtons">
+        <button type="button" onclick="saveChanges()">Save</button>
+        <button type="button" onclick="cancelChanges()">Cancel</button>
+    </div>
+    <button type="button" id="editButton" onclick="enableEditMode()">Edit</button>
+
+<div class="setting-row">
+            <span>View Login History</span>
+            <button onclick="toggleLoginHistory()">View</button>
+        </div>
+
+        <div class="login-history" id="loginHistory" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Time</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Login</td>
+                        <td>10:23 AM</td>
+                        <td>2025-04-18</td>
+                    </tr>
+                    <tr>
+                        <td>Logout</td>
+                        <td>09:14 PM</td>
+                        <td>2025-04-17</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+</div>
+
+</div>
+
+<div class="section1">
     <h2>Display & Accessibility</h2>
     
     <div class="setting-row">
@@ -84,70 +141,125 @@
         </label>
     </div>
     
-    <div class="setting-row">
-        <span>Font Style</span>
-        <select id="fontStyleSelect">
-            <option value="default">Default</option>
-            <option value="georgia">Georgia</option>
-            <option value="century-gothic">Century Gothic</option>
-            <option value="jetbrains-mono">JetBrains Mono</option>
-        </select>
-    </div>
+<div class="setting-row">
+    <span>Font Style</span>
+    <select id="fontStyleSelect">
+        <option value="default">Default</option>
+        <option value="georgia">Georgia</option>
+        <option value="century-gothic">Century Gothic</option>
+        <option value="jetbrains-mono">JetBrains Mono</option>
+    </select>
+</div>
 
-    <div class="setting-row">
-        <span>Font Size</span>
-        <select id="fontSizeSelect">
-            <option value="small">Small</option>
-            <option value="medium" selected>Medium</option>
-            <option value="large">Large</option>
-        </select>
-    </div>  
+<div class="setting-row">
+    <span>Font Size</span>
+    <select id="fontSizeSelect">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium</option>
+        <option value="large">Large</option>
+    </select>
+</div>  
 
-{% endblock %}
 
 {% block extra_scripts %}
-    <script>
+<script>
     document.addEventListener("DOMContentLoaded", function() {
         const fontStyleSelect = document.getElementById("fontStyleSelect");
         const fontSizeSelect = document.getElementById("fontSizeSelect");
 
-        // Restore UI dropdown states
-        if (localStorage.getItem("appFontKey")) {
-            fontStyleSelect.value = localStorage.getItem("appFontKey");
-        }
-        if (localStorage.getItem("appFontSizeKey")) {
-            fontSizeSelect.value = localStorage.getItem("appFontSizeKey");
-        }
+        // Restore saved preferences (or defaults)
+        const savedFontKey = localStorage.getItem("appFontKey") || "default";
+        const savedSizeKey = localStorage.getItem("appFontSizeKey") || "medium";
 
-        // Font style change
-        fontStyleSelect.addEventListener("change", function() {
-            let fontFamily;
-            switch (this.value) {
-                case "georgia": fontFamily = "Georgia, serif"; break;
-                case "century-gothic": fontFamily = "'Century Gothic', sans-serif"; break;
-                case "jetbrains-mono": fontFamily = "'JetBrains Mono', monospace"; break;
-                default: fontFamily = "Montserrat', sans-serif";
-                
-            }
-            document.documentElement.style.setProperty("--app-font", fontFamily);
-            localStorage.setItem("appFont", fontFamily);
-            localStorage.setItem("appFontKey", this.value);
+        fontStyleSelect.value = savedFontKey;
+        fontSizeSelect.value = savedSizeKey;
+
+        // Apply preferences immediately
+        applyFontStyle(savedFontKey);
+        applyFontSize(savedSizeKey);
+
+        // Handlers
+        fontStyleSelect.addEventListener("change", e => {
+            applyFontStyle(e.target.value);
+            localStorage.setItem("appFontKey", e.target.value);
         });
 
-
-        // Font size change
-        fontSizeSelect.addEventListener("change", function() {
-            let size;
-            switch (this.value) {
-                case "small": size = "0.875rem"; break; // ~14px
-                case "medium": size = "1rem"; break;    // ~16px
-                case "large": size = "1.125rem"; break; // ~18px
-                default: size = "1rem";                 // fallback
-            }
-            document.documentElement.style.setProperty("--app-font-size", size);
-            localStorage.setItem("appFontSize", size);
-            localStorage.setItem("appFontSizeKey", this.value);
+        fontSizeSelect.addEventListener("change", e => {
+            applyFontSize(e.target.value);
+            localStorage.setItem("appFontSizeKey", e.target.value);
         });
+
+        // Helpers
+        function applyFontStyle(key) {
+            const map = {
+                "georgia": "Georgia, serif",
+                "century-gothic": "'Century Gothic', sans-serif",
+                "jetbrains-mono": "'JetBrains Mono', monospace",
+                "default": "'Montserrat', sans-serif"
+            };
+            document.documentElement.style.setProperty("--app-font", map[key] || map["default"]);
+            localStorage.setItem("appFontFamily", map[key] || map["default"]);
+        }
+
+        function applyFontSize(key) {
+            const map = {
+                "small": "0.875rem",   // ~14px
+                "medium": "1rem",      // ~16px
+                "large": "1.125rem"    // ~18px
+            };
+            document.documentElement.style.setProperty("--app-font-size", map[key] || map["medium"]);
+            localStorage.setItem("appFontSize", map[key] || map["medium"]);
+        }
     });
-    </script>
+
+    let originalValues = {};
+
+    function enableEditMode() {
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.removeAttribute('readonly');
+        input.removeAttribute('disabled');
+        input.classList.add('editable'); // Add class here
+        originalValues[input.id] = input.value;
+    });
+
+    document.getElementById('formButtons').style.display = 'flex';
+    document.getElementById('editButton').style.display = 'none';
+}
+
+function saveChanges() {
+    // Submit the form programmatically
+    document.querySelector('.profile-form').submit();
+
+    // After submitting, reset the form to readonly and disabled
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.setAttribute('readonly', true);
+        input.setAttribute('disabled', true);
+        input.classList.remove('editable'); // Remove class here
+    });
+
+    document.getElementById('formButtons').style.display = 'none';
+    document.getElementById('editButton').style.display = 'inline-block';
+}
+
+
+function cancelChanges() {
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.value = originalValues[input.id];
+        input.setAttribute('readonly', true);
+        input.setAttribute('disabled', true);
+        input.classList.remove('editable'); // Remove class here
+    });
+
+    document.getElementById('formButtons').style.display = 'none';
+    document.getElementById('editButton').style.display = 'inline-block';
+}
+
+    function toggleLoginHistory() {
+        const history = document.getElementById('loginHistory');
+        history.style.display = (history.style.display === 'none') ? 'block' : 'none';
+    }
+</script>
+
+{% endblock %}
+
 {% endblock %}
