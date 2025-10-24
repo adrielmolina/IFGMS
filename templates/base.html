@@ -13,20 +13,20 @@
     <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Merriweather&family=Source+Sans+Pro&family=Fira+Code&family=Roboto&family=Noto+Sans&display=swap" rel="stylesheet">
     
-    <!-- TODO convert all the icon assets into svg -->
+    <!-- TODO convert all the icon assets into svg - ++DONE++ -->
 
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/CAVITE.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/prc_logo.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/dashboard.svg') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/members.png') }}">
     <link rel="preload" as="image" href="{{ url_for('static', filename='assets/declaration.svg') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/inventory.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/claims.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/reports.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/audit trail.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/accounts.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/settings.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/logout.png') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/inventory.svg') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/claims.svg') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/reports.svg') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/audit.svg') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/accounts.svg') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/settings.svg') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/logout.svg') }}">
 
 
 
@@ -35,7 +35,7 @@
 </head>
 
 <body>
-    <!-- TODO download all assets instead of loading from google api -->
+    <!-- TODO download all assets instead of loading from google api - ++DONE++ -->
     <!-- Sidebar Navigation -->
     <nav class="navbar">
         <aside class="sidebar">
@@ -75,7 +75,7 @@
                 </li>
 
                 <li id="members">
-                    <a href="/members"><img class="icons" src="{{ url_for('static', filename='assets/members.png') }}" alt="logo"/>Members</a>
+                    <a href="/members"><img class="icons" src="{{ url_for('static', filename='assets/members.svg') }}" alt="logo"/>Members</a>
                 </li>
 
                 <li id="declaration" hidden>
@@ -83,15 +83,15 @@
                 </li>
 
                 <li id="inventory">
-                    <a href="/inventory"><img class="icons" src="{{ url_for('static', filename='assets/inventory.png') }}" alt="logo"/>Inventory</a>
+                    <a href="/inventory"><img class="icons" src="{{ url_for('static', filename='assets/inventory.svg') }}" alt="logo"/>Inventory</a>
                 </li>
             
                 <li id="claims">
-                    <a href="/claims"><img class="icons" src="{{ url_for('static', filename='assets/claims.png') }}" alt="logo"/>Manage Claims</a>
+                    <a href="/claims"><img class="icons" src="{{ url_for('static', filename='assets/claims.svg') }}" alt="logo"/>Manage Claims</a>
                 </li>
 
                 <li id="reports" hidden>
-                    <a href="/reports"><img class="icons" src="{{ url_for('static', filename='assets/reports.png') }}" alt="logo"/>Reports</a>
+                    <a href="/reports"><img class="icons" src="{{ url_for('static', filename='assets/reports.svg') }}" alt="logo"/>Reports</a>
                 </li>
 
                 <h4>
@@ -100,19 +100,19 @@
                 </h4>
 
                 <li id="audit_trails" hidden>
-                    <a href="/audit_trails"><img class="icons" src="{{ url_for('static', filename='assets/audit trail.png') }}" alt="logo"/>Audit Trail</a>
+                    <a href="/audit_trails"><img class="icons" src="{{ url_for('static', filename='assets/audit.svg') }}" alt="logo"/>Audit Trail</a>
                 </li>
 
                 <li id="accounts" hidden>
-                    <a href="/accounts"><img class="icons" src="{{ url_for('static', filename='assets/accounts.png') }}" alt="logo"/>Accounts</a>
+                    <a href="/accounts"><img class="icons" src="{{ url_for('static', filename='assets/accounts.svg') }}" alt="logo"/>Accounts</a>
                 </li>
 
                 <li id="settings">
-                    <a href="/settings"><img class="icons" src="{{ url_for('static', filename='assets/settings.png') }}" alt="logo"/>Settings</a>
+                    <a href="/settings"><img class="icons" src="{{ url_for('static', filename='assets/settings.svg') }}" alt="logo"/>Settings</a>
                 </li>
 
                 <li id="logout">
-                    <a href="/logout"><img class="icons" src="{{ url_for('static', filename='assets/logout.png') }}" alt="logo"/>Logout</a>
+                    <a href="/logout"><img class="icons" src="{{ url_for('static', filename='assets/logout.svg') }}" alt="logo"/>Logout</a>
                 </li>
             </ul>
         </aside>
