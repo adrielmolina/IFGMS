@@ -216,7 +216,8 @@ def show_user_accounts():
 @server.route('/settings')
 @login_required
 def settings():
-    return render_template('settings.html')
+    user_details = db_conn.get_user_details_by_username(current_user.username)
+    return render_template('settings.html', user_details=user_details)
 
 
 #? -------------------- END -------------------- ?#
