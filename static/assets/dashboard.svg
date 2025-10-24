@@ -1,7 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
-<path d="M0 0 C2.64 0 5.28 0 8 0 C8 3.3 8 6.6 8 10 C5.36 10 2.72 10 0 10 C0 6.7 0 3.4 0 0 Z M2 2 C2 3.98 2 5.96 2 8 C3.32 8 4.64 8 6 8 C6 6.02 6 4.04 6 2 C4.68 2 3.36 2 2 2 Z " fill="#E2E2E2" transform="translate(13,11)"/>
-<path d="M0 0 C2.64 0 5.28 0 8 0 C8 3.3 8 6.6 8 10 C5.36 10 2.72 10 0 10 C0 6.7 0 3.4 0 0 Z M2 2 C2 3.98 2 5.96 2 8 C3.32 8 4.64 8 6 8 C6 6.02 6 4.04 6 2 C4.68 2 3.36 2 2 2 Z " fill="#E2E2E2" transform="translate(3,3)"/>
-<path d="M0 0 C2.64 0 5.28 0 8 0 C8 1.98 8 3.96 8 6 C5.36 6 2.72 6 0 6 C0 4.02 0 2.04 0 0 Z M2 2 C2 2.66 2 3.32 2 4 C3.32 4 4.64 4 6 4 C6 3.34 6 2.68 6 2 C4.68 2 3.36 2 2 2 Z " fill="#E2E2E2" transform="translate(3,15)"/>
-<path d="M0 0 C2.64 0 5.28 0 8 0 C8 1.98 8 3.96 8 6 C5.36 6 2.72 6 0 6 C0 4.02 0 2.04 0 0 Z M2 2 C2 2.66 2 3.32 2 4 C3.32 4 4.64 4 6 4 C6 3.34 6 2.68 6 2 C4.68 2 3.36 2 2 2 Z " fill="#E2E2E2" transform="translate(13,3)"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M520-600v-240h320v240H520ZM120-440v-400h320v400H120Zm400 320v-400h320v400H520Zm-400 0v-240h320v240H120Zm80-400h160v-240H200v240Zm400 320h160v-240H600v240Zm0-480h160v-80H600v80ZM200-200h160v-80H200v80Zm160-320Zm240-160Zm0 240ZM360-280Z"/></svg>
