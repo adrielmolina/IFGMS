@@ -370,6 +370,26 @@ def reset_password():
     return render_template("reset_password.html")
 
 
+@server.route('/api/declaration', methods=['POST'])
+def declaration_api():
+    method = request.method
+    data = request.get_json()
+
+    if method == 'POST':
+        dispatch_type = 'transmission' if current_user.office_location != 'Chapter' else 'declaration' 
+        dispatch_origin = current_user.office_location
+        dispatch_year = datetime.now().year
+        dispatch_cutoff = data.get('dispatch_cutoff')
+        #date_dispatched = data.get('date_dispatched')
+        #dispatch_total = data.get('dispatch_total')
+        late_declare = data.get('late_declare')
+        dispatch_remarks = data.get('dispatch_remarks')
+        
+        result = db_conn.create_dispatch(dispatch_type, dispatch_origin, dispatch_year, dispatch_cutoff, late_declare, dispatch_remarks)
+        return jsonify({"success": True}) if result == True else jsonify({"success": False, "error": result}), 500 
+        
+
+
 @server.route('/settings_save_changes', methods=['POST'])
 @login_required
 def settings_save_changes():
@@ -387,14 +407,14 @@ def settings_save_changes():
 
         if all([first_name, middle_name, last_name, birthdate, email, phone]):
             update_success = db_conn.update_user_details(
-    current_user.account_id,  # ✅ actual user ID
-    first_name,
-    middle_name,
-    last_name,
-    birthdate,
-    phone,
-    email
-)
+            current_user.account_id,  # ✅ actual user ID
+            first_name,
+            middle_name,
+            last_name,
+            birthdate,
+            phone,
+            email
+            )
 
             if update_success:
                 flash("Details updated successfully!", "success")
@@ -421,7 +441,7 @@ def get_pending_claims_count():
 
 # TODO fix api route names ex. /api/members/get_records
 
-@server.route('/api/members/records')
+@server.route('/api/members/records', methods=['GET'])
 def get_members():
     member_records = db_conn.get_member_records()
     return jsonify([record.to_dict() for record in member_records])
@@ -450,7 +470,7 @@ def add_new_record():
     new_record_id = db_conn.add_new_record()
     return jsonify({"success": True, "record_id": new_record_id})
 
-@server.route('/api/save_record_details', methods=['POST'])
+@server.route('/api/save_record_details', methods=['PATCH'])
 def save_record_details():
     data = request.get_json()
     if data:

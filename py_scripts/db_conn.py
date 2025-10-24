@@ -280,7 +280,24 @@ def update_password(email, new_password):
     
 
 
-
+def create_dispatch(dispatch_type, origin, year, cutoff, late, remarks):
+    db_session = SessionLocal()
+    try:
+        new_dispatch = models.Dispatch(
+            dispatch_type=dispatch_type,
+            dispatch_origin=origin,
+            dispatch_year=year,
+            dispatch_cutoff=cutoff,
+            late_declare=late,
+            dispatch_remarks=remarks
+        )
+        db_session.add(new_dispatch)
+        db_session.commit()
+        return True
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error creating dispatch: {e}")
+        return str(e)
 
 
 
@@ -632,10 +649,9 @@ def verify_maab_no(maab_no):
 
 # TODO add indexes on fields that are frequently queried
 def save_record_details(data):
-    conn = conn_init()
-    Session = sessionmaker(bind=conn)
-    with Session() as session:
-        record = session.query(models.Records).filter_by(record_id=data['record_id']).first()
+    db_session = SessionLocal()
+    try:
+        record = db_session.query(models.Records).filter_by(record_id=data['record_id']).first()
         if not record:
             return False  # Or raise an exception
 
@@ -651,9 +667,13 @@ def save_record_details(data):
                 if value == '':
                     value = None
                 setattr(record, field, value)
-
-        session.commit()
+        db_session.commit()
         return True
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving record details: {e}")
+        return False
+
 
 # TODO add the new fields here to update
 # TODO change the column 'status' to claim_status
@@ -771,7 +791,9 @@ def get_entries(record_id):
                 models.Entries.OR_num,
                 models.Entries.OR_date,
                 models.Entries.remarks,
-                models.Entries.tags
+                models.Entries.tags,
+                models.Entries.dispatch_ready,
+                models.Entries.dispatch_id
             )
             .join(models.Members, models.Entries.member_id == models.Members.member_id)
             .filter(models.Entries.record_id == record_id)
@@ -782,7 +804,8 @@ def get_entries(record_id):
         col_names = [
             'entry_id', 'maab_category', 'maab_no', 'first_name', 'middle_name', 'last_name', 'suffix',
             'birth_date', 'age', 'sex', 'contact_no', 'email', 'address', 'blood_type', 'id_received',
-            'declared', 'declaration_date', 'paid', 'OR_num', 'OR_date', 'remarks', 'tags'
+            'declared', 'declaration_date', 'paid', 'OR_num', 'OR_date', 'remarks', 'tags', 'dispatch_ready',
+            'dispatch_id'
         ]
         return [dict(zip(col_names, row)) for row in results]
     

@@ -67,10 +67,11 @@
         <div id="members_table" class="ht-theme-main"></div>
     </div>
 
+    <!-- TODO fix unclosed divs - breaks when closed -->
     <div id="overlay" class="overlay">
-        <div id="overlay-content" class="overlay-content">
+        <div id="overlay-content" class="overlay-content"><div>
             <span id="close-overlay" class="close-overlay">&times;</span>
-            <div id="overlay-body" class="overlay-body">
+            <div id="overlay-body" class="overlay-body"><div>
                 <!-- Dynamic content goes here -->
     <div>
 
@@ -87,8 +88,7 @@
             </label>
         </div>
 
-        <div id="record_details" class="record_details">
-            <form action="/api/members/entries" method="POST" id="record_entries">                 
+        <div id="record_details" class="record_details">           
         <table class="record_details_table">
             <tr>
                 <td>
@@ -242,14 +242,14 @@
             <tr>
                 <td colspan="6">
                     <div class="input-container">
-                        <input type="text" id="remarks" name="remarks" required autocomplete="off" placeholder=" ">
+                        <input type="text" id="remarks" name="remarks" autocomplete="off" placeholder=" ">
                         <label for="remarks">Remarks</label>
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="tags" name="tags" required autocomplete="off" placeholder=" ">
+                        <input type="text" id="tags" name="tags" autocomplete="off" placeholder=" ">
                         <label for="tags">Tags</label>
                     </div>
                 </td>
@@ -280,7 +280,7 @@
                 
                 <div class="second_row">
                 <div id="entry_details" class="entry_details">
-                <form action="form action=/api/members/entries" method="POST" id="record_entries">
+                <!-- <form id="record_entries"> -->
         <table>
             <tr>
                 <td>
@@ -474,8 +474,10 @@
                 </div>
 
 {% endblock %}
+
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
+
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/entries_table.js')}}"></script>
 
@@ -650,7 +652,8 @@
         searchPlugin.query('');
         hotInstance.render(); // refresh the table to clear highlights
     });
-        
+    
+    /*
     // Record Details Box Switch
     const record_details_check = document.getElementById('record_details_check');
     const record_details = document.getElementById('record_details');
@@ -673,6 +676,7 @@
             entry_details.style.display = 'none';   // Hide div
         }
     });
+    */
 
     // reload table data
     function refreshMembersTable() {
@@ -770,7 +774,7 @@
 
         // Send data to backend
         fetch('/api/save_record_details', {
-            method: 'POST',
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
@@ -863,10 +867,9 @@
     });
 
     
-</script>
+
 
 <!-- Clear filters button logic -->
- <script>
            document.addEventListener('DOMContentLoaded', () => {
                const searchInput = document.getElementById('search_input');
                const clearButton = document.getElementById('search_clear');
