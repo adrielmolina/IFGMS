@@ -6,7 +6,7 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/claims.css') }}">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
@@ -24,19 +24,25 @@
             <!-- TODO make this a file dialog and file opener -->
                 <!-- TODO add PRC Email to settings -->
                     <!-- TODO center the title -->
-    <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
-        <h3 style="margin: 0; font-weight: bolder;">C L A I M&nbsp;&nbsp;&nbsp;&nbsp;R E C O R D S</h3>                  
-    </span>
+    <div class="module_name">
+            <h1>Claims Management</h1>
+
+        <div class="search_box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
+            <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
 
     <div class="controls_box">
-        <button>Add Record</button>
+        <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
     </div>
-    
-    <br>
-    <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
-    <button id="search_clear">Clear</button>
 
-    <div id="claims_table" class="ht-theme-main"></div>
+
+    <div class="table-container">
+        <div class="table-title"></div>
+        <div id="claims_table" class="ht-theme-main"></div>
+    </div>
 
     <div id="overlay" class="overlay">
         <div id="overlay-content" class="overlay-content">

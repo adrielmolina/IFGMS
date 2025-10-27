@@ -31,6 +31,79 @@ label {
     background-color: #c7db14a5 !important;
     color: #000000;
 }
+.module_name {
+  display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    padding: 15px 20px;
+    margin-left: 0; 
+    margin-right: 0; 
+    position: relative;
+    z-index: 1;
+    margin-top: 0; 
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    background-color: #fff;
+    margin-bottom: 10px;
+    color: #B92F2F
+}
+
+
+/* SEARCH BOX CLEANUP */
+.search_box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  margin-top: 10px;
+  margin-left: auto; 
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.search_box i.fa-magnifying-glass {
+  position: absolute;
+  left: 12px;
+  color: #888;
+  font-size: 16px;
+}
+
+.search_box input {
+  width: 550px !important;
+  padding: 10px 35px 10px 35px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  font-size: 16px;
+}
+
+#search_clear {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+  opacity: 0; 
+  pointer-events: none;
+}
+
+#search_clear.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#search_clear:hover {
+  color: #c9302c;
+}
+
+.search_box input:focus {
+    outline: 2px solid #1a40ff;
+    transition: 0.2s;
+}
+
 
 /* TODO remove when done styling the form */
 #overlay {
@@ -82,45 +155,91 @@ label {
     box-sizing: border-box;
 }
 
-table {
-    width: 100%;
+/* ========================================================= */
+/* CLAIMS TABLE DESIGN (copied and aligned from members.css) */
+/* ========================================================= */
+
+#claims_table::before {
+  content: "CLAIMS TABLE";
+  display: block;
+  background: #f07474;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  padding: 10px 16px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  width: 144.5%;
 }
 
-/* TODO add alternating gray/white color to rows */
-table, th, tr, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-    margin-bottom: 1%;
+#claims_table .ht_clone_top thead th {
+  background-color: #fff !important;
+  color: #1f1313 !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  padding: 10px 14px !important;
 }
 
-th {
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    background-color: #2d1d52;
-    color: white;
-    border-color: white;
-    font-size: 14px;
-    /*TODO set the headers to center*/
+#claims_table .ht_clone_left thead th,
+#claims_table .ht_clone_left tbody th {
+  background-color: #fff !important;
+  color: #1f1313 !important;
+  font-weight: 600 !important;
+  text-align: left !important;
+  border-right: 1px solid #e0e0e0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  width: 40px !important;
 }
 
-td {
-    text-align: center;
-    padding: 5px;
+#claims_table td {
+  border-top: 1px solid #e0e0e0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  border-left: none !important;
+  border-right: none !important;
 }
 
-td input {
-    width: 95%;
+#claims_table .wtHolder {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  overflow: hidden;
 }
 
-td input[type="checkbox"] {
-    transform: scale(1.5);
+.handsontable {
+  font-family: "Poppins";
+  font-size: 14px;
+  color: #555;
+  background: #fff;
+  border-radius: 8px !important;
+  border-collapse: collapse;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-td select {
-    width: 95%;
+.handsontable th {
+  color: #444 !important;
+  font-weight: 700;
+  padding: 10px 20px !important;
+  border-bottom: 1px solid #f0f0f0;
+  letter-spacing: 0.5px;
+  font-size: 14px;
 }
+
+.handsontable td {
+  padding: 9px 14px !important;
+  border-bottom: 1px solid #f7f7f7;
+  color: #555;
+}
+
+.handsontable tr:hover td {
+  background: #fff !important;
+}
+/* ========================================================= */
+/* END CLAIMS TABLE DESIGN                                   */
+/* ========================================================= */
+
 
 #entries_table {
     min-width: 100%;
@@ -237,7 +356,6 @@ input:checked + .slider:before {
 }
 
 .controls_box {
-    /* border: #000000 1px solid; */
     border-bottom: 1px solid black;
     width: 99%;
     height: fit-content;

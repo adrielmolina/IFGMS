@@ -10,8 +10,9 @@
 
 {% block content %}
 <div class="module_name">
-    <h1>Dashboard</h1>
-     
+    <h1>Dashboard |</h1>
+    <h4> Overview of System Metrics and Performance</h4>
+    
     <div class="filter-group">
         <div class="dropdown-container">
             <label for="monthDropdown">Selected Month:</label>
@@ -81,7 +82,7 @@
 <div class="chart-container vertical">
     <div class="chart-with-notif">
         <div class="chart-card full">
-            <div id="chart_div" style="width: 100%; height: 400px;"></div>
+            <div id="chart_div" ></div>
         </div>
 
         <div class="notification-card">
@@ -157,9 +158,9 @@
         ]);
 
         var options = {
-    title: 'SALES PER ID CATEGORY',
+    title: 'Sales Performance by Membership Type',
     isStacked: false,
-    chartArea: { width: '80%' }, 
+    chartArea: { width: '70%' }, 
     width: 1000, 
     height: 400,
     backgroundColor: '#fff',
@@ -171,7 +172,7 @@
     bar: {
         groupWidth: '60%',
     },
-    colors: ['#e74c3c', '#3498db'],  // red & blue tones
+    colors: ['#e74c3c', '#0049e6'],  // red & blue tones
     vAxis: {
         viewWindow: {
             min: 0,
