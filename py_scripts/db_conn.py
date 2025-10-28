@@ -13,14 +13,12 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+if os.getenv('FLASK_ENV') == 'development':
+    current_dir = Path(__file__).parent
+    parent_dir = current_dir.parent
+    env_loc = parent_dir/'creds.env'
 
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent
-env_loc = parent_dir/'creds.env'
-
-print("ENV File Location:", env_loc)
-
-load_dotenv(env_loc)
+    load_dotenv(env_loc)
 
 DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'local').lower()
 
