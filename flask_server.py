@@ -797,4 +797,5 @@ if __name__ == '__main__':
         
         server.jinja_env.auto_reload = True
     else:
-        server.run(host="0.0.0.0", port=5000)
+        #server.run(host="0.0.0.0", port=5000)
+        pass
