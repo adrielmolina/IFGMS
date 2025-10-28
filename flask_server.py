@@ -10,7 +10,6 @@ from functools import wraps
 
 
 server = Flask(__name__)
-server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
 
 # CACHE CONTROL FOR STATIC FILES
@@ -63,8 +62,10 @@ def roles_required(*roles):
 @server.before_request
 def auto_login():
     ''' Auto-login for development purposes. Remove or disable in production. '''
+    auto_login_enabled = True if os.getenv("FLASK_ENV") == "development" else False
+    
     db_session = db_conn.SessionLocal()
-    if server.config.get("DEBUG_BYPASS_LOGIN", True):
+    if server.config.get("DEBUG_BYPASS_LOGIN", auto_login_enabled):
         if not current_user.is_authenticated:
             test_user = db_session.query(db_conn.models.Accounts).filter_by(username="adriel").first()
             login_user(test_user)
@@ -777,9 +778,23 @@ def favicon():
 
 
 if __name__ == '__main__':
+    
+    # DEPRECATED LIVE RELOAD METHOD. REMOVE LATER
+    '''
     flask_server = Server(server.wsgi_app)
     flask_server.watch('static/*.*')  # watches static files (CSS/JS)
     flask_server.watch('templates/*.html')  # watches templates
     flask_server.serve(port=5000, host="127.0.0.1")
 
     #server.run(debug=True, use_reloader=True, port=5000)
+    '''
+    
+    if os.getenv("FLASK_ENV") == "development":
+        flask_server = Server(server.wsgi_app)
+        flask_server.watch('static/*.*')
+        flask_server.watch('templates/*.html')
+        flask_server.serve(port=5000, host="127.0.0.1")
+        
+        server.jinja_env.auto_reload = True
+    else:
+        server.run(host="0.0.0.0", port=5000)
