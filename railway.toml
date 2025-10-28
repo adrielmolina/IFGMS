@@ -1,5 +1,0 @@
-[build]
-
-
-[start]
-cmd = "gunicorn flask_server:server"
