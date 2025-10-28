@@ -13,14 +13,16 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-if os.getenv('FLASK_ENV') == 'development':
+if os.getenv('FLASK_ENV') == 'production':
+    DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'aiven').lower()
+else:
     current_dir = Path(__file__).parent
     parent_dir = current_dir.parent
     env_loc = parent_dir/'creds.env'
 
     load_dotenv(env_loc)
 
-DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'local').lower()
+    DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'local').lower()
 
 # FOR AIVEN DB CONNECTION
 AIVEN_URI = os.getenv('AIVEN_URI')

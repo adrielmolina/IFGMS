@@ -62,7 +62,7 @@ def roles_required(*roles):
 @server.before_request
 def auto_login():
     ''' Auto-login for development purposes. Remove or disable in production. '''
-    auto_login_enabled = True if os.getenv("FLASK_ENV") == "development" else False
+    auto_login_enabled = False if os.getenv("FLASK_ENV") == "production" else True
     
     db_session = db_conn.SessionLocal()
     if server.config.get("DEBUG_BYPASS_LOGIN", auto_login_enabled):
@@ -788,14 +788,18 @@ if __name__ == '__main__':
 
     #server.run(debug=True, use_reloader=True, port=5000)
     '''
+    print("FLASK_ENV:", os.getenv("FLASK_ENV"))
     
-    if os.getenv("FLASK_ENV") == "development":
+    if os.getenv("FLASK_ENV") == "production":
+        #server.run(host="0.0.0.0", port=5000)
+        pass
+    else:
+    #if os.getenv("FLASK_ENV") == "development":
         flask_server = Server(server.wsgi_app)
         flask_server.watch('static/*.*')
         flask_server.watch('templates/*.html')
         flask_server.serve(port=5000, host="127.0.0.1")
         
         server.jinja_env.auto_reload = True
-    else:
-        #server.run(host="0.0.0.0", port=5000)
-        pass
+
+        
