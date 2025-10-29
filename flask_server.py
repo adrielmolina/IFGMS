@@ -122,9 +122,9 @@ def logout():
 
 @server.route('/')
 def landing_page():
-    if os.getenv("FLASK_ENV") == "production":
+    if os.getenv("env") == "production":
         env = 'Live'
-    elif os.getenv("FLASK_ENV") == "staging":
+    elif os.getenv("env") == "staging":
         env = 'Staging'
     else:
         env = 'Development'
