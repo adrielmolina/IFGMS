@@ -10,6 +10,7 @@ from functools import wraps
 
 
 server = Flask(__name__)
+server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
 
 # CACHE CONTROL FOR STATIC FILES
@@ -28,6 +29,7 @@ login_manager.login_message = {
 login_manager.login_message_category = "warning"
 
 # TODO put @login_required on all template and api routes
+#! TODO redirect user to dashboard if already logged in and trying to access login page
 
 # for closing the session after requests
 @server.teardown_appcontext
@@ -120,7 +122,14 @@ def logout():
 
 @server.route('/')
 def landing_page():
-    return render_template('index.html')
+    if os.getenv("FLASK_ENV") == "production":
+        env = 'Live'
+    elif os.getenv("FLASK_ENV") == "staging":
+        env = 'Staging'
+    else:
+        env = 'Development'
+    
+    return render_template('index.html', env=env)
 
 
 @server.route('/create_account')
@@ -800,6 +809,5 @@ if __name__ == '__main__':
         flask_server.watch('templates/*.html')
         flask_server.serve(port=5000, host="127.0.0.1")
         
-        server.jinja_env.auto_reload = True
 
         
