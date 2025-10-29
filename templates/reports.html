@@ -18,25 +18,25 @@
             <h1>Reports</h1>
     </div>
 
-    <div>
     <!-- Filter container -->
-        <div class="filter_search_container">
-            <div class="filters_box">
-                <label for="filter_year">Filter by:</label>
-                <select id="filter_year">
-                    <option value="">Year</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
-                </select>
+    <div class="filter_search_container">
+        <div class="filters_box">
+            <label for="filter_year">Filter by:</label>
+            <select id="filter_year">
+                <option value="">Year</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+            </select>
 
-                <select id="filter_category">
-                    <option value="">Category</option>
-                    <option value="Public">Public</option>
-                    <option value="Private">Private</option>
-                </select>
-            </div>
+            <select id="filter_category">
+                <option value="">Category</option>
+                <option value="Public">Public</option>
+                <option value="Private">Private</option>
+            </select>
+
+            <button class="btn-export"><i class="fa-solid fa-file-export"></i> Export</button>
         </div>
     </div>
     
@@ -312,38 +312,18 @@
             { title: "Total Per Classification", field: "total", hozAlign:"center", headerHozAlign:"center", widthGrow: 1.2   },
         ],
 
-    groupBy: ["district", "municipality"],
+        groupBy: ["district", "municipality"],
 
-    groupHeader: function(value, count, data, group){
-        // if(group.getField() === "district"){
-        //     // 8 matte shades (blue, green, red families)
-        //     let colors = [
-        //         "#E3F2FD", "#BBDEFB", "#90CAF9", // blues
-        //         "#E8F5E9", "#C8E6C9", "#A5D6A7", // greens
-        //         "#FFEBEE", "#FFCDD2"             // reds
-        //     ];
-        //     let bgColor = colors[(value - 1) % colors.length];
+        groupHeader: function(value, count, data, group){
+            if(group.getField() === "district"){
+                return "<div style='text-align:center; font-weight:bold; font-size:1.1em; background:#7495f0; color:white; padding:6px; border-radius:4px;'>District " + value + "</div>";
+            }
+            if(group.getField() === "municipality"){
+                return "<div style='text-align:center; font-weight:bold; background:lightgray; padding:4px;'>" + value + "</div>";
+            }
+            return value;
+        },
 
-        //     return `<div style="text-align:center; font-weight:bold; font-size:1.1em; 
-        //                         background:${bgColor}; padding:6px; border-radius:4px;">
-        //                 <span class="tabulator-arrow"></span> District ${value}
-        //             </div>`;
-        // }
-
-        // if(group.getField() === "municipality"){
-        //     return `<div style="text-align:center; font-weight:bold; background:#f5f5f5; padding:4px;">
-        //                 <span class="tabulator-arrow"></span> ${value}
-        //             </div>`;
-        // }        
-
-        if(group.getField() === "district"){
-            return "<div style='text-align:center; font-weight:bold; font-size:1.1em;'>District " + value + "</div>";
-        }
-        if(group.getField() === "municipality"){
-            return "<div style='text-align:center; font-weight:bold; background:#f0f0f0; padding:4px;'>" + value + "</div>";
-        }
-        return value;
-    },
 });
 
     
