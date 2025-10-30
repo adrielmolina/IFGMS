@@ -31,8 +31,11 @@
    <div class="glass-card" id="loginForm">
       <img src="/static/assets/favicon.ico" alt="logo" class="login_logo" />
 
-      <h1>FGMS <span>Login</span></h1>
-      <p>Please login to continue.</p>
+    <span>
+        <h1>FGMS Login</h1>
+        <p style="color:rgb(37, 37, 37); padding:0%; gap:0;" >{{ env }} Environment</p>
+    </span>
+    <p>Please login to continue.</p>
 
    <form action="/login" method="POST" onsubmit="return handleLogin(event)">
     <input type="text" id="username" name="username" placeholder="Username" required autocomplete="off" autofocus />
@@ -54,10 +57,11 @@
     <div class="divider"><span></span><span>  or  </span><span></span></div>
 
     <!-- Request Account -->
-           <div class="request-account">
+            <div class="request-account">
                 <a href="/create_account">Request Account</a>
+                
             </div>
-              </form>
+            </form>
             </div> <!-- end of glass-card -->
 
             <div id="maab_reg" class="maab_reg">
@@ -68,7 +72,8 @@
                 </a>
           </div>
      </div>
-</div>
+    <!-- <p style="z-index: 9999; position: fixed; left: 45%; top: 29%; color:rgb(0, 0, 0); padding:5px; border-radius:6px;" >{{ env }} Environment</p> -->
+
 
 <script>
 

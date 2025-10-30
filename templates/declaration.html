@@ -48,13 +48,14 @@
     </div>
   </div>
 
-  <div class="action-buttons">
-    <button type="button" class="btn transmit" disabled>Transmit</button>
-    <button type="button" class="btn history" disabled>History</button>
-    <button type="button" class="btn select-all">Select All</button>
-    <button type="button" class="btn archive">Archive</button>
+    <div class="action-buttons">
+        <button id="btn_create_dispatch" type="button" class="btn_create_dispatch" >Create Disptch</button>
+        <button type="button" class="btn transmit" disabled>Transmit (0)</button>
+        <button type="button" class="btn history" disabled>History (0)</button>
+        <button type="button" class="btn select-all">Select All</button>
+        <button type="button" class="btn archive">Archive</button>
+    </div>
   </div>
-</div>
 
 <!-- ========================== -->
 <!-- DECLARATION TABLE SECTION -->
@@ -65,7 +66,7 @@
       <thead>
         <tr>
           <th><input type="checkbox" id="selectAll"></th>
-          <th>Transaction No.</th>
+          <th>Dispatch No.</th>
           <th>Year</th>
           <th>MAAB No.</th>
           <th>Member ID</th>
@@ -205,10 +206,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize
   updateSelection();
 });
-</script>
 
 <!-- 🔎 Search functionality -->
-<script>
 const searchInput = document.getElementById('search_input');
 const table = document.getElementById('dataTable');
 const rows = table.getElementsByTagName('tr');
@@ -217,10 +216,36 @@ searchInput.addEventListener('keyup', function () {
   const filter = searchInput.value.toLowerCase();
 
   for (let i = 1; i < rows.length; i++) {
-    const cells = rows[i].getElementsByTagName('td');
-    const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join('');
-    rows[i].style.display = rowText.includes(filter) ? '' : 'none';
+    let cells = rows[i].getElementsByTagName('td');
+    let rowText = '';
+
+    for (let j = 0; j < cells.length; j++) {
+      rowText += cells[j].textContent.toLowerCase();
+    }
+
+    rows[i].style.display = rowText.indexOf(filter) > -1 ? '' : 'none';
   }
 });
+
+document.getElementById('btn_create_dispatch').addEventListener('click', function() {
+    const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):"); // TODO use a date picker in a prmopt box
+    const late_declare = prompt("Include Late Declarations? (yes/no):").toLowerCase() === 'yes';
+    const dispatch_remarks = prompt("Enter Remarks (optional):");
+
+
+    fetch('/api/declaration', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            dispatch_cutoff,
+            late_declare,
+            dispatch_remarks
+        })
+    })
+});
+
+
 </script>
 {% endblock %}
