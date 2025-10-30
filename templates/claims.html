@@ -24,17 +24,42 @@
             <!-- TODO make this a file dialog and file opener -->
                 <!-- TODO add PRC Email to settings -->
                     <!-- TODO center the title -->
-    <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
-        <h3 style="margin: 0; font-weight: bolder;">C L A I M&nbsp;&nbsp;&nbsp;&nbsp;R E C O R D S</h3>                  
-    </span>
-
-    <div class="controls_box">
-        <button>Add Record</button>
+    <div class="module_name">
+        <h1>CLAIMS</h1>
     </div>
-    
-    <br>
-    <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
-    <button id="search_clear">Clear</button>
+
+    <!-- Filter container -->
+    <div class="filter_search_container">
+        <div class="filters_box">
+            <label for="filter_year">Filter by:</label>
+            <select id="filter_year">
+                <option value="">Year</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+            </select>
+
+            <select id="filter_category">
+                <option value="Month">Month</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+            </select>
+        </div>
+
+        <input id="claims-search" type="text" placeholder="Search...">
+    </div>
+
 
     <div id="claims_table" class="ht-theme-main"></div>
 
@@ -44,74 +69,84 @@
             <div id="overlay-body" class="overlay-body">
                 <!-- Dynamic content goes here -->
 
-                <span style="display: flex; flex-direction: row; align-items: center;gap: 15px;">
-                    <h3 style="margin: 0; font-weight: bolder;">C L A I M&nbsp;&nbsp;&nbsp;&nbsp;D E T A I L S</h3>                  
-                </span>
-                <div class="controls_box">
-                    <button onclick="expandAll()">Expand all groups</button>
-                    <button onclick="collapseAll()">Collapse all groups</button> <br><br><br><br>
-                    <button id="save_claim_record" class="save_claim_record">Save</button>
-                    <button id="delete_claim_record" class="delete_claim_record">Delete Record</button>
+                <div class="module_name">
+                    <h2>Claims Details</h2>
                 </div>
+
+                <div class="controls_box">
+                    <div class="controls_box_left">
+                        <button class="btn-expand" onclick="expandAll()">Expand all groups</button>
+                        <button class="btn-expand" onclick="collapseAll()">Collapse all groups</button>
+                    </div>
+
+                    <div class="controls_box_right">
+                        <button id="save_claim_record" class="btn-save">Save</button>
+                        <button id="delete_claim_record" class="btn-delete">Delete</button>
+                    </div>
+                </div>
+
 
                 <!-- TODO add credits and help buttons in sidebar -->
                 <div class="collapse_box_header">
                     <input id="claim_info_check" name="claim_info_check" class="collapse_box_checkbox"
                     type="checkbox" checked data-target_div="claim_info"> 
+
                     <!-- data-target_div should be the id of the div it's supposed to open/close -->
-                    <label for="claim_info_check" class="collapse_box_label">Claim Info</label>
+                    <label for="claim_info_check" class="collapse_box_label">CLAIM INFO</label>
                 </div>
-                <div id="claim_info" class="collapse_group">                 
-                    
+
+                <div id="claim_info" class="collapse_group">                                  
                     <div class="input_set">
+                        <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" placeholder=" ">
                         <label for="claim_id">Claim ID</label>
-                        <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" readonly>
-                    </div>
-                    
-                    <div class="input_set">
-                        <!-- <label for="date_filed">Date Filed</label> -->
-                        <span>
-                            <label for="date_released">Date Filed</label>
-                            <button style="float: right;" type="button" onclick="document.getElementById('date_filed').value = new Date().toISOString().slice(0, 10);">
-                                Today
-                            </button>
-                        </span>
-                        <input type="date" id="date_filed" name="date_filed" autocomplete="off">
                     </div>
 
                     <div class="input_set">
+                        <input type="date" id="date_filed" name="date_filed" autocomplete="off" placeholder=" ">
+                        <label for="date_filed">Date Filed</label>
+                        <button type="button" onclick="document.getElementById('date_filed').value = new Date().toISOString().slice(0, 10);">
+                            Today
+                        </button>
+                    </div>
+
+                    <div class="input_set">
+                        <input type="text" id="received_by" name="received_by" autocomplete="off" placeholder=" ">
                         <label for="received_by">Received by</label>
-                        <input type="text" id="received_by" name="received_by" autocomplete="off">
                     </div>
 
                     <div class="input_set">
-                        <label for="claim_origin">Claim Origin</label>
-                        <select name="claim_origin" id="claim_origin">
+                        <select id="claim_origin" name="claim_origin" required>
+                            <option value="" disabled selected hidden></option>
                             <option value="chapter">Chapter</option>
                             <option value="dasma">Dasmariñas</option>
                             <option value="silang">Silang</option>
                         </select>
+                        <label for="claim_origin">Claim Origin</label>
                     </div>
 
                     <div class="input_set">
+                        <input type="date" id="date_of_loss" name="date_of_loss" autocomplete="off" placeholder=" ">
                         <label for="date_of_loss">Date of Loss</label>
-                        <input type="date" id="date_of_loss" name="date_of_loss" autocomplete="off">
                     </div>
 
                     <div class="input_set">
-                        <label for="claim_type">Claim Type</label>
-                        <select name="claim_type" id="claim_type">
+                        <input type="date" id="claim_type" name="claim_type" required placeholder=" ">
+                        <label for="claim_type">Date of Loss</label>
+                    </div>
+
+                    <div class="input_set">
+                        <select id="claim_type" name="claim_type" required>
+                            <option value="" disabled selected hidden></option>
                             <option value="ACCIDENT">Accident</option>
                             <option value="DEATH">Death</option>
                         </select>
+                        <label for="claim_type">Claim Type</label>
                     </div>
-
                 </div>
 
-                <div class="collapse_box_header">
+                <!-- <div class="collapse_box_header">
                     <input id="principal_insured_info_check" name="principal_insured_info_check" class="collapse_box_checkbox"
                     type="checkbox" checked data-target_div="principal_insured_info"> 
-                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
                     <label for="principal_insured_info_check" class="collapse_box_label">Principal Insured Info</label>
                 </div>
                 <div id="principal_insured_info" class="collapse_group">      
@@ -158,13 +193,67 @@
                     
                     <input type="text" id="prpl_insured_contact" name="prpl_insured_contact" hidden>
                     <input type="text" id="prpl_insured_email" name="prpl_insured_email" hidden> 
+                </div> -->
+
+                <div class="collapse_box_header">
+                    <input id="principal_insured_info_check" name="principal_insured_info_check" class="collapse_box_checkbox"
+                        type="checkbox" checked data-target_div="principal_insured_info"> 
+                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
+                    <label for="principal_insured_info_check" class="collapse_box_label">PRINCIPAL INSURED INFORMATION</label>
                 </div>
+
+                <div id="principal_insured_info" class="collapse_group">      
+                    <div class="input_set">
+                        <input type="text" id="maab_no" name="maab_no" autocomplete="off" required>
+                        <label for="maab_no">MAAB No.</label>
+                        <button id="verify_maab_no" class="verify_maab_no">Verify</button>
+                    </div>
+
+                    <div class="input_set">
+                        <input type="date" id="eff_date" name="eff_date" readonly required>
+                        <label for="eff_date">Effectivity Date</label>
+                    </div>
+
+                    <div class="input_set">
+                        <input type="text" id="prpl_insured_fname" name="prpl_insured_fname" readonly>
+                        <label for="prpl_insured_fname">Principal Insured First Name</label>
+                    </div>
+
+                    <div class="input_set">
+                        <input type="text" id="prpl_insured_mname" name="prpl_insured_mname" readonly>
+                        <label for="prpl_insured_mname">Principal Insured Middle Name</label>
+                    </div>
+
+                    <div class="input_set">
+                        <input type="text" id="prpl_insured_lname" name="prpl_insured_lname" readonly>
+                        <label for="prpl_insured_lname">Principal Insured Last Name</label>
+                    </div>
+
+                    <div class="input_set">
+                        <select name="prpl_insured_suffix" id="prpl_insured_suffix" disabled required>
+                            <option value="NA">NA</option>
+                            <option value="Jr">Jr</option>
+                            <option value="Sr">Sr</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                            <option value="V">V</option>
+                            <option value="VI">VI</option>
+                            <option value="VII">VII</option>
+                        </select>
+                        <label for="prpl_insured_suffix">Principal Insured Suffix</label>
+                    </div>
+
+                    <input type="text" id="prpl_insured_contact" name="prpl_insured_contact" hidden>
+                    <input type="text" id="prpl_insured_email" name="prpl_insured_email" hidden> 
+                </div>
+
 
                 <div class="collapse_box_header">
                     <input id="claimant_info_check" name="claimant_info_check" class="collapse_box_checkbox"
                     type="checkbox" checked data-target_div="claimant_info"> 
                     <!-- data-target_div should be the id of the div it's supposed to open/close -->
-                    <label for="claimant_info_check" class="collapse_box_label">Claimant Info</label>
+                    <label for="claimant_info_check" class="collapse_box_label">CLAIMANT INFORMATION</label>
                 </div>
                 <div id="claimant_info" class="collapse_group">  
 
@@ -236,7 +325,7 @@
                     <input id="requirements_check" name="requirements_check" class="collapse_box_checkbox"
                     type="checkbox" checked data-target_div="requirements"> 
                     <!-- data-target_div should be the id of the div it's supposed to open/close -->
-                    <label for="requirements_check" class="collapse_box_label">Required Documents</label>
+                    <label for="requirements_check" class="collapse_box_label">REQUIRED DOCUMENTS</label>
                 </div>
                 <div id="requirements" class="collapse_group">
                     <div class="input_set">
