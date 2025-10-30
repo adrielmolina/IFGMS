@@ -1,12 +1,354 @@
+.module_name {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    padding: 15px 20px;
+    margin-left: 0; 
+    margin-right: 0; 
+    position: relative;
+    z-index: 1;
+    margin-top: 0; 
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    background-color: #fff;
+    margin-bottom: 10px;
+    color: #B92F2F
+}
 
 body {
     background-color: #f3e8e8;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
 }
 
-label {
-    font-weight: bold;
+.filter_search_container {
+  display: flex;
+  justify-content: space-between;  /* keeps filters on left, search on right */
+  align-items: center;
+  background: #fff;
+  padding: 15px 20px;
+  margin: 20px 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  width: auto;
 }
+
+.filters_box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#claims-search {
+  padding: 6px 8px 6px 30px;
+  width: 250px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/svgs/solid/magnifying-glass.svg') no-repeat 8px center;
+  background-size: 14px 14px;
+}
+
+.filters_box label {
+  font-weight: 600;
+  color: #333;
+}
+
+.filters_box select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: border 0.2s;
+}
+
+.filters_box select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+.filter_search_container .search_box {
+  margin: 0;
+  margin-left: auto;
+}
+
+.filter_search_container .search_box input {
+  width: 280px;
+}
+
+.search_box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  margin-top: 10px;
+  margin-left: auto; 
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+#overlay .module_name {
+    width: 100%;
+}
+
+#overlay .module_name h3 {
+    background-color: #fff;
+    color: #B92F2F;
+    font-weight: 600;
+    letter-spacing: 0.25px;
+    padding: 4px 10px;         /* reduced padding */
+    border-radius: 8px;        /* slightly smaller rounding */
+    margin: 8px 0;
+    width: 100%;
+    text-align: left;
+    box-sizing: border-box;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);  /* softer shadow */
+}
+
+.controls_box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;      /* ⬇️ reduced from 10px */
+  padding-top: 2px;     /* ⬇️ reduced from 10px */
+  padding-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.controls_box_left,
+.controls_box_right {
+  display: flex;
+  gap: 8px;             /* ⬇️ slightly tighter for balance */
+}
+
+.controls_box button {
+  padding: 8px 14px;    /* ⬇️ smaller button height */
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  color: #fff;
+}
+
+.btn-expand {
+  background-color: #64748b;
+}
+.btn-expand:hover {
+  background-color: #475569;
+}
+
+.btn-save {
+  background-color: #22c55e;
+}
+.btn-save:hover {
+  background-color: #16a34a;
+}
+
+.btn-delete {
+  background-color: #ef4444;
+}
+.btn-delete:hover {
+  background-color: #dc2626;
+}
+
+.collapse_box_header {
+    color: white;
+    font-weight: 600;
+    background-color: #f07474;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    padding: 2px 6px; /* smaller height and side space */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 4px 0;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+    box-sizing: border-box;
+    min-height: 40px; /* force smaller height */
+}
+
+.collapse_box_header:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.collapse_box_label {
+    background: transparent;
+    color: inherit;
+    font-weight: 600;
+    font-size: 0.65rem; /* visibly smaller */
+    line-height: 1; /* tighten text spacing */
+    user-select: none;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.collapse_box_checkbox {
+    display: none;
+}
+
+/* Base label style */
+.collapse_box_label {
+  cursor: pointer;
+  font-size: 20px;
+  user-select: none;
+  /* margin-left: 1%; */
+  margin: 1%
+}
+.collapse_box_label:hover {
+  text-decoration: underline;
+}
+/* Default arrow (right) */
+.collapse_box_label::before {
+  content: "▶";  /* right-pointing triangle */
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 1s;
+}
+
+/* Checked arrow (down) */
+.collapse_box_checkbox:checked + .collapse_box_label::before {
+  content: "▼";  /* down-pointing triangle */
+  color: rgb(36, 183, 36);
+}
+
+.collapse_group {
+    /* background-color: #5f0909bf; */
+    /* border: 1px solid black; */
+    margin-bottom: 1%;
+    display: flex;
+    gap: 10px;
+    padding: 20px;
+    width: 99%;
+}
+
+/* === CLAIM INFO & PRINCIPAL INSURED INFO GROUP BOXES === */
+#claim_info,
+#principal_insured_info {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 24px 20px; 
+  margin: 10px 0 16px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-auto-rows: minmax(60px, auto); /* ensures consistent row height */
+  gap: 20px; /* uniform spacing between inputs */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* === Wider Principal Insured Name Fields === */
+#principal_insured_info #prpl_insured_fname,
+#principal_insured_info #prpl_insured_mname,
+#principal_insured_info #prpl_insured_lname {
+  min-width: 280px;        /* wider to accommodate longer names */
+  max-width: 100%;         /* prevent overflowing container */
+  grid-column: span 2;     /* span 2 columns in the grid */
+  box-sizing: border-box;  
+  margin-bottom: 16px;     /* consistent spacing below each input */
+}
+
+/* Ensure the parent grid has enough space for wider inputs */
+#principal_insured_info {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 20px;          /* vertical and horizontal spacing */
+}
+
+
+/* === INPUT SETS === */
+#claim_info .input_set,
+#principal_insured_info .input_set {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+#claim_info .input_set input,
+#claim_info .input_set select,
+#principal_insured_info .input_set input,
+#principal_insured_info .input_set select {
+  width: 100%;
+  padding: 20px 12px 8px 12px; /* taller input for floating label */
+  font-size: 1rem;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  box-sizing: border-box;
+  appearance: none; /* removes default select arrow spacing */
+}
+
+/* === FLOATING LABELS === */
+#claim_info .input_set label,
+#principal_insured_info .input_set label {
+  position: absolute;
+  top: 14px;
+  left: 12px;
+  font-size: 0.9rem;
+  color: #777;
+  background: #fff;
+  padding: 0 4px;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+/* Label moves when input/select is focused or has value */
+#claim_info .input_set input:focus + label,
+#claim_info .input_set input:not(:placeholder-shown) + label,
+#claim_info .input_set select:focus + label,
+#claim_info .input_set select:valid + label,
+#principal_insured_info .input_set input:focus + label,
+#principal_insured_info .input_set input:not(:placeholder-shown) + label,
+#principal_insured_info .input_set select:focus + label,
+#principal_insured_info .input_set select:valid + label {
+  top: -8px;     
+  left: 10px;
+  font-size: 0.75rem;
+  color: #B92F2F;
+}
+
+/* === FOCUS EFFECT === */
+#claim_info .input_set input:focus,
+#claim_info .input_set select:focus,
+#principal_insured_info .input_set input:focus,
+#principal_insured_info .input_set select:focus {
+  outline: none;
+  border-color: #B92F2F;
+  box-shadow: 0 0 0 2px rgba(185, 47, 47, 0.15);
+}
+
+/* === BUTTONS (Verify, Today, etc.) === */
+#claim_info .input_set button,
+#principal_insured_info .input_set button {
+  margin-top: 6px; 
+  align-self: flex-start;
+  background-color: #f07474;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#claim_info .input_set button:hover,
+#principal_insured_info .input_set button:hover {
+  background-color: #d85f5f;
+}
+
 
 .ht_master .wtHolder {
     padding-bottom: 1%; /* adjust this value */
@@ -429,98 +771,9 @@ input:checked + .slider:before {
     flex: 1; /* optional: equal width columns */
 }
 
-.controls_box {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  padding-top: 10px;
-  margin-top: auto;
-  width: 80%;
-}
-.controls_box button {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-}
-.controls_box button:hover {
-  background-color: #3c3c3c;
-}
 
-.btn-add {
-  background-color: #22c55e !important;
-  color:#fff; 
-}
-.btn-add:hover {
-  background-color: #16a34a !important; 
-  color:hsl(0, 0%, 21%); 
-}
 
-.collapse_box_header {
-    background-color: #4e474732;
-    width: 99%;
-    height: 4vh;
-    border-radius: 10px;
-    margin: 5px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-}
-.collapse_box_header:hover {
-    border: #000000 1px solid;
-    cursor: pointer;
-}
 
-.collapse_box_checkbox {
-    display: none;
-}
-
-/* Base label style */
-.collapse_box_label {
-  cursor: pointer;
-  font-size: 20px;
-  user-select: none;
-  /* margin-left: 1%; */
-  margin: 1%
-}
-.collapse_box_label:hover {
-  text-decoration: underline;
-}
-/* Default arrow (right) */
-.collapse_box_label::before {
-  content: "▶";  /* right-pointing triangle */
-  display: inline-block;
-  margin-right: 6px;
-  transition: transform 1s;
-}
-
-/* Checked arrow (down) */
-.collapse_box_checkbox:checked + .collapse_box_label::before {
-  content: "▼";  /* down-pointing triangle */
-  color: rgb(36, 183, 36);
-}
-
-.collapse_group {
-    /* background-color: #5f0909bf; */
-    /* border: 1px solid black; */
-    margin-bottom: 1%;
-    display: flex;
-    gap: 10px;
-    padding: 20px;
-    width: 99%;
-}
-.input_set {
-    display: flex;
-    flex-direction: column;
-    width: 80%;
-    margin: 5px;
-}
 
 /* ========================================================= */
 /* PAGINATION STYLING                */
