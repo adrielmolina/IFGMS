@@ -15,7 +15,7 @@
 <div class="module_name">
   <h1>Declaration</h1>
 
-    <div class="search_box">
+  <div class="search_box">
     <i class="fa-solid fa-magnifying-glass"></i>
     <input type="text" id="search_input" placeholder="Search declarations..." autocomplete="off">
     <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
@@ -46,7 +46,6 @@
         <option>De La Salle University Dasmarinas</option>
       </select>
     </div>
-
   </div>
 
     <div class="action-buttons">
@@ -57,7 +56,6 @@
         <button type="button" class="btn archive">Archive</button>
     </div>
   </div>
-
 
 <!-- ========================== -->
 <!-- DECLARATION TABLE SECTION -->
@@ -168,24 +166,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const checkedCount = document.querySelectorAll(".row-check:checked").length;
     const totalCount = tableRows.length;
 
+    // Enable/disable buttons
     transmitBtn.disabled = checkedCount === 0;
     historyBtn.disabled = checkedCount === 0;
 
-    transmitBtn.textContent = `Transmit (${checkedCount})`;
-    historyBtn.textContent = `History (${checkedCount})`;
+    // Dynamic text (only show count when > 0)
+    transmitBtn.textContent = checkedCount > 0
+      ? `Transmit (${checkedCount})`
+      : "Transmit";
+    historyBtn.textContent = checkedCount > 0
+      ? `History (${checkedCount})`
+      : "History";
 
+    // Update summary
     summaryText.textContent = `Showing ${totalCount} of ${totalCount} declarations • ${checkedCount} selected`;
 
+    // Update "select all" checkbox state
     selectAllCheckbox.checked = checkedCount === totalCount;
   }
 
+  // Handle row checkbox changes
   rowChecks.forEach(cb => cb.addEventListener("change", updateSelection));
 
+  // Handle "Select All" checkbox in table header
   selectAllCheckbox.addEventListener("change", () => {
     rowChecks.forEach(cb => cb.checked = selectAllCheckbox.checked);
     updateSelection();
   });
 
+  // Handle "Select All / Deselect All" button
   selectAllBtn.addEventListener("click", () => {
     const isSelecting = selectAllBtn.textContent === "Select All";
     rowChecks.forEach(cb => cb.checked = isSelecting);
@@ -194,6 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSelection();
   });
 
+  // Initialize
   updateSelection();
 });
 
