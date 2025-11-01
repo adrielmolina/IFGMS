@@ -6,7 +6,7 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/inventory.css') }}">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
@@ -527,8 +527,6 @@ class Carousel {
   }
 }
 
-
-
 // Refers to the carousel root element you want to target, use specific class selectors if using multiple carousels
 const el = document.querySelector('.carousel');
 // Create a new carousel object
@@ -751,5 +749,5 @@ clearBtn.addEventListener('click', function () {
 
 
         
-    </script>
+</script>
 {% endblock %}
