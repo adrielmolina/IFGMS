@@ -390,7 +390,7 @@ form button:hover {
 }
 
 
-/* ---------- INVENTORY TABLE  ---------- */
+/* ---------- INVENTORY TABLE (INTEGRATED WITH SIDE-CARD STYLE) ---------- */
 .inventory_table {
     margin-top: 20px;
     width: 95%;
@@ -415,6 +415,7 @@ form button:hover {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
+/* Category header (like side-card.full h4) */
 .category-label {
     font-size: 16px;
     font-weight: 600;
@@ -424,6 +425,7 @@ form button:hover {
     letter-spacing: 0.3px;
 }
 
+/* Category color themes */
 #table-Classic .category-label { background: #f07474; }          /* red */
 #table-Bronze .category-label { background: #c97a57; }           /* bronze */
 #table-Silver .category-label { background: #a0a0a0; }           /* silver gray */
@@ -433,6 +435,7 @@ form button:hover {
 #table-Senior .category-label { background: #b86bbf; }           /* purple */
 #table-Senior_+.category-label { background: #6a4fbf; }          /* dark violet */
 
+/* Table styling inside each section */
 .category-table-section table {
     width: 100%;
     border-collapse: collapse;
@@ -504,7 +507,7 @@ form button:hover {
 
 .category-bar {
     background: #fff;
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -540,3 +543,4 @@ form button:hover {
 .category-table-section.active {
     display: block;
 }
+

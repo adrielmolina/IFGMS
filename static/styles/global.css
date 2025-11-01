@@ -14,5 +14,5 @@ body *:not(.navbar):not(.navbar *):not(.module_name):not(.module_name *):not(h1)
 .module_name h1 {
     font-size: 35px !important;
     font-weight: 700 !important;
-    color:  #ed4e4e;
+    color: rgb(214, 88, 88);
 }
