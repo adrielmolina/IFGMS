@@ -1,17 +1,8 @@
-html, body {
-    padding: 0;
-    height: 100%;
-    overflow: hidden;
-}
-
 body {
-    font-family: Arial, sans-serif;
-    margin: 20;
-    padding: 1rem;
-    background: #fff4f4;
+    background-color: #f3e8e8;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    min-height: 100vh; 
 }
 
 .ht_clone_top {
@@ -35,8 +26,8 @@ body {
     justify-content: space-between; 
     align-items: center;
     padding: 15px 20px;
-    margin-left: 0;
-    margin-right: 0;
+    margin-left: 0; 
+    margin-right: 0; 
     position: relative;
     z-index: 1;
     margin-top: 0; 
@@ -44,29 +35,152 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     background-color: #fff;
     margin-bottom: 10px;
-    color: #d14d4d;
-    font-weight: bold !important;
+    color: #B92F2F
 }
 
 
-.top-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    justify-content: space-between;
+
+.filter_search_container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 15px 20px;
+  margin: 0 0 25px 0; 
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-top: 20px;
+  margin-bottom: 20px;
+  width: auto;
 }
 
-/* ========================================================= */
-/* SEARCH BAR                                                */
-/* ========================================================= */
+.filters_box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filters_box label {
+  font-weight: 600;
+  color: #333;
+}
+
+.filters_box select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: border 0.2s;
+}
+
+.filters_box select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+.filter_search_container .search_box {
+  margin: 0;
+  margin-left: auto;
+}
+
+.filter_search_container .search_box input {
+  width: 280px;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* space between label and dropdown */
+}
+
+.filter label {
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* ----------------------------- */
+/* Custom Dropdown Integration   */
+/* ----------------------------- */
+
+.custom-select {
+  position: relative;
+  width: 200px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.custom-select .selected {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: border 0.2s, background 0.2s;
+}
+
+.custom-select .selected:hover {
+  border-color: #3b82f6;
+  background: #fff;
+}
+
+.custom-select .options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: none;
+  background: #fff;
+  border: 1px solid #ff0000;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  z-index: 10;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.custom-select.open .options {
+  display: block;
+}
+
+.custom-select .options li {
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+/* Unique hover colors per option */
+.custom-select .options li:hover[data-value="Classic"] { background: #f07474; color: #fff; }
+.custom-select .options li:hover[data-value="Bronze"] { background: #c97a57; color: #fff; }
+.custom-select .options li:hover[data-value="Silver"] { background: #a0a0a0; color: #fff; }
+.custom-select .options li:hover[data-value="Gold"] { background: #e0b84c; color: #fff; }
+.custom-select .options li:hover[data-value="Platinum"] { background: #7fbcd2; color: #fff; }
+.custom-select .options li:hover[data-value="Enhanced Platinum"] { background: #4d8fac; color: #fff; }
+.custom-select .options li:hover[data-value="Senior"] { background: #b86bbf; color: #fff; }
+.custom-select .options li:hover[data-value="Senior+"] { background: #6a4fbf; color: #fff; }
+.custom-select .options li:hover[data-value="all"] { background: #f0f0f0; color: #333; }
+
+/* Persistent active color for selected category */
+.custom-select .options li.active[data-value="Classic"] { background: #f07474; color: #fff; }
+.custom-select .options li.active[data-value="Bronze"] { background: #c97a57; color: #fff; }
+.custom-select .options li.active[data-value="Silver"] { background: #a0a0a0; color: #fff; }
+.custom-select .options li.active[data-value="Gold"] { background: #e0b84c; color: #fff; }
+.custom-select .options li.active[data-value="Platinum"] { background: #7fbcd2; color: #fff; }
+.custom-select .options li.active[data-value="Enhanced Platinum"] { background: #4d8fac; color: #fff; }
+.custom-select .options li.active[data-value="Senior"] { background: #b86bbf; color: #fff; }
+.custom-select .options li.active[data-value="Senior+"] { background: #6a4fbf; color: #fff; }
+.custom-select .options li.active[data-value="all"] { background: #f0f0f0; color: #333; }
+
+
+
 
 .search_box {
   display: flex;
   align-items: center;
   position: relative;
   width: fit-content;
-  margin-top: px;
+  margin-top: 10px;
   margin-left: auto; 
   margin-right: 10px;
   margin-bottom: 10px;
@@ -115,27 +229,50 @@ body {
   transition: 0.2s;
 }
 
-#openFormBtn1 {
-    position: relative;
-    z-index: 10;
-    padding: 10px 25px;
-    background-color: #534caf !important;
-    color: white;
-    border: none;
-    cursor: pointer;
-    margin-top: 6vh;
-    margin-bottom: 1vh;
+.action-buttons {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  margin: 25px 0 20px 25px;
+  flex-wrap: wrap;
 }
 
- #openFormBtn2 {
-    position: relative;
-    z-index: 10;
-    padding: 10px 25px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    cursor: pointer;
-    margin-bottom: 10px;
+.action-buttons .btn {
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Button colors — same scheme as members.css */
+.action-buttons #openFormBtn1 {
+  background: #34a853;  /* ✅ Green for transmit */
+  color: white;
+}
+
+#openFormBtn1:hover {
+  background-color: #16a34a !important; 
+  color:hsl(0, 0%, 21%); 
+}
+
+.action-buttons #openFormBtn2 {
+  background: #4285f4;  /* 🔵 Blue for select all */
+  color: white;
+}
+
+#openFormBtn2:hover {
+  background-color: #2563eb !important;
+  color:hsl(0, 0%, 21%); 
+}
+
+/* Hover effect */
+.action-buttons .btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
 }
 
 #popupForm1, #popupForm2 {
@@ -161,8 +298,8 @@ h2{
     border-radius: 8px;
     width: 35vh;
     text-align: center;
-    margin-right: 115vh;
     margin-bottom: 44vh;
+    border: 1px solid #f07474;
 }
 
 .form-container2 {
@@ -174,13 +311,22 @@ h2{
     position: relative;
 }
 
-.close-btn {
+#closeBtn1 {
+    position: absolute;
+    top: 30px;
+    right: 800px;
+    font-size: 30px;
+    cursor: pointer;
+    color: rgb(241, 68, 68);
+}
+
+#closeBtn2 {
     position: absolute;
     top: 10px;
     right: 10px;
     font-size: 30px;
     cursor: pointer;
-    color: #333;
+    color: rgb(241, 68, 68);
 }
 
 .form-row {
@@ -195,17 +341,41 @@ h2{
     margin-bottom: 5px;
 }
 
-.form-row input {
+/* New wrapper for inputs side-by-side */
+.input-group {
+    display: flex;
+    gap: 8px; /* space between inputs */
+}
+
+/* Style prefixBox smaller */
+#prefixBox {
+    width: 50px;
     padding: 10px;
     font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    width: 100%; /* Full width to fit the container */
+    background-color: #eee;
+    text-align: center;
 }
 
-#ID_Number, #numIds, #idNumberBox {
-    width: 100%; /* Ensure input fields are full-width */
+/* Number input fills remaining space */
+#ID_Number {
+    flex-grow: 1;  /* take remaining space */
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
+
+/* Other inputs remain full width if needed */
+#numIds, #idNumberBox {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
 
 form button {
     padding: 12px;
@@ -390,7 +560,28 @@ form button:hover {
 }
 
 
-/* ---------- INVENTORY TABLE (INTEGRATED WITH SIDE-CARD STYLE) ---------- */
+
+
+.table_wrapper {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  padding: 10px 20px 20px;
+  margin-top: 10px;
+  position: relative;
+}
+
+.category-label {
+  font-weight: 600;
+  font-size: 16px;
+  color: #444;
+  margin-bottom: 10px;
+  text-align: left;
+  border-bottom: 2px solid #f07474;
+  padding-bottom: 6px;
+}
+
+
 .inventory_table {
     margin-top: 20px;
     width: 95%;
@@ -398,87 +589,35 @@ form button:hover {
     margin-left: 60px;
 }
 
-.category-table-section {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
-    width: 100%;
-    margin: 0 0 40px 0;
-    transition: all 0.3s ease;
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: fadeInCard 0.4s ease forwards;
+.handsontable th {
+    background-color: #f07474 ; /* your light coral color */
+    color: #fff ;
+    font-weight: bold ;
+    text-align: center;
+    border: 1px solid #ccc ;
+    padding: 14px ;
 }
 
-.category-table-section:hover {
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-}
-
-/* Category header (like side-card.full h4) */
-.category-label {
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-    padding: 10px 14px;
-    border-radius: 12px 12px 0 0;
-    letter-spacing: 0.3px;
-}
-
-/* Category color themes */
-#table-Classic .category-label { background: #f07474; }          /* red */
-#table-Bronze .category-label { background: #c97a57; }           /* bronze */
-#table-Silver .category-label { background: #a0a0a0; }           /* silver gray */
-#table-Gold .category-label { background: #e0b84c; }             /* gold */
-#table-Platinum .category-label { background: #7fbcd2; }         /* light blue */
-#table-Enhanced_Platinum .category-label { background: #4d8fac; }/* deeper blue */
-#table-Senior .category-label { background: #b86bbf; }           /* purple */
-#table-Senior_+.category-label { background: #6a4fbf; }          /* dark violet */
-
-/* Table styling inside each section */
-.category-table-section table {
-    width: 100%;
-    border-collapse: collapse;
-    background: transparent;
-}
-
-.category-table-section th {
-    background: transparent;
-    font-weight: 600;
-    padding: 10px 14px;
-    border-bottom: 1px solid #f0f0f0;
-    color: #444;
-    font-size: 13.5px;
+/* Data cells */
+.handsontable td {
+    border: 1px solid #ccc !important;
+    padding: 14px !important;
     text-align: left;
-    letter-spacing: 0.2px;
+    color: #333;
 }
 
-.category-table-section td {
-    padding: 9px 14px;
-    font-size: 13.5px;
-    color: #555;
-    border-bottom: 1px solid #f7f7f7;
+/* Alternate row coloring */
+.handsontable .ht_master tr:nth-child(odd) td {
+    background-color: #fafafa !important;
 }
 
-.category-table-section tr:last-child td {
-    border-bottom: none;
+.handsontable .ht_master tr:nth-child(even) td {
+    background-color: #f2f2f2 !important;
 }
 
-.category-table-section table tr {
-    border-left: 1px solid rgba(0, 0, 0, 0.05);
-    border-right: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.category-table-section tr:hover {
-    background: #ffc7c7;
-    transition: background 0.2s ease;
-}
-
-@keyframes fadeInCard {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Optional: Hover effect for better UX */
+.handsontable .ht_master tr:hover td {
+    background-color: #f9f9f9 !important;
 }
 
 .inventory_btns {

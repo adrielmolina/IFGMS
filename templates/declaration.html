@@ -48,10 +48,13 @@
     </div>
   </div>
 
-  <div class="action-buttons" id="defaultButtons">
-    <button type="button" class="btn transmit" disabled>Transmit (0)</button>
-    <button type="button" class="btn history" onclick="showHistory()">History</button>
-    <button type="button" class="btn select-all">Select All</button>
+    <div class="action-buttons">
+        <button id="btn_create_dispatch" type="button" class="btn_create_dispatch" >Create Disptch</button>
+        <button type="button" class="btn transmit" disabled>Transmit (0)</button>
+        <button type="button" class="btn history" disabled>History (0)</button>
+        <button type="button" class="btn select-all">Select All</button>
+        <button type="button" class="btn archive">Archive</button>
+    </div>
   </div>
 
   <!-- Hidden alternate buttons for History view -->
@@ -59,7 +62,6 @@
     <button type="button" class="btn export"><i class="fa-solid fa-file-export"></i> Export</button>
   </div>
 </div>
-
 <div class="declaration_table">
   <h4 id="tableTitle">
     <i class="fa-solid fa-file-lines"></i> Dispatch Contents
@@ -142,24 +144,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const checkedCount = document.querySelectorAll(".row-check:checked").length;
     const totalCount = tableRows.length;
 
+    // Enable/disable buttons
     transmitBtn.disabled = checkedCount === 0;
-    historyBtn.disabled = false;
+    historyBtn.disabled = checkedCount === 0;
 
-    transmitBtn.textContent = `Transmit (${checkedCount})`;
-    historyBtn.textContent = `History (${checkedCount})`;
+    // Dynamic text (only show count when > 0)
+    transmitBtn.textContent = checkedCount > 0
+      ? `Transmit (${checkedCount})`
+      : "Transmit";
+    historyBtn.textContent = checkedCount > 0
+      ? `History (${checkedCount})`
+      : "History";
 
+    // Update summary
     summaryText.textContent = `Showing ${totalCount} of ${totalCount} declarations • ${checkedCount} selected`;
 
+    // Update "select all" checkbox state
     selectAllCheckbox.checked = checkedCount === totalCount;
   }
 
+  // Handle row checkbox changes
   rowChecks.forEach(cb => cb.addEventListener("change", updateSelection));
 
+  // Handle "Select All" checkbox in table header
   selectAllCheckbox.addEventListener("change", () => {
     rowChecks.forEach(cb => cb.checked = selectAllCheckbox.checked);
     updateSelection();
   });
 
+  // Handle "Select All / Deselect All" button
   selectAllBtn.addEventListener("click", () => {
     const isSelecting = selectAllBtn.textContent === "Select All";
     rowChecks.forEach(cb => cb.checked = isSelecting);
@@ -168,12 +181,11 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSelection();
   });
 
+  // Initialize
   updateSelection();
 });
-</script>
 
 <!-- 🔎 Search functionality -->
-<script>
 const searchInput = document.getElementById('search_input');
 const table = document.getElementById('dataTable');
 const rows = table.getElementsByTagName('tr');
@@ -192,6 +204,27 @@ searchInput.addEventListener('keyup', function () {
     rows[i].style.display = rowText.indexOf(filter) > -1 ? '' : 'none';
   }
 });
+
+document.getElementById('btn_create_dispatch').addEventListener('click', function() {
+    const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):"); // TODO use a date picker in a prmopt box
+    const late_declare = prompt("Include Late Declarations? (yes/no):").toLowerCase() === 'yes';
+    const dispatch_remarks = prompt("Enter Remarks (optional):");
+
+
+    fetch('/api/declaration', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            dispatch_cutoff,
+            late_declare,
+            dispatch_remarks
+        })
+    })
+});
+
+
 </script>
 
 <!-- 👇 Added for History and Back button toggle -->

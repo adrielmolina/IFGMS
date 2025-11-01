@@ -1,4 +1,4 @@
-CREATE TABLE `members_info` (
+CREATE TABLE IF NOT EXISTS `members_info` (
 	`member_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`first_name` VARCHAR(255),
 	`middle_name` VARCHAR(255),
@@ -15,7 +15,7 @@ CREATE TABLE `members_info` (
 );
 
 
-CREATE TABLE `accounts` (
+CREATE TABLE IF NOT EXISTS `accounts` (
 	`account_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`username` VARCHAR(255) NOT NULL UNIQUE,
 	`password` VARCHAR(255) NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE `accounts` (
 );
 
 
-CREATE TABLE `membership_records` (
+CREATE TABLE IF NOT EXISTS `membership_records` (
 	`record_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`year` YEAR,
 	`id_received` BOOLEAN COMMENT 'mark automatically if all cards in entry is received',
@@ -55,7 +55,7 @@ CREATE TABLE `membership_records` (
 );
 
 
-CREATE TABLE `inventory` (
+CREATE TABLE IF NOT EXISTS `inventory` (
 	`inv_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
 	`maab_no` VARCHAR(255) UNIQUE,
@@ -66,7 +66,7 @@ CREATE TABLE `inventory` (
 );
 
 
-CREATE TABLE `maab_claims` (
+CREATE TABLE IF NOT EXISTS `maab_claims` (
 	`claim_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`date_filed` DATE,
 	`received_by` VARCHAR(255),
@@ -117,7 +117,7 @@ CREATE TABLE `maab_claims` (
 );
 
 
-CREATE TABLE `maab_claims_archive` (
+CREATE TABLE IF NOT EXISTS `maab_claims_archive` (
 	`archived_claim_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`claim_id` INTEGER NOT NULL UNIQUE,
 	`date_filed` DATE,
@@ -169,7 +169,7 @@ CREATE TABLE `maab_claims_archive` (
 );
 
 
-CREATE TABLE `otp_verifications` (
+CREATE TABLE IF NOT EXISTS `otp_verifications` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`email` VARCHAR(255) NOT NULL,
 	`otp` VARCHAR(6) NOT NULL,
@@ -180,7 +180,7 @@ CREATE TABLE `otp_verifications` (
 );
 
 
-CREATE TABLE `audit_logs` (
+CREATE TABLE IF NOT EXISTS `audit_logs` (
 	`action_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`date` DATETIME NOT NULL,
 	`staff_name` VARCHAR(255) NOT NULL,
@@ -192,7 +192,7 @@ CREATE TABLE `audit_logs` (
 );
 
 
-CREATE TABLE `entry_contents` (
+CREATE TABLE IF NOT EXISTS `entry_contents` (
 	`entry_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`record_id` INTEGER,
 	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
@@ -206,16 +206,19 @@ CREATE TABLE `entry_contents` (
 	`OR_date` DATE,
 	`remarks` TEXT(65535),
 	`tags` ENUM('late-declare', 'overage', 'underage'),
+	`dispatch_ready` BOOLEAN,
+	`dispatch_id` INTEGER UNIQUE,
 	PRIMARY KEY(`entry_id`)
 ) COMMENT='table for contents of a membership_record entry';
 
 
-CREATE TABLE `dispatch` (
+CREATE TABLE IF NOT EXISTS `dispatch` (
 	`dispatch_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`dispatch_type` ENUM('declaration', 'transmission'),
-	`dispatch_origin` ENUM('chapter', 'dasma', 'silang'),
+	`dispatch_origin` ENUM('Chapter', 'Dasmarinas', 'Silang'),
 	`dispatch_year` YEAR,
 	`dispatch_cutoff` DATE,
+	`dispatch_status` ENUM('current', 'dispatched', 'disregard'),
 	`date_dispatched` DATE,
 	`dispatch_total` INTEGER,
 	`late_declare` BOOLEAN,
@@ -224,7 +227,7 @@ CREATE TABLE `dispatch` (
 );
 
 
-CREATE TABLE `dispatch_contents` (
+CREATE TABLE IF NOT EXISTS `RETIRED_dispatch_contents` (
 	`dispatch_content_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`entry_id` INTEGER NOT NULL UNIQUE,
 	`maab_category` ENUM('classic', 'bronze', 'silver', 'gold', 'platinum', 'safe card', 'senior', 'senior+'),
@@ -249,4 +252,7 @@ ADD FOREIGN KEY(`member_id`) REFERENCES `members_info`(`member_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `maab_claims`
 ADD FOREIGN KEY(`maab_no`) REFERENCES `entry_contents`(`maab_no`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `entry_contents`
+ADD FOREIGN KEY(`dispatch_id`) REFERENCES `dispatch`(`dispatch_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
