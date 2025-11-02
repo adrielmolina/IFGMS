@@ -1,39 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>MAAB ID Gallery</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
-
+  <meta charset="UTF-8" />
+  <title>MAAB ID Gallery</title>
+  <!-- Link to your single cleaned CSS file -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
 </head>
 <body>
-    <div class="gallery-container">
-        <h1>MAAB ID GALLERY</h1>
+  <div class="main-section">
 
-        <div class="carousel">
-            <button class="arrow left" id="leftBtn">&#10094;</button>
+    <!-- ===== GALLERY CONTAINER ===== -->
+    <div class="gallery-wrapper">
+      <button id="prevBtn" class="slide-btn">&#10094;</button> <!-- left arrow -->
+      <div class="gallery" id="gallery">
+      
+        <!-- Use url_for to ensure Flask serves the files correctly -->
+        <div class="card" data-id="classic" data-image="{{ url_for('static', filename='assets/ID1.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID1.png') }}" alt="Classic ID">
+          <p>Classic ID</p>
+        </div>
 
-            <div class="image-track" id="imageTrack">
-                <img src="{{ url_for('static', filename='assets/ID1.png') }}" alt="Classic ID" data-desc="classic">
-                <img src="{{ url_for('static', filename='assets/ID2.png') }}" alt="Bronze ID" data-desc="bronze">
-                <img src="{{ url_for('static', filename='assets/ID3.png') }}" alt="Silver ID" data-desc="silver">
-                <img src="{{ url_for('static', filename='assets/ID4.png') }}" alt="Gold ID" data-desc="gold">
-                <img src="{{ url_for('static', filename='assets/ID5.png') }}" alt="Platinum ID" data-desc="platinum">
-                <img src="{{ url_for('static', filename='assets/ID6.png') }}" alt="Senior ID" data-desc="senior">
-                <img src="{{ url_for('static', filename='assets/ID7.png') }}" alt="Senior Plus ID" data-desc="seniorplus">
+        <div class="card" data-id="premier-bronze" data-image="{{ url_for('static', filename='assets/ID2.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID2.png') }}" alt="Premier Bronze ID">
+          <p>Premier Bronze ID</p>
+        </div>
+
+        <div class="card" data-id="premier-silver" data-image="{{ url_for('static', filename='assets/ID3.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID3.png') }}" alt="Premier Silver ID">
+          <p>Premier Silver ID</p>
+        </div>
+
+        <div class="card" data-id="premier-gold" data-image="{{ url_for('static', filename='assets/ID4.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID4.png') }}" alt="Premier Gold ID">
+          <p>Premier Gold ID</p>
+        </div>
+
+        <div class="card" data-id="premier-platinum" data-image="{{ url_for('static', filename='assets/ID5.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID5.png') }}" alt="Premier Platinum ID">
+          <p>Premier Platinum ID</p>
+        </div>
+
+        <div class="card" data-id="senior" data-image="{{ url_for('static', filename='assets/ID6.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID6.png') }}" alt="Senior ID">
+          <p>Senior ID</p>
+        </div>
+
+        <div class="card" data-id="seniorplus" data-image="{{ url_for('static', filename='assets/ID7.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID7.png') }}" alt="Senior Plus ID">
+          <p>Senior Plus ID</p>
+        </div>
+        <button id="nextBtn" class="slide-btn">&#10095;</button> <!-- right arrow -->
+      </div> <!-- /.gallery -->
+
+    </div> <!-- /.gallery-container -->
+
+    <!-- ===== DESCRIPTION / DETAILS MODAL (hidden by default) ===== -->
+    <div id="descriptionModal" class="modal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="idTitle">
+        <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+
+        <div class="modal-body">
+          <div class="modal-left">
+            <img id="idImage" src="" alt="Selected MAAB ID">
+          </div>
+
+          <div class="modal-right">
+            <h3 id="idTitle"></h3>
+            <div id="idDescription" class="id-description"></div>
+            <div class="modal-actions">
+              <button id="beMemberBtn" class="member-btn">Be a Member</button>
             </div>
-
-            <button class="arrow right" id="rightBtn">&#10095;</button>
+          </div>
         </div>
-
-        <div id="descriptionBox" class="description-box">
-            <p>Click any ID to view its details.</p>
-        </div>
+      </div>
     </div>
 
-    <!-- ######################## REGISTRATION FORM ######################## -->
+    <!-- ===================== Registration form (unchanged) ===================== -->
     <section class="form-container">
-        <h2>Register as a Member</h2>
+       <section class="form-container">
+      
+
         <form id="registrationForm">
             <!-- Row 1 -->
             <div class="form-row">
@@ -164,9 +210,10 @@
                 <button type="submit" class="submit-btn">Submit</button>
             </div>
         </form>
-    </section>
+      </section>
+</div>
 
-    <footer class="footer-ash">
+<footer class="footer-ash">
         <div class="footer-container">
             <div class="footer-description">
                 <h3>PHILIPPINE RED CROSS</h3>
@@ -195,126 +242,203 @@
         <p>© 2025 Philippine Red Cross Cavite Chapter | All Rights Reserved</p>
     </footer>
 
-    <script>
-        // -------------------- ID Gallery JS --------------------
-        const descriptions = {
-            classic: `⛑ Issuance Age is 5 - 65 years old<br>
-                      ⛑ Php 12,000.00 - Accident Death, Disablement & Dismemberment<br>
-                      ⛑ Php 12,000.00 - Unprovoked Murder and Assault<br>
-                      ⛑ Php 5,000.00 - Accidental Medical Reimbursement<br>
-                      ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
-                      ⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
-            bronze: `⛑ Issuance Age is 5 - 65 years old<br>
-                     ⛑ Php 35,000.00 - Accident Death, Disablement & Dismemberment<br>
-                     ⛑ Php 35,000.00 - Unprovoked Murder and Assault<br>
-                     ⛑ Php 5,000.00 - Accidental Medical Reimbursement<br>
-                     ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
-                     ⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
-            silver: `⛑ Issuance Age is 5 - 65 years old<br>
-                     ⛑ Php 100,000.00 - Accident Death, Disablement & Dismemberment<br>
-                     ⛑ Php 100,000.00 - Unprovoked Murder and Assault<br>
-                     ⛑ Php 10,000.00 - Accidental Medical Reimbursement<br>
-                     ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
-                     ⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
-            gold: `⛑ Issuance Age is 5 - 65 years old<br>
-                   ⛑ Php 200,000.00 - Accident Death, Disablement & Dismemberment<br>
-                   ⛑ Php 200,000.00 - Unprovoked Murder and Assault<br>
-                   ⛑ Php 10,000.00 - Accidental Medical Reimbursement<br>
-                   ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
-                   ⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
-            platinum: `⛑ Issuance Age is 5 - 65 years old<br>
-                       ⛑ Php 300,000.00 - Accident Death, Disablement & Dismemberment<br>
-                       ⛑ Php 300,000.00 - Unprovoked Murder and Assault<br>
-                       ⛑ Php 10,000.00 - Accidental Medical Reimbursement<br>
-                       ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
-                       ⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
-            senior: `⛑ Issuance Age is 66 - 80 years old<br>
-                     ⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment<br>
-                     ⛑ Php 50,000.00 - Unprovoked Murder and Assault<br>
-                     ⛑ Php 5,000.00 - Accidental Medical Reimbursement<br>
-                     ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
-                     ⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
-            seniorplus: `⛑ Issuance Age is 81 - 85 years old<br>
-                         ⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment<br>
-                         ⛑ Php 50,000.00 - Unprovoked Murder and Assault<br>
-                         ⛑ Php 5,000.00 - Accidental Medical Reimbursement<br>
-                         ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
-                         ⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)`
+      <form id="registrationForm">
+        <!-- your full form fields ... (I left them out here for brevity) -->
+      </form>
+    </section>
+
+    <!-- footer omitted here for brevity — keep your existing footer HTML as-is -->
+
+  </div>
+
+  <!-- Put the JS at the end of body so DOM elements exist -->
+  <script>
+    /* ---------------- DATA (descriptions) ---------------- */
+    const descriptions = {
+      classic: {
+        title: "CLASSIC ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 12,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 12,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      "premier-bronze": {
+        title: "PREMIER BRONZE ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 35,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 35,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      "premier-silver": {
+        title: "PREMIER SILVER ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 100,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 100,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 10,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      "premier-gold": {
+        title: "PREMIER GOLD ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 200,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 200,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 10,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      "premier-platinum": {
+        title: "PREMIER PLATINUM ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 300,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 300,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 10,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      senior: {
+        title: "SENIOR ID",
+        details: [
+          "⛑ Issuance Age is 66 - 80 years old",
+          "⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 50,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      seniorplus: {
+        title: "SENIOR PLUS ID",
+        details: [
+          "⛑ Issuance Age is 81 - 85 years old",
+          "⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 50,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      }
+    };
+
+    /* ---------------- DOM ELEMENTS ---------------- */
+    const modal = document.getElementById('descriptionModal');
+    const modalContent = document.querySelector('.modal-content');
+    const modalClose = document.getElementById('modalClose');
+    const idImage = document.getElementById('idImage');
+    const idTitle = document.getElementById('idTitle');
+    const idDescription = document.getElementById('idDescription');
+    const beMemberBtn = document.getElementById('beMemberBtn');
+
+    /* ---------------- HANDLERS ---------------- */
+    // Open modal when clicking a card
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => {
+        const idKey = card.dataset.id;
+        const imgSrcFromAttr = card.dataset.image || card.querySelector('img').src;
+        const data = descriptions[idKey];
+        if (!data) return console.warn('No description found for', idKey);
+
+        // Populate modal
+        idImage.src = imgSrcFromAttr;
+        idImage.alt = data.title;
+        idTitle.textContent = data.title;
+
+        // Build description HTML (list)
+        idDescription.innerHTML = '';
+        const ul = document.createElement('ul');
+        ul.className = 'modal-desc-list';
+        data.details.forEach(text => {
+          const li = document.createElement('li');
+          li.innerHTML = text; // safe because content is controlled by you
+          ul.appendChild(li);
+        });
+        idDescription.appendChild(ul);
+
+        // Place Be a Member link -> navigate to registration page
+        beMemberBtn.onclick = () => {
+          // use route path you want (Flask route)
+          window.location.href = '/membership_register';
         };
 
-        const track = document.getElementById('imageTrack');
-        const descBox = document.getElementById('descriptionBox');
-        document.getElementById('leftBtn').onclick = () => track.scrollBy({ left: -300, behavior: 'smooth' });
-        document.getElementById('rightBtn').onclick = () => track.scrollBy({ left: 300, behavior: 'smooth' });
+        // Show modal
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
 
-        document.querySelectorAll('.image-track img').forEach(img => {
-            img.addEventListener('click', () => {
-                const type = img.dataset.desc;
-                descBox.innerHTML = `<h2>${img.alt}</h2><p>${descriptions[type]}</p>`;
-            });
-        });
+        // add class for animations if you want (optional)
+        modalContent.classList.add('open');
+      });
+    });
 
-        // -------------------- Registration Form JS --------------------
-        document.getElementById("registrationForm").addEventListener("submit", function (e) {
-            e.preventDefault();
-            alert("Registration submitted successfully! Thank you for applying in Membership Accident Assistance Benefit.");
-        });
+    // Close handlers
+    modalClose.addEventListener('click', closeModal);
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
 
-        const birthInput = document.getElementById("birthdate");
-        const maabSelect = document.getElementById("maab");
-        const maabMessage = document.getElementById("maabMessage");
-        const ageInput = document.getElementById("age");
+    function closeModal() {
+      // play close animation (if desired) then hide
+      modalContent.classList.remove('open');
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      // clear image src to avoid stale image
+      idImage.src = '';
+      idTitle.textContent = '';
+      idDescription.innerHTML = '';
+    }
 
-        birthInput.addEventListener("change", function () {
-            const birthDate = new Date(this.value);
-            if (isNaN(birthDate)) return;
+    /* -------------- End of modal logic -------------- */
 
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const m = today.getMonth() - birthDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+/* ---------------- SLIDESHOW LOGIC ---------------- */
+const gallery = document.getElementById('gallery');
+const cards = document.querySelectorAll('.card');
+let currentIndex = 7;
+const cardsPerView = 0.1; // show 3 IDs per view (adjust if you want)
+const totalCards = cards.length;
+const slideInterval = 1000; // milliseconds between slides
 
-            ageInput.value = age;
+// Move gallery smoothly
+function updateGallery() {
+  const offset = -(currentIndex * (cards[0].offsetWidth + 100)); // card width + gap
+  gallery.style.transform = `translateX(${offset}px)`;
+  gallery.style.transition = 'transform 0.6s ease';
+}
 
-            if (age > 150 || age < 1) {
-                ageInput.value = "";
-                alert("Please enter a valid birthdate. Age must be below 150.");
-                return;
-            }
+// Next and previous controls
+document.getElementById('nextBtn').addEventListener('click', () => {
+  currentIndex = (currentIndex + cardsPerView) % totalCards;
+  updateGallery();
+});
 
-            maabSelect.disabled = false;
-            const allOptions = Array.from(maabSelect.options).slice(1);
-            allOptions.forEach(opt => (opt.style.display = "none"));
+document.getElementById('prevBtn').addEventListener('click', () => {
+  currentIndex = (currentIndex - cardsPerView + totalCards) % totalCards;
+  updateGallery();
+});
 
-            if (age >= 5 && age <= 65) {
-                showOptions(["Classic", "Bronze", "Silver", "Gold", "Platinum"]);
-                maabMessage.textContent = "Applicable for ages 5 to 65 years old.";
-            } else if (age >= 66 && age <= 80) {
-                showOptions(["Senior"]);
-                maabMessage.textContent = "Applicable for ages 66 to 80 years old.";
-            } else if (age >= 81 && age <= 85) {
-                showOptions(["Senior+"]);
-                maabMessage.textContent = "Applicable for ages 81 to 85 years old.";
-            } else {
-                maabSelect.disabled = true;
-                maabMessage.textContent = "Not eligible for MAAB membership.";
-            }
+// Auto-slideshow (like a ticking clock)
+setInterval(() => {
+  currentIndex = (currentIndex + cardsPerView) % totalCards;
+  updateGallery();
+}, slideInterval);
 
-            function showOptions(names) {
-                names.forEach(name => {
-                    const opt = [...maabSelect.options].find(o => o.text === name);
-                    if (opt) opt.style.display = "block";
-                });
-            }
-        });
 
-        document.getElementById("backBtn").addEventListener("click", function () {
-            document.body.style.transition = "opacity 0.6s ease";
-            document.body.style.opacity = "0";
-            setTimeout(() => {
-                window.location.href = "/";
-            }, 600);
-        });
-    </script>
+
+  </script>
 </body>
 </html>
