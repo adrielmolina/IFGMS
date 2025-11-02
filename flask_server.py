@@ -26,6 +26,7 @@ login_manager.login_message = {
 login_manager.login_message_category = "warning"
 
 # TODO put @login_required on all template and api routes
+#! TODO redirect user to dashboard if already logged in and trying to access login page
 
 # for closing the session after requests
 @server.teardown_appcontext
@@ -60,8 +61,10 @@ def roles_required(*roles):
 @server.before_request
 def auto_login():
     ''' Auto-login for development purposes. Remove or disable in production. '''
+    auto_login_enabled = False if os.getenv("FLASK_ENV") == "production" else True
+    
     db_session = db_conn.SessionLocal()
-    if server.config.get("DEBUG_BYPASS_LOGIN", True):
+    if server.config.get("DEBUG_BYPASS_LOGIN", auto_login_enabled):
         if not current_user.is_authenticated:
             test_user = db_session.query(db_conn.models.Accounts).filter_by(username="adriel").first()
             login_user(test_user)
@@ -116,7 +119,14 @@ def logout():
 
 @server.route('/')
 def landing_page():
-    return render_template('index.html')
+    if os.getenv("env") == "production":
+        env = 'Live'
+    elif os.getenv("env") == "staging":
+        env = 'Staging'
+    else:
+        env = 'Development'
+    
+    return render_template('index.html', env=env)
 
 
 @server.route('/create_account')
@@ -367,6 +377,66 @@ def reset_password():
     return render_template("reset_password.html")
 
 
+@server.route('/api/declaration', methods=['POST'])
+def declaration_api():
+    method = request.method
+    data = request.get_json()
+
+    if method == 'POST':
+        dispatch_type = 'transmission' if current_user.office_location != 'Chapter' else 'declaration' 
+        dispatch_origin = current_user.office_location
+        dispatch_year = datetime.now().year
+        dispatch_cutoff = data.get('dispatch_cutoff')
+        #date_dispatched = data.get('date_dispatched')
+        #dispatch_total = data.get('dispatch_total')
+        late_declare = data.get('late_declare')
+        dispatch_remarks = data.get('dispatch_remarks')
+        
+        result = db_conn.create_dispatch(dispatch_type, dispatch_origin, dispatch_year, dispatch_cutoff, late_declare, dispatch_remarks)
+        return jsonify({"success": True}) if result == True else jsonify({"success": False, "error": result}), 500 
+        
+
+
+@server.route('/settings_save_changes', methods=['POST'])
+@login_required
+def settings_save_changes():
+    if request.method == 'POST':
+        print("=== FORM DATA RECEIVED ===")
+        print(request.form)
+        print("===========================")
+
+        first_name = request.form.get('first_name', '').upper()
+        middle_name = request.form.get('middle_name', '').upper()
+        last_name = request.form.get('last_name', '').upper()
+        birthdate = request.form.get('birthdate')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+
+        if all([first_name, middle_name, last_name, birthdate, email, phone]):
+            update_success = db_conn.update_user_details(
+            current_user.account_id,  # ✅ actual user ID
+            first_name,
+            middle_name,
+            last_name,
+            birthdate,
+            phone,
+            email
+            )
+
+            if update_success:
+                flash("Details updated successfully!", "success")
+            else:
+                flash("Update failed!", "error")
+
+        else:
+            flash("Please fill out all fields.", "error")
+
+        return redirect(url_for('settings'))
+
+    return redirect(url_for('settings'))
+
+
+
 # API FOR DASHBOARD
 @server.route('/api/get_pending_claims_count')
 def get_pending_claims_count():
@@ -378,7 +448,7 @@ def get_pending_claims_count():
 
 # TODO fix api route names ex. /api/members/get_records
 
-@server.route('/api/members/records')
+@server.route('/api/members/records', methods=['GET'])
 def get_members():
     member_records = db_conn.get_member_records()
     return jsonify([record.to_dict() for record in member_records])
@@ -407,7 +477,7 @@ def add_new_record():
     new_record_id = db_conn.add_new_record()
     return jsonify({"success": True, "record_id": new_record_id})
 
-@server.route('/api/save_record_details', methods=['POST'])
+@server.route('/api/save_record_details', methods=['PATCH'])
 def save_record_details():
     data = request.get_json()
     if data:
@@ -714,9 +784,27 @@ def favicon():
 
 
 if __name__ == '__main__':
+    
+    # DEPRECATED LIVE RELOAD METHOD. REMOVE LATER
+    '''
     flask_server = Server(server.wsgi_app)
     flask_server.watch('static/*.*')  # watches static files (CSS/JS)
     flask_server.watch('templates/*.html')  # watches templates
     flask_server.serve(port=5000, host="127.0.0.1")
 
     #server.run(debug=True, use_reloader=True, port=5000)
+    '''
+    print("FLASK_ENV:", os.getenv("FLASK_ENV"))
+    
+    if os.getenv("FLASK_ENV") == "production":
+        #server.run(host="0.0.0.0", port=5000)
+        pass
+    else:
+    #if os.getenv("FLASK_ENV") == "development":
+        flask_server = Server(server.wsgi_app)
+        flask_server.watch('static/*.*')
+        flask_server.watch('templates/*.html')
+        flask_server.serve(port=5000, host="127.0.0.1")
+        
+
+        

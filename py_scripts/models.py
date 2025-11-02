@@ -132,6 +132,8 @@ class Entries(Base):
     OR_date = Column(Date)
     remarks = Column(Text)
     tags = Column(String(255))
+    dispatch_ready = Column(Boolean)
+    dispatch_id = Column(Integer, ForeignKey('dispatch.dispatch_id'))
     
     @property
     def declaration_date_YMD(self):
@@ -291,6 +293,20 @@ class Claims(Base):
             'claim_type': self.claim_type
         }
         
+
+class Dispatch(Base):
+    __tablename__ = 'dispatch'
+    dispatch_id = Column(Integer, primary_key=True, autoincrement=True, unique=True, nullable=False)
+    dispatch_type = Column(String(255))
+    dispatch_origin = Column(String(255))
+    dispatch_year = Column(Integer)
+    dispatch_cutoff = Column(Date)
+    dispatch_status = Column(String(255))
+    date_dispatched = Column(Date)
+    dispatch_total = Column(DECIMAL(10, 0))
+    late_declare = Column(Boolean)
+    dispatch_remarks = Column(Text)
+    
 
 class Logs(Base):
     __tablename__ = 'audit_logs'

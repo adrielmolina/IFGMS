@@ -6,7 +6,7 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/inventory.css') }}">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
@@ -18,15 +18,41 @@
 {% block content %}
 <div class="module_name">
     <h1>Inventory</h1>
+      <div class="search_box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="searchInput" placeholder="Search inventory..." autocomplete="off">
+      <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
+    </div>
 </div>
 
-  <div class="top-bar">
-    <button id="openFormBtn1">Add ID Stock</button>
-    <div class="search-container">
-      <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="Search...">
+<div class="filter_search_container">
+  <div class="filters_box">
+    <div class="filter">
+      <label for="filterCategory">Category:</label>
+      <div class="custom-select" id="filterCategory">
+        <div class="selected" data-value="all">All Categories</div>
+        <ul class="options">
+          <li data-value="all">All Categories</li>
+          <li data-value="Classic">Classic</li>
+          <li data-value="Bronze">Bronze</li>
+          <li data-value="Silver">Silver</li>
+          <li data-value="Gold">Gold</li>
+          <li data-value="Platinum">Platinum</li>
+          <li data-value="Enhanced Platinum">Enhanced Platinum</li>
+          <li data-value="Senior">Senior</li>
+          <li data-value="Senior+">Senior+</li>
+        </ul>
+      </div>
     </div>
   </div>
+
+  <div class="action-buttons">
+    <button class="btn" id="openFormBtn1">Add ID Stock</button>
+    <button class="btn" id="openFormBtn2">ID Descriptions</button>
+  </div>
+</div>
+
+  
 
 <div id="popupForm1" class="popup-form">
     <div class="form-container1">
@@ -34,8 +60,8 @@
         <h2>Add ID</h2>
         <form action="#">
             <div class="form-row">
-                <Label for="ID_Number">Category:</Label>
-                <select name="cars" id="cars">
+                <Label for="cards">Category:</Label>
+                <select name="cards" id="cards">
                     <option value="Classic">Classic</option>
                     <option value="Bronze">Bronze</option>
                     <option value="Silver">Silver</option>
@@ -48,18 +74,22 @@
             </div>
             
             <div class="form-row">
-                <Label for="ID_Number">Series Start:</Label>
-                <input type="number" id="ID_Number" maxlength="5" name="ID_Number" placeholder="00000" required>
+                <label for="ID_Number">Series Start:</label>
+                <div class="input-group">
+                    <input type="text" id="prefixBox" readonly>
+                    <input type="number" id="ID_Number" maxlength="7" name="ID_Number" min="0" placeholder="0000000" required>
+                </div>
             </div>
+
 
             <div class="form-row">
                 <label for="numIds">ID Count:</label>
-                <input type="number" id="numIds" name="numIds" min="1" max="10" required>
+                <input type="number" id="numIds" name="numIds" min="1" required>
             </div>
 
             <div class="form-row">
                 <label for="idNumberBox">Series End:</label>
-                <input type="text" id="idNumberBox" name="idNumberBox" placeholder="00000" readonly>
+                <input type="text" id="idNumberBox" name="idNumberBox" placeholder="0000000" readonly>
             </div>
 
             <button type="submit">Submit</button>
@@ -67,29 +97,30 @@
     </div>
 </div>
 
+<div id="inventory_table" class="inventory-table">
+  <div class="category-table-section" id="table-all">
+  <div class="table_wrapper">
+    <div class="category-label">All Categories</div>
+    <div id="hot-all"></div>
+  </div>
+</div>
+  </div>
 
-    <div id="inventory_table" class="inventory-table">
-    {% for cat in [
-        'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'
-    ] %}
-    <div class="category-table-section" id="table-{{ cat|replace(' ', '_') }}">
-        <div class="category-label">{{ cat }}</div>
-        <div id="hot-{{ cat|replace(' ', '_') }}"></div>
+  <!-- 🔹 PER-CATEGORY TABLES -->
+  {% for cat in [
+    'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 
+    'Enhanced Platinum', 'Senior', 'Senior+'
+] %}
+  <div class="category-table-section" id="table-{{ cat|replace(' ', '_') }}">
+    <div class="table_wrapper">
+      <div class="category-label">{{ cat }}</div>
+      <div id="hot-{{ cat|replace(' ', '_') }}"></div>
     </div>
-    {% endfor %}
-    </div>
+  </div>
+{% endfor %}
+</div>
 
-    <div class="category-bar">
-        <button class="cat-btn" data-cat="Classic">Classic</button>
-        <button class="cat-btn" data-cat="Bronze">Bronze</button>
-        <button class="cat-btn" data-cat="Silver">Silver</button>
-        <button class="cat-btn" data-cat="Gold">Gold</button>
-        <button class="cat-btn" data-cat="Platinum">Platinum</button>
-        <button class="cat-btn" data-cat="Enhanced Platinum">Enhanced Platinum</button>
-        <button class="cat-btn" data-cat="Senior">Senior</button>
-        <button class="cat-btn" data-cat="Senior+">Senior+</button>
-        <button id="openFormBtn2">ID Desc</button>
-    </div>
+
     
 <div id="popupForm2" class="popup-form">
     <div class="form-container2">
@@ -111,15 +142,94 @@
 
 {% block extra_scripts %}
     <script>
+      // ADD ID FORM
+
       const inventoryData = JSON.parse('{{ inventory_data | tojson | safe }}');
       console.log(inventoryData);
         // Max limit for ID Number input
-        const numberInput = document.getElementById('ID_Number');
-    numberInput.addEventListener('input', function() {
-        if (this.value.length > 5) {
-            this.value = this.value.slice(0, 5);
-        }
-    });
+       const prefixBox = document.getElementById('prefixBox'); // readonly prefix input
+      const numberInput = document.getElementById('ID_Number'); // numeric part input
+      const countInput = document.getElementById('numIds');
+      const seriesEndBox = document.getElementById('idNumberBox');
+      const categorySelect = document.getElementById('cards'); // category select
+
+      // Map category prefixes
+      const categoryPrefixes = {
+          "Classic": "PC",
+          "Bronze": "PB",
+          "Silver": "PS",
+          "Gold": "PG",
+          "Platinum": "PP",
+          "Enhanced Platinum": "PEP",
+          "Senior": "S",
+          "Senior+": "SP"
+      };
+
+      // Pad numbers with leading zeros
+      function padNumber(num, length) {
+          return num.toString().padStart(length, '0');
+      }
+
+      // Update prefix based on category selection
+      function updatePrefix() {
+          const prefix = categoryPrefixes[categorySelect.value] || '';
+          prefixBox.value = prefix;
+          updateSeriesEnd();
+      }
+
+      // Update Series End value
+      function updateSeriesEnd() {
+          const prefix = prefixBox.value;
+          let startVal = parseInt(numberInput.value, 10);
+          const countVal = parseInt(countInput.value, 10);
+
+          // Ensure valid startVal, default 0 if invalid or negative
+          if (isNaN(startVal) || startVal < 0) {
+              startVal = 0;
+              numberInput.value = '0';
+          }
+
+          // Ensure valid countVal (must be > 0)
+          if (!isNaN(countVal) && countVal > 0) {
+              const endNumber = startVal + countVal - 1;
+              seriesEndBox.value = prefix + padNumber(endNumber, 7); // prefix + 7-digit zero padded number
+          } else {
+              seriesEndBox.value = '';
+          }
+      }
+
+// Event listeners
+
+// When category changes, update prefix and series end
+categorySelect.addEventListener('change', updatePrefix);
+
+// When number input changes, enforce numeric and max length, then update
+numberInput.addEventListener('input', () => {
+    // Remove non-digit characters
+    numberInput.value = numberInput.value.replace(/\D/g, '');
+
+    // Limit length to 7 digits
+    if (numberInput.value.length > 7) {
+        numberInput.value = numberInput.value.slice(0, 7);
+    }
+
+    updateSeriesEnd();
+});
+
+// When count input changes, ensure positive number then update
+countInput.addEventListener('input', () => {
+    let val = parseInt(countInput.value, 10);
+    if (isNaN(val) || val < 1) {
+        countInput.value = '0';
+    }
+    updateSeriesEnd();
+});
+
+// Initialize prefix and series end on page load
+updatePrefix();
+
+
+    
 
 // Get references to elements for Form 1
 const openFormBtn1 = document.getElementById('openFormBtn1');
@@ -417,8 +527,6 @@ class Carousel {
   }
 }
 
-
-
 // Refers to the carousel root element you want to target, use specific class selectors if using multiple carousels
 const el = document.querySelector('.carousel');
 // Create a new carousel object
@@ -429,108 +537,217 @@ exampleCarousel.mounted();
 
 
 
-        // Handsontable columns
-        const hotColumns = [
-        {data: 'inv_id', type: 'text', title: 'ID'},
-        {data: 'maab_category', type: 'text', title: 'Maab Category'},
-        {data: 'maab_no', type: 'text', title: 'Maab No.'},
-        {data: 'used', type: 'text', title: 'Used'},
-        {data: 'allocated_to', type: 'text', title: 'Allocated To'},
-        {data: 'remarks', type: 'text', title: 'Remarks'}
-    ];
+// ============================================================
+// 🔸 Define Handsontable columns
+// ============================================================
+const hotColumns = [
+  { data: 'inv_id', type: 'text', title: 'ID' },
+  { data: 'maab_category', type: 'text', title: 'Maab Category' },
+  { data: 'maab_no', type: 'text', title: 'Maab No.' },
+  { data: 'used', type: 'text', title: 'Used' },
+  { data: 'allocated_to', type: 'text', title: 'Allocated To' },
+  { data: 'remarks', type: 'text', title: 'Remarks' }
+];
 
-    // Store Handsontable instances
-    const hotInstances = {};
+const hotInstances = {};
+const categories = [
+  'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 
+  'Enhanced Platinum', 'Senior', 'Senior+'
+];
 
-    // List of categories
-    const categories = [
-        'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'
-    ];
-
-    // Initialize a Handsontable for each category
-    categories.forEach(cat => {
-        const container = document.getElementById('hot-' + cat.replace(/ /g, '_'));
-        if (container) {
-            const filteredData = inventoryData.filter(item => item.maab_category === cat);
-
-            hotInstances[cat] = new Handsontable(container, {
-                data: filteredData,  // Filtered data based on category
-                colHeaders: hotColumns.map(col => col.title),
-                columns: hotColumns,
-                rowHeaders: true,
-                width: '100%',
-                stretchH: 'all',
-                height: 300,
-                licenseKey: 'non-commercial-and-evaluation'
-            });
-        }
-    });
-
-    // Show only the selected category table
-    function showCategory(cat) {
-        categories.forEach(c => {
-            const el = document.getElementById('table-' + c.replace(/ /g, '_'));
-            if (el) {
-                el.classList.toggle('active', c === cat);
-            }
-        });
-    }
-
-    // Function to update the current selected category and UI
-    function selectCategory(cat) {
-        currentCategory = cat;
-        // Highlight the selected button
-        document.querySelectorAll('.category-bar .cat-btn').forEach(b => {
-            if (b.getAttribute('data-cat') === cat) {
-                b.classList.add('selected');
-            } else {
-                b.classList.remove('selected');
-            }
-        });
-        showCategory(cat);
-    }
-
-    // Button click logic
-    document.querySelectorAll('.category-bar .cat-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const cat = this.getAttribute('data-cat');
-            selectCategory(cat);
-        });
-    });
-
-    // Show the first category by default
-    selectCategory('Classic');
-
-
-    const searchInput = document.getElementById('searchInput');
-
-  // Function to filter the inventory data
-  function filterInventory(query) {
-    // Loop through each category (Classic, Bronze, etc.)
-    categories.forEach(cat => {
-      const container = document.getElementById('hot-' + cat.replace(/ /g, '_'));
-      
-      if (container && hotInstances[cat]) {
-        // Filter the data for the current category
-        const filteredData = inventoryData.filter(item => {
-          return (
-            item.maab_category.toLowerCase().includes(query.toLowerCase()) || 
-            item.inv_id.toLowerCase().includes(query.toLowerCase()) ||
-            item.maab_no.toLowerCase().includes(query.toLowerCase())
-          );
-        });
-
-        // Update the Handsontable instance with the filtered data
-        hotInstances[cat].loadData(filteredData);
-      }
-    });
+// ============================================================
+// 🔹 Helper Functions
+// ============================================================
+function getCategoryColor(cat) {
+  switch (cat) {
+    case 'Classic': return '#f07474';
+    case 'Bronze': return '#c97a57';
+    case 'Silver': return '#a0a0a0';
+    case 'Gold': return '#e0b84c';
+    case 'Platinum': return '#7fbcd2';
+    case 'Enhanced Platinum': return '#4d8fac';
+    case 'Senior': return '#b86bbf';
+    case 'Senior+': return '#6a4fbf';
+    default: return '#fafafa'; // 'all'
   }
+}
 
-  // Add an event listener for the search input field
-  searchInput.addEventListener('input', function() {
-    const query = this.value.trim();
-    filterInventory(query);
+function darkenColor(hex, amount = 20) {
+  let usePound = false;
+  if (hex[0] === "#") {
+    hex = hex.slice(1);
+    usePound = true;
+  }
+  let num = parseInt(hex, 16);
+  let r = Math.max(0, (num >> 16) - amount);
+  let g = Math.max(0, ((num >> 8) & 0x00FF) - amount);
+  let b = Math.max(0, (num & 0x0000FF) - amount);
+  return (usePound ? "#" : "") + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
+}
+
+// ============================================================
+// 🔹 Initialize Handsontable Instances
+// ============================================================
+function initHot(containerId, data) {
+  const container = document.getElementById(containerId);
+  if (!container) return null;
+  return new Handsontable(container, {
+    data: data,
+    colHeaders: hotColumns.map(c => c.title),
+    columns: hotColumns,
+    rowHeaders: true,
+    stretchH: 'all',
+    width: '100%',
+    height: 520,
+    licenseKey: 'non-commercial-and-evaluation'
   });
+}
+
+// --- "All" table
+hotInstances['all'] = initHot('hot-all', inventoryData);
+
+// --- Per-category tables
+categories.forEach(cat => {
+  const filteredData = inventoryData.filter(item => item.maab_category === cat);
+  hotInstances[cat] = initHot('hot-' + cat.replace(/ /g, '_'), filteredData);
+});
+
+// ============================================================
+// 🔹 Show/Hide Handsontable by category
+// ============================================================
+function showCategory(cat) {
+  document.querySelectorAll('.category-table-section').forEach(section => {
+    section.classList.remove('active');
+  });
+  const section = document.getElementById('table-' + cat.replace(/ /g, '_'));
+  if (section) section.classList.add('active');
+
+  if (hotInstances[cat]) {
+    hotInstances[cat].render();
+    applyHeaderColor(hotInstances[cat], cat);
+  }
+}
+
+// ============================================================
+// 🔹 Apply header color
+// ============================================================
+function applyHeaderColor(hotInstance, cat) {
+  const color = getCategoryColor(cat);
+  const borderColor = darkenColor(color, 30);
+
+  hotInstance.updateSettings({
+    afterRender: function() {
+      const ths = hotInstance.rootElement.querySelectorAll('th');
+      ths.forEach(th => {
+        th.style.backgroundColor = color;
+        th.style.borderColor = borderColor;
+        th.style.color = (cat === 'all') ? '#333' : '#fff';
+      });
+    }
+  });
+
+  // Trigger immediate render
+  hotInstance.render();
+}
+
+// ============================================================
+// 🔹 Custom Dropdown Integration
+// ============================================================
+let currentCategory = 'all';
+const customSelect = document.querySelector('.custom-select');
+const selected = customSelect.querySelector('.selected');
+const options = customSelect.querySelectorAll('.options li');
+
+selected.addEventListener('click', () => {
+  customSelect.classList.toggle('open');
+});
+
+options.forEach(option => {
+  option.addEventListener('click', () => {
+    const cat = option.dataset.value;
+    currentCategory = cat;
+
+    // Update dropdown UI
+    selected.textContent = option.textContent;
+    selected.dataset.value = cat;
+    const color = getCategoryColor(cat);
+    selected.style.background = color;
+    selected.style.color = (cat === 'all') ? '#333' : '#fff';
+    selected.style.borderColor = darkenColor(color, 30);
+
+    // Remove previous active highlight
+    options.forEach(opt => opt.classList.remove('active'));
+    option.classList.add('active');
+
+    // Switch table and header
+    showCategory(cat);
+
+    customSelect.classList.remove('open');
+  });
+});
+
+// Close dropdown if clicked outside
+document.addEventListener('click', e => {
+  if (!customSelect.contains(e.target)) customSelect.classList.remove('open');
+});
+
+// Show "All" by default
+showCategory('all');
+
+
+
+// ============================================================
+// ✅ Search Functionality
+// ============================================================
+const searchInput = document.getElementById('searchInput');
+const clearBtn = document.getElementById('search_clear');
+
+function safeLower(v) {
+  return (v && typeof v === 'string') ? v.toLowerCase() : '';
+}
+
+function applySearchFilter(query) {
+  const q = query.trim().toLowerCase();
+  const visibleTable = currentCategory || 'all';
+  const instance = hotInstances[visibleTable];
+  if (!instance) return;
+
+  const filtered = inventoryData.filter(item => {
+    if (visibleTable !== 'all' && item.maab_category !== visibleTable) return false;
+    return (
+      safeLower(item.inv_id).includes(q) ||
+      safeLower(item.maab_no).includes(q) ||
+      safeLower(item.maab_category).includes(q) ||
+      safeLower(item.allocated_to).includes(q) ||
+      safeLower(item.remarks).includes(q)
+    );
+  });
+
+  instance.loadData(filtered);
+}
+
+// 🔍 Typing into search bar
+searchInput.addEventListener('input', function () {
+  applySearchFilter(this.value);
+
+  // Toggle visibility of the clear button
+  if (this.value.trim() !== '') {
+    clearBtn.classList.add('visible');
+  } else {
+    clearBtn.classList.remove('visible');
+  }
+});
+
+
+// ❌ Clicking the clear button
+clearBtn.addEventListener('click', function () {
+  searchInput.value = '';
+  applySearchFilter('');
+  searchInput.focus();
+});
+
+
+
         
-    </script>
+</script>
 {% endblock %}
