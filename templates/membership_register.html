@@ -1,165 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Membership Registration</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
+    <meta charset="UTF-8">
+    <title>MAAB ID Gallery</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
+
 </head>
 <body>
+    <div class="gallery-container">
+        <h1>MAAB ID GALLERY</h1>
 
-    <body>
-        <fieldset>
-            <legend>NAMES</legend>
-            <input type="text" name="" id="">
-        </fieldset>
+        <div class="carousel">
+            <button class="arrow left" id="leftBtn">&#10094;</button>
 
-        <!-- TODO INSERT JB's PAGE HERE -->
-    </body>
+            <div class="image-track" id="imageTrack">
+                <img src="{{ url_for('static', filename='assets/ID1.png') }}" alt="Classic ID" data-desc="classic">
+                <img src="{{ url_for('static', filename='assets/ID2.png') }}" alt="Bronze ID" data-desc="bronze">
+                <img src="{{ url_for('static', filename='assets/ID3.png') }}" alt="Silver ID" data-desc="silver">
+                <img src="{{ url_for('static', filename='assets/ID4.png') }}" alt="Gold ID" data-desc="gold">
+                <img src="{{ url_for('static', filename='assets/ID5.png') }}" alt="Platinum ID" data-desc="platinum">
+                <img src="{{ url_for('static', filename='assets/ID6.png') }}" alt="Senior ID" data-desc="senior">
+                <img src="{{ url_for('static', filename='assets/ID7.png') }}" alt="Senior Plus ID" data-desc="seniorplus">
+            </div>
 
-      <!-- Back Button inside header, top-right -->
-      <button class="btn back">Back</button>
-    </header>
-
-    <!-- Form -->
-    <main class="form-wrapper">
-      <h1>MAAB Membership Sign Up</h1>
-
-      <form class="form">
-
-        <!-- Full Name -->
-        <div class="row cols-4">
-          <div class="field">
-            <label for="firstName">First Name</label>
-            <input id="firstName" type="text" placeholder="First Name" />
-          </div>
-          <div class="field">
-            <label for="middleName">Middle Name</label>
-            <input id="middleName" type="text" placeholder="Middle Name" />
-          </div>
-          <div class="field">
-            <label for="lastName">Last Name</label>
-            <input id="lastName" type="text" placeholder="Last Name" />
-          </div>
-          <div class="field">
-            <label for="suffix">Suffix</label>
-            <select id="suffix">
-              <option value="">Select</option>
-              <option>Jr.</option>
-              <option>Sr.</option>
-              <option>III</option>
-            </select>
-          </div>
+            <button class="arrow right" id="rightBtn">&#10095;</button>
         </div>
 
-        <!-- Birthdate, Gender, Blood Type -->
-        <div class="row cols-3">
-          <div class="field">
-            <label for="birthdate">Birthdate</label>
-            <input id="birthdate" type="date" />
-          </div>
-          <div class="field">
-            <label for="gender">Gender/Sex</label>
-            <select id="gender">
-              <option value="">Select</option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="bloodType">Blood Type</label>
-            <select id="bloodType">
-              <option value="">Select</option>
-              <option>A+</option><option>A-</option>
-              <option>B+</option><option>B-</option>
-              <option>O+</option><option>O-</option>
-              <option>AB+</option><option>AB-</option>
-            </select>
-          </div>
+        <div id="descriptionBox" class="description-box">
+            <p>Click any ID to view its details.</p>
         </div>
+    </div>
 
-        <!-- Contact & Email -->
-        <div class="row cols-2">
-          <div class="field">
-            <label for="contact">Contact Number</label>
-            <input id="contact" type="tel" placeholder="Enter contact number" />
-          </div>
-          <div class="field">
-            <label for="email">Email Address</label>
-            <input id="email" type="email" placeholder="Enter email" />
-          </div>
+    <!-- ######################## REGISTRATION FORM ######################## -->
+    <section class="form-container">
+        <h2>Register as a Member</h2>
+        <form id="registrationForm">
+            <!-- Row 1 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name <span class="required">*</span></label>
+                    <input type="text" name="fname" required>
+                </div>
+                <div class="form-group">
+                    <label>Middle Name</label>
+                    <input type="text" name="mname" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label>Surname <span class="required">*</span></label>
+                    <input type="text" name="sname" required>
+                </div>
+                <div class="form-group">
+                    <label>Suffix <span class="optional">(if applicable)</span></label>
+                    <select name="suffix">
+                        <option value="">Not applicable</option>
+                        <option>Jr.</option>
+                        <option>Sr.</option>
+                        <option>II</option>
+                        <option>III</option>
+                        <option>IV</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Birthdate <span class="required">*</span></label>
+                    <input type="date" id="birthdate" name="birthdate" required>
+                </div>
+                <div class="form-group">
+                    <label>Age <span class="required">*</span></label>
+                    <input type="number" id="age" name="age" readonly maxlength="3" max="150" placeholder="Auto" required>
+                </div>
+                <div class="form-group">
+                    <label>Sex <span class="required">*</span></label>
+                    <select name="sex" required>
+                        <option value="">Select</option>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Blood Type <span class="required">*</span></label>
+                    <select name="bloodtype" required>
+                        <option value="">Select</option>
+                        <option>A+</option>
+                        <option>A-</option>
+                        <option>B+</option>
+                        <option>B-</option>
+                        <option>O+</option>
+                        <option>O-</option>
+                        <option>AB+</option>
+                        <option>AB-</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Contact Number <span class="required">*</span></label>
+                    <div class="contact-field">
+                        <span class="country-code">+63</span>
+                        <input type="tel" name="contact" placeholder="9xxxxxxxxx" maxlength="10" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" name="email" required>
+                </div>
+            </div>
+
+            <!-- Row 4 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Province <span class="required">*</span></label>
+                    <input type="text" name="province" required>
+                </div>
+                <div class="form-group">
+                    <label>Municipality <span class="required">*</span></label>
+                    <input type="text" name="municipality" required>
+                </div>
+                <div class="form-group">
+                    <label>Street / Barangay <span class="required">*</span></label>
+                    <input type="text" name="street" required>
+                </div>
+                <div class="form-group">
+                    <label>City <span class="required">*</span></label>
+                    <input type="text" name="city" required>
+                </div>
+            </div>
+
+            <!-- Row 5 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>MAAB Category</label>
+                    <select id="maab" name="maab" required disabled>
+                        <option value="">Select</option>
+                        <option>Classic</option>
+                        <option>Bronze</option>
+                        <option>Silver</option>
+                        <option>Gold</option>
+                        <option>Platinum</option>
+                        <option>Senior</option>
+                        <option>Senior+</option>
+                    </select>
+                    <small id="maabMessage" class="maab-note"></small>
+                </div>
+                <div class="form-group">
+                    <label>Office <span class="required">*</span></label>
+                    <select name="office" required>
+                        <option value="">Select Branch</option>
+                        <option>Cavite City Branch</option>
+                        <option>Silang Branch</option>
+                        <option>Dasma Branch</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="back-btn" id="backBtn">Back</button>
+                <button type="submit" class="submit-btn">Submit</button>
+            </div>
+        </form>
+    </section>
+
+    <footer class="footer-ash">
+        <div class="footer-container">
+            <div class="footer-description">
+                <h3>PHILIPPINE RED CROSS</h3>
+                <p>
+                    Born officially in 1947, but with roots that trace back to the revolutionary days,
+                    the Philippine Red Cross has truly become the premier humanitarian organization in
+                    the country, committed to provide quality life-saving services that protect life
+                    and dignity especially of indigent Filipinos in vulnerable situations.
+                </p>
+            </div>
+            <div class="footer-button">
+                <a href="https://redcross.org.ph/about-us/" target="_blank" class="learn-more-btn">Learn More</a>
+            </div>
+            <div class="footer-follow">
+                <h3>FOLLOW US</h3>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/BatangRedCross" target="_blank">Facebook</a>
+                    <a href="https://x.com/philredcross" target="_blank">X (Twitter)</a>
+                    <a href="https://www.instagram.com/philredcross/" target="_blank">Instagram</a>
+                </div>
+            </div>
         </div>
+    </footer>
 
-        <!-- Address -->
-        <div class="row cols-4">
-          <div class="field">
-            <label for="province">Province</label>
-            <select id="province">
-              <option value="">Select</option>
-              <option>Cavite</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="municipality">Municipality</label>
-            <select id="municipality">
-              <option value="">Select</option>
-              <option>Cavite City</option>
-              <option>Dasma</option>
-              <option>Silang</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="street">Street / Barangay</label>
-            <input id="street" type="text" placeholder="Street / Barangay" />
-          </div>
-          <div class="field">
-            <label for="city">City</label>
-            <select id="city">
-              <option value="">Select</option>
-              <option>City of Cavite</option>
-              <option>City of Dasmarinas</option>
-              <option>City of Silang</option>
-            </select>
-          </div>
-        </div>
+    <footer class="footer-dark">
+        <p>© 2025 Philippine Red Cross Cavite Chapter | All Rights Reserved</p>
+    </footer>
 
-        <!-- Maab Category & Office -->
-        <div class="row cols-2">
-          <div class="field">
-            <label for="MAABCategory">MAAB Category</label>
-            <select id="MAABCategory">
-              <option value="">Select</option>
-              <option>Classic</option>
-              <option>Bronze</option>
-              <option>Silver</option>
-              <option>Gold</option>
-              <option>Platinum</option>
-              <option>Senior</option>
-              <option>Senior+</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="office">Office</label>
-            <select id="office">
-              <option value="">Select</option>
-              <option>Cavite Chapter</option>
-              <option>Silang Chapter</option>
-              <option>Dasma Chapter</option>
-            </select>
-          </div>
-        </div>
+    <script>
+        // -------------------- ID Gallery JS --------------------
+        const descriptions = {
+            classic: `⛑ Issuance Age is 5 - 65 years old<br>
+                      ⛑ Php 12,000.00 - Accident Death, Disablement & Dismemberment<br>
+                      ⛑ Php 12,000.00 - Unprovoked Murder and Assault<br>
+                      ⛑ Php 5,000.00 - Accidental Medical Reimbursement<br>
+                      ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
+                      ⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
+            bronze: `⛑ Issuance Age is 5 - 65 years old<br>
+                     ⛑ Php 35,000.00 - Accident Death, Disablement & Dismemberment<br>
+                     ⛑ Php 35,000.00 - Unprovoked Murder and Assault<br>
+                     ⛑ Php 5,000.00 - Accidental Medical Reimbursement<br>
+                     ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
+                     ⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
+            silver: `⛑ Issuance Age is 5 - 65 years old<br>
+                     ⛑ Php 100,000.00 - Accident Death, Disablement & Dismemberment<br>
+                     ⛑ Php 100,000.00 - Unprovoked Murder and Assault<br>
+                     ⛑ Php 10,000.00 - Accidental Medical Reimbursement<br>
+                     ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
+                     ⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
+            gold: `⛑ Issuance Age is 5 - 65 years old<br>
+                   ⛑ Php 200,000.00 - Accident Death, Disablement & Dismemberment<br>
+                   ⛑ Php 200,000.00 - Unprovoked Murder and Assault<br>
+                   ⛑ Php 10,000.00 - Accidental Medical Reimbursement<br>
+                   ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
+                   ⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
+            platinum: `⛑ Issuance Age is 5 - 65 years old<br>
+                       ⛑ Php 300,000.00 - Accident Death, Disablement & Dismemberment<br>
+                       ⛑ Php 300,000.00 - Unprovoked Murder and Assault<br>
+                       ⛑ Php 10,000.00 - Accidental Medical Reimbursement<br>
+                       ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
+                       ⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
+            senior: `⛑ Issuance Age is 66 - 80 years old<br>
+                     ⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment<br>
+                     ⛑ Php 50,000.00 - Unprovoked Murder and Assault<br>
+                     ⛑ Php 5,000.00 - Accidental Medical Reimbursement<br>
+                     ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
+                     ⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)`,
+            seniorplus: `⛑ Issuance Age is 81 - 85 years old<br>
+                         ⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment<br>
+                         ⛑ Php 50,000.00 - Unprovoked Murder and Assault<br>
+                         ⛑ Php 5,000.00 - Accidental Medical Reimbursement<br>
+                         ⛑ Php 5,000.00 - Burial Assistance (if Accident)<br>
+                         ⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)`
+        };
 
-      </form>
+        const track = document.getElementById('imageTrack');
+        const descBox = document.getElementById('descriptionBox');
+        document.getElementById('leftBtn').onclick = () => track.scrollBy({ left: -300, behavior: 'smooth' });
+        document.getElementById('rightBtn').onclick = () => track.scrollBy({ left: 300, behavior: 'smooth' });
 
-            <!-- Buttons OUTSIDE form -->
-        <div class="form-actions">
-        <button type="reset" class="btn clear">Clear Form</button>
-        <button type="submit" form="form" class="btn submit">Submit</button>
-        </div>
+        document.querySelectorAll('.image-track img').forEach(img => {
+            img.addEventListener('click', () => {
+                const type = img.dataset.desc;
+                descBox.innerHTML = `<h2>${img.alt}</h2><p>${descriptions[type]}</p>`;
+            });
+        });
 
-    </main>
-  </div>
+        // -------------------- Registration Form JS --------------------
+        document.getElementById("registrationForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            alert("Registration submitted successfully! Thank you for applying in Membership Accident Assistance Benefit.");
+        });
 
+        const birthInput = document.getElementById("birthdate");
+        const maabSelect = document.getElementById("maab");
+        const maabMessage = document.getElementById("maabMessage");
+        const ageInput = document.getElementById("age");
+
+        birthInput.addEventListener("change", function () {
+            const birthDate = new Date(this.value);
+            if (isNaN(birthDate)) return;
+
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+
+            ageInput.value = age;
+
+            if (age > 150 || age < 1) {
+                ageInput.value = "";
+                alert("Please enter a valid birthdate. Age must be below 150.");
+                return;
+            }
+
+            maabSelect.disabled = false;
+            const allOptions = Array.from(maabSelect.options).slice(1);
+            allOptions.forEach(opt => (opt.style.display = "none"));
+
+            if (age >= 5 && age <= 65) {
+                showOptions(["Classic", "Bronze", "Silver", "Gold", "Platinum"]);
+                maabMessage.textContent = "Applicable for ages 5 to 65 years old.";
+            } else if (age >= 66 && age <= 80) {
+                showOptions(["Senior"]);
+                maabMessage.textContent = "Applicable for ages 66 to 80 years old.";
+            } else if (age >= 81 && age <= 85) {
+                showOptions(["Senior+"]);
+                maabMessage.textContent = "Applicable for ages 81 to 85 years old.";
+            } else {
+                maabSelect.disabled = true;
+                maabMessage.textContent = "Not eligible for MAAB membership.";
+            }
+
+            function showOptions(names) {
+                names.forEach(name => {
+                    const opt = [...maabSelect.options].find(o => o.text === name);
+                    if (opt) opt.style.display = "block";
+                });
+            }
+        });
+
+        document.getElementById("backBtn").addEventListener("click", function () {
+            document.body.style.transition = "opacity 0.6s ease";
+            document.body.style.opacity = "0";
+            setTimeout(() => {
+                window.location.href = "/";
+            }, 600);
+        });
+    </script>
 </body>
 </html>

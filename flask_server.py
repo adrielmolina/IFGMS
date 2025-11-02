@@ -13,9 +13,6 @@ server = Flask(__name__)
 server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
 
-# CACHE CONTROL FOR STATIC FILES
-server.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
-
 login_manager = LoginManager()
 login_manager.init_app(server)
 login_manager.login_view = 'landing_page'
@@ -370,46 +367,6 @@ def reset_password():
     return render_template("reset_password.html")
 
 
-@server.route('/settings_save_changes', methods=['POST'])
-@login_required
-def settings_save_changes():
-    if request.method == 'POST':
-        print("=== FORM DATA RECEIVED ===")
-        print(request.form)
-        print("===========================")
-
-        first_name = request.form.get('first_name', '').upper()
-        middle_name = request.form.get('middle_name', '').upper()
-        last_name = request.form.get('last_name', '').upper()
-        birthdate = request.form.get('birthdate')
-        email = request.form.get('email')
-        phone = request.form.get('phone')
-
-        if all([first_name, middle_name, last_name, birthdate, email, phone]):
-            update_success = db_conn.update_user_details(
-    current_user.account_id,  # ✅ actual user ID
-    first_name,
-    middle_name,
-    last_name,
-    birthdate,
-    phone,
-    email
-)
-
-            if update_success:
-                flash("Details updated successfully!", "success")
-            else:
-                flash("Update failed!", "error")
-
-        else:
-            flash("Please fill out all fields.", "error")
-
-        return redirect(url_for('settings'))
-
-    return redirect(url_for('settings'))
-
-
-
 # API FOR DASHBOARD
 @server.route('/api/get_pending_claims_count')
 def get_pending_claims_count():
@@ -751,7 +708,7 @@ def root_static_files(filename):
 # Favicon
 @server.route('/favicon.ico')
 def favicon():
-    return send_from_directory(server.static_folder, 'assets/favicon.ico')
+    return send_from_directory(server.static_folder, 'assets/favicon.ico') 
 
 #? -------------------- END -------------------- ?#
 
