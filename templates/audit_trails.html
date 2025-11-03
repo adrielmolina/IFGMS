@@ -17,7 +17,7 @@
 <div class="module_name">
     <h1>Audit Trail</h1>
     
-     <div class="search_box">
+    <div class="search_box">
         <i class="fa-solid fa-magnifying-glass"></i>
         <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
         <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
@@ -25,7 +25,6 @@
 </div>
 
 
-</div>
     <form>
         <div class="audit-logs_table" spellcheck="false">
             <div class="audit-logs_table full">
@@ -35,12 +34,12 @@
                     <tr>
                         <th> </th>
                         <th>ID</th>
-                        <th>DATE</th>
-                        <th>USERNAME</th>
-                        <th>USER LEVEL</th>
-                        <th>ACTION NAME</th>
-                        <th>DESCRIPTION</th>
-                        <th>ACCOUNT ID</th>
+                        <th>Date</th>
+                        <th>Username</th>
+                        <th>User Level</th>
+                        <th>Action</th>
+                        <th>Description</th>
+                        <th>Account ID</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,9 +60,7 @@
             </table>
         </div>
         </div>
-        <div class="inventory_btns">
-            <button type="submit" name="print_report">Print Report</button>
-        </div>
+        <div class="datatable-footer"></div>
     </form>
 {% endblock %}
 
@@ -79,6 +76,12 @@ $(document).ready(function() {
     var lengthControl = $(this)
     .closest('.dataTables_wrapper')
     .find('.dataTables_length');
+
+    // Move the info and pagination OUTSIDE of the white card
+    var wrapper = $(this).closest('.dataTables_wrapper');
+    var footer = wrapper.find('.dataTables_info, .dataTables_paginate');
+    $('.datatable-footer').append(footer);
+
     
     // Create a container above your table for it
     var container = $('<div class="table-top-controls"></div>');
@@ -113,6 +116,28 @@ $(document).ready(function() {
         });
     });
 });
+
+// UPLOADED IMAGE
+document.addEventListener("DOMContentLoaded", function() {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            navProfileImage.src = savedProfileImage;
+        }
+    }
+    
+    // Listen for storage changes from settings page
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profileImage') {
+            const navProfileImage = document.getElementById("navProfileImage");
+            if (navProfileImage) {
+                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+            }
+        }
+    });
+});
+
 </script>
 
 {% endblock %}

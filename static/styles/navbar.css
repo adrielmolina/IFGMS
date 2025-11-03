@@ -125,7 +125,7 @@ body {
 
 .sidebar-links {
     list-style: none;
-    margin-top: 20px;
+    margin-top: 10px !important;
     height: 80%;
     overflow-y: auto;
     scrollbar-width: none;
@@ -161,7 +161,8 @@ body {
 
 /* User account section */
 .user-account {
-    margin-top: auto;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .user-account  a{
@@ -183,14 +184,14 @@ body {
     align-items: center;
     padding: 10px;
     border-radius: 10px;
-    color: white;               /* White text */
-    text-decoration: none;     /* No underline */
-    cursor: default;           /* Not clickable */
+    color: white;            
+    text-decoration: none;    
+    cursor: default;           
     font-weight: 600;
 }
 
 .user-profile * {
-    color: white !important;       /* Force all inner elements to stay white */
+    color: white !important;      
     text-decoration: none !important;
 }
 
@@ -198,8 +199,7 @@ body {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    border: 2px solid #ffffff;
-    margin-left: -14px;
+    margin-left: 0px;
 }
 
 .user-profile h3 {
@@ -208,8 +208,8 @@ body {
 }
 
 .user-profile span {
-    font-size: 0.775rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 1000;
 }
 
 .user-detail {
@@ -239,22 +239,19 @@ body {
     box-shadow: none;
     transform: none;
     transition: 
-          transform 0.3s ease,
-          box-shadow 0.3s ease,
-          background 0.3s ease,
+    transform 0.3s ease;
+          box-shadow 0.3s ease;
+          background 0.3s ease;
          scale 0.3s ease;
 }
 
 
-
-/* 3D effect on hover */
 .icons:hover {
     background: linear-gradient(145deg, #ff3b30, #d02a1a);
     box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.4), -6px -6px 15px rgba(255, 255, 255, 0.3);
     transform: translateZ(5px) perspective(500px) rotateX(0deg) rotateY(0deg);
 }
 
-/* Customize sidebar links */
 .sidebar-links li a {
     display: flex;
     align-items: center;
@@ -287,31 +284,19 @@ body {
     color: #fff;
 }
 
-
 .sidebar-header {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     text-align: center;
-    padding: 10px 0;
-    transition: all 0.4s ease;
-    overflow: visible;
+    padding: 5px 0;
 }
 
-/* 🧠 The trick: scale up the image beyond its natural box */
 .sidebar-header img {
-    width: 90%;               /* "zooms in" even if sidebar is 85px */
-    height: auto;
-    object-fit: contain;
-    transform: translateY(5px); /* center adjust */
-    transition: all 0.4s ease;
-    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.4));
-}
-
-/* ✨ On hover — shrink a bit, remove shadow */
-.sidebar:hover .sidebar-header img {
-    width: 90%;
-    filter: none;
+    width: 80px !important;        
+    height: 80px !important;        
+    object-fit: contain;  
+    border-radius: 50%;   
 }
 

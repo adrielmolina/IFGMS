@@ -51,7 +51,7 @@
     <div class="action-buttons">
         <button id="btn_create_dispatch" type="button" class="btn_create_dispatch" >Create Disptch</button>
         <button type="button" class="btn transmit" disabled>Transmit (0)</button>
-        <button type="button" class="btn history" disabled>History (0)</button>
+        <button type="button" class="btn history" onclick="showHistory()">History </button>
         <button type="button" class="btn select-all">Select All</button>
         <button type="button" class="btn archive">Archive</button>
     </div>
@@ -144,35 +144,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const checkedCount = document.querySelectorAll(".row-check:checked").length;
     const totalCount = tableRows.length;
 
-    // Enable/disable buttons
+    // Enable or disable buttons
     transmitBtn.disabled = checkedCount === 0;
-    historyBtn.disabled = checkedCount === 0;
+    historyBtn.disabled = false;
 
-    // Dynamic text (only show count when > 0)
-    transmitBtn.textContent = checkedCount > 0
-      ? `Transmit (${checkedCount})`
-      : "Transmit";
-    historyBtn.textContent = checkedCount > 0
-      ? `History (${checkedCount})`
-      : "History";
+    // Button text update
+    transmitBtn.textContent = checkedCount > 0 ? `Transmit (${checkedCount})` : "Transmit";
+    historyBtn.textContent = checkedCount > 0 ? `History (${checkedCount})` : "History";
 
-    // Update summary
+    // Summary text
     summaryText.textContent = `Showing ${totalCount} of ${totalCount} declarations • ${checkedCount} selected`;
 
-    // Update "select all" checkbox state
+    // Select all checkbox update
     selectAllCheckbox.checked = checkedCount === totalCount;
   }
 
-  // Handle row checkbox changes
+  // Row checkboxes
   rowChecks.forEach(cb => cb.addEventListener("change", updateSelection));
 
-  // Handle "Select All" checkbox in table header
+  // Table Select All checkbox
   selectAllCheckbox.addEventListener("change", () => {
     rowChecks.forEach(cb => cb.checked = selectAllCheckbox.checked);
     updateSelection();
   });
 
-  // Handle "Select All / Deselect All" button
+  // Button Select All / Deselect All
   selectAllBtn.addEventListener("click", () => {
     const isSelecting = selectAllBtn.textContent === "Select All";
     rowChecks.forEach(cb => cb.checked = isSelecting);
@@ -184,63 +180,221 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize
   updateSelection();
 });
-
-<!-- 🔎 Search functionality -->
-const searchInput = document.getElementById('search_input');
-const table = document.getElementById('dataTable');
-const rows = table.getElementsByTagName('tr');
-
-searchInput.addEventListener('keyup', function () {
-  const filter = searchInput.value.toLowerCase();
-
-  for (let i = 1; i < rows.length; i++) {
-    let cells = rows[i].getElementsByTagName('td');
-    let rowText = '';
-
-    for (let j = 0; j < cells.length; j++) {
-      rowText += cells[j].textContent.toLowerCase();
-    }
-
-    rows[i].style.display = rowText.indexOf(filter) > -1 ? '' : 'none';
-  }
-});
-
-document.getElementById('btn_create_dispatch').addEventListener('click', function() {
-    const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):"); // TODO use a date picker in a prmopt box
-    const late_declare = prompt("Include Late Declarations? (yes/no):").toLowerCase() === 'yes';
-    const dispatch_remarks = prompt("Enter Remarks (optional):");
-
-
-    fetch('/api/declaration', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            dispatch_cutoff,
-            late_declare,
-            dispatch_remarks
-        })
-    })
-});
-
-
 </script>
 
-<!-- 👇 Added for History and Back button toggle -->
+<!-- 🔎 Search Function -->
+<script>
+document.getElementById('search_input').addEventListener('keyup', function () {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll('#dataTable tbody tr');
+
+  rows.forEach(row => {
+    const rowText = row.textContent.toLowerCase();
+    row.style.display = rowText.includes(filter) ? '' : 'none';
+  });
+});
+</script>
+
+<!-- 📦 Dispatch Create -->
+<script>
+document.getElementById('btn_create_dispatch').addEventListener('click', function() {
+  const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):");
+  const late_declare = prompt("Include Late Declarations? (yes/no):").toLowerCase() === 'yes';
+  const dispatch_remarks = prompt("Enter Remarks (optional):");
+
+  fetch('/api/declaration', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ dispatch_cutoff, late_declare, dispatch_remarks })
+  });
+});
+</script>
+
+<!-- 📜 History Toggle -->
 <script>
 function showHistory() {
-  document.getElementById("defaultButtons").classList.add("hidden");
+  // Hide default action buttons and show history buttons
+  document.querySelector(".action-buttons").classList.add("hidden");
   document.getElementById("historyButtons").classList.remove("hidden");
   document.getElementById("backButton").classList.remove("hidden");
   document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Dispatch History';
+  
+  showDispatchTable();
 }
 
 function backToMain() {
-  document.getElementById("defaultButtons").classList.remove("hidden");
+  // Show default action buttons and hide history buttons
+  document.querySelector(".action-buttons").classList.remove("hidden");
   document.getElementById("historyButtons").classList.add("hidden");
   document.getElementById("backButton").classList.add("hidden");
   document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-file-lines"></i> Dispatch Contents';
+  
+  // Restore the main table content
+  showMainTable();
 }
+
+function showDispatchTable() {
+  const tableBody = document.querySelector("#dataTable tbody");
+  
+  // Sample dispatch data 
+  const dispatchData = [
+    {
+      dispatch_id: "DISP001",
+      dispatch_type: "Regular",
+      dispatch_origin: "Cavite",
+      dispatch_year: "2025",
+      dispatch_cutoff: "2025-01-15",
+      date_dispatched: "2025-01-16",
+      dispatch_total: "150",
+      late_declare: "No",
+      dispatch_remarks: "N/A"
+    },
+    {
+      dispatch_id: "DISP002",
+      dispatch_type: "Special",
+      dispatch_origin: "Silang",
+      dispatch_year: "2025",
+      dispatch_cutoff: "2025-02-14",
+      date_dispatched: "2025-02-15",
+      dispatch_total: "89",
+      late_declare: "Yes",
+      dispatch_remarks: "N/A"
+    },
+    {
+      dispatch_id: "DISP003",
+      dispatch_type: "Regular",
+      dispatch_origin: "Dasma",
+      dispatch_year: "2025",
+      dispatch_cutoff: "2025-03-15",
+      date_dispatched: "2025-03-16",
+      dispatch_total: "175",
+      late_declare: "No",
+      dispatch_remarks: "Quarter-end dispatch"
+    }
+  ];
+
+  // Update table headers for dispatch view
+  const tableHead = document.querySelector("#dataTable thead tr");
+  tableHead.innerHTML = `
+    <th>Dispatch ID</th>
+    <th>Type</th>
+    <th>Origin</th>
+    <th>Year</th>
+    <th>Dispatch Cutoff</th>
+    <th>Date Dispatched</th>
+    <th>Dispatch Total</th>
+    <th>Late Declare</th>
+    <th>Remarks</th>
+  `;
+
+  // Populate table with dispatch data
+  tableBody.innerHTML = dispatchData.map(item => `
+    <tr>
+      <td>${item.dispatch_id}</td>
+      <td>${item.dispatch_type}</td>
+      <td>${item.dispatch_origin}</td>
+      <td>${item.dispatch_year}</td>
+      <td>${item.dispatch_cutoff}</td>
+      <td>${item.date_dispatched}</td>
+      <td>${item.dispatch_total}</td>
+      <td>${item.late_declare}</td>
+      <td>${item.dispatch_remarks}</td>
+    </tr>
+  `).join('');
+
+  // Update summary text
+  document.getElementById("summaryText").textContent = `Showing ${dispatchData.length} dispatch history records`;
+}
+
+function showMainTable() {
+  // Restore the original main table content
+  const tableBody = document.querySelector("#dataTable tbody");
+  const tableHead = document.querySelector("#dataTable thead tr");
+  
+  // Restore original headers (with checkboxes)
+  tableHead.innerHTML = `
+    <th><input type="checkbox" id="selectAll"></th>
+    <th>Dispatch Content ID</th>
+    <th>Entry ID</th>
+    <th>MAAB Category</th>
+    <th>MAAB No.</th>
+    <th>Member Name</th>
+    <th>Member Birth Date</th>
+    <th>Effectivity Date</th>
+    <th>Location Particular</th>
+    <th>Late Declare</th>
+  `;
+
+  // Restore original sample data (with checkboxes)
+  tableBody.innerHTML = `
+    <tr>
+      <td><input type="checkbox" class="row-check"></td>
+      <td>DC001</td>
+      <td>EN001</td>
+      <td>Regular</td>
+      <td>MAAB001</td>
+      <td>Juan Dela Cruz</td>
+      <td>1998-05-10</td>
+      <td>2025-01-10</td>
+      <td>Cavite</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td><input type="checkbox" class="row-check"></td>
+      <td>DC002</td>
+      <td>EN002</td>
+      <td>Associate</td>
+      <td>MAAB002</td>
+      <td>Maria Santos</td>
+      <td>1996-08-22</td>
+      <td>2025-02-05</td>
+      <td>Cavite</td>
+      <td>Yes</td>
+    </tr>
+  `;
+
+  // Re-initialize event listeners for checkboxes
+  initializeCheckboxListeners();
+  updateSelection();
+}
+
+// Reinitialize checkbox functionality after switching back to main view
+function initializeCheckboxListeners() {
+  const rowChecks = document.querySelectorAll(".row-check");
+  const selectAllCheckbox = document.getElementById("selectAll");
+  
+  if (rowChecks.length > 0 && selectAllCheckbox) {
+    rowChecks.forEach(cb => cb.addEventListener("change", updateSelection));
+    selectAllCheckbox.addEventListener("change", () => {
+      rowChecks.forEach(cb => cb.checked = selectAllCheckbox.checked);
+      updateSelection();
+    });
+  }
+}
+
+
+
+
+// UPLOADED IMAGE
+document.addEventListener("DOMContentLoaded", function() {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            navProfileImage.src = savedProfileImage;
+        }
+    }
+    
+    // Listen for storage changes from settings page
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profileImage') {
+            const navProfileImage = document.getElementById("navProfileImage");
+            if (navProfileImage) {
+                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+            }
+        }
+    });
+});
+
 </script>
 {% endblock %}
