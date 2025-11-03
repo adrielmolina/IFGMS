@@ -35,7 +35,7 @@
     </div>
 
     <div class="controls_box">
-        <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
+        <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
     </div>
 
 
@@ -871,7 +871,7 @@
             });
     }
     // Add Record button logic
-    document.querySelector('button').addEventListener('click', function () {
+    document.getElementById('add_record_btn').addEventListener('click', function () {
         // Call backend to add a new record
         fetch('/api/add_claim_record', {
             method: 'POST',
