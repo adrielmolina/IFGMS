@@ -406,5 +406,35 @@ h2.numbercount {
 }
 
 
+/* ADD ONLY THESE LINES TO YOUR EXISTING CSS - NO CHANGES TO YOUR ORIGINAL CODE */
 
+* {
+    box-sizing: border-box;
+}
+
+.cards-container {
+    flex-wrap: wrap;
+}
+
+.card {
+    min-width: 200px;
+}
+
+#chart_div {
+    width: 100% !important;
+    overflow: hidden;
+}
+
+#chart_div svg {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+.side-card {
+    overflow-x: auto;
+}
+
+.side-card table {
+    min-width: 600px;
+}
 

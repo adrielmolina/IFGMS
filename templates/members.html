@@ -94,23 +94,23 @@
             <tr>
                 <td>
                     <div class="input-container">
-                        <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly placeholder=" ">
                         <label for="record_id">Record ID</label>
+                        <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly placeholder=" ">
                     </div>
                 </td>
 
                 <td>
                     <!-- TODO change to year only or remove the field completely -->
                     <div class="input-container">
-                        <input type="text" id="year" name="year" required autocomplete="off" readonly placeholder=" ">
                         <label for="year">Year</label>
+                        <input type="text" id="year" name="year" required autocomplete="off" readonly placeholder=" ">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
                         <label for="id_rcv">ID Received</label>
+                        <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
                     </div>
                 </td>
 
@@ -130,15 +130,15 @@
 
                 <td>
                     <div class="input-container">
-                        <input type="date" id="dec_date" name="dec_date" required autocomplete="off">
                         <label for="dec_date">Declaration Date</label>
+                        <input type="date" id="dec_date" name="dec_date" required autocomplete="off">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="date" id="eff_date" name="eff_date" required autocomplete="off">
                         <label for="eff_date">Effectivity Date</label>
+                        <input type="date" id="eff_date" name="eff_date" required autocomplete="off">
                     </div>
                 </td>
             </tr>
@@ -147,14 +147,15 @@
                 <td>
                     <!-- TODO add js function to set location particular to all caps while typing -->
                     <div class="input-container">
+                         <label for="loc_par">Location Particular</label>
                         <input type="text" id="loc_par" name="loc_par" required autocomplete="off" placeholder=" ">
-                        <label for="loc_par">Location Particular</label>
                     </div>
                 </td>
                 
                 <td colspan="2">
                     <!-- TODO add select options for accepted tags -->
                     <div class="input-container">
+                        <label for="loc_cat">Location Category</label>
                         <select name="loc_cat" id="loc_cat" required>
                             <option value=""></option>
                             <option value="Public Nursery">Public Nursery</option>
@@ -185,12 +186,12 @@
                             <option value="Individual">Individual</option>
                             <option value="Walk-In">Walk-In</option>
                         </select>
-                        <label for="loc_cat">Location Category</label>
                     </div>
                 </td>
 
                 <td colspan="2">
                     <div class="input-container">
+                        <label for="municipality">Municipality</label>
                         <select name="municipality" id="municipality" required>
                             <option value=""></option>
                             <option value="Cavite City">Cavite City</option>
@@ -217,15 +218,14 @@
                             <option value="Tagaytay City">Tagaytay City</option>
                             <option value="Ternate">Ternate</option>
                         </select>
-                        <label for="municipality">Municipality</label>
                     </div>
                 </td>
 
                 <td>
                 <!-- TODO add auto district number based on municipality selected -->
                         <div class="input-container">
-                            <input type="text" id="district" name="district" required autocomplete="off" readonly placeholder=" ">
                             <label for="district">District</label>
+                            <input type="text" id="district" name="district" required autocomplete="off" readonly placeholder=" ">
                         </div>
                 </td>
                 
@@ -234,8 +234,8 @@
                 <!-- TODO autofill based on account logged in -->
                 <!-- TODO change this to select so it is still modifiable -->
                     <div class="input-container">
-                        <input type="text" id="origin" name="origin" required autocomplete="off" placeholder=" ">
                         <label for="origin">Origin</label>
+                        <input type="text" id="origin" name="origin" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>
             </tr>
@@ -243,15 +243,15 @@
             <tr>
                 <td colspan="6">
                     <div class="input-container">
-                        <input type="text" id="remarks" name="remarks" autocomplete="off" placeholder=" ">
                         <label for="remarks">Remarks</label>
+                        <input type="text" id="remarks" name="remarks" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="tags" name="tags" autocomplete="off" placeholder=" ">
                         <label for="tags">Tags</label>
+                        <input type="text" id="tags" name="tags" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
             </tr>
@@ -286,6 +286,7 @@
             <tr>
                 <td>
                     <div class="input-container">
+                        <label for="maab_cat">Category</label>
                         <select name="maab_cat" id="maab_cat" required>
                             <option value=""></option>
                             <option value="Classic">Classic</option>
@@ -297,40 +298,40 @@
                             <option value="Senior">Senior</option>
                             <option value="Senior+">Senior+</option>            
                         </select>
-                        <label for="maab_cat">Category</label>
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="maab_no" name="maab_no" required autocomplete="off" placeholder=" ">
                         <label for="maab_no">MAAB No.</label>
+                        <input type="text" id="maab_no" name="maab_no" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>
     
                 <td>
                     <div class="input-container">
-                        <input type="text" id="fname" name="fname" required autocomplete="off" placeholder=" ">
                         <label for="fname">First Name</label>
+                        <input type="text" id="fname" name="fname" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>
                 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="mname" name="mname" required autocomplete="off" placeholder=" ">
                         <label for="mname">Middle Name</label>
+                        <input type="text" id="mname" name="mname" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="lname" name="lname" required autocomplete="off" placeholder=" ">
                         <label for="lname">Last Name</label>
+                        <input type="text" id="lname" name="lname" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
+                        <label for="suffix">Suffix</label>
                         <select name="suffix" id="suffix" required>
                             <option value=""></option>
                             <option value="NA">NA</option>
@@ -343,7 +344,6 @@
                             <option value="VI">VI</option>
                             <option value="VII">VII</option>
                         </select>
-                        <label for="suffix">Suffix</label>
                     </div>
                 </td>
             </tr>
@@ -351,45 +351,46 @@
             <tr>
                 <td>
                     <div class="input-container">
+                        <label for="bdate">Birthdate</label>
                             <input type="date" id="bdate" name="bdate" required autocomplete="off">
-                            <label for="bdate">Birthdate</label>
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
+                    <label for="sex">Sex</label>
                         <select name="sex" id="sex" required>
                             <option value=""></option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                         </select>
-                        <label for="sex">Sex</label>
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="contact" name="contact" required autocomplete="off" placeholder=" ">
                         <label for="contact">Contact No</label>
+                        <input type="text" id="contact" name="contact" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>                               
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="email" name="email" required autocomplete="off" placeholder=" ">
                         <label for="email">Email</label>
+                        <input type="text" id="email" name="email" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="address" name="address" required autocomplete="off" placeholder=" ">
                         <label for="address">Address</label>
+                        <input type="text" id="address" name="address" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
+                        <label for="blood_type">Blood Type</label>
                         <select name="blood_type" id="blood_type" required>
                             <option value=""></option>
                             <option value="A+">A+</option>
@@ -401,7 +402,6 @@
                             <option value="O+">O+</option>
                             <option value="O-">O-</option>
                         </select>
-                        <label for="blood_type">Blood Type</label>
                     </div>
                 </td>                              
             </tr>
@@ -423,29 +423,29 @@
 
                 <td>
                     <div class="input-container">
-                        <input type="date" id="declare_date" name="declare_date" autocomplete="off">
                         <label for="declare_date">Declaration Date</label>
+                        <input type="date" id="declare_date" name="declare_date" autocomplete="off">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="entry_paid" name="entry_paid" autocomplete="off">
                         <label for="entry_paid">Paid</label>
+                        <input type="checkbox" id="entry_paid" name="entry_paid" autocomplete="off">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="entry_or_no" name="entry_or_no" autocomplete="off" placeholder=" ">
                         <label for="entry_or_no">OR No</label>
+                        <input type="text" id="entry_or_no" name="entry_or_no" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
                         <label for="entry_or_date">OR Date</label>
+                        <input type="text" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
             </tr>
@@ -453,15 +453,15 @@
             <tr>
                 <td colspan="5">
                     <div class="input-container">
-                        <input type="text" id="entry_remarks" name="entry_remarks" autocomplete="off" placeholder=" ">
                         <label for="entry_remarks">Remarks</label>
+                        <input type="text" id="entry_remarks" name="entry_remarks" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="entry_tags" name="entry_tags" autocomplete="off" placeholder=" ">
                         <label for="entry_tags">Tags</label>
+                        <input type="text" id="entry_tags" name="entry_tags" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
             </tr>
@@ -913,6 +913,29 @@
             }
         });
     });
+
+
+// UPLOADED IMAGE
+document.addEventListener("DOMContentLoaded", function() {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            navProfileImage.src = savedProfileImage;
+        }
+    }
+    
+    // Listen for storage changes from settings page
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profileImage') {
+            const navProfileImage = document.getElementById("navProfileImage");
+            if (navProfileImage) {
+                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+            }
+        }
+    });
+});
+    
 </script>
 
 {% endblock %}
