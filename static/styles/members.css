@@ -1,5 +1,5 @@
 body {
-    background-color: #f3e8e8;
+    background-color: #cccccc41;
     padding: 10px;
     display: flex;
     flex-direction: column;
@@ -38,7 +38,7 @@ label {
   padding: 15px 20px;
   margin: 0 0 25px 0; 
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.249);
   margin-top: 20px;
   margin-bottom: 20px;
   width: auto;
@@ -84,10 +84,8 @@ label {
   align-items: center;
   position: relative;
   width: fit-content;
-  margin-top: 10px;
   margin-left: auto; 
   margin-right: 10px;
-  margin-bottom: 10px;
 }
 
 .search_box i.fa-magnifying-glass {
@@ -129,14 +127,17 @@ label {
 }
 
 .search_box input:focus {
-    outline: 2px solid #1a40ff;
+    outline: none;
+    border: 1px solid #5a7ffa;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
     transition: 0.2s;
 }
 
 .module_name {
     display: flex;
     justify-content: space-between; 
-    align-items: center;
+    align-items: flex-start; /* important: keeps titles top-aligned */
+    flex-wrap: wrap;
     padding: 15px 20px;
     margin-left: 0; 
     margin-right: 0; 
@@ -144,12 +145,21 @@ label {
     z-index: 1;
     margin-top: 0; 
     border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.249);
     background-color: #fff;
     margin-bottom: 10px;
-    color: #B92F2F
+    color: #B92F2F !important;
+    flex-direction: row;
 }
 
+
+.module_name h4 {
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 10px;
+    margin-top: 18px;
+    color: #2b2b2b;
+}
 /* ---------- BUTTONS ---------- */
 .controls_box {
   display: flex;
@@ -305,162 +315,163 @@ label {
   scrollbar-width: thin;
   scrollbar-color: #b3b3b3 #f0f0f0;
 }
+/* -------------------------------
+   MODERN FLOATING LABELS (ABOVE ONLY)
+   Neutral minimalist palette
+------------------------------- */
 
 .record_details .input-container,
 .entry_details .input-container {
   position: relative;
-  margin: 10px 0;
+  margin: 18px 0;
   width: 100%;
 }
 
+/* ==== INPUTS & SELECTS ==== */
 .record_details input,
 .entry_details input,
 .record_details select,
 .entry_details select {
   width: 100%;
-  padding: 12px 14px;
-  font-size: 14px !important;
-  border: 1.5px solid #d1d1d1;
-  border-radius: 8px;
+  padding: 14px 12px 10px;
+  font-size: 14px;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
   background: #fff;
+  color: #222;
   outline: none;
   transition: all 0.25s ease;
-  color: #222;
 }
 
-/* hover = soft navy */
+/* Hover effect */
 .record_details input:hover,
 .entry_details input:hover,
 .record_details select:hover,
 .entry_details select:hover {
-  border-color: #00008d80;
-  box-shadow: 0 0 4px rgba(0, 0, 128, 0.15);
+  border-color: #999;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
 }
 
-/* focus = red */
+/* Focus effect */
 .record_details input:focus,
 .entry_details input:focus,
 .record_details select:focus,
 .entry_details select:focus {
-  border-color: #b92f2f;
-  box-shadow: 0 0 6px rgba(185, 47, 47, 0.25);
+  border-color: #555;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
-/* filled = navy */
-.record_details input:not(:placeholder-shown),
-.entry_details input:not(:placeholder-shown),
-.record_details select:valid,
-.entry_details select:valid {
-  border-color: #3b3be0;
-  color: #3b3be0;
-}
-
-/* label base */
+/* ==== LABELS ==== */
 .record_details label,
 .entry_details label {
   position: absolute;
-  top: 50%;
-  left: 14px;
-  transform: translateY(-50%);
+  top: 40%; /* Start in the middle of input */
+  left: 12px;
+  background:transparent;
+  padding: 0 6px;
   font-size: 14px;
   color: #777;
-  background: #fff;
-  padding: 0 4px;
   pointer-events: none;
+  transform: translateY(-25%);
   transition: all 0.25s ease;
 }
 
-/* label: red when typing, navy when filled */
+/* Label floats upwards on hover, focus, or when filled */
+.record_details input:hover + label,
+.entry_details input:hover + label,
+.record_details select:hover + label,
+.entry_details select:hover + label,
 .record_details input:focus + label,
 .entry_details input:focus + label,
 .record_details select:focus + label,
-.entry_details select:focus + label {
-  top: 0;
-  transform: translateY(-50%);
-  font-size: 12px;
-  color: #b92f2f;
-}
-
+.entry_details select:focus + label,
 .record_details input:not(:placeholder-shown) + label,
 .entry_details input:not(:placeholder-shown) + label,
 .record_details select:valid + label,
 .entry_details select:valid + label {
-  top: 0;
-  transform: translateY(-50%);
+  top: -25px; /* Move above input */
+  transform: translateY(0); /* Remove vertical centering */
   font-size: 12px;
-  color: #000080;
+  color: #333;
 }
 
-/* checkbox section */
-.record_details .checkbox-container {
+/* Ensure label stays above when input has value */
+.record_details input:not(:placeholder-shown) + label,
+.entry_details input:not(:placeholder-shown) + label,
+.record_details select:valid + label,
+.entry_details select:valid + label {
+  top: -25px;
+  transform: translateY(0);
+  font-size: 12px;
+  color: #333;
+}
+
+/* ==== CHECKBOXES ==== */
+.record_details .checkbox-container,
+.entry_details .checkbox-container {
   display: flex;
   flex-direction: column; 
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 0;
-  margin: 0;
-  height: 100%;
-}
-
-.record_details .input-container.checkbox-container {
-  padding: 0;
-  margin: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.record_details .checkbox-container label {
-  font-size: 13px;
-  color: #000080;
-  margin-bottom: 4px;
-  line-height: 1.2;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.record_details .checkbox-container label:hover {
-  color: #b92f2f;
-}
-
-.record_details .checkbox-container input[type="checkbox"] {
-  transform: scale(1.2);
-  accent-color: #b92f2f;
-  cursor: pointer;
-  margin: 0;
-}
-
-.record_details_table td {
-  vertical-align: middle;
-  padding: 6px 10px;
-}
-
-.record_details_table .checkbox-container {
-  min-width: 70px;
-}
-
-
-
-/* ---------- READONLY ---------- */
-
-.record_details input[readonly] {
-  background-color: transparent;
-  color: #666;
-}
-
-/* ---------- FIELDSETS ---------- */
-
-fieldset {
-  border: 2px solid #353fff;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
+  gap: 4px;
   width: 100%;
+  padding: 4px 0;
 }
-fieldset legend {
-  font-size: 16px;
-  padding: 0 10px;
+
+.record_details .checkbox-container label,
+.entry_details .checkbox-container label {
+  font-size: 13px;
   color: #333;
+  font-weight: 500;
+  margin: 0;
+  cursor: pointer;
+  position: static; /* Reset for checkbox labels */
+  transform: none;
+  background: none;
+}
+
+.record_details .checkbox-container input[type="checkbox"],
+.entry_details .checkbox-container input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #666;
+  cursor: pointer;
+}
+
+/* ==== TABLE CELLS ==== */
+.record_details_table td,
+.entry_details_table td {
+  vertical-align: middle;
+  text-align: center;
+  padding: 6px 8px;
+}
+
+/* Uniform checkbox columns */
+.record_details_table td:nth-child(3),
+.record_details_table td:nth-child(4),
+.record_details_table td:nth-child(5),
+.entry_details_table td:nth-child(10),
+.entry_details_table td:nth-child(11),
+.entry_details_table td:nth-child(13) {
+  width: 90px;
+}
+
+/* ==== READONLY ==== */
+.record_details input[readonly],
+.entry_details input[readonly] {
+  background-color: #f8f8f8;
+  color: #666;
+  border-color: #ddd;
+}
+
+/* ==== REMOVE FIELDSETS ==== */
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+legend {
+  display: none;
 }
 
 /* ---------- TABLES ---------- */
@@ -822,55 +833,4 @@ tr:hover {
     margin-top: 20px;
 }
 
-/* === FIXED STACKED CHECKBOX STYLE (labels restored) === */
 
-.record_details .checkbox-container,
-.entry_details .checkbox-container {
-  display: flex;
-  flex-direction: column; 
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 100%;
-  padding: 4px 0;
-  position: relative;
-}
-
-.record_details .input-container.checkbox-container label,
-.entry_details .input-container.checkbox-container label {
-  position: static !important;
-  transform: none !important;
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-  cursor: pointer;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.record_details .checkbox-container input[type="checkbox"],
-.entry_details .checkbox-container input[type="checkbox"] {
-  width: 25px;
-  height: 25px;
-  accent-color: #000080;
-  cursor: pointer;
-  margin: 0 auto;
-  display: block;
-}
-
-.record_details_table td,
-.entry_details_table td {
-  vertical-align: middle;
-  text-align: center;
-  padding: 4px 6px;
-}
-
-/* optional: uniform width for checkbox columns */
-.record_details_table td:nth-child(3),
-.record_details_table td:nth-child(4),
-.record_details_table td:nth-child(5),
-.entry_details_table td:nth-child(10),
-.entry_details_table td:nth-child(11),
-.entry_details_table td:nth-child(13) {
-  width: 90px;
-}

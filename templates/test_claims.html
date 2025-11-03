@@ -1,0 +1,176 @@
+<div class="collapse_box_header">
+                    <input id="claim_info_check" name="claim_info_check" class="collapse_box_checkbox"
+                    type="checkbox" checked data-target_div="claim_info"> 
+                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
+                    <label for="claim_info_check" class="collapse_box_label">Claim Info</label>
+                </div>
+                <div id="claim_info" class="collapse_group">                 
+                    
+                    <div class="input_set">
+                        <label for="claim_id">Claim ID</label>
+                        <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" readonly>
+                    </div>
+                    
+                    <div class="input_set">
+                        <!-- <label for="date_filed">Date Filed</label> -->
+                        <span>
+                            <label for="date_released">Date Filed</label>
+                            <button style="float: right;" type="button" onclick="document.getElementById('date_filed').value = new Date().toISOString().slice(0, 10);">
+                                Today
+                            </button>
+                        </span>
+                        <input type="date" id="date_filed" name="date_filed" autocomplete="off">
+                    </div>
+
+                    <div class="input_set">
+                        <label for="received_by">Received by</label>
+                        <input type="text" id="received_by" name="received_by" autocomplete="off">
+                    </div>
+
+                    <div class="input_set">
+                        <label for="claim_origin">Claim Origin</label>
+                        <select name="claim_origin" id="claim_origin">
+                            <option value="chapter">Chapter</option>
+                            <option value="dasma">Dasmariñas</option>
+                            <option value="silang">Silang</option>
+                        </select>
+                    </div>
+
+                    <div class="input_set">
+                        <label for="date_of_loss">Date of Loss</label>
+                        <input type="date" id="date_of_loss" name="date_of_loss" autocomplete="off">
+                    </div>
+
+                    <div class="input_set">
+                        <label for="claim_type">Claim Type</label>
+                        <select name="claim_type" id="claim_type">
+                            <option value="ACCIDENT">Accident</option>
+                            <option value="DEATH">Death</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                 <div class="collapse_box_header">
+                    <input id="principal_insured_info_check" name="principal_insured_info_check" class="collapse_box_checkbox"
+                    type="checkbox" checked data-target_div="principal_insured_info"> 
+                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
+                    <label for="principal_insured_info_check" class="collapse_box_label">Principal Insured Info</label>
+                </div>
+                <div id="principal_insured_info" class="collapse_group">      
+                    <div class="input_set">
+                        <label for="maab_no">MAAB No.</label>
+                        <input type="text" id="maab_no" name="maab_no" autocomplete="off">
+                        <button id="verify_maab_no" class="verify_maab_no">Verify</button>
+                    </div>
+
+                    <div class="input_set">
+                        <label for="eff_date">Effectivity Date</label>
+                        <input type="date" id="eff_date" name="eff_date" readonly>
+                    </div>
+
+                    <div class="input_set">
+                        <label for="prpl_insured_fname">Principal Insured First Name</label>
+                        <input type="text" id="prpl_insured_fname" name="prpl_insured_fname" readonly>
+                    </div>
+
+                    <div class="input_set">
+                        <label for="prpl_insured_mname">Principal Insured Middle Name</label>
+                        <input type="text" id="prpl_insured_mname" name="prpl_insured_mname" readonly>
+                    </div>
+
+                    <div class="input_set">
+                        <label for="prpl_insured_lname">Principal Insured Last Name</label>
+                        <input type="text" id="prpl_insured_lname" name="prpl_insured_lname" readonly>
+                    </div>
+
+                    <div class="input_set">
+                        <label for="prpl_insured_suffix">Principal Insured Suffix</label>
+                        <select name="prpl_insured_suffix" id="prpl_insured_suffix" disabled>
+                            <option value="NA">NA</option>
+                            <option value="Jr">Jr</option>
+                            <option value="Sr">Sr</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                            <option value="V">V</option>
+                            <option value="VI">VI</option>
+                            <option value="VII">VII</option>
+                        </select>
+                    </div>
+                    
+                    <input type="text" id="prpl_insured_contact" name="prpl_insured_contact" hidden>
+                    <input type="text" id="prpl_insured_email" name="prpl_insured_email" hidden> 
+                </div>
+
+                <div class="collapse_box_header">
+                    <input id="claimant_info_check" name="claimant_info_check" class="collapse_box_checkbox"
+                    type="checkbox" checked data-target_div="claimant_info"> 
+                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
+                    <label for="claimant_info_check" class="collapse_box_label">Claimant Info</label>
+                </div>
+                <div id="claimant_info" class="collapse_group">  
+
+                    <div class="input_set">
+                        <label for="same_as_insureed">Same as Insured</label>
+                        <input type="checkbox" id="same_as_insureed" name="same_as_insureed">
+                    </div>
+
+                    <div class="input_set">
+                        <label for="claimant_fname">Claimant First Name</label>
+                        <input type="text" id="claimant_fname" name="claimant_fname" required autocomplete="off">
+                    </div>
+
+                    <div class="input_set">
+                        <label for="claimant_mname">Claimant Middle Name</label>
+                        <input type="text" id="claimant_mname" name="claimant_mname" required autocomplete="off">
+                    </div>
+
+                    <div class="input_set">
+                        <label for="claimant_lname">Claimant Last Name</label>
+                        <input type="text" id="claimant_lname" name="claimant_lname" required autocomplete="off">
+                    </div>
+
+                    <div class="input_set">
+                        <label for="claimant_suffix">Claimant Suffix</label>
+                        <select name="claimant_suffix" id="claimant_suffix">
+                            <option value="NA">NA</option>
+                            <option value="Jr">Jr</option>
+                            <option value="Sr">Sr</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                            <option value="V">V</option>
+                            <option value="VI">VI</option>
+                            <option value="VII">VII</option>
+                        </select>
+                    </div>
+
+                    <div class="input_set">
+                        <label for="relation">Relation to Principal Insured</label>
+                        <input list="relation_list" id="relation" name="relation" autocomplete="off">
+                        <datalist id="relation_list">
+                            <option value="Spouse">Spouse</option>
+                            <option value="Son">Son</option>
+                            <option value="Daughter">Daughter</option>
+                            <option value="Father">Father</option>
+                            <option value="Mother">Mother</option>
+                            <option value="Grandson">Grandson</option>
+                            <option value="Granddaughter">Granddaughter</option>
+                            <option value="Grandfather">Grandfather</option>
+                            <option value="Grandmother">Grandmother</option>
+                            <option value="Uncle">Uncle</option>
+                            <option value="Aunt">Aunt</option>
+                        </datalist>
+                    </div>
+                    <div class="input_set">
+                        <label for="claimant_contact_no">Claimant Contact No.</label>
+                        <input type="tel" id="claimant_contact_no" name="claimant_contact_no">
+                    </div>
+
+                    <div class="input_set">
+                        <label for="claimant_email">Claimant Email</label>
+                        <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
+                    </div>
+       
+                </div>

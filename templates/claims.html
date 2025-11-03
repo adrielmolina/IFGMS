@@ -6,7 +6,7 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/claims.css') }}">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
@@ -25,7 +25,7 @@
                 <!-- TODO add PRC Email to settings -->
                     <!-- TODO center the title -->
     <div class="module_name">
-        <h1>CLAIMS</h1>
+        <h1>CLAIMS MANAGEMENT</h1>
     </div>
 
     <!-- Filter container -->
@@ -60,8 +60,16 @@
         <input id="claims-search" type="text" placeholder="Search...">
     </div>
 
+    <!-- FIX THE PLACEMENT OF THIS -->
+    <div class="controls_box">
+        <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
+    </div>
 
-    <div id="claims_table" class="ht-theme-main"></div>
+
+    <div class="table-container">
+        <div class="table-title"></div>
+        <div id="claims_table" class="ht-theme-main"></div>
+    </div>
 
     <div id="overlay" class="overlay">
         <div id="overlay-content" class="overlay-content">
@@ -91,13 +99,12 @@
                     <input id="claim_info_check" name="claim_info_check" class="collapse_box_checkbox"
                     type="checkbox" checked data-target_div="claim_info"> 
 
-                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
                     <label for="claim_info_check" class="collapse_box_label">CLAIM INFO</label>
                 </div>
 
                 <div id="claim_info" class="collapse_group">                                  
                     <div class="input_set">
-                        <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" placeholder=" ">
+                        <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" placeholder=" " readonly>
                         <label for="claim_id">Claim ID</label>
                     </div>
 
@@ -144,56 +151,6 @@
                     </div>
                 </div>
 
-                <!-- <div class="collapse_box_header">
-                    <input id="principal_insured_info_check" name="principal_insured_info_check" class="collapse_box_checkbox"
-                    type="checkbox" checked data-target_div="principal_insured_info"> 
-                    <label for="principal_insured_info_check" class="collapse_box_label">Principal Insured Info</label>
-                </div>
-                <div id="principal_insured_info" class="collapse_group">      
-                    <div class="input_set">
-                        <label for="maab_no">MAAB No.</label>
-                        <input type="text" id="maab_no" name="maab_no" autocomplete="off">
-                        <button id="verify_maab_no" class="verify_maab_no">Verify</button>
-                    </div>
-
-                    <div class="input_set">
-                        <label for="eff_date">Effectivity Date</label>
-                        <input type="date" id="eff_date" name="eff_date" readonly>
-                    </div>
-
-                    <div class="input_set">
-                        <label for="prpl_insured_fname">Principal Insured First Name</label>
-                        <input type="text" id="prpl_insured_fname" name="prpl_insured_fname" readonly>
-                    </div>
-
-                    <div class="input_set">
-                        <label for="prpl_insured_mname">Principal Insured Middle Name</label>
-                        <input type="text" id="prpl_insured_mname" name="prpl_insured_mname" readonly>
-                    </div>
-
-                    <div class="input_set">
-                        <label for="prpl_insured_lname">Principal Insured Last Name</label>
-                        <input type="text" id="prpl_insured_lname" name="prpl_insured_lname" readonly>
-                    </div>
-
-                    <div class="input_set">
-                        <label for="prpl_insured_suffix">Principal Insured Suffix</label>
-                        <select name="prpl_insured_suffix" id="prpl_insured_suffix" disabled>
-                            <option value="NA">NA</option>
-                            <option value="Jr">Jr</option>
-                            <option value="Sr">Sr</option>
-                            <option value="II">II</option>
-                            <option value="III">III</option>
-                            <option value="IV">IV</option>
-                            <option value="V">V</option>
-                            <option value="VI">VI</option>
-                            <option value="VII">VII</option>
-                        </select>
-                    </div>
-                    
-                    <input type="text" id="prpl_insured_contact" name="prpl_insured_contact" hidden>
-                    <input type="text" id="prpl_insured_email" name="prpl_insured_email" hidden> 
-                </div> -->
 
                 <div class="collapse_box_header">
                     <input id="principal_insured_info_check" name="principal_insured_info_check" class="collapse_box_checkbox"
@@ -249,16 +206,15 @@
                 </div>
 
 
-                <div class="collapse_box_header">
+                <!-- <div class="collapse_box_header">
                     <input id="claimant_info_check" name="claimant_info_check" class="collapse_box_checkbox"
                     type="checkbox" checked data-target_div="claimant_info"> 
-                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
                     <label for="claimant_info_check" class="collapse_box_label">CLAIMANT INFORMATION</label>
                 </div>
                 <div id="claimant_info" class="collapse_group">  
 
                     <div class="input_set">
-                        <label for="same_as_insureed">Same as Insured</label>
+                        <label for="same_as_insureed">Same as <br>Insured</label>
                         <input type="checkbox" id="same_as_insureed" name="same_as_insureed">
                     </div>
 
@@ -319,7 +275,81 @@
                         <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
                     </div>
        
+                </div> -->
+
+                <div class="collapse_box_header">
+                    <input id="claimant_info_check" name="claimant_info_check" class="collapse_box_checkbox"
+                        type="checkbox" checked data-target_div="claimant_info">
+                    <label for="claimant_info_check" class="collapse_box_label">CLAIMANT INFORMATION</label>
                 </div>
+
+                <div id="claimant_info" class="collapse_group">
+
+                    <div class="input_set checkbox_set">
+                        <input type="checkbox" id="same_as_insureed" name="same_as_insureed">
+                        <label for="same_as_insureed">Same as Insured</label>
+                    </div>
+
+                    <div class="input_set floating_label">
+                        <input type="text" id="claimant_fname" name="claimant_fname" required autocomplete="off">
+                        <label for="claimant_fname">Claimant First Name</label>
+                    </div>
+
+                    <div class="input_set floating_label">
+                        <input type="text" id="claimant_mname" name="claimant_mname" required autocomplete="off">
+                        <label for="claimant_mname">Claimant Middle Name</label>
+                    </div>
+
+                    <div class="input_set floating_label">
+                        <input type="text" id="claimant_lname" name="claimant_lname" required autocomplete="off">
+                        <label for="claimant_lname">Claimant Last Name</label>
+                    </div>
+
+                    <div class="input_set select_label">
+                        <select name="claimant_suffix" id="claimant_suffix">
+                            <option value="NA">NA</option>
+                            <option value="Jr">Jr</option>
+                            <option value="Sr">Sr</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                            <option value="V">V</option>
+                            <option value="VI">VI</option>
+                            <option value="VII">VII</option>
+                        </select>
+                        <label for="claimant_suffix">Claimant Suffix</label>
+                    </div>
+
+                    <div class="input_set floating_label">
+                        <input list="relation_list" id="relation" name="relation" autocomplete="off">
+                        <label for="relation">Relation to Principal Insured</label>
+                        <datalist id="relation_list">
+                            <option value="Spouse">Spouse</option>
+                            <option value="Son">Son</option>
+                            <option value="Daughter">Daughter</option>
+                            <option value="Father">Father</option>
+                            <option value="Mother">Mother</option>
+                            <option value="Grandson">Grandson</option>
+                            <option value="Granddaughter">Granddaughter</option>
+                            <option value="Grandfather">Grandfather</option>
+                            <option value="Grandmother">Grandmother</option>
+                            <option value="Uncle">Uncle</option>
+                            <option value="Aunt">Aunt</option>
+                        </datalist>
+                    </div>
+
+                    <div class="input_set floating_label">
+                        <input type="tel" id="claimant_contact_no" name="claimant_contact_no">
+                        <label for="claimant_contact_no">Claimant Contact No.</label>
+                    </div>
+
+                    <div class="input_set floating_label">
+                        <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
+                        <label for="claimant_email">Claimant Email</label>
+                    </div>
+
+                </div>
+
 
                 <div class="collapse_box_header">
                     <input id="requirements_check" name="requirements_check" class="collapse_box_checkbox"
@@ -481,13 +511,9 @@
                         <div class="release_remarks_section">
                             <label for="release_remarks">Release Remarks</label>
                             <input type="text" id="release_remarks" name="release_remarks" required autocomplete="off">
-                        </div>
-
-       
+                        </div>   
                        
-  
                     </div>
-
 
                     <div class="input_set">
                         <label for="picked_up">Picked Up</label>
@@ -497,10 +523,7 @@
                     <div class="input_set">
                         <label for="date_picked_up">Date Picked Up</label>
                         <input type="date" id="date_picked_up" name="date_picked_up">
-                    </div>
-                    
-
-                    
+                    </div>      
                 </div>
 
 

@@ -187,8 +187,8 @@ body {
     background: transparent;
     color: inherit;
     font-weight: 600;
-    font-size: 0.65rem; /* visibly smaller */
-    line-height: 1; /* tighten text spacing */
+    font-size: 0.65rem; 
+    line-height: 1; 
     user-select: none;
     display: flex;
     align-items: center;
@@ -199,7 +199,6 @@ body {
     display: none;
 }
 
-/* Base label style */
 .collapse_box_label {
   cursor: pointer;
   font-size: 20px;
@@ -210,17 +209,16 @@ body {
 .collapse_box_label:hover {
   text-decoration: underline;
 }
-/* Default arrow (right) */
+
 .collapse_box_label::before {
-  content: "▶";  /* right-pointing triangle */
+  content: "▶";  
   display: inline-block;
   margin-right: 6px;
   transition: transform 1s;
 }
 
-/* Checked arrow (down) */
 .collapse_box_checkbox:checked + .collapse_box_label::before {
-  content: "▼";  /* down-pointing triangle */
+  content: "▼";  
   color: rgb(36, 183, 36);
 }
 
@@ -236,7 +234,8 @@ body {
 
 /* === CLAIM INFO & PRINCIPAL INSURED INFO GROUP BOXES === */
 #claim_info,
-#principal_insured_info {
+#principal_insured_info,
+#claimant_info {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
@@ -244,8 +243,8 @@ body {
   margin: 10px 0 16px 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  grid-auto-rows: minmax(60px, auto); /* ensures consistent row height */
-  gap: 20px; /* uniform spacing between inputs */
+  grid-auto-rows: minmax(60px, auto); 
+  gap: 20px; 
   width: 100%;
   box-sizing: border-box;
 }
@@ -254,32 +253,36 @@ body {
 #principal_insured_info #prpl_insured_fname,
 #principal_insured_info #prpl_insured_mname,
 #principal_insured_info #prpl_insured_lname {
-  min-width: 280px;        /* wider to accommodate longer names */
-  max-width: 100%;         /* prevent overflowing container */
-  grid-column: span 2;     /* span 2 columns in the grid */
+  min-width: 280px;        
+  max-width: 100%;       
+  grid-column: span 2;     
   box-sizing: border-box;  
-  margin-bottom: 16px;     /* consistent spacing below each input */
+  margin-bottom: 16px;     
 }
 
-/* Ensure the parent grid has enough space for wider inputs */
 #principal_insured_info {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px 20px;          /* vertical and horizontal spacing */
+  gap: 16px 20px;    
 }
 
 
 /* === INPUT SETS === */
 #claim_info .input_set,
-#principal_insured_info .input_set {
+#principal_insured_info .input_set,
+#claimant_info .input_set {
   position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
 }
 
-#claim_info .input_set input,
+#claim_info .input_set input:not([type="checkbox"]),
 #claim_info .input_set select,
-#principal_insured_info .input_set input,
-#principal_insured_info .input_set select {
+#principal_insured_info .input_set input:not([type="checkbox"]),
+#principal_insured_info .input_set select,
+#claimant_info .input_set input:not([type="checkbox"]),
+#claimant_info .input_set select {
   width: 100%;
   padding: 20px 12px 8px 12px; /* taller input for floating label */
   font-size: 1rem;
@@ -290,9 +293,11 @@ body {
   appearance: none; /* removes default select arrow spacing */
 }
 
+
 /* === FLOATING LABELS === */
 #claim_info .input_set label,
-#principal_insured_info .input_set label {
+#principal_insured_info .input_set label,
+#claimant_info .input_set label {
   position: absolute;
   top: 14px;
   left: 12px;
@@ -312,7 +317,11 @@ body {
 #principal_insured_info .input_set input:focus + label,
 #principal_insured_info .input_set input:not(:placeholder-shown) + label,
 #principal_insured_info .input_set select:focus + label,
-#principal_insured_info .input_set select:valid + label {
+#principal_insured_info .input_set select:valid + label,
+#claimant_info .input_set input:focus + label,
+#claimant_info .input_set input:not(:placeholder-shown) + label,
+#claimant_info .input_set select:focus + label,
+#claimant_info .input_set select:valid + label {
   top: -8px;     
   left: 10px;
   font-size: 0.75rem;
@@ -323,7 +332,9 @@ body {
 #claim_info .input_set input:focus,
 #claim_info .input_set select:focus,
 #principal_insured_info .input_set input:focus,
-#principal_insured_info .input_set select:focus {
+#principal_insured_info .input_set select:focus,
+#claimant_info .input_set input:focus,
+#claimant_info .input_set select:focus {
   outline: none;
   border-color: #B92F2F;
   box-shadow: 0 0 0 2px rgba(185, 47, 47, 0.15);
@@ -349,6 +360,37 @@ body {
   background-color: #d85f5f;
 }
 
+/* ✅ Refined Same as Insured styling (compact + centered) */
+.input_set label[for="same_as_insureed"] {
+  position: static !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  font-size: 0.9rem !important;
+  color: #333 !important;
+  line-height: 1.2 !important;
+  margin: 0 auto 6px auto !important;
+  width: 50% !important; /* narrower span */
+}
+
+.input_set input[type="checkbox"]#same_as_insureed {
+  display: block !important;
+  margin: 0 auto !important;
+  width: 26px !important;
+  height: 26px !important;
+  cursor: pointer !important;
+  transform: scale(1) !important;
+}
+
+/* ✅ Keep suffix aligned and consistent width */
+#claimant_info #claimant_suffix {
+  width: 50% !important;
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+
 
 .ht_master .wtHolder {
     padding-bottom: 1%; /* adjust this value */
@@ -373,6 +415,62 @@ body {
     background-color: #c7db14a5 !important;
     color: #000000;
 }
+
+/* SEARCH BOX CLEANUP */
+.search_box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  margin-top: 10px;
+  margin-left: auto; 
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.search_box i.fa-magnifying-glass {
+  position: absolute;
+  left: 12px;
+  color: #888;
+  font-size: 16px;
+}
+
+.search_box input {
+  width: 550px !important;
+  padding: 10px 35px 10px 35px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  font-size: 16px;
+}
+
+#search_clear {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+  opacity: 0; 
+  pointer-events: none;
+}
+
+#search_clear.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#search_clear:hover {
+  color: #c9302c;
+}
+
+.search_box input:focus {
+    outline: 2px solid #1a40ff;
+    transition: 0.2s;
+}
+
 
 /* TODO remove when done styling the form */
 #overlay {
@@ -424,45 +522,91 @@ body {
     box-sizing: border-box;
 }
 
-table {
-    width: 100%;
+/* ========================================================= */
+/* CLAIMS TABLE DESIGN (copied and aligned from members.css) */
+/* ========================================================= */
+
+#claims_table::before {
+  content: "CLAIMS TABLE";
+  display: block;
+  background: #f07474;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  padding: 10px 16px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  width: 144.5%;
 }
 
-/* TODO add alternating gray/white color to rows */
-table, th, tr, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-    margin-bottom: 1%;
+#claims_table .ht_clone_top thead th {
+  background-color: #fff !important;
+  color: #1f1313 !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  padding: 10px 14px !important;
 }
 
-th {
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    background-color: #2d1d52;
-    color: white;
-    border-color: white;
-    font-size: 14px;
-    /*TODO set the headers to center*/
+#claims_table .ht_clone_left thead th,
+#claims_table .ht_clone_left tbody th {
+  background-color: #fff !important;
+  color: #1f1313 !important;
+  font-weight: 600 !important;
+  text-align: left !important;
+  border-right: 1px solid #e0e0e0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  width: 40px !important;
 }
 
-td {
-    text-align: center;
-    padding: 5px;
+#claims_table td {
+  border-top: 1px solid #e0e0e0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  border-left: none !important;
+  border-right: none !important;
 }
 
-td input {
-    width: 95%;
+#claims_table .wtHolder {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  overflow: hidden;
 }
 
-td input[type="checkbox"] {
-    transform: scale(1.5);
+.handsontable {
+  font-family: "Poppins";
+  font-size: 14px;
+  color: #555;
+  background: #fff;
+  border-radius: 8px !important;
+  border-collapse: collapse;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-td select {
-    width: 95%;
+.handsontable th {
+  color: #444 !important;
+  font-weight: 700;
+  padding: 10px 20px !important;
+  border-bottom: 1px solid #f0f0f0;
+  letter-spacing: 0.5px;
+  font-size: 14px;
 }
+
+.handsontable td {
+  padding: 9px 14px !important;
+  border-bottom: 1px solid #f7f7f7;
+  color: #555;
+}
+
+.handsontable tr:hover td {
+  background: #fff !important;
+}
+/* ========================================================= */
+/* END CLAIMS TABLE DESIGN                                   */
+/* ========================================================= */
+
 
 #entries_table {
     min-width: 100%;
@@ -577,7 +721,3 @@ input:checked + .slider:before {
     flex-direction: column;
     flex: 1; /* optional: equal width columns */
 }
-
-
-
-

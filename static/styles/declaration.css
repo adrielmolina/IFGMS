@@ -34,13 +34,14 @@ label {
   justify-content: space-between;
   align-items: center;
   background: #fff;
-  padding: 15px 20px;
+  padding: 10px 10px;
   margin: 0 0 25px 0; 
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   margin-top: 20px;
   margin-bottom: 20px;
   width: auto;
+  padding-left: 20px;
 }
 
 .filters_box {
@@ -87,7 +88,7 @@ label {
   align-items: center;
   position: relative;
   width: fit-content;
-  margin-top: 40px;
+  margin-top: 10px;
   margin-left: auto; 
   margin-right: 10px;
   margin-bottom: 10px;
@@ -154,25 +155,23 @@ label {
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     background-color: #fff;
     margin-bottom: 10px;
-    color: #B92F2F;
+    color: #d14d4d;
+    font-weight: bold !important;
 }
 
 /* ========================================================= */
 /* CONTROLS (BUTTONS)                                        */
 /* ========================================================= */
 
-/* ========================================================= */
-/* ACTION BUTTONS (Transmit / History / Select All / Archive) */
-/* Matches members.css button style */
-/* ========================================================= */
 
 .action-buttons {
   display: flex;
   justify-content: flex-start;
-  align-items: center;
+  align-items: right;
   gap: 12px;
-  margin: 25px 0 20px 25px;
+  margin: 25px 0 25px 25px;
   flex-wrap: wrap;
+  padding-right: 20px;
 }
 
 .action-buttons .btn {
@@ -185,38 +184,119 @@ label {
   transition: all 0.2s ease-in-out;
 }
 
-/* Button colors — same scheme as members.css */
 .action-buttons .btn.transmit {
-  background: #34a853;  /* ✅ Green for transmit */
+  background: #34a853; 
   color: white;
 }
 
 .action-buttons .btn.history {
-  background: #fbbc05;  /* 🟡 Yellow for history */
+  background: #fbbc05; 
   color: black;
 }
 
-.action-buttons .btn.archive {
-  background: #e0e0e0;  /* ⚪ Gray for archive */
-  color: black;
-}
 
 .action-buttons .btn.select-all {
-  background: #4285f4;  /* 🔵 Blue for select all */
+  background: #4285f4;  
   color: white;
 }
 
-/* Hover effect */
 .action-buttons .btn:hover {
   opacity: 0.9;
   transform: translateY(-2px);
 }
 
-/* Disabled state */
 .action-buttons .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+  margin-bottom: 10px;
+}
+
+.btn.print {
+  background-color: #2f31b9;
+  color: white;
+  border: none;
+  padding: 9px 18px;
+  font-size: 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: center;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.25s ease, transform 0.1s ease;
+  margin-top: 20px;
+}
+
+.btn.print i {
+  font-size: 15px;
+}
+
+.btn.print:hover {
+  background-color: #a82828;
+  transform: translateY(-1px);
+}
+
+.btn.print:active {
+  transform: translateY(0);
+}
+
+.summary {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 13.5px;
+  color: #444;
+  background: transparent;
+  padding: 8px 14px;
+  justify-content: center;
+}
+
+.summary p {
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.btn.export {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.btn.export:hover {
+  background: #0056b3;
+}
+
+.btn.back {
+  background: none;
+  color: #b92f2f;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.btn.print i {
+  margin-right: 6px;
 }
 
 
@@ -224,40 +304,97 @@ label {
 /* STATIC DECLARATION TABLE (for #dataTable)                 */
 /* ========================================================= */
 
+
+.declaration_table {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    width: 100%;
+    margin: 0;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInCard 0.4s ease forwards;
+}
+
+.declaration_table:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
 .table_wrapper {
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
-  padding: 10px;
-  margin-top: 10px;
+    overflow-x: auto;
+    padding: 0 10px 10px 10px;
 }
 
-#dataTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: "Poppins";
-  font-size: 14px;
-  color: #333;
+.declaration_table table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
-#dataTable thead {
-  background-color: #f07474;
-  color: #fff;
+.declaration_table th {
+    background: transparent;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #444;
+    font-size: 13.5px;
+    text-align: left;
+    letter-spacing: 0.2px;
 }
 
-#dataTable th, #dataTable td {
-  text-align: center;
-  padding: 10px;
-  border-bottom: 1px solid #e0e0e0;
+.declaration_table td {
+    padding: 9px 14px;
+    font-size: 13.5px;
+    color: #555;
+    border-bottom: 1px solid #f7f7f7;
+    text-align: left;
 }
 
-#dataTable tbody tr:hover {
-  background-color: #f9f9f9;
+.declaration_table tr:last-child td {
+    border-bottom: none;
+}
+
+.declaration_table table tr {
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.declaration_table tr:hover {
+    background: #ffc7c7;
+    transition: background 0.2s ease;
+}
+
+@keyframes fadeInCard {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.declaration_table h4 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    background: #f07474;
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 12px 12px 0 0;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.declaration_table h4 i {
+    font-size: 16px;
 }
 
 #dataTable input[type="checkbox"] {
-  transform: scale(1.2);
+  transform: scale(1.1);
+  cursor: pointer;
 }
+
+
 
 
 .fa,

@@ -34,25 +34,26 @@
         container: 'univer-app'
     });
 
-    document.getElementById('excelFileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            const data = new Uint8Array(evt.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const univerData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        document.getElementById('excelFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const univerData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-            univer.getWorkbook().getSheets().forEach(sheet => univer.getWorkbook().deleteSheet(sheet.getSheetId()));
+                univer.getWorkbook().getSheets().forEach(sheet => univer.getWorkbook().deleteSheet(sheet.getSheetId()));
 
-            univer.getWorkbook().insertSheet({
-                sheetName: firstSheetName,
-                cellData: univerData
-            });
-        };
-        reader.readAsArrayBuffer(file);
+                univer.getWorkbook().insertSheet({
+                    sheetName: firstSheetName,
+                    cellData: univerData
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
     });
-});
     </script>
+
 {% endblock %}
