@@ -362,6 +362,29 @@
                 target.style.display = this.checked ? 'flex' : 'none';
             });
         });
-    }); 
+    });
+
+
+// UPLOADED IMAGE
+document.addEventListener("DOMContentLoaded", function() {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            navProfileImage.src = savedProfileImage;
+        }
+    }
+    
+    // Listen for storage changes from settings page
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profileImage') {
+            const navProfileImage = document.getElementById("navProfileImage");
+            if (navProfileImage) {
+                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+            }
+        }
+    });
+});
+
     </script>
 {% endblock %}

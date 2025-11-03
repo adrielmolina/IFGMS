@@ -12,17 +12,18 @@ body {
     justify-content: space-between; 
     align-items: center;
     padding: 15px 20px;
-    margin-left: 0; 
-    margin-right: 0; 
     position: relative;
     z-index: 1;
-    margin-top: 0; 
+    margin-top: 10px; 
+    margin-left: 15px;
+    margin-bottom: 20px;
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.249);
     background-color: #fff;
     margin-bottom: 10px;
     color: #B92F2F
 }
+
 
 /* -------- search box style ------- */
 .search_box {
@@ -40,8 +41,8 @@ body {
 }
 
 .search_box input {
-    width: 300px;
-    padding: 8px 35px 8px 35px;
+    width: 350px;
+    padding: 8px 35px 8px 35px !important;
     border: 1px solid #ccc;
     border-radius: 15px;
     font-size: 15px;
@@ -99,17 +100,14 @@ body {
   font-size: 13px;
 }
 
-
-
 /* ----------------- Table Styles ----------------- */
-
-
 .audit-logs_table {
     background: transparent;
     border-radius: 14px;
-    width: 98%;
+    width: 99%;
     transition: all 0.3s ease;
     margin-left: 10px !important;
+    margin-right: 15px !important;
     opacity: 0;
     transform: translateY(10px);
     animation: fadeInCard 0.4s ease forwards;
@@ -158,7 +156,7 @@ body {
 }
 
 .audit-logs_table tr:hover {
-    background: #ffc7c7;
+    background: #ffebeb;
     transition: background 0.2s ease;
 }
 
@@ -170,7 +168,7 @@ body {
 }
 
 .audit-logs_table.full h4 {
-    font-size: 16px !important;
+    font-size: 20px !important;
     font-weight: 600;
     color: #fff;
     background: #f07474 !important;
@@ -187,13 +185,13 @@ body {
     border-radius: 15px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     overflow: hidden;
-     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
+
 
 table, th, tr, td {
     border: 1px solid #ccc;
     border-collapse: collapse;
-    font-size: 14px; /* From inventory.css */
+    font-size: 14px; 
 }
 
 th {
@@ -201,19 +199,19 @@ th {
     padding-right: 10px;
     padding-top: 5px;
     padding-bottom: 5px;
-    background-color: #f5b8a9; /* From inventory.css */
-    color: #3a3a3a; /* From inventory.css */
+    background-color: #f5b8a9; 
+    color: #3a3a3a; 
     font-weight: bold;
-    border: 2px solid rgba(255, 255, 255, 0.2); 
+    border: 1px solid transparent; 
     font-size: 14px;
 }
 
 td {
     text-align: center;
     border: 2px solid rgba(255, 255, 255, 0.2); 
-    padding: 14px; /* From inventory.css */
+    padding: 14px;
     text-align: left;
-    font-size: 14px; /* Unified size */
+    font-size: 14px; 
 }
 
 td[contenteditable="false"] {
@@ -227,9 +225,216 @@ input[type="checkbox"] {
     accent-color: #369144;
 }
 
+.datatable-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 10px 0 10px; 
+    padding: 8px 15px;
+    background: transparent; 
+    border-top: 1px solid #e5e5e5;
+    font-size: 14px;
+    color: #333;
+}
+
+.datatable-footer .dataTables_paginate a {
+    color: #444 !important;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.datatable-footer .dataTables_paginate a:hover {
+    background: rgba(255, 54, 54, 0.658);
+}
+
+
+.audit-logs_table.full {
+    margin-bottom: 0; 
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #f07474 !important;
+    color: #47ff19 !important;
+    border-radius: 6px;
+}
+
+/************************** PENDING AND ACCOUNTS TABLE ********************/
+
+.pending-requests-wrapper,
+.active-requests-wrapper {
+    position: relative;
+}
+
+.audit-logs_table.full {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    padding: 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.audit-logs_table.full h4 {
+    padding: 15px 30px;
+}
+
+.audit-logs_table.full .search_box {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.audit-logs_table.full .search_box input {
+    padding: 8px 35px 8px 35px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 14px;
+}
+
+.audit-logs_table.full .search_box i.fa-magnifying-glass {
+    position: absolute;
+    left: 12px;
+    font-size: 14px;
+    color: #888;
+    pointer-events: none;
+}
+
+.audit-logs_table.full .search_box button {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #888;
+    display: none;
+}
+
+.audit-logs_table.full .search_box input:not(:placeholder-shown) + button {
+    display: block;
+}
+
+#pending_table .tabulator,
+#active_table .tabulator {
+    border: none;
+    font-size: 14px;
+}
+
+#pending_table .tabulator,
+#active_table .tabulator {
+    background: #fff !important;
+    border-radius: 14px !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.155) !important;
+    width: 100% !important;
+    margin: 0 20px 40px 20px !important;
+    margin-left: 60px !important;
+    border: none !important;
+    font-size: 14px;
+}
+
+#pending_table .tabulator-header,
+#active_table .tabulator-header {
+    background: transparent !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    color: #444 !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.2px;
+}
+
+#pending_table .tabulator-col,
+#active_table .tabulator-col {
+    background: transparent !important;
+    padding: 10px 15px !important;
+    border-right: 1px solid #ffffff !important;
+    white-space: nowrap !important;
+    min-width: 190px !important;
+}
+
+#pending_table .tabulator-col .tabulator-col-title,
+#active_table .tabulator-col .tabulator-col-title {
+    text-overflow: clip !important;
+    overflow: visible !important;
+    min-width: 190px !important;
+}
+
+#pending_table .tabulator-row,
+#active_table .tabulator-row {
+    border-bottom: 1px solid #f7f7f7 !important;
+    border-left: 1px solid rgb(255, 255, 255) !important;
+    border-right: 1px solid rgb(255, 255, 255) !important;
+    min-width: 190px !important;
+}
+
+#pending_table .tabulator-row:last-child,
+#active_table .tabulator-row:last-child {
+    border-bottom: none !important;
+    min-width: 190px !important;
+
+}
+
+#pending_table .tabulator-cell,
+#active_table .tabulator-cell {
+    padding: 9px 14px !important;
+    color: #555 !important;
+    font-size: 13.5px !important;
+    min-width: 190px !important;
+}
+
+#pending_table .tabulator-row:hover,
+#active_table .tabulator-row:hover {
+    background: #f4cccc !important;
+    transition: background 0.2s ease;
+}
+
+#pending_table .tabulator,
+#active_table .tabulator {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInCard 0.4s ease forwards;
+}
+
+@keyframes fadeInCard {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tabulator {
+    background: transparent !important;
+    border: none !important;
+}
+
+.tabulator .tabulator-header, 
+.tabulator .tabulator-table {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Remove vertical lines (column borders) for both tables */
+#pending_table .tabulator-col,
+#active_table .tabulator-col,
+#pending_table .tabulator-cell,
+#active_table .tabulator-cell {
+    border-right: none !important;
+    border-left: none !important;
+}
+
+/* Also remove the table's left and right edges to make it clean */
+#pending_table .tabulator-tableholder,
+#active_table .tabulator-tableholder {
+    border-left: none !important;
+    border-right: none !important;
+}
+
+
 /* ----------------- Buttons ----------------- */
 button, .clearSearch {
-    color: #212C62; /* Updated to inventory-style */
+    color: #212C62; 
     background-color: white;
     border: 1px solid #212C62;
     border-radius: 50px;
@@ -431,4 +636,16 @@ fieldset legend {
     grid-row-start: 4;
     margin-top: 20px;
     margin-bottom: 20px;
+}
+
+
+.fas,
+.fa-solid,
+.fa-regular,
+.fa-light,
+.fa-thin,
+.fa-duotone,
+.fa-brands {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900; 
 }
