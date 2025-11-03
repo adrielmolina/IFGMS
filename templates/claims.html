@@ -446,6 +446,7 @@
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/input-restrictions.js')}}"></script>
 <script>
     // page load functions
     document.addEventListener('DOMContentLoaded', function () {
@@ -1145,37 +1146,6 @@
             alert('An error occurred while deleting the record.');
         });
     });
-
-    document.addEventListener("DOMContentLoaded", () => {
-    const claimantNameFields = ["claimant_fname", "claimant_mname", "claimant_lname"];
-
-    claimantNameFields.forEach(id => {
-        const input = document.getElementById(id);
-        if (!input) return;
-
-        const allowedPattern = /^[a-zA-Z' -]$/;
-        const allowedKeys = [
-            "Backspace", "Tab", "Escape", "Delete",
-            "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
-            "Home", "End"
-        ];
-
-        input.addEventListener("keydown", function (event) {
-            if (allowedKeys.includes(event.key)) return;
-
-            if (!allowedPattern.test(event.key)) {
-                event.preventDefault();
-            }
-        });
-
-        input.addEventListener("paste", function (event) {
-            const pasted = (event.clipboardData || window.clipboardData).getData("text");
-            if ([...pasted].some(char => !allowedPattern.test(char))) {
-                event.preventDefault();
-            }
-        });
-    });
-});
 
 
 </script>
