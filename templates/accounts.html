@@ -6,7 +6,7 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <!-- Tabulator CSS -->
     <link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator.min.css" rel="stylesheet">
     <!-- Tabulator JS -->
@@ -18,24 +18,36 @@
     <div class="module_name">
         <h1>Accounts</h1>
     </div>
-
-    <h2>Pending Account Requests</h2>
-    <input id="pending_search" placeholder="Search...">
-    <button id="pending_clear_search" onclick="clearSearch()">Clear Search</button>
-    <div id="pending_table"></div>
     
+  
+    <div class="pending-requests-wrapper">
+        <div class="audit-logs_table full" spellcheck="false">
+            <h4>Pending Account Requests</h4>
+            <div class="search_box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="pending_search" placeholder="Search..." autocomplete="off">
+                <button id="pending_clear_search"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+                <div id="pending_table"></div>
+            </div>
+        </div>
 
-    <div id="btn_row_pending" class="btn_row">
+        <div id="btn_row_pending" class="btn_row">
         <button id="approve" name="action" value="approve">APPROVE</button>
         <button id="decline" name="action" value="decline">DECLINE</button>
     </div>
     
-
-    <h2>Active Accounts</h2>
-    <input id="active_search" placeholder="Search...">
-    <button id="active_clear_search" onclick="clearSearch()">Clear Search</button>
-    <div id="active_table"></div>
-
+    <div class="active-requests-wrapper">
+        <div class="audit-logs_table full" spellcheck="false">
+            <h4>Active Accounts</h4>
+                <div class="search_box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="active_search" placeholder="Search..." autocomplete="off">
+                    <button id="active_clear_search"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                    <div id="active_table"></div>           
+            </div>
+        </div>
     <div id="btn_row_active" class="btn_row">
         <button id="create" name="action" value="create">NEW ACCOUNT</button>
         <button id="archive" name="archive" value="archive">ARCHIVE</button>
@@ -167,26 +179,24 @@
         });
 
         // CLEAR SEARCH BUTTONS
-        function clearSearch() {
-            searchInputP.value = "";
-            pendingTable.clearFilter();
-
-            searchInputA.value = "";
-            activeTable.clearFilter();
-        }
+        document.getElementById("pending_clear_search").addEventListener("click", function () {
+        input = document.getElementById("pending_search");
+        input.value = "";
+        input.dispatchEvent(new Event("input")); // triggers Tabulator filtering reset
+        });
 
         // create column headers
         const accountColumns = [
         {formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 50},
         {title: "ID", field: "account_id"},
-        {title: "USERNAME", field: "username"},
-        {title: "EMAIL", field: "email"},
-        {title: "FIRST NAME", field: "first_name"},
-        {title: "MIDDLE NAME", field: "middle_name"},
-        {title: "LAST NAME", field: "last_name"},
-        {title: "CONTACT NO.", field: "contact_no"},
-        {title: "ACCOUNT CREATED", field: "acct_created"},
-        {title: "OFFICE", field: "office_location", editor:"list", editorParams: {
+        {title: "Username", field: "username"},
+        {title: "Email", field: "email"},
+        {title: "First Name", field: "first_name"},
+        {title: "Middle Name", field: "middle_name"},
+        {title: "Last Name", field: "last_name"},
+        {title: "Contact No.", field: "contact_no"},
+        {title: "Account Created", field: "acct_created"},
+        {title: "Office", field: "office_location", editor:"list", editorParams: {
             values: {
                 'Chapter': 'Chapter',
                 'Dasmarinas': 'Dasmarinas',
@@ -194,10 +204,10 @@
             }
         },
         formatter: (cell) => {
-            return `${cell.getValue()} <span style="color:#3b3b3b;">✎</span>`;
+            return `${cell.getValue()} <span style="color:#FF0033;">✎</span>`;
         }
         },
-        {title: "USER LEVEL", field: "user_level", editor:"list", editorParams: {
+        {title: "User Level", field: "user_level", editor:"list", editorParams: {
             values: {
                 'staff': 'staff',   
                 'admin': 'admin',   
@@ -205,11 +215,11 @@
             }
         },
         formatter: (cell) => {
-            return `${cell.getValue()} <span style="color:#3b3b3b;">✎</span>`;
+            return `${cell.getValue()} <span style="color:#FF0033;">✎</span>`;
         }
         },
-        {title: "STATUS", field: "acct_status"},
-        {title: "ACCOUNT REVIEW", field: "acct_review_date"},
+        {title: "Status", field: "acct_status"},
+        {title: "Account Review", field: "acct_review_date"},
         ];
         // Create both tables
         const pendingTable = new Tabulator("#pending_table", {
@@ -426,5 +436,26 @@
                 document.getElementById('overlay').style.display = 'none';
             }
         });
+    // UPLOADED IMAGE
+document.addEventListener("DOMContentLoaded", function() {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            navProfileImage.src = savedProfileImage;
+        }
+    }
+    
+    // Listen for storage changes from settings page
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profileImage') {
+            const navProfileImage = document.getElementById("navProfileImage");
+            if (navProfileImage) {
+                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+            }
+        }
+    });
+});
+
     </script>
 {% endblock %}

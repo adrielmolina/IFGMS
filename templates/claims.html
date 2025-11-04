@@ -35,7 +35,7 @@
     </div>
 
     <div class="controls_box">
-        <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
+        <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
     </div>
 
 
@@ -446,6 +446,7 @@
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/input-restrictions.js')}}"></script>
 <script>
     // page load functions
     document.addEventListener('DOMContentLoaded', function () {
@@ -871,7 +872,7 @@
             });
     }
     // Add Record button logic
-    document.querySelector('button').addEventListener('click', function () {
+    document.getElementById('add_record_btn').addEventListener('click', function () {
         // Call backend to add a new record
         fetch('/api/add_claim_record', {
             method: 'POST',
@@ -1174,6 +1175,27 @@
                 event.preventDefault();
             }
         });
+    });
+});
+
+// UPLOADED IMAGE
+document.addEventListener("DOMContentLoaded", function() {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            navProfileImage.src = savedProfileImage;
+        }
+    }
+    
+    // Listen for storage changes from settings page
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profileImage') {
+            const navProfileImage = document.getElementById("navProfileImage");
+            if (navProfileImage) {
+                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+            }
+        }
     });
 });
 
