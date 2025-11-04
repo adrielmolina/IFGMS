@@ -503,7 +503,19 @@ def get_entries(record_id):
     entries = db_conn.get_entries(record_id)
     return jsonify(entries)
 
+@server.route('/api/members/add_entry', methods=['POST'])
+def add_entry():
+    data = request.get_json()
+    if data:
+        result = db_conn.add_entry_content(data)
 
+        if result:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": result}), 500
+    else:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+    
 @server.route('/api/get_claim_records')
 def get_claim_records():
     claim_records = db_conn.get_claim_records()

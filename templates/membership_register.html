@@ -85,25 +85,29 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>First Name <span class="required">*</span></label>
-                    <input type="text" name="fname" required>
+                    <input id="fname" type="text" name="fname" required >
                 </div>
                 <div class="form-group">
                     <label>Middle Name</label>
-                    <input type="text" name="mname" placeholder="Optional">
+                    <input id="mname" type="text" name="mname" placeholder="Optional">
                 </div>
                 <div class="form-group">
-                    <label>Surname <span class="required">*</span></label>
-                    <input type="text" name="sname" required>
+                    <label>Last Name <span class="required">*</span></label>
+                    <input id="lname" type="text" name="sname" required>
                 </div>
                 <div class="form-group">
                     <label>Suffix <span class="optional">(if applicable)</span></label>
-                    <select name="suffix">
-                        <option value="">Not applicable</option>
-                        <option>Jr.</option>
-                        <option>Sr.</option>
-                        <option>II</option>
-                        <option>III</option>
-                        <option>IV</option>
+                    <select name="suffix" id="suffix" required>
+                            <option value=""></option>
+                            <option value="NA">NA</option>
+                            <option value="Jr">Jr</option>
+                            <option value="Sr">Sr</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                            <option value="V">V</option>
+                            <option value="VI">VI</option>
+                            <option value="VII">VII</option>
                     </select>
                 </div>
             </div>
@@ -120,16 +124,16 @@
                 </div>
                 <div class="form-group">
                     <label>Sex <span class="required">*</span></label>
-                    <select name="sex" required>
+                    <select name="sex" id="sex" required>
                         <option value="">Select</option>
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Prefer not to say</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="">Prefer not to say</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Blood Type <span class="required">*</span></label>
-                    <select name="bloodtype" required>
+                    <select name="bloodtype" id="bloodtype" required>
                         <option value="">Select</option>
                         <option>A+</option>
                         <option>A-</option>
@@ -149,12 +153,12 @@
                     <label>Contact Number <span class="required">*</span></label>
                     <div class="contact-field">
                         <span class="country-code">+63</span>
-                        <input type="tel" name="contact" placeholder="9xxxxxxxxx" maxlength="10" required>
+                        <input type="tel" id="contact" name="contact" placeholder="9xxxxxxxxx" maxlength="10" required>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Email Address <span class="required">*</span></label>
-                    <input type="email" name="email" required>
+                    <input type="email" id="email" name="email" required>
                 </div>
             </div>
 
@@ -162,19 +166,44 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Province <span class="required">*</span></label>
-                    <input type="text" name="province" required>
+                    <input type="text" id="province" name="province" value="Cavite" readonly>
                 </div>
                 <div class="form-group">
                     <label>Municipality <span class="required">*</span></label>
-                    <input type="text" name="municipality" required>
+                    <select name="municipality" id="municipality" required>
+                            <option value=""></option>
+                            <option value="Cavite City">Cavite City</option>
+                            <option value="Kawit">Kawit</option>
+                            <option value="Noveleta">Noveleta</option>
+                            <option value="Rosario">Rosario</option>
+                            <option value="Bacoor">Bacoor</option>
+                            <option value="Imus">Imus</option>
+                            <option value="Dasmariñas">Dasmariñas</option>
+                            <option value="Carmona">Carmona</option>
+                            <option value="General Mariano Alvarez (GMA)">General Mariano Alvarez (GMA)</option>
+                            <option value="Silang">Silang</option>
+                            <option value="General Trias">General Trias</option>
+                            <option value="Amadeo">Amadeo</option>
+                            <option value="Indang">Indang</option>
+                            <option value="Tanza">Tanza</option>
+                            <option value="Trece Martires">Trece Martires</option>
+                            <option value="Alfonso">Alfonso</option>
+                            <option value="Gen. Emilio Aguinaldo (Bailen)">Gen. Emilio Aguinaldo (Bailen)</option>
+                            <option value="Magallanes">Magallanes</option>
+                            <option value="Maragondon">Maragondon</option>
+                            <option value="Mendez">Mendez</option>
+                            <option value="Naic">Naic</option>
+                            <option value="Tagaytay City">Tagaytay City</option>
+                            <option value="Ternate">Ternate</option>
+                        </select>
                 </div>
                 <div class="form-group">
-                    <label>Street / Barangay <span class="required">*</span></label>
-                    <input type="text" name="street" required>
+                    <label>Barangay No.<span class="required"></span></label>
+                    <input type="text" id="brgy_no" name="street">
                 </div>
                 <div class="form-group">
-                    <label>City <span class="required">*</span></label>
-                    <input type="text" name="city" required>
+                    <label>Street <span class="required"></span></label>
+                    <input type="text" id="street" name="city" >
                 </div>
             </div>
 
@@ -182,12 +211,13 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>MAAB Category</label>
-                    <select id="maab" name="maab" required disabled>
-                        <option value="">Select</option>
+                    <select id="maab" name="maab" required>
+                        <option value="">Select Category</option>
                         <option>Classic</option>
                         <option>Bronze</option>
                         <option>Silver</option>
                         <option>Gold</option>
+                        <option>Safe Card</option>
                         <option>Platinum</option>
                         <option>Senior</option>
                         <option>Senior+</option>
@@ -196,18 +226,18 @@
                 </div>
                 <div class="form-group">
                     <label>Office <span class="required">*</span></label>
-                    <select name="office" required>
+                    <select name="office" id="origin" required>
                         <option value="">Select Branch</option>
-                        <option>Cavite City Branch</option>
-                        <option>Silang Branch</option>
-                        <option>Dasma Branch</option>
+                        <option value="chapter">Cavite Chapter</option>
+                        <option value="dasma">Dasma Branch</option>
+                        <option value="silang">Silang Branch</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-actions">
-                <button type="button" class="back-btn" id="backBtn">Back</button>
-                <button type="submit" class="submit-btn">Submit</button>
+                <button type="button" class="back-btn" id="back_btn">Back</button>
+                <button type="submit" class="submit-btn" id="submit_btn">Submit</button>
             </div>
         </form>
       </section>
@@ -436,6 +466,37 @@ setInterval(() => {
   currentIndex = (currentIndex + cardsPerView) % totalCards;
   updateGallery();
 }, slideInterval);
+
+document.getElementById('back_btn').addEventListener('click', () => {
+    window.location.href = '/';
+});
+
+// submit btn logic
+document.getElementById('submit_btn').addEventListener('click', () => {
+    const member_info = {
+        from: 'online_register',
+
+        fname: document.getElementById('fname').value,
+        mname: document.getElementById('mname').value,
+        lname: document.getElementById('lname').value,
+        suffix: document.getElementById('suffix').value,
+        birthdate: document.getElementById('birthdate').value,
+        age: document.getElementById('age').value,
+        sex: document.getElementById('sex').value,
+        bloodtype: document.getElementById('bloodtype').value,
+        contact: document.getElementById('contact').value,
+        email: document.getElementById('email').value,
+        province: document.getElementById('province').value,
+        municipality: document.getElementById('municipality').value,
+        
+          street: document.getElementById('street').value,
+          brgy_no: document.getElementById('brgy_no').value,
+        address: street + ", " + brgy_no,
+
+        maab: document.getElementById('maab').value,
+        origin: document.getElementById('origin').value  
+    }
+});
 
 
 

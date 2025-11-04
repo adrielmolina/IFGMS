@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
 CREATE TABLE IF NOT EXISTS `entry_contents` (
 	`entry_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`record_id` INTEGER,
-	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
+	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+', 'Safe Card'),
 	`maab_no` VARCHAR(255) UNIQUE COMMENT 'maybe foreign key with inventory. what happens when id is platinum?',
 	`member_id` INTEGER,
 	`id_received` BOOLEAN,
