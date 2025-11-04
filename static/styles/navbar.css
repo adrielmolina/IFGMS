@@ -21,7 +21,8 @@
 
 body {
   min-height: 100vh;
-  margin-left: 5vw;
+  margin-left: 6vw;
+  background: #F0F4FF;
 }
 
 /* TODO highlight currently selected module */
@@ -266,7 +267,7 @@ body {
 
 .sidebar-links li a:hover .icons {
     background: linear-gradient(145deg, #ff3b30, #d02a1a);
-    box-shadow: 
+    box-shadow:
         0 8px 20px rgba(0, 0, 0, 0.5),
         0 0 10px rgba(255, 255, 255, 0.2);
     transform: scale(1.2) translateY(-5px);

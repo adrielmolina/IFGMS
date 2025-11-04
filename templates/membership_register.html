@@ -1,23 +1,444 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Membership Registration</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
-    </head>
+<head>
+  <meta charset="UTF-8" />
+  <title>MAAB ID Gallery</title>
+  <!-- Link to your single cleaned CSS file -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
+</head>
+<body>
+  <div class="main-section">
 
-    <body>
-        <fieldset>
-            <legend>NAMES</legend>
-            <input type="text" name="" id="">
-        </fieldset>
+    <!-- ===== GALLERY CONTAINER ===== -->
+    <div class="gallery-wrapper">
+      <button id="prevBtn" class="slide-btn">&#10094;</button> <!-- left arrow -->
+      <div class="gallery" id="gallery">
+      
+        <!-- Use url_for to ensure Flask serves the files correctly -->
+        <div class="card" data-id="classic" data-image="{{ url_for('static', filename='assets/ID1.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID1.png') }}" alt="Classic ID">
+          <p>Classic ID</p>
+        </div>
 
-        <!-- TODO INSERT JB's PAGE HERE -->
-    </body>
+        <div class="card" data-id="premier-bronze" data-image="{{ url_for('static', filename='assets/ID2.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID2.png') }}" alt="Premier Bronze ID">
+          <p>Premier Bronze ID</p>
+        </div>
 
-    <script>
+        <div class="card" data-id="premier-silver" data-image="{{ url_for('static', filename='assets/ID3.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID3.png') }}" alt="Premier Silver ID">
+          <p>Premier Silver ID</p>
+        </div>
 
-    </script>
+        <div class="card" data-id="premier-gold" data-image="{{ url_for('static', filename='assets/ID4.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID4.png') }}" alt="Premier Gold ID">
+          <p>Premier Gold ID</p>
+        </div>
 
+        <div class="card" data-id="premier-platinum" data-image="{{ url_for('static', filename='assets/ID5.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID5.png') }}" alt="Premier Platinum ID">
+          <p>Premier Platinum ID</p>
+        </div>
+
+        <div class="card" data-id="senior" data-image="{{ url_for('static', filename='assets/ID6.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID6.png') }}" alt="Senior ID">
+          <p>Senior ID</p>
+        </div>
+
+        <div class="card" data-id="seniorplus" data-image="{{ url_for('static', filename='assets/ID7.png') }}">
+          <img src="{{ url_for('static', filename='assets/ID7.png') }}" alt="Senior Plus ID">
+          <p>Senior Plus ID</p>
+        </div>
+        <button id="nextBtn" class="slide-btn">&#10095;</button> <!-- right arrow -->
+      </div> <!-- /.gallery -->
+
+    </div> <!-- /.gallery-container -->
+
+    <!-- ===== DESCRIPTION / DETAILS MODAL (hidden by default) ===== -->
+    <div id="descriptionModal" class="modal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="idTitle">
+        <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+
+        <div class="modal-body">
+          <div class="modal-left">
+            <img id="idImage" src="" alt="Selected MAAB ID">
+          </div>
+
+          <div class="modal-right">
+            <h3 id="idTitle"></h3>
+            <div id="idDescription" class="id-description"></div>
+            <div class="modal-actions">
+              <button id="beMemberBtn" class="member-btn">Be a Member</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== Registration form (unchanged) ===================== -->
+    <section class="form-container">
+       <section class="form-container">
+      
+
+        <form id="registrationForm">
+            <!-- Row 1 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name <span class="required">*</span></label>
+                    <input type="text" name="fname" required>
+                </div>
+                <div class="form-group">
+                    <label>Middle Name</label>
+                    <input type="text" name="mname" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label>Surname <span class="required">*</span></label>
+                    <input type="text" name="sname" required>
+                </div>
+                <div class="form-group">
+                    <label>Suffix <span class="optional">(if applicable)</span></label>
+                    <select name="suffix">
+                        <option value="">Not applicable</option>
+                        <option>Jr.</option>
+                        <option>Sr.</option>
+                        <option>II</option>
+                        <option>III</option>
+                        <option>IV</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Birthdate <span class="required">*</span></label>
+                    <input type="date" id="birthdate" name="birthdate" required>
+                </div>
+                <div class="form-group">
+                    <label>Age <span class="required">*</span></label>
+                    <input type="number" id="age" name="age" readonly maxlength="3" max="150" placeholder="Auto" required>
+                </div>
+                <div class="form-group">
+                    <label>Sex <span class="required">*</span></label>
+                    <select name="sex" required>
+                        <option value="">Select</option>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Blood Type <span class="required">*</span></label>
+                    <select name="bloodtype" required>
+                        <option value="">Select</option>
+                        <option>A+</option>
+                        <option>A-</option>
+                        <option>B+</option>
+                        <option>B-</option>
+                        <option>O+</option>
+                        <option>O-</option>
+                        <option>AB+</option>
+                        <option>AB-</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Contact Number <span class="required">*</span></label>
+                    <div class="contact-field">
+                        <span class="country-code">+63</span>
+                        <input type="tel" name="contact" placeholder="9xxxxxxxxx" maxlength="10" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" name="email" required>
+                </div>
+            </div>
+
+            <!-- Row 4 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Province <span class="required">*</span></label>
+                    <input type="text" name="province" required>
+                </div>
+                <div class="form-group">
+                    <label>Municipality <span class="required">*</span></label>
+                    <input type="text" name="municipality" required>
+                </div>
+                <div class="form-group">
+                    <label>Street / Barangay <span class="required">*</span></label>
+                    <input type="text" name="street" required>
+                </div>
+                <div class="form-group">
+                    <label>City <span class="required">*</span></label>
+                    <input type="text" name="city" required>
+                </div>
+            </div>
+
+            <!-- Row 5 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>MAAB Category</label>
+                    <select id="maab" name="maab" required disabled>
+                        <option value="">Select</option>
+                        <option>Classic</option>
+                        <option>Bronze</option>
+                        <option>Silver</option>
+                        <option>Gold</option>
+                        <option>Platinum</option>
+                        <option>Senior</option>
+                        <option>Senior+</option>
+                    </select>
+                    <small id="maabMessage" class="maab-note"></small>
+                </div>
+                <div class="form-group">
+                    <label>Office <span class="required">*</span></label>
+                    <select name="office" required>
+                        <option value="">Select Branch</option>
+                        <option>Cavite City Branch</option>
+                        <option>Silang Branch</option>
+                        <option>Dasma Branch</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="back-btn" id="backBtn">Back</button>
+                <button type="submit" class="submit-btn">Submit</button>
+            </div>
+        </form>
+      </section>
+</div>
+
+<footer class="footer-ash">
+        <div class="footer-container">
+            <div class="footer-description">
+                <h3>PHILIPPINE RED CROSS</h3>
+                <p>
+                    Born officially in 1947, but with roots that trace back to the revolutionary days,
+                    the Philippine Red Cross has truly become the premier humanitarian organization in
+                    the country, committed to provide quality life-saving services that protect life
+                    and dignity especially of indigent Filipinos in vulnerable situations.
+                </p>
+            </div>
+            <div class="footer-button">
+                <a href="https://redcross.org.ph/about-us/" target="_blank" class="learn-more-btn">Learn More</a>
+            </div>
+            <div class="footer-follow">
+                <h3>FOLLOW US</h3>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/BatangRedCross" target="_blank">Facebook</a>
+                    <a href="https://x.com/philredcross" target="_blank">X (Twitter)</a>
+                    <a href="https://www.instagram.com/philredcross/" target="_blank">Instagram</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <footer class="footer-dark">
+        <p>© 2025 Philippine Red Cross Cavite Chapter | All Rights Reserved</p>
+    </footer>
+
+      <form id="registrationForm">
+        <!-- your full form fields ... (I left them out here for brevity) -->
+      </form>
+    </section>
+
+    <!-- footer omitted here for brevity — keep your existing footer HTML as-is -->
+
+  </div>
+
+  <!-- Put the JS at the end of body so DOM elements exist -->
+  <script>
+    /* ---------------- DATA (descriptions) ---------------- */
+    const descriptions = {
+      classic: {
+        title: "CLASSIC ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 12,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 12,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      "premier-bronze": {
+        title: "PREMIER BRONZE ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 35,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 35,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      "premier-silver": {
+        title: "PREMIER SILVER ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 100,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 100,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 10,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      "premier-gold": {
+        title: "PREMIER GOLD ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 200,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 200,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 10,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      "premier-platinum": {
+        title: "PREMIER PLATINUM ID",
+        details: [
+          "⛑ Issuance Age is 5 - 65 years old",
+          "⛑ Php 300,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 300,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 10,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      senior: {
+        title: "SENIOR ID",
+        details: [
+          "⛑ Issuance Age is 66 - 80 years old",
+          "⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 50,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      },
+      seniorplus: {
+        title: "SENIOR PLUS ID",
+        details: [
+          "⛑ Issuance Age is 81 - 85 years old",
+          "⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+          "⛑ Php 50,000.00 - Unprovoked Murder and Assault",
+          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
+          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
+          "⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+      }
+    };
+
+    /* ---------------- DOM ELEMENTS ---------------- */
+    const modal = document.getElementById('descriptionModal');
+    const modalContent = document.querySelector('.modal-content');
+    const modalClose = document.getElementById('modalClose');
+    const idImage = document.getElementById('idImage');
+    const idTitle = document.getElementById('idTitle');
+    const idDescription = document.getElementById('idDescription');
+    const beMemberBtn = document.getElementById('beMemberBtn');
+
+    /* ---------------- HANDLERS ---------------- */
+    // Open modal when clicking a card
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => {
+        const idKey = card.dataset.id;
+        const imgSrcFromAttr = card.dataset.image || card.querySelector('img').src;
+        const data = descriptions[idKey];
+        if (!data) return console.warn('No description found for', idKey);
+
+        // Populate modal
+        idImage.src = imgSrcFromAttr;
+        idImage.alt = data.title;
+        idTitle.textContent = data.title;
+
+        // Build description HTML (list)
+        idDescription.innerHTML = '';
+        const ul = document.createElement('ul');
+        ul.className = 'modal-desc-list';
+        data.details.forEach(text => {
+          const li = document.createElement('li');
+          li.innerHTML = text; // safe because content is controlled by you
+          ul.appendChild(li);
+        });
+        idDescription.appendChild(ul);
+
+        // Place Be a Member link -> navigate to registration page
+        beMemberBtn.onclick = () => {
+          // use route path you want (Flask route)
+          window.location.href = '/membership_register';
+        };
+
+        // Show modal
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+
+        // add class for animations if you want (optional)
+        modalContent.classList.add('open');
+      });
+    });
+
+    // Close handlers
+    modalClose.addEventListener('click', closeModal);
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    function closeModal() {
+      // play close animation (if desired) then hide
+      modalContent.classList.remove('open');
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      // clear image src to avoid stale image
+      idImage.src = '';
+      idTitle.textContent = '';
+      idDescription.innerHTML = '';
+    }
+
+    /* -------------- End of modal logic -------------- */
+
+/* ---------------- SLIDESHOW LOGIC ---------------- */
+const gallery = document.getElementById('gallery');
+const cards = document.querySelectorAll('.card');
+let currentIndex = 7;
+const cardsPerView = 1; // show 3 IDs per view (adjust if you want)
+const totalCards = cards.length;
+const slideInterval = 1000; // milliseconds between slides
+
+// Move gallery smoothly
+function updateGallery() {
+  const offset = -(currentIndex * (cards[0].offsetWidth + 100)); // card width + gap
+  gallery.style.transform = `translateX(${offset}px)`;
+  gallery.style.transition = 'transform 0.6s ease';
+}
+
+// Next and previous controls
+document.getElementById('nextBtn').addEventListener('click', () => {
+  currentIndex = (currentIndex + cardsPerView) % totalCards;
+  updateGallery();
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  currentIndex = (currentIndex - cardsPerView + totalCards) % totalCards;
+  updateGallery();
+});
+
+// Auto-slideshow (like a ticking clock)
+setInterval(() => {
+  currentIndex = (currentIndex + cardsPerView) % totalCards;
+  updateGallery();
+}, slideInterval);
+
+
+
+  </script>
+</body>
 </html>

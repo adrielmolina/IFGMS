@@ -785,7 +785,7 @@ def root_static_files(filename):
 # Favicon
 @server.route('/favicon.ico')
 def favicon():
-    return send_from_directory(server.static_folder, 'assets/favicon.ico')
+    return send_from_directory(server.static_folder, 'assets/favicon.ico') 
 
 #? -------------------- END -------------------- ?#
 
