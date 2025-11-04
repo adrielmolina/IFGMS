@@ -126,6 +126,12 @@ def logout():
 
 @server.route('/')
 def landing_page():
+    # redirect to dashboard if already logged in
+    if os.getenv("FLASK_ENV") == "production" or os.getenv("FLASK_ENV") == "staging":
+        if current_user.is_authenticated:
+            return redirect(url_for('dashboard'))
+        
+    
     if os.getenv("env") == "production":
         env = 'Live'
     elif os.getenv("env") == "staging":
