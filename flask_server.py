@@ -13,6 +13,13 @@ server = Flask(__name__)
 server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
 
+# CACHE CONTROL FOR STATIC FILES
+if os.getenv("FLASK_ENV") == "production":
+    server.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
+else:
+    server.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+
 login_manager = LoginManager()
 login_manager.init_app(server)
 login_manager.login_view = 'landing_page'
