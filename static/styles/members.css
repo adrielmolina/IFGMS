@@ -750,3 +750,45 @@ tr:hover {
 }
 
 
+/* ========================================================= */
+/* PAGINATION STYLING                */
+/* ========================================================= */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination-controls button {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pagination-controls button:hover {
+  background: #ffeaea;
+}
+
+.pagination-controls button.active {
+  background: #d9534f;
+  color: white;
+  border-color: #d43f3a;
+}
+
+.entries-select {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
+}
