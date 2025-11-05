@@ -812,6 +812,21 @@ def get_entries(record_id):
     except Exception as e:
         return ["Error fetching entries: {e}"]
 
+# WIP
+def add_entry_content(data):
+    db_session = SessionLocal()
+    try:
+        result = models.Entries(**data)
+        db_session.add(result)
+        db_session.commit()
+        return True
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error adding entry content: {e}")
+        return False
+
+
+
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
     """
