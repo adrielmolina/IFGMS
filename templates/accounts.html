@@ -21,33 +21,76 @@
     
   
     <div class="pending-requests-wrapper">
-        <div class="audit-logs_table full" spellcheck="false">
-            <h4>Pending Account Requests</h4>
-            <div class="search_box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="pending_search" placeholder="Search..." autocomplete="off">
-                <button id="pending_clear_search"><i class="fa-solid fa-xmark"></i></button>
+                    <div class="table-top">
+                <label>
+                    Show
+                    <select id="pending_entries">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    entries
+                </label>
             </div>
-                <div id="pending_table"></div>
+    <div class="audit-logs_table full" spellcheck="false">
+        <h4>Pending Account Requests</h4>
+        <div class="search_box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="pending_search" placeholder="Search..." autocomplete="off">
+            <button id="pending_clear_search"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Table layout -->
+        <div class="table-container">
+            <div id="pending_table"></div>
+
+            <div class="table-bottom">
+                <div class="table-info" id="pending_info"></div>
+                <div id="pending_pagination" class="table-pagination"></div>
             </div>
         </div>
+    </div>
+</div>
 
         <div id="btn_row_pending" class="btn_row">
         <button id="approve" name="action" value="approve">APPROVE</button>
         <button id="decline" name="action" value="decline">DECLINE</button>
     </div>
     
-    <div class="active-requests-wrapper">
-        <div class="audit-logs_table full" spellcheck="false">
-            <h4>Active Accounts</h4>
-                <div class="search_box">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="active_search" placeholder="Search..." autocomplete="off">
-                    <button id="active_clear_search"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                    <div id="active_table"></div>           
+<div class="active-requests-wrapper">
+                <div class="table-top">
+                <label>
+                    Show
+                    <select id="active_entries">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    entries
+                </label>
+            </div>
+    <div class="audit-logs_table full" spellcheck="false">
+        <h4>Active Accounts</h4>
+        <div class="search_box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="active_search" placeholder="Search..." autocomplete="off">
+            <button id="active_clear_search"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="table-container">
+
+            <div id="active_table"></div>
+
+            <div class="table-bottom">
+                <div class="table-info" id="active_info"></div>
+                <div id="active_pagination" class="table-pagination"></div>
             </div>
         </div>
+    </div>
+</div>
+
     <div id="btn_row_active" class="btn_row">
         <button id="create" name="action" value="create">NEW ACCOUNT</button>
         <button id="archive" name="archive" value="archive">ARCHIVE</button>
@@ -148,45 +191,46 @@
 
 
 {% block extra_scripts %}
-    <script>
-        // page load functions
-        document.addEventListener('DOMContentLoaded', function () {
-            
-        });
+<script>
+document.addEventListener('DOMContentLoaded', function () {
 
-        // SEARCH BUTTONS
-        const searchInputP = document.getElementById("pending_search");
-        searchInputP.addEventListener("input", () => {
+    // ====================== SEARCH FUNCTIONALITY ======================
+    const searchInputP = document.getElementById("pending_search");
+    searchInputP.addEventListener("input", () => {
         const keyword = searchInputP.value.toLowerCase();
-
         pendingTable.setFilter((data) => {
             return Object.values(data)
-            .join(" ")
-            .toLowerCase()
-            .includes(keyword);
+                .join(" ")
+                .toLowerCase()
+                .includes(keyword);
         });
-        });
-        const searchInputA = document.getElementById("active_search");
-        searchInputA.addEventListener("input", () => {
-        const keyword = searchInputA.value.toLowerCase();
+    });
 
+    const searchInputA = document.getElementById("active_search");
+    searchInputA.addEventListener("input", () => {
+        const keyword = searchInputA.value.toLowerCase();
         activeTable.setFilter((data) => {
             return Object.values(data)
-            .join(" ")
-            .toLowerCase()
-            .includes(keyword);
+                .join(" ")
+                .toLowerCase()
+                .includes(keyword);
         });
-        });
+    });
 
-        // CLEAR SEARCH BUTTONS
-        document.getElementById("pending_clear_search").addEventListener("click", function () {
-        input = document.getElementById("pending_search");
+    document.getElementById("pending_clear_search").addEventListener("click", function () {
+        const input = document.getElementById("pending_search");
         input.value = "";
-        input.dispatchEvent(new Event("input")); // triggers Tabulator filtering reset
-        });
+        input.dispatchEvent(new Event("input")); 
+    });
 
-        // create column headers
-        const accountColumns = [
+    document.getElementById("active_clear_search").addEventListener("click", function () {
+        const input = document.getElementById("active_search");
+        input.value = "";
+        input.dispatchEvent(new Event("input")); 
+    });
+
+    // ====================== TABLE COLUMN DEFINITIONS ======================
+    const accountColumns = [
         {formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 50},
         {title: "ID", field: "account_id"},
         {title: "Username", field: "username"},
@@ -203,9 +247,7 @@
                 'Silang': 'Silang' 
             }
         },
-        formatter: (cell) => {
-            return `${cell.getValue()} <span style="color:#FF0033;">✎</span>`;
-        }
+        formatter: (cell) => `${cell.getValue()} <span style="color:#FF0033;">✎</span>`
         },
         {title: "User Level", field: "user_level", editor:"list", editorParams: {
             values: {
@@ -214,248 +256,225 @@
                 'superadmin': 'superadmin',   
             }
         },
-        formatter: (cell) => {
-            return `${cell.getValue()} <span style="color:#FF0033;">✎</span>`;
-        }
+        formatter: (cell) => `${cell.getValue()} <span style="color:#FF0033;">✎</span>`
         },
         {title: "Status", field: "acct_status"},
         {title: "Account Review", field: "acct_review_date"},
-        ];
-        // Create both tables
-        const pendingTable = new Tabulator("#pending_table", {
-        layout: "fitColumns",
-        selectable: true,
-        reactiveData: true,
-        columns: accountColumns
-        });
-        const activeTable = new Tabulator("#active_table", {
-        layout: "fitColumns",
-        selectable: true,
-        reactiveData: true,
-        columns: accountColumns
-        });
+    ];
 
-        // get account
-        function fetchAccounts() {
-            fetch('/api/accounts')
+    // ====================== TABLE CREATION WITH PAGINATION ======================
+    const pendingTable = new Tabulator("#pending_table", {
+        layout: "fitColumns",
+        selectable: true,
+        reactiveData: true,
+        pagination: "local",
+        paginationSize: 10,
+        columns: accountColumns
+    });
+
+    const activeTable = new Tabulator("#active_table", {
+        layout: "fitColumns",
+        selectable: true,
+        reactiveData: true,
+        pagination: "local",
+        paginationSize: 10,
+        columns: accountColumns
+    });
+
+    
+
+    // ====================== TABLE EVENTS TO UPDATE INFO ======================
+
+// Trigger update after render finishes (page load, filter, resize, etc.)
+pendingTable.on("renderComplete", () => {
+    setTimeout(() => updateTableInfo(pendingTable, "pending_info"), 0);
+});
+activeTable.on("renderComplete", () => {
+    setTimeout(() => updateTableInfo(activeTable, "active_info"), 0);
+});
+
+
+    // ====================== FETCH ACCOUNTS ======================
+    function fetchAccounts() {
+        fetch('/api/accounts')
             .then(res => res.json())
             .then(data => {
-                pendingTable.setData(data.pending);
-                activeTable.setData(data.active);
+                pendingTable.setData(data.pending).then(() => updateTableInfo(pendingTable, "pending_info"));
+                activeTable.setData(data.active).then(() => updateTableInfo(activeTable, "active_info"));
             });
-        }
-        fetchAccounts();
+    }
+    fetchAccounts();
 
-        // create account overlay
-        document.getElementById('create').addEventListener('click', () => {
-            document.getElementById('overlay').style.display = 'flex';
-        });
+    // ====================== PAGINATION INFO ======================
+    function updateTableInfo(table, infoId) {
+    const info = document.getElementById(infoId);
+    const totalRows = table.getDataCount("all");
+    const page = table.getPage();
+    const size = table.getPageSize();
+    const start = totalRows === 0 ? 0 : (page - 1) * size + 1;
+    const end = Math.min(page * size, totalRows);
 
-        // approve accounts
-        document.getElementById('approve').addEventListener('click', () => {
-            // Get selected rows from the pending table
+    // get number of selected rows
+    const selectedCount = table.getSelectedData().length;
 
-            //console.log(pendingTable.getSelectedData());
+    if (totalRows === 0) {
+        info.textContent = "No entries to show";
+    } else {
+        info.textContent = `Showing ${start} to ${end} of ${totalRows} entries` + 
+            (selectedCount > 0 ? ` • ${selectedCount} selected` : "");
+    }
+}
 
-            const selectedData = pendingTable.getSelectedData();
-            const ids = selectedData.map(row => row.account_id);
 
-            if (ids.length === 0) {
-                alert("No accounts selected.");
-                return;
-            }
+    pendingTable.on("dataLoaded", () => updateTableInfo(pendingTable, "pending_info"));
+pendingTable.on("pageLoaded", () => updateTableInfo(pendingTable, "pending_info"));
+pendingTable.on("rowSelectionChanged", () => updateTableInfo(pendingTable, "pending_info"));
 
-            // Send to backend
-            fetch('/api/accounts/approve', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: ids })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Selected accounts approved!');
-                    fetchAccounts();
-                } else {
-                    alert('Error approving accounts.');
-                }
-            })
-            .catch(err => console.error(err));
-        });
+activeTable.on("dataLoaded", () => updateTableInfo(activeTable, "active_info"));
+activeTable.on("pageLoaded", () => updateTableInfo(activeTable, "active_info"));
+activeTable.on("rowSelectionChanged", () => updateTableInfo(activeTable, "active_info"));
 
-        // decline accounts
-        document.getElementById('decline').addEventListener('click', () => {
-            
-            //console.log(pendingTable.getSelectedData());
 
-            const selectedData = pendingTable.getSelectedData();
-            const ids = selectedData.map(row => row.account_id);
+    document.getElementById("pending_entries").addEventListener("change", (e) => {
+        pendingTable.setPageSize(parseInt(e.target.value));
+        updateTableInfo(pendingTable, "pending_info");
+    });
 
-            if (ids.length === 0) {
-                alert("No accounts selected.");
-                return;
-            }
+    document.getElementById("active_entries").addEventListener("change", (e) => {
+        activeTable.setPageSize(parseInt(e.target.value));
+        updateTableInfo(activeTable, "active_info");
+    });
 
-            fetch('/api/accounts/decline', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: ids })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Selected accounts declined!');
-                    fetchAccounts();
-                } else {
-                    alert('Error declining accounts.');
-                }
-            })
-            .catch(err => console.error(err));
-        });
-            
-        
-        // reset accounts password
-        document.getElementById('reset').addEventListener('click', () => {
-            
-            //console.log(activeTable.getSelectedData());
+    // ====================== ACCOUNT ACTIONS ======================
+    document.getElementById('create').addEventListener('click', () => {
+        document.getElementById('overlay').style.display = 'flex';
+    });
 
-            const selectedData = activeTable.getSelectedData();
-            const ids = selectedData.map(row => row.account_id);
+    document.getElementById('approve').addEventListener('click', () => {
+        const selectedData = pendingTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        if (!ids.length) return alert("No accounts selected.");
 
-            if (ids.length === 0) {
-                alert("No accounts selected.");
-                return;
-            }
+        fetch('/api/accounts/approve', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.success ? 'Selected accounts approved!' : 'Error approving accounts.');
+            fetchAccounts();
+        })
+        .catch(err => console.error(err));
+    });
 
-            fetch('/api/accounts/reset', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: ids })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                alert('Successfully reset password for selected accounts!');
-                    fetchAccounts();
-                } else {
-                    alert('Error resetting password for accounts.');
-                }
-            })
-            .catch(err => console.error(err));
-        });
+    document.getElementById('decline').addEventListener('click', () => {
+        const selectedData = pendingTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        if (!ids.length) return alert("No accounts selected.");
 
-        // update user level
-        activeTable.on("cellEdited", function(cell) {
-            if (cell.getField() === "user_level") {
-                const rowData = cell.getRow().getData();
+        fetch('/api/accounts/decline', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.success ? 'Selected accounts declined!' : 'Error declining accounts.');
+            fetchAccounts();
+        })
+        .catch(err => console.error(err));
+    });
 
-                fetch('/api/accounts/update_userlvl', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: rowData.account_id,
-                        user_level: cell.getValue()
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`Successfully updated ${rowData.account_id} to ${cell.getValue()}`);
-                        console.log(`Updated user ${rowData.account_id} to ${cell.getValue()}`);
-                        fetchAccounts();
-                    } else {
-                        alert(`Failed to update user_id ${rowData.account_id}`);
-                    }
-                });
-            }
-        });
+    document.getElementById('reset').addEventListener('click', () => {
+        const selectedData = activeTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        if (!ids.length) return alert("No accounts selected.");
 
-        // update office location
-        activeTable.on("cellEdited", function(cell) {
-            if (cell.getField() === "office_location") {
-                const rowData = cell.getRow().getData();
+        fetch('/api/accounts/reset', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.success ? 'Successfully reset password for selected accounts!' : 'Error resetting password for accounts.');
+            fetchAccounts();
+        })
+        .catch(err => console.error(err));
+    });
 
-                fetch('/api/accounts/update_ofc', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: rowData.account_id,
-                        office_location: cell.getValue()
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`Successfully updated ${rowData.account_id} to ${cell.getValue()}`);
-                        console.log(`Updated user ${rowData.account_id} to ${cell.getValue()}`);
-                        fetchAccounts();
-                    } else {
-                        alert(`Failed to update user_id ${rowData.account_id}`);
-                    }
-                });
+    document.getElementById('archive').addEventListener('click', () => {
+        const selectedData = activeTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        if (!ids.length) return alert("No accounts selected.");
+
+        fetch('/api/accounts/archive', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.success ? 'Successfully archived selected account/s!' : 'Error archiving account/s.');
+            fetchAccounts();
+        })
+        .catch(err => console.error(err));
+    });
+
+    // ====================== EDIT CELL EVENTS ======================
+    activeTable.on("cellEdited", function(cell) {
+        const rowData = cell.getRow().getData();
+        let url, payload;
+
+        if (cell.getField() === "user_level") {
+            url = '/api/accounts/update_userlvl';
+            payload = { id: rowData.account_id, user_level: cell.getValue() };
+        } else if (cell.getField() === "office_location") {
+            url = '/api/accounts/update_ofc';
+            payload = { id: rowData.account_id, office_location: cell.getValue() };
+        } else return;
+
+        fetch(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Successfully updated ${rowData.account_id} to ${cell.getValue()}`);
+                fetchAccounts();
+            } else {
+                alert(`Failed to update user_id ${rowData.account_id}`);
             }
         });
+    });
 
-        // archive accounts
-        document.getElementById('archive').addEventListener('click', () => {
-            
-            //console.log(activeTable.getSelectedData());
+    // ====================== OVERLAY ======================
+    document.getElementById('close-overlay').addEventListener('click', function () {
+        document.getElementById('overlay').style.display = 'none';
+    });
 
-            const selectedData = activeTable.getSelectedData();
-            const ids = selectedData.map(row => row.account_id);
-
-            if (ids.length === 0) {
-                alert("No accounts selected.");
-                return;
-            }
-
-            fetch('/api/accounts/archive', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: ids })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Successfully archived selected account/s!');
-                    fetchAccounts();
-                } else {
-                    alert('Error archiving account/s.');
-                }
-            })
-            .catch(err => console.error(err));
-        });
-
-        // for x button in overlay
-        document.getElementById('close-overlay').addEventListener('click', function () {
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
             document.getElementById('overlay').style.display = 'none';
-        });
-        // close overlay on ESC key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === "Escape") {
-                document.getElementById('overlay').style.display = 'none';
-            }
-        });
-    // UPLOADED IMAGE
-document.addEventListener("DOMContentLoaded", function() {
+        }
+    });
+
+    // ====================== PROFILE IMAGE ======================
     const navProfileImage = document.getElementById("navProfileImage");
     if (navProfileImage) {
         const savedProfileImage = localStorage.getItem("profileImage");
-        if (savedProfileImage) {
-            navProfileImage.src = savedProfileImage;
-        }
+        if (savedProfileImage) navProfileImage.src = savedProfileImage;
     }
     
-    // Listen for storage changes from settings page
     window.addEventListener('storage', function(e) {
-        if (e.key === 'profileImage') {
-            const navProfileImage = document.getElementById("navProfileImage");
-            if (navProfileImage) {
-                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
-            }
+        if (e.key === 'profileImage' && navProfileImage) {
+            navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
         }
     });
-});
 
-    </script>
+});
+</script>
 {% endblock %}
