@@ -98,7 +98,6 @@
                 <div class="form-group">
                     <label>Suffix <span class="optional">(if applicable)</span></label>
                     <select name="suffix" id="suffix" required>
-                            <option value=""></option>
                             <option value="NA">NA</option>
                             <option value="Jr">Jr</option>
                             <option value="Sr">Sr</option>
@@ -120,7 +119,7 @@
                 </div>
                 <div class="form-group">
                     <label>Age <span class="required">*</span></label>
-                    <input type="number" id="age" name="age" readonly maxlength="3" max="150" placeholder="Auto" required>
+                    <input type="number" id="age" name="age" readonly maxlength="3" max="150" placeholder="Auto">
                 </div>
                 <div class="form-group">
                     <label>Sex <span class="required">*</span></label>
@@ -171,7 +170,6 @@
                 <div class="form-group">
                     <label>Municipality <span class="required">*</span></label>
                     <select name="municipality" id="municipality" required>
-                            <option value=""></option>
                             <option value="Cavite City">Cavite City</option>
                             <option value="Kawit">Kawit</option>
                             <option value="Noveleta">Noveleta</option>
@@ -211,8 +209,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>MAAB Category</label>
-                    <select id="maab" name="maab" required>
-                        <option value="">Select Category</option>
+                    <select id="maab_cat" name="maab" required>
                         <option>Classic</option>
                         <option>Bronze</option>
                         <option>Silver</option>
@@ -227,7 +224,6 @@
                 <div class="form-group">
                     <label>Office <span class="required">*</span></label>
                     <select name="office" id="origin" required>
-                        <option value="">Select Branch</option>
                         <option value="chapter">Cavite Chapter</option>
                         <option value="dasma">Dasma Branch</option>
                         <option value="silang">Silang Branch</option>
@@ -237,7 +233,7 @@
 
             <div class="form-actions">
                 <button type="button" class="back-btn" id="back_btn">Back</button>
-                <button type="submit" class="submit-btn" id="submit_btn">Submit</button>
+                <button type="button" class="submit-btn" id="submit_btn">Submit</button>
             </div>
         </form>
       </section>
@@ -471,8 +467,14 @@ document.getElementById('back_btn').addEventListener('click', () => {
     window.location.href = '/';
 });
 
+// TODO add age checking for MAAB category; check if age fits category every age input update
 // submit btn logic
 document.getElementById('submit_btn').addEventListener('click', () => {
+  const street = document.getElementById('street').value.toUpperCase();
+  const brgy_no = document.getElementById('brgy_no').value;
+  const municipality = document.getElementById('municipality').value;
+  const province = document.getElementById('province').value;
+
     const member_info = {
         from: 'online_register',
 
@@ -486,16 +488,54 @@ document.getElementById('submit_btn').addEventListener('click', () => {
         bloodtype: document.getElementById('bloodtype').value,
         contact: document.getElementById('contact').value,
         email: document.getElementById('email').value,
-        province: document.getElementById('province').value,
-        municipality: document.getElementById('municipality').value,
-        
-          street: document.getElementById('street').value,
-          brgy_no: document.getElementById('brgy_no').value,
-        address: street + ", " + brgy_no,
-
-        maab: document.getElementById('maab').value,
+        municipality: municipality,
+        address: `${street}, Brgy. ${brgy_no}, ${municipality}, ${province}`,
+        maab_cat: document.getElementById('maab_cat').value,
         origin: document.getElementById('origin').value  
     }
+
+    fetch('/api/member_register/add_entry', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(member_info)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success === true) {
+            alert('Registration successful!');
+            window.location.href = '/';
+        } else {
+            alert('Registration failed: ' + data.error);
+        }
+    }) .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during registration.');
+    })
+});
+
+document.getElementById('birthdate').addEventListener('change', function () {
+    const birthdateInput = this.value;
+    const ageInput = document.getElementById('age');
+
+    if (!birthdateInput) {
+        ageInput.value = '';
+        return;
+    }
+
+    const birthDate = new Date(birthdateInput);
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    // adjust if birthday hasn’t happened yet this year
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+
+    ageInput.value = age;
 });
 
 

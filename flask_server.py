@@ -503,11 +503,38 @@ def get_entries(record_id):
     entries = db_conn.get_entries(record_id)
     return jsonify(entries)
 
-@server.route('/api/members/add_entry', methods=['POST'])
+@server.route('/api/member_register/add_entry', methods=['POST'])
 def add_entry():
     data = request.get_json()
+    print(data)
     if data:
-        result = db_conn.add_entry_content(data)
+        fname = data.get('fname').upper()
+        mname = data.get('mname').upper()
+        lname = data.get('lname').upper()
+        suffix = data.get('suffix')
+        
+        birthdate_string = data.get('birthdate')
+        birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
+        
+        age = data.get('age')
+        
+        sex = data.get('sex')
+        if sex == "null" or sex == "":
+            sex = None
+            
+        bloodtype = data.get('bloodtype')
+        if bloodtype == "null" or bloodtype == "":
+            bloodtype = None
+        
+        contact = data.get('contact')
+        email = data.get('email')
+        municipality = data.get('municipality')
+        
+        address = data.get('address')
+        maab_cat = data.get('maab_cat')
+        origin = data.get('origin')
+        
+        result = db_conn.add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, bloodtype, contact, email, municipality, address, maab_cat, origin)
 
         if result:
             return jsonify({"success": True})

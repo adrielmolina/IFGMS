@@ -44,11 +44,11 @@ CREATE TABLE IF NOT EXISTS `membership_records` (
 	`declaration_date` DATE COMMENT 'if declared. overwrite this field everytime declaration button is clicked',
 	`effectivity_date` DATE,
 	`location_particular` VARCHAR(255),
-	`location_category` ENUM('Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder', 'Public Elementary School', 'Private Elementary School', 'Public High School', 'Private High School', 'Public Senior High School', 'Private Senior High School', 'Public Integrated School', 'Private Integrated School', 'Public College', 'Private College', 'Government Company/Organization', 'Private Company/Organization', 'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events', 'Training', 'Company/Organization Training', 'Individual', 'Walk-In'),
+	`location_category` ENUM('Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder', 'Public Elementary School', 'Private Elementary School', 'Public High School', 'Private High School', 'Public Senior High School', 'Private Senior High School', 'Public Integrated School', 'Private Integrated School', 'Public College', 'Private College', 'Government Company/Organization', 'Private Company/Organization', 'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events', 'Training', 'Company/Organization Training', 'Individual', 'Walk-In', 'Online'),
 	`municipality` ENUM('Cavite City', 'Kawit', 'Noveleta', 'Rosario', 'Bacoor', 'Imus', 'Dasmariñas', 'Carmona', 'General Mariano Alvarez (GMA)', 'Silang', 'General Trias', 'Amadeo', 'Indang', 'Tanza', 'Trece Martires', 'Alfonso', 'Gen. Emilio Aguinaldo (Bailen)', 'Magallanes', 'Maragondon', 'Mendez', 'Naic', 'Tagaytay City', 'Ternate'),
 	`district` INTEGER,
 	`paid` BOOLEAN DEFAULT false COMMENT 'automatically mark as paid if all contents are paid',
-	`origin` ENUM('Chapter', 'Dasmarinas', 'Silang'),
+	`origin` ENUM('chapter', 'dasma', 'silang'),
 	`remarks` TEXT(65535),
 	`tags` ENUM('late-declare', 'overage', 'underage'),
 	PRIMARY KEY(`record_id`)

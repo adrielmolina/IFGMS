@@ -813,12 +813,60 @@ def get_entries(record_id):
         return ["Error fetching entries: {e}"]
 
 # WIP
-def add_entry_content(data):
+def add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, bloodtype, contact, email, municipality, address, maab_cat, origin):
     db_session = SessionLocal()
     try:
-        result = models.Entries(**data)
-        db_session.add(result)
+        #create new member first
+        new_member = models.Members(
+            first_name=fname,
+            middle_name=mname,
+            last_name=lname,
+            suffix=suffix,
+            birth_date=birthdate,
+            age=age,
+            sex=sex,
+            contact_no=contact,
+            email=email,
+            address=address,
+            blood_type=bloodtype,
+        )
+        
+        db_session.add(new_member)
         db_session.commit()
+        
+        member_id = new_member.member_id
+        
+        # create new record first
+        new_record = models.Records(
+            year=datetime.now().year,
+            id_received=None,
+            declared=None,
+            declaration_date=None,
+            effectivity_date=date.today(), # set effectivity date to today, update when paid
+            location_particular='Online Registration',
+            location_category='Online', 
+            municipality=municipality,
+            district=tools.get_district_from_municipality(municipality),
+            paid=None,
+            origin=origin,
+            remarks=None,
+            tags=None
+        )
+        
+        db_session.add(new_record)
+        db_session.commit()
+        
+        record_id = new_record.record_id
+        
+        new_entry_content = models.Entries(
+            record_id=record_id,
+            maab_category=maab_cat,
+            member_id=member_id
+        )
+        
+        db_session.add(new_entry_content)
+        db_session.commit()
+        
         return True
     except Exception as e:
         db_session.rollback()
