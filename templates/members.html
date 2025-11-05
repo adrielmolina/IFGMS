@@ -62,11 +62,30 @@
         </div>
 
     <!-- TODO declaration/transmission: automate this with js- check the location of the person signed in  -->
+<div class="entries-select">
+    Show
+    <select id="entriesPerPage">
+      <option value="10" selected>10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+    entries
+  </div>
 
     <div class="table-container">
         <div class="table-title"></div>
         <div id="members_table" class="ht-theme-main"></div>
     </div>
+
+    <!-- Pagination and summary area -->
+<div class="pagination-container">
+  <div class="summary">
+    <p id="summaryText">Showing 1 to 10 of 40 emtries</p>
+  </div>
+
+  <div id="paginationControls" class="pagination-controls"></div>
+</div>
 
     <!-- TODO fix unclosed divs - breaks when closed -->
     <div id="overlay" class="overlay">
@@ -637,6 +656,89 @@
                 dropdownMenu: true,
                 licenseKey: 'non-commercial-and-evaluation'
             });
+
+            // ✅ ADDED: Pagination + Show Entries + Summary
+            let allData = [...data];
+            let filteredData = [...data];
+            let currentPage = 1;
+            let entriesPerPage = 10;
+
+            const summaryText = document.getElementById('summaryText');
+            const paginationControls = document.getElementById('paginationControls');
+            const entriesSelect = document.getElementById('entriesPerPage');
+            const searchInput = document.getElementById('search_input');
+            const searchClear = document.getElementById('search_clear');
+
+            function renderTable() {
+                const start = (currentPage - 1) * entriesPerPage;
+                const end = start + entriesPerPage;
+                const pageData = filteredData.slice(start, end);
+                hotInstance.loadData(pageData);
+                updateSummary();
+                updatePagination();
+            }
+
+            function updateSummary() {
+                const total = filteredData.length;
+                const start = total === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
+                const end = Math.min(currentPage * entriesPerPage, total);
+                summaryText.textContent = total > 0
+                    ? `Showing ${start} to ${end} of ${total} entries`
+                    : "No entries found";
+            }
+
+            function updatePagination() {
+                paginationControls.innerHTML = "";
+                const totalPages = Math.ceil(filteredData.length / entriesPerPage);
+                if (totalPages <= 1) return;
+
+                function addButton(label, page, disabled = false, active = false) {
+                    const btn = document.createElement("button");
+                    btn.textContent = label;
+                    if (disabled) btn.disabled = true;
+                    if (active) btn.classList.add("active");
+                    btn.onclick = () => {
+                        currentPage = page;
+                        renderTable();
+                    };
+                    paginationControls.appendChild(btn);
+                }
+
+                addButton("Previous", currentPage - 1, currentPage === 1);
+                for (let i = 1; i <= totalPages; i++) {
+                    addButton(i, i, false, i === currentPage);
+                }
+                addButton("Next", currentPage + 1, currentPage === totalPages);
+            }
+
+            entriesSelect.addEventListener("change", () => {
+                entriesPerPage = parseInt(entriesSelect.value);
+                currentPage = 1;
+                renderTable();
+            });
+
+            searchInput.addEventListener("input", () => {
+                const query = searchInput.value.toLowerCase().trim();
+                filteredData = allData.filter(row =>
+                    Object.values(row).some(val =>
+                        String(val || "").toLowerCase().includes(query)
+                    )
+                );
+                currentPage = 1;
+                renderTable();
+            });
+
+            searchClear.addEventListener("click", () => {
+                searchInput.value = "";
+                filteredData = [...allData];
+                currentPage = 1;
+                renderTable();
+            });
+
+            renderTable();
+            // ✅ END OF ADDED PAGINATION CODE
+
+
             const searchPlugin = hotInstance.getPlugin('search');
             document.getElementById('search_input').addEventListener('input', function() {
             const query = this.value;
@@ -654,7 +756,6 @@
         searchPlugin.query('');
         hotInstance.render(); // refresh the table to clear highlights
     });
-    
     /*
     // Record Details Box Switch
     const record_details_check = document.getElementById('record_details_check');
@@ -795,27 +896,24 @@
         });
     });
 
-    
-
-
 <!-- Clear filters button logic -->
-           document.addEventListener('DOMContentLoaded', () => {
-               const searchInput = document.getElementById('search_input');
-               const clearButton = document.getElementById('search_clear');
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search_input');
+    const clearButton = document.getElementById('search_clear');
 
-           searchInput.addEventListener('input', () => {
-                if (searchInput.value.trim() !== "") {
-                clearButton.classList.add('visible');
-                } else {
-                clearButton.classList.remove('visible');
-    }
-  });
+    searchInput.addEventListener('input', () => {
+        if (searchInput.value.trim() !== "") {
+            clearButton.classList.add('visible');
+        } else {
+            clearButton.classList.remove('visible');
+        }
+    });
 
-               clearButton.addEventListener('click', () => {
-               searchInput.value = "";
-               clearButton.classList.remove('visible');
-               searchInput.focus();
-  });
+    clearButton.addEventListener('click', () => {
+        searchInput.value = "";
+        clearButton.classList.remove('visible');
+        searchInput.focus();
+    });
 });
 
     // Toggle Record Details Form with Radio Buttons
@@ -842,7 +940,6 @@
         });
     });
 
-
 // UPLOADED IMAGE
 document.addEventListener("DOMContentLoaded", function() {
     const navProfileImage = document.getElementById("navProfileImage");
@@ -863,7 +960,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
-    
 </script>
+
 
 {% endblock %}
