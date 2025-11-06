@@ -321,10 +321,9 @@
        
                 </div>
 
-                <div class="collapse_box_header">
+                <!-- <div class="collapse_box_header">
                     <input id="requirements_check" name="requirements_check" class="collapse_box_checkbox"
                     type="checkbox" checked data-target_div="requirements"> 
-                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
                     <label for="requirements_check" class="collapse_box_label">REQUIRED DOCUMENTS</label>
                 </div>
                 <div id="requirements" class="collapse_group">
@@ -408,25 +407,140 @@
                             </ul>
         
                         </div>
-                    </div> 
+                    </div>  -->
 
-                    <div class="input_set">
-                        <button class="generate_claim_letter" id="generate_claim_letter">Generate Claim Letter Template</button>
-
-                        <input type="file" accept=".docx, .pdf" id="upload_scanned_docs" name="upload_scanned_docs" required autocomplete="off">
-                        <a class="scanned_docs" id="scanned_docs" href="drive.google.com">View Scanned Docs</a>
-
-                        <label for="claim_remarks" style="font-weight: bold;">Claim Remarks</label>
-                        <input type="text" id="claim_remarks" name="claim_remarks" autocomplete="off">
-
-                        <input type="checkbox" id="sent_advanced_notice" name="sent_advanced_notice" hidden>
+                    <div class="collapse_box_header">
+                        <input id="requirements_check" name="requirements_check" class="collapse_box_checkbox"
+                        type="checkbox" checked data-target_div="requirements"> 
+                        <label for="requirements_check" class="collapse_box_label">REQUIRED DOCUMENTS</label>
                     </div>
-                </div>
+                    <div id="requirements" class="collapse_group">
+                        <div class="input_set">
+                            <div class="requiements_section" id="requirements_section">
+                                
+                                <ul class="requirements_list" name="page1">
+                                    <li class="requirements_title">REQUIRED</li>
+                                    <li>
+                                        <input type="checkbox" id="req_claim_form" name="req_claim_form">
+                                        <label for="req_claim_form">Claim Form</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_prc_id" name="req_prc_id">
+                                        <label for="req_prc_id">PRC ID</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_med_cert" name="req_med_cert">
+                                        <label for="req_med_cert">Medical Certificate</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_hos_bill_or" name="req_hos_bill_or">
+                                        <label for="req_hos_bill_or">Hospital Bill/OR</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_state_of_acc" name="req_state_of_acc">
+                                        <label for="req_state_of_acc">Statement of Account</label>
+                                    </li>
+
+                                    <li>
+                                        <input type="checkbox" id="req_med_records" name="req_med_records">
+                                        <label for="req_med_records">Medical Records</label>
+                                    </li>
+
+                                    <li>
+                                        <input type="checkbox" id="req_incident_rep" name="req_incident_rep">
+                                        <label for="req_incident_rep">Incident Report</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_police_rep" name="req_police_rep">
+                                        <label for="req_police_rep">Police Report</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_brgy_rep" name="req_brgy_rep">
+                                        <label for="req_brgy_rep">Barangay Report</label>
+                                    </li>
+                                    
+                                </ul>
+
+                                <ul class="requirements_list" name="page2">
+                                    <li class="requirements_title">IF APPLICABLE</li>
+                                    <li>
+                                        <input type="checkbox" id="req_doctor_pres" name="req_doctor_pres">
+                                        <label for="req_doctor_pres">Doctor's Prescription</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_purchased_meds" name="req_purchased_meds">
+                                        <label for="req_purchased_meds">Purchased Medicines</label>
+                                    </li> 
+                                    <li>
+                                        <input type="checkbox" id="req_animal_bite_treat_rec" name="req_animal_bite_treat_rec">
+                                        <label for="req_animal_bite_treat_rec">Animal Bite Treatment Record</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_drivers_lic" name="req_drivers_lic">
+                                        <label for="req_drivers_lic">Driver's License</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_death_cert" name="req_death_cert">
+                                        <label for="req_death_cert">Death Certificate</label>
+                                    </li>
+                                    <li>
+                                        <input type="checkbox" id="req_burial_receipts" name="req_burial_receipts">
+                                        <label for="req_burial_receipts">Burial Receipts</label>
+                                    </li>
+                                </ul>
+
+                                <ul class="requirements_list" name="page3">
+                                    <li class="requirements_title">PROOF OF RELATIONSHIP</li>
+                                    
+                                    <li>
+                                        <input type="checkbox" id="req_birth_cert" name="req_birth_cert">
+                                        <label for="req_birth_cert">Birth Certificate</label>
+                                    </li>
+                                    
+                                    <li>
+                                        <input type="checkbox" id="req_marriage_cert" name="req_marriage_cert">
+                                        <label for="req_marriage_cert">Marriage Certificate</label>
+                                    </li>
+                                    
+                                    <li class="claim_remarks_li">
+                                        <div class="input_set">
+                                            <input type="text" id="claim_remarks" name="claim_remarks" placeholder=" " autocomplete="off">
+                                            <label for="claim_remarks">Claim Remarks</label>
+                                        </div>
+                                    </li>
+                                </ul>
+
+                            </div>
+                        </div> 
+
+                        <!-- <div class="input_set">
+                            <button class="generate_claim_letter" id="generate_claim_letter">Generate Claim Letter Template</button>
+
+                            <input type="file" accept=".docx, .pdf" id="upload_scanned_docs" name="upload_scanned_docs" required autocomplete="off">
+                            <a class="scanned_docs" id="scanned_docs" href="drive.google.com">View Scanned Docs</a>
+
+                            <label for="claim_remarks" style="font-weight: bold;">Claim Remarks</label>
+                            <input type="text" id="claim_remarks" name="claim_remarks" autocomplete="off">
+
+                            <input type="checkbox" id="sent_advanced_notice" name="sent_advanced_notice" hidden>
+                        </div> -->
+
+                        <!-- Right side section -->
+                        <div class="input_set right_section">
+                            <button class="generate_claim_letter" id="generate_claim_letter">
+                                Generate Claim Letter Template
+                            </button>
+                            
+                            <input type="file" accept=".docx, .pdf" class="upload_scanned_docs" id="upload_scanned_docs" name="upload_scanned_docs" required autocomplete="off">
+
+                            <a class="scanned_docs" id="scanned_docs" href="drive.google.com">View Scanned Docs</a>
+                            <input type="checkbox" id="sent_advanced_notice" name="sent_advanced_notice" hidden>
+                        </div>
+                    </div>
 
                 <div class="collapse_box_header">
                     <input id="claim_status_check" name="claim_status_check" class="collapse_box_checkbox"
                     type="checkbox" checked data-target_div="claim_status_info"> 
-                    <!-- data-target_div should be the id of the div it's supposed to open/close -->
                     <label for="claim_status_check" class="collapse_box_label">Claim Status</label>
                 </div>
                 <div id="claim_status_info" class="collapse_group">  
