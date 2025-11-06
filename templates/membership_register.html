@@ -3,8 +3,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Membership Registration</title>
-  <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}">
+  <title>MAAB Registration</title>
+  <!-- Link to your single cleaned CSS file -->
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
 </head>
 
@@ -466,6 +466,81 @@ setInterval(() => {
   currentIndex = (currentIndex + cardsPerView) % totalCards;
   updateGallery();
 }, slideInterval);
+
+document.getElementById('back_btn').addEventListener('click', () => {
+    window.location.href = '/';
+});
+
+// TODO add age checking for MAAB category; check if age fits category every age input update
+// submit btn logic
+document.getElementById('submit_btn').addEventListener('click', () => {
+  const street = document.getElementById('street').value.toUpperCase();
+  const brgy_no = document.getElementById('brgy_no').value;
+  const municipality = document.getElementById('municipality').value;
+  const province = document.getElementById('province').value;
+
+    const member_info = {
+        from: 'online_register',
+
+        fname: document.getElementById('fname').value,
+        mname: document.getElementById('mname').value,
+        lname: document.getElementById('lname').value,
+        suffix: document.getElementById('suffix').value,
+        birthdate: document.getElementById('birthdate').value,
+        age: document.getElementById('age').value,
+        sex: document.getElementById('sex').value,
+        bloodtype: document.getElementById('bloodtype').value,
+        contact: document.getElementById('contact').value,
+        email: document.getElementById('email').value,
+        municipality: municipality,
+        address: `${street}, Brgy. ${brgy_no}, ${municipality}, ${province}`,
+        maab_cat: document.getElementById('maab_cat').value,
+        origin: document.getElementById('origin').value  
+    }
+
+    fetch('/api/member_register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(member_info)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success === true) {
+            alert('Registration successful!');
+            window.location.href = '/';
+        } else {
+            alert('Registration failed: ' + data.error);
+        }
+    }) .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during registration.');
+    })
+});
+
+document.getElementById('birthdate').addEventListener('change', function () {
+    const birthdateInput = this.value;
+    const ageInput = document.getElementById('age');
+
+    if (!birthdateInput) {
+        ageInput.value = '';
+        return;
+    }
+
+    const birthDate = new Date(birthdateInput);
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    // adjust if birthday hasn’t happened yet this year
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+
+    ageInput.value = age;
+});
 
 
 
