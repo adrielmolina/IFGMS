@@ -126,24 +126,36 @@ body {
   gap: 8px;             /* ⬇️ slightly tighter for balance */
 }
 
-.controls_box button {
+.controls_box button, .generate_claim_letter, 
+#requirements input[type="file"].upload_scanned_docs::file-selector-button{
   padding: 8px 14px;    /* ⬇️ smaller button height */
   border: none;
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s ease-in-out;
-  display: flex;
+  /* display: flex; */
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 6px;
   font-size: 15px;
   color: #fff;
+  text-align: center;
 }
 
-.btn-expand {
+.btn-expand, .generate_claim_letter,
+#upload_scanned_docs::file-selector-button{
   background-color: #64748b;
 }
-.btn-expand:hover {
+
+.btn-expand:hover,.generate_claim_letter,
+#upload_scanned_docs::file-selector-button:hover{
+  background-color: #475569;
+}
+
+.upload_scanned_docs_label:hover,
+.scanned_docs:hover {
   background-color: #475569;
 }
 
@@ -161,10 +173,51 @@ body {
   background-color: #dc2626;
 }
 
+.upload_scanned_docs_label, .scanned_docs {
+  background-color: #64748b;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s ease-in-out;
+  font-size: 15px;
+}
+
+#upload_scanned_docs {
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  padding: 6px;
+  background-color: #fff;
+  font-size: 15px;
+  color: #333;
+  width: auto;
+  box-sizing: border-box;
+}
+
+.scanned_docs {
+  background-color: #64748b;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 15px;
+  transition: background 0.2s ease-in-out;
+  cursor: pointer;
+}
+
 .collapse_box_header {
-    color: white;
+    color: rgb(55, 49, 49);
     font-weight: 600;
-    background-color: #f07474;
+    background-color: #c49191;
     box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     border-radius: 8px;
     padding: 2px 6px; /* smaller height and side space */
@@ -235,7 +288,9 @@ body {
 /* === CLAIM INFO & PRINCIPAL INSURED INFO GROUP BOXES === */
 #claim_info,
 #principal_insured_info,
-#claimant_info {
+#claimant_info,
+#requirements,
+#claim_status_info {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
@@ -334,7 +389,7 @@ body {
 #principal_insured_info .input_set input:focus,
 #principal_insured_info .input_set select:focus,
 #claimant_info .input_set input:focus,
-#claimant_info .input_set select:focus {
+#claimant_info .input_set select:focus.bottom_section {
   outline: none;
   border-color: #B92F2F;
   box-shadow: 0 0 0 2px rgba(185, 47, 47, 0.15);
@@ -389,8 +444,6 @@ body {
   margin: 0 auto !important;
   display: block !important;
 }
-
-
 
 .ht_master .wtHolder {
     padding-bottom: 1%; /* adjust this value */
@@ -670,53 +723,303 @@ input:checked + .slider:before {
     margin-top: 20px;
 }
 
+/*-------------------------------------------------------------------------*/
+/* === PARENT FLEX SETTINGS === */
+#requirements {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 24px 20px;
+  margin: 10px 0 16px 0;
+  display: flex;        
+  justify-content: flex-start;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .requiements_section {
-    border: 1px solid black;
+    border: solid #d2cfcf 1px;
+    border-radius: 10px;
     display: flex;
     flex-direction: row;
     width: fit-content;
-    padding: 1%;
+    padding: 2%;
+    gap: 40px;
+    align-items: flex-start;
 }
 
-.requiements_section ul label {
-    font-weight: normal;
-    margin-left: 10px;
-    font-size: 18px;
+.right_section {
+  border: solid #d2cfcf 1px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 2%;
+  box-sizing: border-box;
+  min-width: 25% !important;
 }
 
-.requiements_section ul {
+/* === LIST === */
+.requirements_list {
     list-style-type: none;
-    padding-left: 0; /* optional: removes default indentation */
+    padding-left: 0;
     display: flex;
     flex-direction: column;
-    margin-left: 20px;
-    margin-right: 20px;
+    min-width: 400px;
+    min-height: 300px;
+    justify-content: flex-start;
+    position: relative;
+    padding-top: 50px;
 }
 
-.columns {
-    border: 1px solid black;
+.requirements_list .requirements_title {
+    font-weight: bold;
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 48px;
+    color: #B92F2F;
+    list-style: none;
+    margin: 0;
+    z-index: 1;
+}
+
+.requirements_list li {
+    margin-bottom: 14px;
     display: flex;
-    width: auto;
-
-    gap: 30px;
+    align-items: center;
 }
 
+.requirements_list li:not(.requirements_title) {
+    padding-left: 50px;
+}
+
+.requirements_list label {
+    font-weight: normal;
+    margin-left: 12px;
+    font-size: 0.8em;
+}
+
+.requirements_list input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+#requirements .input_set {
+    position: relative;         
+    transform: translateX(-40px); 
+    left: 37px;         
+    width: 100%;
+}
+
+#requirements .input_set input#claim_remarks {
+    width: 100%;
+    padding: 16px 12px 8px 12px;
+    font-size: 1rem;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    left: -40px;  
+    position: relative;
+}
+
+#requirements .input_set label[for="claim_remarks"] {
+    position: absolute;
+    top: 16px;
+    left: -28px;  
+    font-size: 0.9rem;
+    color: #777;
+    background: #fff;
+    padding: 0 4px;
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+#requirements .input_set input#claim_remarks:focus + label,
+#requirements .input_set input#claim_remarks:not(:placeholder-shown) + label {
+    top: -8px;
+    left: -38px;  
+    font-size: 0.75rem;
+    color: #B92F2F;
+}
+
+#requirements .input_set input#claim_remarks:focus {
+    outline: none;
+    border-color: #B92F2F;
+    box-shadow: 0 0 0 2px rgba(185, 47, 47, 0.15);
+}
+
+#requirements .right_section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;              
+    min-width: 250px;      
+}
+/*-------------------------------------------------------------------------*/
+
+/* === CLAIM STATUS SECTION (Modern Two-Column Layout) === */
+/* Keep consistent with other card sections */
 .release_section {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid black;
-    width: auto;
-    padding: 1%;
-    gap: 20px;
-}
-.release_remarks_section {
-    display: flex;
-    flex-direction: column;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  padding: 24px 20px;
+  margin: 10px 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+  grid-column: 1 / -1;  
 }
 
-.release_sectin_column {
-    display: flex;
-    width: auto;
-    flex-direction: column;
-    flex: 1; /* optional: equal width columns */
+/* Restore two-column structure */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
 }
+
+/* Column styling */
+.release_sectin_column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Remarks below columns */
+.release_remarks_section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Form controls */
+.release_section input,
+.release_section select {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Buttons */
+.release_section button {
+  background-color: #64748b;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.release_section button:hover {
+  background-color: #475569;
+}
+
+/* Links */
+.release_section a {
+  color: #1d4ed8;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.release_section a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive: stack columns on smaller screens */
+@media (max-width: 900px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Labels and inputs alignment */
+.release_sectin_column label {
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.release_sectin_column input,
+.release_sectin_column select {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  background-color: #fff;
+  transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.release_sectin_column input:focus,
+.release_sectin_column select:focus {
+  outline: none;
+  border-color: #64748b;
+  box-shadow: 0 0 0 2px rgba(100,116,139,0.2);
+}
+
+/* Buttons */
+.release_sectin_column button,
+.generate_prm,
+.generate_quit_claim {
+  background-color: #64748b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  width: fit-content;
+}
+
+.release_sectin_column button:hover,
+.generate_prm:hover,
+.generate_quit_claim:hover {
+  background-color: #475569;
+}
+
+/* File links (View PRM File, etc.) */
+a.prm_file,
+a.quit_claim_file {
+  background-color: #64748b;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease-in-out;
+  width: fit-content;
+}
+
+a.prm_file:hover,
+a.quit_claim_file:hover {
+  background-color: #475569;
+}
+
+/* Release Remarks Section */
+.release_remarks_section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.release_remarks_section input {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
