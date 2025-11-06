@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `membership_records` (
 	`paid` BOOLEAN DEFAULT false COMMENT 'automatically mark as paid if all contents are paid',
 	`origin` ENUM('chapter', 'dasma', 'silang'),
 	`remarks` TEXT(65535),
-	`tags` ENUM('late-declare', 'overage', 'underage'),
+	`tags` ENUM() COMMENT 'late-declare, overage, underage',
 	PRIMARY KEY(`record_id`)
 );
 
@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS `entry_contents` (
 	`OR_num` INTEGER,
 	`OR_date` DATE,
 	`remarks` TEXT(65535),
-	`tags` ENUM('late-declare', 'overage', 'underage'),
+	`tags` ENUM() COMMENT 'late-declare, overage, underage',
 	`dispatch_ready` BOOLEAN,
 	`dispatch_id` INTEGER UNIQUE,
 	PRIMARY KEY(`entry_id`)
