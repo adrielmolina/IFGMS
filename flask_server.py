@@ -126,6 +126,12 @@ def logout():
 
 @server.route('/')
 def landing_page():
+    # redirect to dashboard if already logged in
+    if os.getenv("FLASK_ENV") == "production" or os.getenv("FLASK_ENV") == "staging":
+        if current_user.is_authenticated:
+            return redirect(url_for('dashboard'))
+        
+    
     if os.getenv("env") == "production":
         env = 'Live'
     elif os.getenv("env") == "staging":
@@ -497,7 +503,106 @@ def get_entries(record_id):
     entries = db_conn.get_entries(record_id)
     return jsonify(entries)
 
+@server.route('/api/save_entry_details', methods=['POST'])
+def save_entry_details():
+    data = request.get_json()
+    print(data)
+    if data:
+        record_id = data.get('record_id')
+        maab_category = data.get('maab_category')
+        maab_no = data.get('maab_no')
+                
+        first_name = data.get('first_name').upper()
+        middle_name = data.get('middle_name').upper()
+        last_name = data.get('last_name').upper()
+        suffix = data.get('suffix')
+        
+        birthdate_string = data.get('birth_date')
+        birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
+        
+        age = data.get('age')
+        
+        sex = data.get('sex')
+        if sex == "null" or sex == "":
+            sex = None
+            
+        bloodtype = data.get('blood_type')
+        if bloodtype == "null" or bloodtype == "":
+            bloodtype = None
+        
+        contact = data.get('contact_no')
+        email = data.get('email')
+        address = data.get('address')
+        
+        id_received = data.get('id_received')
+        declared = data.get('declared')
+        declaration_date_string = data.get('declaration_date')
+        declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
+        
+        paid = data.get('paid')
+        OR_num = data.get('OR_num')
+        OR_date_string = data.get('OR_date')
+        OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
+        
+        remarks = data.get('remarks')
+        tags = data.get('tags')
+        dispatch_ready = data.get('dispatch_ready')
+        dispatch_id = data.get('dispatch_id')  
+        
+        # TODO change this
+        result = db_conn.add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, bloodtype, contact, email, municipality, address, maab_cat, origin)
 
+        if result:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": result}), 500
+    else:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+
+
+
+# TODO check if a record exist for Online Registration on the same day. if yes put the entry on that record
+@server.route('/api/member_register', methods=['POST'])
+def member_register():
+    data = request.get_json()
+    print(data)
+    if data:
+        fname = data.get('fname').upper()
+        mname = data.get('mname').upper()
+        lname = data.get('lname').upper()
+        suffix = data.get('suffix')
+        
+        birthdate_string = data.get('birthdate')
+        birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
+        
+        age = data.get('age')
+        
+        sex = data.get('sex')
+        if sex == "null" or sex == "":
+            sex = None
+            
+        bloodtype = data.get('bloodtype')
+        if bloodtype == "null" or bloodtype == "":
+            bloodtype = None
+        
+        contact = data.get('contact')
+        email = data.get('email')
+        municipality = data.get('municipality')
+        
+        address = data.get('address')
+        maab_cat = data.get('maab_cat')
+        origin = data.get('origin')
+        
+        result = db_conn.add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, bloodtype, contact, email, municipality, address, maab_cat, origin)
+
+        if result:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": result}), 500
+    else:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+    
 @server.route('/api/get_claim_records')
 def get_claim_records():
     claim_records = db_conn.get_claim_records()

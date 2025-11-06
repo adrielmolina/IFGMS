@@ -62,11 +62,30 @@
         </div>
 
     <!-- TODO declaration/transmission: automate this with js- check the location of the person signed in  -->
+<div class="entries-select">
+    Show
+    <select id="entriesPerPage">
+      <option value="10" selected>10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+    entries
+  </div>
 
     <div class="table-container">
         <div class="table-title"></div>
         <div id="members_table" class="ht-theme-main"></div>
     </div>
+
+    <!-- Pagination and summary area -->
+<div class="pagination-container">
+  <div class="summary">
+    <p id="summaryText">Showing 1 to 10 of 40 emtries</p>
+  </div>
+
+  <div id="paginationControls" class="pagination-controls"></div>
+</div>
 
     <!-- TODO fix unclosed divs - breaks when closed -->
     <div id="overlay" class="overlay">
@@ -288,13 +307,12 @@
                     <div class="input-container">
                         <label for="maab_cat">Category</label>
                         <select name="maab_cat" id="maab_cat" required>
-                            <option value=""></option>
                             <option value="Classic">Classic</option>
                             <option value="Bronze">Bronze</option>
                             <option value="Silver">Silver</option>
                             <option value="Gold">Gold</option>
                             <option value="Platinum">Platinum</option>
-                            <option value="Enhanced Platinum">Enhanced Platinum</option>
+                            <option value="Safe Card">Safe Card</option>
                             <option value="Senior">Senior</option>
                             <option value="Senior+">Senior+</option>            
                         </select>
@@ -333,7 +351,6 @@
                     <div class="input-container">
                         <label for="suffix">Suffix</label>
                         <select name="suffix" id="suffix" required>
-                            <option value=""></option>
                             <option value="NA">NA</option>
                             <option value="Jr">Jr</option>
                             <option value="Sr">Sr</option>
@@ -356,6 +373,15 @@
                     </div>
                 </td>
 
+                <!-- TODO add auto compute age -->
+                <td>
+                    <div class="input-container">
+                        <label for="age">Age</label>
+                        <input type="text" id="age" name="age" required autocomplete="off" placeholder=" " readonly>
+                    </div>
+                </td>
+
+
                 <td>
                     <div class="input-container">
                     <label for="sex">Sex</label>
@@ -363,6 +389,7 @@
                             <option value=""></option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
+                            <option value="">Prefer not to say</option>
                         </select>
                     </div>
                 </td>
@@ -421,6 +448,22 @@
                     </div>
                 </td>
 
+
+                <td>
+                    <div class="input-container checkbox-container">
+                        <input type="checkbox" id="dispatch_ready" name="dispatch_ready" autocomplete="off">
+                        <label for="dispatch_ready">Dispatch Ready</label>
+                    </div>
+                </td>
+
+                <td>
+                    <div class="input-container checkbox-container">
+                        <input type="input" id="dispatch_id" name="dispatch_id" autocomplete="off" readonly>
+                        <label for="dispatch_id">Dispatch ID</label>
+                    </div>
+                </td>
+
+
                 <td>
                     <div class="input-container">
                         <label for="declare_date">Declaration Date</label>
@@ -464,6 +507,8 @@
                         <input type="text" id="entry_tags" name="entry_tags" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
+
+            
             </tr>
         </table>
         <div class="controls_box";>
@@ -637,6 +682,89 @@
                 dropdownMenu: true,
                 licenseKey: 'non-commercial-and-evaluation'
             });
+
+            // ✅ ADDED: Pagination + Show Entries + Summary
+            let allData = [...data];
+            let filteredData = [...data];
+            let currentPage = 1;
+            let entriesPerPage = 10;
+
+            const summaryText = document.getElementById('summaryText');
+            const paginationControls = document.getElementById('paginationControls');
+            const entriesSelect = document.getElementById('entriesPerPage');
+            const searchInput = document.getElementById('search_input');
+            const searchClear = document.getElementById('search_clear');
+
+            function renderTable() {
+                const start = (currentPage - 1) * entriesPerPage;
+                const end = start + entriesPerPage;
+                const pageData = filteredData.slice(start, end);
+                hotInstance.loadData(pageData);
+                updateSummary();
+                updatePagination();
+            }
+
+            function updateSummary() {
+                const total = filteredData.length;
+                const start = total === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
+                const end = Math.min(currentPage * entriesPerPage, total);
+                summaryText.textContent = total > 0
+                    ? `Showing ${start} to ${end} of ${total} entries`
+                    : "No entries found";
+            }
+
+            function updatePagination() {
+                paginationControls.innerHTML = "";
+                const totalPages = Math.ceil(filteredData.length / entriesPerPage);
+                if (totalPages <= 1) return;
+
+                function addButton(label, page, disabled = false, active = false) {
+                    const btn = document.createElement("button");
+                    btn.textContent = label;
+                    if (disabled) btn.disabled = true;
+                    if (active) btn.classList.add("active");
+                    btn.onclick = () => {
+                        currentPage = page;
+                        renderTable();
+                    };
+                    paginationControls.appendChild(btn);
+                }
+
+                addButton("Previous", currentPage - 1, currentPage === 1);
+                for (let i = 1; i <= totalPages; i++) {
+                    addButton(i, i, false, i === currentPage);
+                }
+                addButton("Next", currentPage + 1, currentPage === totalPages);
+            }
+
+            entriesSelect.addEventListener("change", () => {
+                entriesPerPage = parseInt(entriesSelect.value);
+                currentPage = 1;
+                renderTable();
+            });
+
+            searchInput.addEventListener("input", () => {
+                const query = searchInput.value.toLowerCase().trim();
+                filteredData = allData.filter(row =>
+                    Object.values(row).some(val =>
+                        String(val || "").toLowerCase().includes(query)
+                    )
+                );
+                currentPage = 1;
+                renderTable();
+            });
+
+            searchClear.addEventListener("click", () => {
+                searchInput.value = "";
+                filteredData = [...allData];
+                currentPage = 1;
+                renderTable();
+            });
+
+            renderTable();
+            // ✅ END OF ADDED PAGINATION CODE
+
+
             const searchPlugin = hotInstance.getPlugin('search');
             document.getElementById('search_input').addEventListener('input', function() {
             const query = this.value;
@@ -654,7 +782,6 @@
         searchPlugin.query('');
         hotInstance.render(); // refresh the table to clear highlights
     });
-    
     /*
     // Record Details Box Switch
     const record_details_check = document.getElementById('record_details_check');
@@ -795,27 +922,24 @@
         });
     });
 
-    
-
-
 <!-- Clear filters button logic -->
-           document.addEventListener('DOMContentLoaded', () => {
-               const searchInput = document.getElementById('search_input');
-               const clearButton = document.getElementById('search_clear');
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search_input');
+    const clearButton = document.getElementById('search_clear');
 
-           searchInput.addEventListener('input', () => {
-                if (searchInput.value.trim() !== "") {
-                clearButton.classList.add('visible');
-                } else {
-                clearButton.classList.remove('visible');
-    }
-  });
+    searchInput.addEventListener('input', () => {
+        if (searchInput.value.trim() !== "") {
+            clearButton.classList.add('visible');
+        } else {
+            clearButton.classList.remove('visible');
+        }
+    });
 
-               clearButton.addEventListener('click', () => {
-               searchInput.value = "";
-               clearButton.classList.remove('visible');
-               searchInput.focus();
-  });
+    clearButton.addEventListener('click', () => {
+        searchInput.value = "";
+        clearButton.classList.remove('visible');
+        searchInput.focus();
+    });
 });
 
     // Toggle Record Details Form with Radio Buttons
@@ -842,16 +966,15 @@
         });
     });
 
-
-// UPLOADED IMAGE
-document.addEventListener("DOMContentLoaded", function() {
-    const navProfileImage = document.getElementById("navProfileImage");
-    if (navProfileImage) {
-        const savedProfileImage = localStorage.getItem("profileImage");
-        if (savedProfileImage) {
-            navProfileImage.src = savedProfileImage;
+    // UPLOADED IMAGE
+    document.addEventListener("DOMContentLoaded", function() {
+        const navProfileImage = document.getElementById("navProfileImage");
+        if (navProfileImage) {
+            const savedProfileImage = localStorage.getItem("profileImage");
+            if (savedProfileImage) {
+                navProfileImage.src = savedProfileImage;
+            }
         }
-    }
     
     // Listen for storage changes from settings page
     window.addEventListener('storage', function(e) {
@@ -861,9 +984,62 @@ document.addEventListener("DOMContentLoaded", function() {
                 navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
             }
         }
+        });
     });
-});
-    
+
+    //TODO add inputs: age, dispatch ready, dispatch id, province street brgy etc.
+    // add entry function
+    document.getElementById('add_entry_details').addEventListener('click', function () {
+        // Gather data from the entry form fields
+        const payload = {
+            record_id: document.getElementById('record_id').value,
+            maab_category: document.getElementById('maab_cat').value,
+            maab_no: document.getElementById('maab_no').value,
+
+            first_name: document.getElementById('fname').value,
+            middle_name: document.getElementById('mname').value,
+            last_name: document.getElementById('lname').value,
+            suffix: document.getElementById('suffix').value,
+            birth_date: document.getElementById('bdate').value,
+            age: document.getElementById('age').value,
+            sex: document.getElementById('sex').value,
+            contact_no: document.getElementById('contact').value,
+            email: document.getElementById('email').value,
+            address: document.getElementById('address').value,
+            blood_type: document.getElementById('blood_type').value,
+
+            id_received: document.getElementById('id_received').checked,
+            declared: document.getElementById('entry_declared').checked,
+            declaration_date: document.getElementById('declare_date').value,
+            paid: document.getElementById('entry_paid').checked,
+            OR_num: document.getElementById('entry_or_no').value,
+            OR_date: document.getElementById('entry_or_date').value,
+            remarks: document.getElementById('entry_remarks').value,
+            tags: document.getElementById('entry_tags').value,
+            dispatch_ready: document.getElementById('dispatch_ready').checked,
+            dispatch_id: document.getElementById('dispatch_id').value
+        };
+
+        fetch('/api/save_entry_details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success === true) {
+                alert('Entry added successfully!');
+            } else {
+                alert('Entry adding failed: ' + data.error);
+            }
+        }) .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during entry adding.');
+        })
+    });
+
+
 </script>
+
 
 {% endblock %}

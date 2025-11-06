@@ -570,7 +570,8 @@
             "Training",
             "Company/Organization Training",
             "Individual",
-            "Walk-In"
+            "Walk-In",
+            "Online"
           ]
         },
         {
@@ -656,9 +657,9 @@
           "check": "",
           "id": 11,
           "values": [
-            "Chapter",
-            "Dasmarinas",
-            "Silang"
+            "chapter",
+            "dasma",
+            "silang"
           ]
         },
         {
@@ -682,7 +683,7 @@
         {
           "name": "tags",
           "type": "ENUM",
-          "comment": "",
+          "comment": "late-declare, overage, underage",
           "unique": false,
           "increment": false,
           "notNull": false,
@@ -690,11 +691,7 @@
           "default": "",
           "check": "",
           "id": 13,
-          "values": [
-            "late-declare",
-            "overage",
-            "underage"
-          ],
+          "values": [],
           "size": ""
         }
       ],
@@ -2343,7 +2340,8 @@
             "Platinum",
             "Enhanced Platinum",
             "Senior",
-            "Senior+"
+            "Senior+",
+            "Safe Card"
           ]
         },
         {
@@ -2499,14 +2497,24 @@
           "unique": false,
           "notNull": false,
           "increment": false,
-          "comment": "",
+          "comment": "late-declare, overage, underage",
           "id": 12,
           "size": "",
-          "values": [
-            "late-declare",
-            "overage",
-            "underage"
-          ]
+          "values": []
+        },
+        {
+          "id": "lTe-jxjbm-EVo4a6LnxBb",
+          "name": "dispatch_ready",
+          "type": "BOOLEAN",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
         },
         {
           "id": "9S-YrUsst26xzbJVTpSn3",
@@ -2607,6 +2615,23 @@
           "comment": "",
           "size": "",
           "values": []
+        },
+        {
+          "id": "9cDHnJ6k0SFrvZrafXgGz",
+          "name": "dispatch_status",
+          "type": "ENUM",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "values": [
+            "current",
+            "dispatched",
+            "disregard"
+          ]
         },
         {
           "id": "4uBaDpm6UeTbf9t3GC0-p",

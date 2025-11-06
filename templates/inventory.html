@@ -97,6 +97,17 @@
     </div>
 </div>
 
+<div class="entries-select">
+    Show
+    <select id="entriesPerPage">
+      <option value="10" selected>10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+    entries
+  </div>
+
 <div id="inventory_table" class="inventory-table">
   <div class="category-table-section" id="table-all">
   <div class="table_wrapper">
@@ -120,7 +131,14 @@
 {% endfor %}
 </div>
 
+<!-- Pagination and summary area -->
+<div class="pagination-container">
+  <div class="summary">
+    <p id="summaryText">Showing 1 to 10 of 40 declarations • 0 selected</p>
+  </div>
 
+  <div id="paginationControls" class="pagination-controls"></div>
+</div>
     
 <div id="popupForm2" class="popup-form">
     <div class="form-container2">
@@ -538,7 +556,7 @@ exampleCarousel.mounted();
 
 
 // ============================================================
-// 🔸 Define Handsontable columns
+// 🔸 Handsontable Columns
 // ============================================================
 const hotColumns = [
   { data: 'inv_id', type: 'text', title: 'ID' },
@@ -586,7 +604,7 @@ function darkenColor(hex, amount = 20) {
 }
 
 // ============================================================
-// 🔹 Initialize Handsontable Instances
+// 🔹 Initialize Handsontable
 // ============================================================
 function initHot(containerId, data) {
   const container = document.getElementById(containerId);
@@ -603,34 +621,167 @@ function initHot(containerId, data) {
   });
 }
 
-// --- "All" table
+// Create "All" table
 hotInstances['all'] = initHot('hot-all', inventoryData);
 
-// --- Per-category tables
+// Per-category tables
 categories.forEach(cat => {
   const filteredData = inventoryData.filter(item => item.maab_category === cat);
   hotInstances[cat] = initHot('hot-' + cat.replace(/ /g, '_'), filteredData);
 });
 
 // ============================================================
-// 🔹 Show/Hide Handsontable by category
+// 🔹 Pagination Setup
+// ============================================================
+let currentCategory = 'all';
+let currentPage = 1;
+let entriesPerPage = parseInt(document.getElementById('entriesPerPage').value, 10);
+
+const summaryText = document.getElementById('summaryText');
+const paginationControls = document.getElementById('paginationControls');
+const entriesSelect = document.getElementById('entriesPerPage');
+
+entriesSelect.addEventListener('change', () => {
+  entriesPerPage = parseInt(entriesSelect.value, 10);
+  currentPage = 1;
+  renderCurrentTable();
+});
+
+// ============================================================
+// 🔹 Render current table with search & pagination
+// ============================================================
+let searchQuery = '';
+
+function safeLower(v) {
+  return (v && typeof v === 'string') ? v.toLowerCase() : '';
+}
+
+function getFilteredData() {
+  return inventoryData.filter(item => {
+    if (currentCategory !== 'all' && item.maab_category !== currentCategory) return false;
+    return (
+      safeLower(item.inv_id).includes(searchQuery) ||
+      safeLower(item.maab_no).includes(searchQuery) ||
+      safeLower(item.maab_category).includes(searchQuery) ||
+      safeLower(item.allocated_to).includes(searchQuery) ||
+      safeLower(item.remarks).includes(searchQuery)
+    );
+  });
+}
+
+function renderCurrentTable() {
+  const instance = hotInstances[currentCategory];
+  if (!instance) return;
+
+  const filtered = getFilteredData();
+  const totalItems = filtered.length;
+  const startIndex = (currentPage - 1) * entriesPerPage;
+  const endIndex = startIndex + entriesPerPage;
+  const pageData = filtered.slice(startIndex, endIndex);
+
+  instance.loadData(pageData);
+  instance.render();
+  applyHeaderColor(instance, currentCategory);
+
+  renderPagination(totalItems);
+}
+
+function renderPagination(totalItems) {
+  const totalPages = Math.ceil(totalItems / entriesPerPage) || 1;
+  paginationControls.innerHTML = '';
+
+  // --- Previous button ---
+  const prevBtn = document.createElement('button');
+  prevBtn.textContent = 'Previous';
+  prevBtn.disabled = currentPage === 1;
+  prevBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderCurrentTable();
+    }
+  });
+  paginationControls.appendChild(prevBtn);
+
+  // --- Helper to create a page button ---
+  function createPageButton(page) {
+    const btn = document.createElement('button');
+    btn.textContent = page;
+    btn.classList.add('page-btn');
+    if (page === currentPage) btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      currentPage = page;
+      renderCurrentTable();
+    });
+    paginationControls.appendChild(btn);
+  }
+
+  // --- Helper to add ellipsis ---
+  function addEllipsis() {
+    const span = document.createElement('span');
+    span.textContent = '...';
+    span.classList.add('ellipsis');
+    paginationControls.appendChild(span);
+  }
+
+  // --- Page buttons logic ---
+  if (totalPages <= 10) {
+    // Show all if 10 or fewer pages
+    for (let i = 1; i <= totalPages; i++) createPageButton(i);
+  } else {
+    const visiblePages = 5;
+
+    if (currentPage <= visiblePages) {
+      for (let i = 1; i <= visiblePages; i++) createPageButton(i);
+      addEllipsis();
+      createPageButton(totalPages);
+    } else if (currentPage >= totalPages - visiblePages + 1) {
+      createPageButton(1);
+      addEllipsis();
+      for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
+    } else {
+      createPageButton(1);
+      addEllipsis();
+      for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
+      addEllipsis();
+      createPageButton(totalPages);
+    }
+  }
+
+  // --- Next button ---
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = 'Next';
+  nextBtn.disabled = currentPage === totalPages;
+  nextBtn.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderCurrentTable();
+    }
+  });
+  paginationControls.appendChild(nextBtn);
+
+  // --- Summary text ---
+  const start = totalItems === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
+  const end = Math.min(currentPage * entriesPerPage, totalItems);
+  summaryText.textContent = `Showing ${start} to ${end} of ${totalItems} entries`;
+}
+
+
+
+// ============================================================
+// 🔹 Show/Hide category & apply header color
 // ============================================================
 function showCategory(cat) {
+  currentCategory = cat;
   document.querySelectorAll('.category-table-section').forEach(section => {
     section.classList.remove('active');
   });
   const section = document.getElementById('table-' + cat.replace(/ /g, '_'));
   if (section) section.classList.add('active');
 
-  if (hotInstances[cat]) {
-    hotInstances[cat].render();
-    applyHeaderColor(hotInstances[cat], cat);
-  }
+  currentPage = 1;
+  renderCurrentTable();
 }
 
-// ============================================================
-// 🔹 Apply header color
-// ============================================================
 function applyHeaderColor(hotInstance, cat) {
   const color = getCategoryColor(cat);
   const borderColor = darkenColor(color, 30);
@@ -645,15 +796,11 @@ function applyHeaderColor(hotInstance, cat) {
       });
     }
   });
-
-  // Trigger immediate render
-  hotInstance.render();
 }
 
 // ============================================================
-// 🔹 Custom Dropdown Integration
+// 🔹 Custom Dropdown
 // ============================================================
-let currentCategory = 'all';
 const customSelect = document.querySelector('.custom-select');
 const selected = customSelect.querySelector('.selected');
 const options = customSelect.querySelectorAll('.options li');
@@ -665,9 +812,6 @@ selected.addEventListener('click', () => {
 options.forEach(option => {
   option.addEventListener('click', () => {
     const cat = option.dataset.value;
-    currentCategory = cat;
-
-    // Update dropdown UI
     selected.textContent = option.textContent;
     selected.dataset.value = cat;
     const color = getCategoryColor(cat);
@@ -675,98 +819,46 @@ options.forEach(option => {
     selected.style.color = (cat === 'all') ? '#333' : '#fff';
     selected.style.borderColor = darkenColor(color, 30);
 
-    // Remove previous active highlight
     options.forEach(opt => opt.classList.remove('active'));
     option.classList.add('active');
 
-    // Switch table and header
     showCategory(cat);
-
     customSelect.classList.remove('open');
   });
 });
 
-// Close dropdown if clicked outside
 document.addEventListener('click', e => {
   if (!customSelect.contains(e.target)) customSelect.classList.remove('open');
 });
 
-// Show "All" by default
-showCategory('all');
-
-
-
 // ============================================================
-// ✅ Search Functionality
+// 🔹 Search
 // ============================================================
 const searchInput = document.getElementById('searchInput');
 const clearBtn = document.getElementById('search_clear');
 
-function safeLower(v) {
-  return (v && typeof v === 'string') ? v.toLowerCase() : '';
-}
-
-function applySearchFilter(query) {
-  const q = query.trim().toLowerCase();
-  const visibleTable = currentCategory || 'all';
-  const instance = hotInstances[visibleTable];
-  if (!instance) return;
-
-  const filtered = inventoryData.filter(item => {
-    if (visibleTable !== 'all' && item.maab_category !== visibleTable) return false;
-    return (
-      safeLower(item.inv_id).includes(q) ||
-      safeLower(item.maab_no).includes(q) ||
-      safeLower(item.maab_category).includes(q) ||
-      safeLower(item.allocated_to).includes(q) ||
-      safeLower(item.remarks).includes(q)
-    );
-  });
-
-  instance.loadData(filtered);
-}
-
-// 🔍 Typing into search bar
 searchInput.addEventListener('input', function () {
-  applySearchFilter(this.value);
+  searchQuery = this.value.trim().toLowerCase();
+  currentPage = 1;
+  renderCurrentTable();
 
-  // Toggle visibility of the clear button
-  if (this.value.trim() !== '') {
-    clearBtn.classList.add('visible');
-  } else {
-    clearBtn.classList.remove('visible');
-  }
+  clearBtn.classList.toggle('visible', searchQuery !== '');
 });
 
-
-// ❌ Clicking the clear button
 clearBtn.addEventListener('click', function () {
+  searchQuery = '';
   searchInput.value = '';
-  applySearchFilter('');
+  currentPage = 1;
+  renderCurrentTable();
   searchInput.focus();
 });
 
+// ============================================================
+// 🔹 Initialize page
+// ============================================================
+showCategory('all');
 
-// UPLOADED IMAGE
-document.addEventListener("DOMContentLoaded", function() {
-    const navProfileImage = document.getElementById("navProfileImage");
-    if (navProfileImage) {
-        const savedProfileImage = localStorage.getItem("profileImage");
-        if (savedProfileImage) {
-            navProfileImage.src = savedProfileImage;
-        }
-    }
-    
-    // Listen for storage changes from settings page
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'profileImage') {
-            const navProfileImage = document.getElementById("navProfileImage");
-            if (navProfileImage) {
-                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
-            }
-        }
-    });
-});
+
 
         
 </script>
