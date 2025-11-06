@@ -1,12 +1,22 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>MAAB ID Gallery</title>
-  <!-- Link to your single cleaned CSS file -->
+  <title>Membership Registration</title>
+  <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
 </head>
-<body>
+
+<body style="background: url('{{ url_for('static', filename='assets/blurred what.png') }}') no-repeat center center fixed; background-size: cover;">
+  <header class="main-header">
+    <div class="header-content">
+      <img src="{{ url_for('static', filename='assets/favicon.ico') }}" alt="PRC Logo" class="header-logo">
+      <h1 class="header-title">Membership Registration</h1>
+    </div>
+  </header>
+
+
   <div class="main-section">
 
     <!-- ===== GALLERY CONTAINER ===== -->
@@ -75,6 +85,24 @@
       </div>
     </div>
 
+
+    
+    <!-- ===== BLUE BANNER SECTION ===== -->
+    <section class="blue-banner">
+      <div class="banner-content">
+        <h2>Be Part of Something Bigger</h2>
+        <p>Join the Philippine Red Cross and help save lives today.</p>
+      </div>
+    </section>
+
+    <!-- ===== IMAGE SECTION (After Blue Banner) ===== -->
+    <section class="banner-image-section">
+      <img 
+        src="{{ url_for('static', filename='assets/gallery.jpg') }}" 
+        alt="Gallery Image" 
+        class="banner-image">
+    </section>
+
     <!-- ===================== Registration form (unchanged) ===================== -->
     <section class="form-container">
        <section class="form-container">
@@ -85,28 +113,25 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>First Name <span class="required">*</span></label>
-                    <input id="fname" type="text" name="fname" required >
+                    <input type="text" name="fname" required>
                 </div>
                 <div class="form-group">
                     <label>Middle Name</label>
-                    <input id="mname" type="text" name="mname" placeholder="Optional">
+                    <input type="text" name="mname" placeholder="Optional">
                 </div>
                 <div class="form-group">
-                    <label>Last Name <span class="required">*</span></label>
-                    <input id="lname" type="text" name="sname" required>
+                    <label>Surname <span class="required">*</span></label>
+                    <input type="text" name="sname" required>
                 </div>
                 <div class="form-group">
                     <label>Suffix <span class="optional">(if applicable)</span></label>
-                    <select name="suffix" id="suffix" required>
-                            <option value="NA">NA</option>
-                            <option value="Jr">Jr</option>
-                            <option value="Sr">Sr</option>
-                            <option value="II">II</option>
-                            <option value="III">III</option>
-                            <option value="IV">IV</option>
-                            <option value="V">V</option>
-                            <option value="VI">VI</option>
-                            <option value="VII">VII</option>
+                    <select name="suffix">
+                        <option value="">Not applicable</option>
+                        <option>Jr.</option>
+                        <option>Sr.</option>
+                        <option>II</option>
+                        <option>III</option>
+                        <option>IV</option>
                     </select>
                 </div>
             </div>
@@ -119,20 +144,20 @@
                 </div>
                 <div class="form-group">
                     <label>Age <span class="required">*</span></label>
-                    <input type="number" id="age" name="age" readonly maxlength="3" max="150" placeholder="Auto">
+                    <input type="number" id="age" name="age" readonly maxlength="3" max="150" placeholder="Auto" required>
                 </div>
                 <div class="form-group">
                     <label>Sex <span class="required">*</span></label>
-                    <select name="sex" id="sex" required>
+                    <select name="sex" required>
                         <option value="">Select</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="">Prefer not to say</option>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Prefer not to say</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Blood Type <span class="required">*</span></label>
-                    <select name="bloodtype" id="bloodtype" required>
+                    <select name="bloodtype" required>
                         <option value="">Select</option>
                         <option>A+</option>
                         <option>A-</option>
@@ -152,12 +177,12 @@
                     <label>Contact Number <span class="required">*</span></label>
                     <div class="contact-field">
                         <span class="country-code">+63</span>
-                        <input type="tel" id="contact" name="contact" placeholder="9xxxxxxxxx" maxlength="10" required>
+                        <input type="tel" name="contact" placeholder="9xxxxxxxxx" maxlength="10" required>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Email Address <span class="required">*</span></label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" name="email" required>
                 </div>
             </div>
 
@@ -165,43 +190,19 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Province <span class="required">*</span></label>
-                    <input type="text" id="province" name="province" value="Cavite" readonly>
+                    <input type="text" name="province" required>
                 </div>
                 <div class="form-group">
                     <label>Municipality <span class="required">*</span></label>
-                    <select name="municipality" id="municipality" required>
-                            <option value="Cavite City">Cavite City</option>
-                            <option value="Kawit">Kawit</option>
-                            <option value="Noveleta">Noveleta</option>
-                            <option value="Rosario">Rosario</option>
-                            <option value="Bacoor">Bacoor</option>
-                            <option value="Imus">Imus</option>
-                            <option value="Dasmariñas">Dasmariñas</option>
-                            <option value="Carmona">Carmona</option>
-                            <option value="General Mariano Alvarez (GMA)">General Mariano Alvarez (GMA)</option>
-                            <option value="Silang">Silang</option>
-                            <option value="General Trias">General Trias</option>
-                            <option value="Amadeo">Amadeo</option>
-                            <option value="Indang">Indang</option>
-                            <option value="Tanza">Tanza</option>
-                            <option value="Trece Martires">Trece Martires</option>
-                            <option value="Alfonso">Alfonso</option>
-                            <option value="Gen. Emilio Aguinaldo (Bailen)">Gen. Emilio Aguinaldo (Bailen)</option>
-                            <option value="Magallanes">Magallanes</option>
-                            <option value="Maragondon">Maragondon</option>
-                            <option value="Mendez">Mendez</option>
-                            <option value="Naic">Naic</option>
-                            <option value="Tagaytay City">Tagaytay City</option>
-                            <option value="Ternate">Ternate</option>
-                        </select>
+                    <input type="text" name="municipality" required>
                 </div>
                 <div class="form-group">
-                    <label>Barangay No.<span class="required"></span></label>
-                    <input type="text" id="brgy_no" name="street">
+                    <label>Street / Barangay <span class="required">*</span></label>
+                    <input type="text" name="street" required>
                 </div>
                 <div class="form-group">
-                    <label>Street <span class="required"></span></label>
-                    <input type="text" id="street" name="city" >
+                    <label>City <span class="required">*</span></label>
+                    <input type="text" name="city" required>
                 </div>
             </div>
 
@@ -209,12 +210,12 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>MAAB Category</label>
-                    <select id="maab_cat" name="maab" required>
+                    <select id="maab" name="maab" required disabled>
+                        <option value="">Select</option>
                         <option>Classic</option>
                         <option>Bronze</option>
                         <option>Silver</option>
                         <option>Gold</option>
-                        <option>Safe Card</option>
                         <option>Platinum</option>
                         <option>Senior</option>
                         <option>Senior+</option>
@@ -223,21 +224,24 @@
                 </div>
                 <div class="form-group">
                     <label>Office <span class="required">*</span></label>
-                    <select name="office" id="origin" required>
-                        <option value="chapter">Cavite Chapter</option>
-                        <option value="dasma">Dasma Branch</option>
-                        <option value="silang">Silang Branch</option>
+                    <select name="office" required>
+                        <option value="">Select Branch</option>
+                        <option>Cavite City Branch</option>
+                        <option>Silang Branch</option>
+                        <option>Dasma Branch</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-actions">
-                <button type="button" class="back-btn" id="back_btn">Back</button>
-                <button type="button" class="submit-btn" id="submit_btn">Submit</button>
+                <button type="button" class="back-btn" id="backBtn">Back</button>
+                <button type="submit" class="submit-btn">Submit</button>
             </div>
         </form>
       </section>
 </div>
+
+
 
 <footer class="footer-ash">
         <div class="footer-container">
@@ -463,83 +467,16 @@ setInterval(() => {
   updateGallery();
 }, slideInterval);
 
-document.getElementById('back_btn').addEventListener('click', () => {
-    window.location.href = '/';
-});
-
-// TODO add age checking for MAAB category; check if age fits category every age input update
-// submit btn logic
-document.getElementById('submit_btn').addEventListener('click', () => {
-  const street = document.getElementById('street').value.toUpperCase();
-  const brgy_no = document.getElementById('brgy_no').value;
-  const municipality = document.getElementById('municipality').value;
-  const province = document.getElementById('province').value;
-
-    const member_info = {
-        from: 'online_register',
-
-        fname: document.getElementById('fname').value,
-        mname: document.getElementById('mname').value,
-        lname: document.getElementById('lname').value,
-        suffix: document.getElementById('suffix').value,
-        birthdate: document.getElementById('birthdate').value,
-        age: document.getElementById('age').value,
-        sex: document.getElementById('sex').value,
-        bloodtype: document.getElementById('bloodtype').value,
-        contact: document.getElementById('contact').value,
-        email: document.getElementById('email').value,
-        municipality: municipality,
-        address: `${street}, Brgy. ${brgy_no}, ${municipality}, ${province}`,
-        maab_cat: document.getElementById('maab_cat').value,
-        origin: document.getElementById('origin').value  
-    }
-
-    fetch('/api/member_register/add_entry', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(member_info)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success === true) {
-            alert('Registration successful!');
-            window.location.href = '/';
-        } else {
-            alert('Registration failed: ' + data.error);
-        }
-    }) .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred during registration.');
-    })
-});
-
-document.getElementById('birthdate').addEventListener('change', function () {
-    const birthdateInput = this.value;
-    const ageInput = document.getElementById('age');
-
-    if (!birthdateInput) {
-        ageInput.value = '';
-        return;
-    }
-
-    const birthDate = new Date(birthdateInput);
-    const today = new Date();
-
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-
-    // adjust if birthday hasn’t happened yet this year
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
-
-    ageInput.value = age;
-});
-
 
 
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
