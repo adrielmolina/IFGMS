@@ -683,7 +683,7 @@
         {
           "name": "tags",
           "type": "ENUM",
-          "comment": "",
+          "comment": "late-declare, overage, underage",
           "unique": false,
           "increment": false,
           "notNull": false,
@@ -691,11 +691,7 @@
           "default": "",
           "check": "",
           "id": 13,
-          "values": [
-            "late-declare",
-            "overage",
-            "underage"
-          ],
+          "values": [],
           "size": ""
         }
       ],
@@ -2501,14 +2497,10 @@
           "unique": false,
           "notNull": false,
           "increment": false,
-          "comment": "",
+          "comment": "late-declare, overage, underage",
           "id": 12,
           "size": "",
-          "values": [
-            "late-declare",
-            "overage",
-            "underage"
-          ]
+          "values": []
         },
         {
           "id": "lTe-jxjbm-EVo4a6LnxBb",

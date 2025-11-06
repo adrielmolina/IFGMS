@@ -874,6 +874,21 @@ def add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, b
         return False
 
 
+def save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birth_date, age, sex, contact_no, email, address, blood_type, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready, dispatch_id):
+    db_session = SessionLocal()
+    try:
+        pass
+        
+        # TODO WIP FINISH THIS TOMORROW
+    
+    
+    
+        return True
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error adding entry content: {e}")
+        return False
+
 
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>MAAB ID Gallery</title>
+  <title>MAAB Registration</title>
   <!-- Link to your single cleaned CSS file -->
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
 </head>
@@ -494,7 +494,7 @@ document.getElementById('submit_btn').addEventListener('click', () => {
         origin: document.getElementById('origin').value  
     }
 
-    fetch('/api/member_register/add_entry', {
+    fetch('/api/member_register', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
