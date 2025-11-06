@@ -431,6 +431,71 @@ input[type="checkbox"] {
     border-right: none !important;
 }
 
+.table-container {
+    position: relative;
+}
+
+.tabulator-footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    height: 40px;
+    background-color: transparent !important;
+}
+
+.table-bottom {
+    color: #444;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    height: 40px;
+    pointer-events: none; /* if you want clicks to pass through */
+}
+
+/* Pagination container */
+#pending_table .tabulator-paginator,
+#active_table .tabulator-paginator {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 5px 0;
+}
+
+/* All buttons inside paginator */
+#pending_table .tabulator-paginator button,
+#active_table .tabulator-paginator button {
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    cursor: pointer;
+    color:black;
+    font-weight: 600;
+}
+
+/* Active page button */
+#pending_table .tabulator-paginator button.active,
+#active_table .tabulator-paginator button.active {
+  background: #d9534f;
+  color: white;
+  border-color: #d43f3a;
+}
+
+/* Hover effect */
+#pending_table .tabulator-paginator button:hover:not(.active),
+#active_table .tabulator-paginator button:hover:not(.active) {
+    background: #ffeaea;
+}
+
+
+
 
 /* ----------------- Buttons ----------------- */
 button, .clearSearch {

@@ -44,13 +44,13 @@ CREATE TABLE `membership_records` (
 	`declaration_date` DATE COMMENT 'if declared. overwrite this field everytime declaration button is clicked',
 	`effectivity_date` DATE,
 	`location_particular` VARCHAR(255),
-	`location_category` ENUM('Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder', 'Public Elementary School', 'Private Elementary School', 'Public High School', 'Private High School', 'Public Senior High School', 'Private Senior High School', 'Public Integrated School', 'Private Integrated School', 'Public College', 'Private College', 'Government Company/Organization', 'Private Company/Organization', 'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events', 'Training', 'Company/Organization Training', 'Individual', 'Walk-In'),
+	`location_category` ENUM('Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder', 'Public Elementary School', 'Private Elementary School', 'Public High School', 'Private High School', 'Public Senior High School', 'Private Senior High School', 'Public Integrated School', 'Private Integrated School', 'Public College', 'Private College', 'Government Company/Organization', 'Private Company/Organization', 'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events', 'Training', 'Company/Organization Training', 'Individual', 'Walk-In', 'Online'),
 	`municipality` ENUM('Cavite City', 'Kawit', 'Noveleta', 'Rosario', 'Bacoor', 'Imus', 'Dasmariñas', 'Carmona', 'General Mariano Alvarez (GMA)', 'Silang', 'General Trias', 'Amadeo', 'Indang', 'Tanza', 'Trece Martires', 'Alfonso', 'Gen. Emilio Aguinaldo (Bailen)', 'Magallanes', 'Maragondon', 'Mendez', 'Naic', 'Tagaytay City', 'Ternate'),
 	`district` INTEGER,
 	`paid` BOOLEAN DEFAULT false COMMENT 'automatically mark as paid if all contents are paid',
-	`origin` ENUM('Chapter', 'Dasmarinas', 'Silang'),
+	`origin` ENUM('chapter', 'dasma', 'silang'),
 	`remarks` TEXT(65535),
-	`tags` ENUM('late-declare', 'overage', 'underage'),
+	`tags` ENUM() COMMENT 'late-declare, overage, underage',
 	PRIMARY KEY(`record_id`)
 );
 
@@ -195,7 +195,7 @@ CREATE TABLE `audit_logs` (
 CREATE TABLE `entry_contents` (
 	`entry_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`record_id` INTEGER,
-	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
+	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+', 'Safe Card'),
 	`maab_no` VARCHAR(255) UNIQUE COMMENT 'maybe foreign key with inventory. what happens when id is platinum?',
 	`member_id` INTEGER,
 	`id_received` BOOLEAN,
@@ -205,7 +205,9 @@ CREATE TABLE `entry_contents` (
 	`OR_num` INTEGER,
 	`OR_date` DATE,
 	`remarks` TEXT(65535),
-	`tags` ENUM('late-declare', 'overage', 'underage'),
+	`tags` ENUM() COMMENT 'late-declare, overage, underage',
+	`dispatch_ready` BOOLEAN,
+	`dispatch_id` INTEGER UNIQUE,
 	PRIMARY KEY(`entry_id`)
 ) COMMENT='table for contents of a membership_record entry';
 

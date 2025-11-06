@@ -1,5 +1,5 @@
 body {
-    background-color: #f3e8e8;
+    background-color: #cccccc41;
     padding: 10px;
     display: flex;
     flex-direction: column;
@@ -223,7 +223,7 @@ label {
   background-color: #2f31b9;
   color: white;
   border: none;
-  padding: 9px 18px;
+  padding: 8px 18px;
   font-size: 14px;
   border-radius: 8px;
   font-weight: 500;
@@ -232,7 +232,6 @@ label {
   align-items: center;
   gap: 8px;
   transition: background 0.25s ease, transform 0.1s ease;
-  margin-top: 20px;
 }
 
 .btn.print i {
@@ -407,4 +406,47 @@ label {
 .fa-brands {
   font-family: "Font Awesome 6 Free" !important;
   font-weight: 900; 
+}
+
+/* ========================================================= */
+/* PAGINATION STYLING                */
+/* ========================================================= */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination-controls button {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pagination-controls button:hover {
+  background: #ffeaea;
+}
+
+.pagination-controls button.active {
+  background: #d9534f;
+  color: white;
+  border-color: #d43f3a;
+}
+
+.entries-select {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
 }
