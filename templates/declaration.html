@@ -4,7 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
@@ -49,12 +49,27 @@
   </div>
 
   <div class="action-buttons">
-      <button id="btn_create_dispatch" type="button" class="btn_create_dispatch">Create Dispatch</button>
-      <button type="button" class="btn transmit" disabled>Transmit (0)</button>
-      <button type="button" class="btn history" onclick="showHistory()">History </button>
-      <button type="button" class="btn select-all">Select All</button>
-      <button type="button" class="btn archive">Archive</button>
-  </div>
+    <button id="btn_create_dispatch" type="button" class="btn_create_dispatch">
+        <i class="fa-solid fa-plus"></i> Create Dispatch
+    </button>
+
+    <button type="button" class="btn transmit" disabled>
+        <i class="fa-solid fa-paper-plane"></i> Transmit (0)
+    </button>
+
+    <button type="button" class="btn history" onclick="showHistory()">
+        <i class="fa-solid fa-clock-rotate-left"></i> History
+    </button>
+
+    <button type="button" class="btn select-all">
+        <i class="fa-solid fa-check-double"></i> Select All
+    </button>
+
+    <button type="button" class="btn archive">
+        <i class="fa-solid fa-box-archive"></i> Archive
+    </button>
+</div>
+
 </div>
 
 <!-- Hidden alternate buttons for History view -->
@@ -156,8 +171,16 @@ document.addEventListener("DOMContentLoaded", () => {
     transmitBtn.disabled = checkedCount === 0;
     historyBtn.disabled = false;
 
-    transmitBtn.textContent = checkedCount > 0 ? `Transmit (${checkedCount})` : "Transmit";
-    historyBtn.textContent = checkedCount > 0 ? `History (${checkedCount})` : "History";
+   transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit (${checkedCount})`;
+if (checkedCount === 0) {
+    transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
+}
+
+historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History (${checkedCount})`;
+if (checkedCount === 0) {
+    historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History`;
+}
+
 
     summaryText.textContent = `Showing ${totalCount} of ${totalCount} declarations • ${checkedCount} selected`;
 
