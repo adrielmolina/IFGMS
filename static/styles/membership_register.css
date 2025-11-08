@@ -36,6 +36,20 @@ body {
   overflow: hidden;  /* hide overflow to simulate slide */
 }
 
+.maab-poster {
+  text-align: center;
+  margin-left: 400px;
+  margin-right: 20px;
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
+
+.maab-poster img {
+  max-width: 400%;
+  width: 1200px;  
+  border-radius: 10px;
+  display: block;
+}
 
 .card {
   width: 170px;

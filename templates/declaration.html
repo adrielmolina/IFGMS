@@ -65,16 +65,8 @@
         <i class="fa-solid fa-check-double"></i> Select All
     </button>
 
-    <button type="button" class="btn archive">
-        <i class="fa-solid fa-box-archive"></i> Archive
-    </button>
 </div>
 
-</div>
-
-<!-- Hidden alternate buttons for History view -->
-<div class="action-buttons hidden" id="historyButtons">
-  <button type="button" class="btn export"><i class="fa-solid fa-file-export"></i> Export</button>
 </div>
 
 <div class="entries-select">
@@ -92,12 +84,6 @@
   <h4 id="tableTitle">
     <i class="fa-solid fa-file-lines"></i> Dispatch Contents
   </h4>
-
-  <!-- Back button shown only in History view -->
-  <button class="btn back hidden" id="backButton" onclick="backToMain()">
-    <i class="fa-solid fa-arrow-left"></i> Back
-  </button>
-
   <div class="table_wrapper">
     <table id="dataTable" class="styled_table">
       <thead>
@@ -144,11 +130,17 @@
   <div id="paginationControls" class="pagination-controls"></div>
 </div>
 
-<div class="form-buttons">
-  <button type="button" class="btn print">
-    <i class="fa-solid fa-print"></i> Print Report
+<!-- Hidden alternate buttons for History view -->
+<div class="action-buttons hidden" id="historyButtons">
+  <!-- Back button shown only in History view -->
+  <button class="btn back hidden" id="backButton" onclick="backToMain()">
+    <i class="fa-solid fa-arrow-left"></i> Back
   </button>
+  <button type="button" class="btn export"><i class="fa-solid fa-file-export"></i> Export</button>
 </div>
+
+
+
 {% endblock %}
 
 {% block extra_scripts %}
