@@ -6,7 +6,8 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/inventory.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
@@ -51,10 +52,16 @@
     </div>
   </div>
 
-  <div class="action-buttons">
-    <button class="btn" id="openFormBtn1">Add ID Stock</button>
-    <button class="btn" id="openFormBtn2">ID Descriptions</button>
-  </div>
+ <div class="action-buttons">
+  <button class="btn" id="openFormBtn1">
+    <i class="fa-solid fa-plus"></i> Add ID Stock
+  </button>
+
+  <button class="btn" id="openFormBtn2">
+    <i class="fa-regular fa-address-card"></i> ID Descriptions
+  </button>
+</div>
+
 </div>
 
   

@@ -10,6 +10,7 @@
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/handsontable/plugins/exportFile/exportFile.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
@@ -141,15 +142,15 @@
 
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="paid" name="paid" autocomplete="off">
                         <label for="paid">Paid</label>
+                        <input type="checkbox" id="paid" name="paid" autocomplete="off">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="declared" name="declared" autocomplete="off">
                         <label for="declared">Declared</label>
+                        <input type="checkbox" id="declared" name="declared" autocomplete="off">
                     </div>
                 </td>
 
@@ -172,7 +173,7 @@
                 <td>
                     <!-- TODO add js function to set location particular to all caps while typing -->
                     <div class="input-container">
-                         <label for="loc_par">Location Particular</label>
+                        <label for="loc_par">Location Particular</label>
                         <input type="text" id="loc_par" name="loc_par" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>
@@ -294,9 +295,14 @@
             </tr>
         </table>
 
-        <div class="controls_box" style="justify-content: flex-end; margin-top: 20px;">
-            <button id="save_record_details" class="save_record_details">Save</button>
-            <button id="delete_record" class="delete_record">Delete Record</button>
+        <div class="controls_box">
+            <button id="save_record_details" class="save_record_details">
+                <img src="/static/assets/save.png" alt="save" class="btn-icon"> Save
+            </button>
+            <button id="delete_record" class="delete_record">
+                <img src="/static/assets/delete.png" alt="delete" class="btn-icon"> Delete
+            </button>
+        </div>
             <!-- TODO add delete record function -->
         </div>
     </form>
@@ -414,10 +420,13 @@
 
                 <td>
                     <div class="input-container">
-                        <label for="contact">Contact No</label>
-                        <input type="text" id="contact" name="contact" required autocomplete="off" placeholder=" ">
+                    <label for="contact">Contact No</label>
+                        <div class="contact-wrapper">
+                            <span class="prefix">+63</span>
+                            <input type="text" id="contact" name="contact" maxlength="10" required autocomplete="off">
+                        </div>
                     </div>
-                </td>                               
+                </td>
 
                 <td>
                     <div class="input-container">
@@ -454,15 +463,15 @@
             <tr>
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="id_received" name="id_received" autocomplete="off">
                         <label for="id_received">ID Received</label>
+                        <input type="checkbox" id="id_received" name="id_received" autocomplete="off">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
                         <label for="entry_declared">Declared</label>
+                        <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
                     </div>
                 </td>
 
@@ -482,12 +491,15 @@
                 </td>
 
 
+
                 <td>
                     <div class="input-container">
                         <label for="declare_date">Declaration Date</label>
                         <input type="date" id="declare_date" name="declare_date" autocomplete="off">
                     </div>
                 </td>
+
+
 
                 <td>
                     <div class="input-container checkbox-container">
@@ -502,7 +514,7 @@
                         <input type="text" id="entry_or_no" name="entry_or_no" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
-
+                
                 <td>
                     <div class="input-container">
                         <label for="entry_or_date">OR Date</label>
@@ -529,8 +541,11 @@
             
             </tr>
         </table>
-        <div class="controls_box";>
-            <button id="add_entry_details" class="add_entry_details">Add</button>
+            <div class="controls_box">
+                <button id="add_entry_details" class="add_entry_details">
+                    <img src="/static/assets/add.png" alt="add" class="btn-icon"> Add Entry
+                </button>
+                </div>    
         </div>
     </form>
 </div>
@@ -1054,6 +1069,22 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     });
 
+
+ // ✅ Export to Excel Button
+document.querySelector('.btn-export').addEventListener('click', function () {
+    if (!hotInstance) {
+        console.error("hotInstance is not defined.");
+        return;
+    }
+
+    const exportPlugin = hotInstance.getPlugin('exportFile');
+    exportPlugin.downloadFile('xlsx', {
+        filename: 'members_records',
+        sheetName: 'Records',
+        fileExtension: 'xlsx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+});
 
 </script>
 

@@ -485,3 +485,16 @@ h2.numbercount {
     min-width: 600px;
 }
 
+.card h3 {
+    display: flex;
+    align-items: left;
+    gap: 5px /* space between icon and text */
+}
+
+.card h3 img.icons {
+    width: 64px;
+    height: 64px;
+    margin-top: -15px;
+}
+
+

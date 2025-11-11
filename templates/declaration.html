@@ -4,7 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
@@ -49,17 +49,24 @@
   </div>
 
   <div class="action-buttons">
-      <button id="btn_create_dispatch" type="button" class="btn_create_dispatch">Create Dispatch</button>
-      <button type="button" class="btn transmit" disabled>Transmit (0)</button>
-      <button type="button" class="btn history" onclick="showHistory()">History </button>
-      <button type="button" class="btn select-all">Select All</button>
-      <button type="button" class="btn archive">Archive</button>
-  </div>
+    <button id="btn_create_dispatch" type="button" class="btn_create_dispatch">
+        <i class="fa-solid fa-plus"></i> Create Dispatch
+    </button>
+
+    <button type="button" class="btn transmit" disabled>
+        <i class="fa-solid fa-paper-plane"></i> Transmit (0)
+    </button>
+
+    <button type="button" class="btn history" onclick="showHistory()">
+        <i class="fa-solid fa-clock-rotate-left"></i> History
+    </button>
+
+    <button type="button" class="btn select-all">
+        <i class="fa-solid fa-check-double"></i> Select All
+    </button>
+
 </div>
 
-<!-- Hidden alternate buttons for History view -->
-<div class="action-buttons hidden" id="historyButtons">
-  <button type="button" class="btn export"><i class="fa-solid fa-file-export"></i> Export</button>
 </div>
 
 <div class="entries-select">
@@ -77,12 +84,6 @@
   <h4 id="tableTitle">
     <i class="fa-solid fa-file-lines"></i> Dispatch Contents
   </h4>
-
-  <!-- Back button shown only in History view -->
-  <button class="btn back hidden" id="backButton" onclick="backToMain()">
-    <i class="fa-solid fa-arrow-left"></i> Back
-  </button>
-
   <div class="table_wrapper">
     <table id="dataTable" class="styled_table">
       <thead>
@@ -129,11 +130,17 @@
   <div id="paginationControls" class="pagination-controls"></div>
 </div>
 
-<div class="form-buttons">
-  <button type="button" class="btn print">
-    <i class="fa-solid fa-print"></i> Print Report
+<!-- Hidden alternate buttons for History view -->
+<div class="action-buttons hidden" id="historyButtons">
+  <!-- Back button shown only in History view -->
+  <button class="btn back hidden" id="backButton" onclick="backToMain()">
+    <i class="fa-solid fa-arrow-left"></i> Back
   </button>
+  <button type="button" class="btn export"><i class="fa-solid fa-file-export"></i> Export</button>
 </div>
+
+
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -174,34 +181,16 @@ function updateSelection() {
   const tableRows = Array.from(document.querySelectorAll("#dataTable tbody tr"));
   const visibleRows = tableRows.filter(r => r.style.display !== "none"); // Filter visible rows
 
-  const checkedCount = visibleRows.filter(r => r.querySelector(".row-check:checked")).length;
-
-  // Make sure the totalCount is calculated properly
-  const totalCount = mainTableData.length; // Ensure this is correct, use filteredData.length if filtering
-
-  // Get the correct entries per page value
-  const entriesPerPage = parseInt(document.getElementById("entriesPerPage").value); // Get value of the select element
-
-  console.log("Current Page:", window.currentPage);
-  console.log("Entries per Page:", entriesPerPage);  // This should now be a number
-  console.log("Total Count:", totalCount);
-
-  // Check if start and end values are calculated correctly
-  const start = (window.currentPage - 1) * entriesPerPage + 1;
-  const end = Math.min(window.currentPage * entriesPerPage, totalCount);
-
-  console.log("Start:", start, "End:", end);
-
-  // Update the summary text to show the range of rows
-  summaryText.textContent = `Showing ${start} to ${end} of ${totalCount} entries • ${checkedCount} selected`;
-
-  // Update the Select All checkbox state
-  if (selectAllCheckbox)
-    selectAllCheckbox.checked = (checkedCount === visibleRows.length && visibleRows.length > 0);
+   transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit (${checkedCount})`;
+if (checkedCount === 0) {
+    transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
 }
 
-// ✅ Make globally callable everywhere
-window.updateSelection = updateSelection;
+historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History (${checkedCount})`;
+if (checkedCount === 0) {
+    historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History`;
+}
+
 
 
 
