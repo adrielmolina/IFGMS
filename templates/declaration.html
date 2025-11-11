@@ -146,6 +146,23 @@
 {% block extra_scripts %}
 <!-- ✅ Existing scripts kept intact -->
 <script>
+  // ✅ Main table data for JS
+const mainTableData = [];
+for (let i = 1; i <= 200; i++) {
+  mainTableData.push({
+    dispatchContentID: `DC${String(i).padStart(3, '0')}`,
+    entryID: `EN${String(i).padStart(3, '0')}`,
+    category: ['Gold','Silver','Bronze','Platinum'][i % 4],
+    maabNo: `MAAB${String(i).padStart(3, '0')}`,
+    memberName: `Member ${i}`,
+    birthDate: `199${i % 10}-0${(i % 9)+1}-10`,
+    effectivityDate: `2025-0${(i % 9)+1}-15`,
+    location: ['Cavite','Dasma','Silang'][i % 3],
+    lateDeclare: i % 2 === 0 ? 'No' : 'Yes'
+  });
+}
+let filteredData = [...mainTableData];
+
 // (Your selection logic)
 document.addEventListener("DOMContentLoaded", () => {
   const rowChecks = document.querySelectorAll(".row-check");
@@ -156,12 +173,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const summaryText = document.getElementById("summaryText");
   const tableRows = document.querySelectorAll("#dataTable tbody tr");
 
-  function updateSelection() {
-    const checkedCount = document.querySelectorAll(".row-check:checked").length;
-    const totalCount = tableRows.length;
+function updateSelection() {
+  const summaryText = document.getElementById("summaryText");
+  const selectAllCheckbox = document.getElementById("selectAll");
+  const rowChecks = document.querySelectorAll(".row-check");
 
-    transmitBtn.disabled = checkedCount === 0;
-    historyBtn.disabled = false;
+  const tableRows = Array.from(document.querySelectorAll("#dataTable tbody tr"));
+  const visibleRows = tableRows.filter(r => r.style.display !== "none"); // Filter visible rows
 
    transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit (${checkedCount})`;
 if (checkedCount === 0) {
@@ -174,10 +192,7 @@ if (checkedCount === 0) {
 }
 
 
-    summaryText.textContent = `Showing ${totalCount} of ${totalCount} declarations • ${checkedCount} selected`;
 
-    selectAllCheckbox.checked = checkedCount === totalCount;
-  }
 
   rowChecks.forEach(cb => cb.addEventListener("change", updateSelection));
 
@@ -187,12 +202,20 @@ if (checkedCount === 0) {
   });
 
   selectAllBtn.addEventListener("click", () => {
-    const isSelecting = selectAllBtn.textContent === "Select All";
-    rowChecks.forEach(cb => cb.checked = isSelecting);
-    selectAllCheckbox.checked = isSelecting;
-    selectAllBtn.textContent = isSelecting ? "Deselect All" : "Select All";
-    updateSelection();
+  const isSelecting = selectAllBtn.textContent === "Select All";
+  
+  // Get only the visible rows
+  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+  visibleRows.forEach(row => {
+    const checkbox = row.querySelector(".row-check");
+    if (checkbox) checkbox.checked = isSelecting;
   });
+  
+  selectAllCheckbox.checked = isSelecting;
+  selectAllBtn.textContent = isSelecting ? "Deselect All" : "Select All";
+  updateSelection();
+});
+
 
   updateSelection();
 });
@@ -200,15 +223,24 @@ if (checkedCount === 0) {
 
 <!-- 🔎 Search Function -->
 <script>
+// ✅ Smart Search that filters full dataset + updates pagination
 document.getElementById('search_input').addEventListener('keyup', function () {
   const filter = this.value.toLowerCase();
-  const rows = document.querySelectorAll('#dataTable tbody tr');
 
-  rows.forEach(row => {
-    const rowText = row.textContent.toLowerCase();
-    row.style.display = rowText.includes(filter) ? '' : 'none';
-  });
+  // Filter the ENTIRE dataset, not just visible rows
+  filteredData = mainTableData.filter(item =>
+    Object.values(item).some(value =>
+      String(value).toLowerCase().includes(filter)
+    )
+  );
+
+  // Reset to first page after searching
+  window.currentPage = 1;
+
+  // Re-render the table with filtered data
+  renderTable();
 });
+
 </script>
 
 <!-- 📦 Dispatch Create -->
@@ -242,13 +274,55 @@ function backToMain() {
   document.getElementById("historyButtons").classList.add("hidden");
   document.getElementById("backButton").classList.add("hidden");
   document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-file-lines"></i> Dispatch Contents';
-  
-  showMainTable();
+
+  const tableHead = document.querySelector("#dataTable thead tr");
+  const tableBody = document.querySelector("#dataTable tbody");
+
+  // ✅ Restore original headers
+  tableHead.innerHTML = `
+    <th><input type="checkbox" id="selectAll"></th>
+    <th>Dispatch Content ID</th>
+    <th>Entry ID</th>
+    <th>MAAB Category</th>
+    <th>MAAB No.</th>
+    <th>Member Name</th>
+    <th>Member Birth Date</th>
+    <th>Effectivity Date</th>
+    <th>Location Particular</th>
+    <th>Late Declare</th>
+  `;
+
+  // ✅ Reset filteredData to full declaration dataset
+  filteredData = [...mainTableData];
+
+  // ✅ Reset page and re-render
+  window.currentPage = 1;
+  renderTable();
+
+  // ✅ Restore checkbox functionality
+  initializeCheckboxListeners();
+  document.querySelector(".btn.select-all").disabled = false;
+  document.querySelector(".btn.transmit").disabled = false;
 }
 
 function showDispatchTable() {
   const tableBody = document.querySelector("#dataTable tbody");
-  
+  const tableHead = document.querySelector("#dataTable thead tr");
+
+  // ✅ Replace table header for history view
+  tableHead.innerHTML = `
+    <th>Dispatch ID</th>
+    <th>Type</th>
+    <th>Origin</th>
+    <th>Year</th>
+    <th>Dispatch Cutoff</th>
+    <th>Date Dispatched</th>
+    <th>Dispatch Total</th>
+    <th>Late Declare</th>
+    <th>Remarks</th>
+  `;
+
+  // ✅ Sample dispatch history data
   const dispatchData = [
     {
       dispatch_id: "DISP001",
@@ -285,34 +359,23 @@ function showDispatchTable() {
     }
   ];
 
-  const tableHead = document.querySelector("#dataTable thead tr");
-  tableHead.innerHTML = `
-    <th>Dispatch ID</th>
-    <th>Type</th>
-    <th>Origin</th>
-    <th>Year</th>
-    <th>Dispatch Cutoff</th>
-    <th>Date Dispatched</th>
-    <th>Dispatch Total</th>
-    <th>Late Declare</th>
-    <th>Remarks</th>
-  `;
+  // ✅ Set the filtered data to the dispatch data
+  filteredData = [...dispatchData];
 
-  tableBody.innerHTML = dispatchData.map(item => `
-    <tr>
-      <td>${item.dispatch_id}</td>
-      <td>${item.dispatch_type}</td>
-      <td>${item.dispatch_origin}</td>
-      <td>${item.dispatch_year}</td>
-      <td>${item.dispatch_cutoff}</td>
-      <td>${item.date_dispatched}</td>
-      <td>${item.dispatch_total}</td>
-      <td>${item.late_declare}</td>
-      <td>${item.dispatch_remarks}</td>
-    </tr>
-  `).join('');
+  // ✅ Reuse the same renderTable() for pagination
+  window.currentPage = 1;
+  renderTable();
 
+  // ✅ Update summary text
   document.getElementById("summaryText").textContent = `Showing ${dispatchData.length} dispatch history records`;
+
+  // ✅ Hide unnecessary buttons if needed
+  const selectAll = document.getElementById("selectAll");
+  if (selectAll) selectAll.checked = false;
+
+  // Disable selection buttons during history view
+  document.querySelector(".btn.select-all").disabled = true;
+  document.querySelector(".btn.transmit").disabled = true;
 }
 
 function showMainTable() {
@@ -332,37 +395,32 @@ function showMainTable() {
     <th>Late Declare</th>
   `;
 
-  tableBody.innerHTML = `
+  tableBody.innerHTML = mainTableData.map(item => `
     <tr>
       <td><input type="checkbox" class="row-check"></td>
-      <td>DC001</td>
-      <td>EN001</td>
-      <td>Regular</td>
-      <td>MAAB001</td>
-      <td>Juan Dela Cruz</td>
-      <td>1998-05-10</td>
-      <td>2025-01-10</td>
-      <td>Cavite</td>
-      <td>No</td>
+      <td>${item.dispatchContentID}</td>
+      <td>${item.entryID}</td>
+      <td>${item.category}</td>
+      <td>${item.maabNo}</td>
+      <td>${item.memberName}</td>
+      <td>${item.birthDate}</td>
+      <td>${item.effectivityDate}</td>
+      <td>${item.location}</td>
+      <td>${item.lateDeclare}</td>
     </tr>
-    <tr>
-      <td><input type="checkbox" class="row-check"></td>
-      <td>DC002</td>
-      <td>EN002</td>
-      <td>Associate</td>
-      <td>MAAB002</td>
-      <td>Maria Santos</td>
-      <td>1996-08-22</td>
-      <td>2025-02-05</td>
-      <td>Cavite</td>
-      <td>Yes</td>
-    </tr>
-  `;
+  `).join('');
+initializeCheckboxListeners();
 
-  initializeCheckboxListeners();
+// ✅ Reset all rows to visible before pagination recalculates
+document.querySelectorAll("#dataTable tbody tr").forEach(row => row.style.display = "");
+
+// ✅ Run pagination AFTER DOM updates
+setTimeout(() => {
+  window.currentPage = 1;
+  renderTable();
   updateSelection();
+}, 0);
 }
-
 function initializeCheckboxListeners() {
   const rowChecks = document.querySelectorAll(".row-check");
   const selectAllCheckbox = document.getElementById("selectAll");
@@ -397,99 +455,134 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
-<!-- ✅ NEW: Pagination + Show Entries Integration -->
+<!-- ✅ FULL Pagination + Show Entries (kept intact, only fixed) -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const rows = Array.from(document.querySelectorAll("#dataTable tbody tr"));
+  function getTableRows() {
+    return Array.from(document.querySelectorAll("#dataTable tbody tr"));
+  }
+
   const paginationControls = document.getElementById("paginationControls");
   const entriesSelect = document.getElementById("entriesPerPage");
   const summaryText = document.getElementById("summaryText");
 
-  let currentPage = 1;
+  // ✅ Make page state GLOBAL so history/back can use it
+  window.currentPage = 1;
   let entriesPerPage = parseInt(entriesSelect.value);
 
-  function renderTable() {
-    const start = (currentPage - 1) * entriesPerPage;
-    const end = start + entriesPerPage;
-    rows.forEach((row, i) => {
-      row.style.display = i >= start && i < end ? "" : "none";
-    });
-    updatePagination();
-    updateSummary();
+  // ✅ Make renderTable GLOBAL so history/back/search can call it
+  window.renderTable = function() {
+  const tableBody = document.querySelector("#dataTable tbody");
+  const start = (currentPage - 1) * entriesPerPage;
+  const end = start + entriesPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (filteredData[0]?.dispatch_id) {
+    // Dispatch table
+    tableBody.innerHTML = paginatedData.map(item => `
+      <tr>
+        <td>${item.dispatch_id}</td>
+        <td>${item.dispatch_type}</td>
+        <td>${item.dispatch_origin}</td>
+        <td>${item.dispatch_year}</td>
+        <td>${item.dispatch_cutoff}</td>
+        <td>${item.date_dispatched}</td>
+        <td>${item.dispatch_total}</td>
+        <td>${item.late_declare}</td>
+        <td>${item.dispatch_remarks}</td>
+      </tr>
+    `).join('');
+    document.querySelector(".btn.select-all").disabled = true;
+    document.querySelector(".btn.transmit").disabled = true;
+  } else {
+    // Main table
+    tableBody.innerHTML = paginatedData.map(item => `
+      <tr>
+        <td><input type="checkbox" class="row-check"></td>
+        <td>${item.dispatchContentID}</td>
+        <td>${item.entryID}</td>
+        <td>${item.category}</td>
+        <td>${item.maabNo}</td>
+        <td>${item.memberName}</td>
+        <td>${item.birthDate}</td>
+        <td>${item.effectivityDate}</td>
+        <td>${item.location}</td>
+        <td>${item.lateDeclare}</td>
+      </tr>
+    `).join('');
+    initializeCheckboxListeners();
   }
+
+  updatePagination();
+  updateSummary();
+  updateSelection();
+};
 
   function updatePagination() {
-  const totalPages = Math.ceil(rows.length / entriesPerPage);
-  paginationControls.innerHTML = "";
+    const totalPages = Math.ceil(filteredData.length / entriesPerPage);
+    paginationControls.innerHTML = "";
 
-  // Previous button
-  const prev = document.createElement("button");
-  prev.textContent = "Previous";
-  prev.disabled = currentPage === 1;
-  prev.onclick = () => {
-    currentPage--;
-    renderTable();
-  };
-  paginationControls.appendChild(prev);
-
-  // Helper to create a page button
-  function createPageButton(page) {
-    const btn = document.createElement("button");
-    btn.textContent = page;
-    if (page === currentPage) btn.classList.add("active");
-    btn.onclick = () => {
-      currentPage = page;
+    const prev = document.createElement("button");
+    prev.textContent = "Previous";
+    prev.disabled = currentPage === 1;
+    prev.onclick = () => {
+      currentPage--;
       renderTable();
     };
-    paginationControls.appendChild(btn);
-  }
+    paginationControls.appendChild(prev);
 
-  // Helper to add ellipsis (...)
-  function addEllipsis() {
-    const ellipsis = document.createElement("span");
-    ellipsis.textContent = "...";
-    ellipsis.classList.add("ellipsis");
-    paginationControls.appendChild(ellipsis);
-  }
-
-  // Always show first page
-  if (totalPages <= 10) {
-    // If total pages small, just show all
-    for (let i = 1; i <= totalPages; i++) createPageButton(i);
-  } else {
-    // If too many pages, show condensed view
-    const visiblePages = 5;
-
-    if (currentPage <= visiblePages) {
-      for (let i = 1; i <= visiblePages; i++) createPageButton(i);
-      addEllipsis();
-      createPageButton(totalPages);
-    } else if (currentPage >= totalPages - visiblePages + 1) {
-      createPageButton(1);
-      addEllipsis();
-      for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
-    } else {
-      createPageButton(1);
-      addEllipsis();
-      for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
-      addEllipsis();
-      createPageButton(totalPages);
+    function createPageButton(page) {
+      const btn = document.createElement("button");
+      btn.textContent = page;
+      if (page === currentPage) btn.classList.add("active");
+      btn.onclick = () => {
+        currentPage = page;
+        renderTable();
+      };
+      paginationControls.appendChild(btn);
     }
+
+    function addEllipsis() {
+      const ellipsis = document.createElement("span");
+      ellipsis.textContent = "...";
+      ellipsis.classList.add("ellipsis");
+      paginationControls.appendChild(ellipsis);
+    }
+
+    if (totalPages <= 10) {
+      for (let i = 1; i <= totalPages; i++) createPageButton(i);
+    } else {
+      const visiblePages = 5;
+
+      if (currentPage <= visiblePages) {
+        for (let i = 1; i <= visiblePages; i++) createPageButton(i);
+        addEllipsis();
+        createPageButton(totalPages);
+      } else if (currentPage >= totalPages - visiblePages + 1) {
+        createPageButton(1);
+        addEllipsis();
+        for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
+      } else {
+        createPageButton(1);
+        addEllipsis();
+        for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
+        addEllipsis();
+        createPageButton(totalPages);
+      }
+    }
+
+    const next = document.createElement("button");
+    next.textContent = "Next";
+    next.disabled = currentPage === totalPages;
+    next.onclick = () => {
+      currentPage++;
+      renderTable();
+    };
+    paginationControls.appendChild(next);
   }
-
-  // Next button
-  const next = document.createElement("button");
-  next.textContent = "Next";
-  next.disabled = currentPage === totalPages;
-  next.onclick = () => {
-    currentPage++;
-    renderTable();
-  };
-  paginationControls.appendChild(next);
-}
-
 
   function updateSummary() {
+    const rows = getTableRows();
     const total = rows.length;
     const start = (currentPage - 1) * entriesPerPage + 1;
     const end = Math.min(currentPage * entriesPerPage, total);

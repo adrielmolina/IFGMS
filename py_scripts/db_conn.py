@@ -968,7 +968,36 @@ def GET_audit_logs():
     except Exception as e:
         print(f"Error fetching audit logs: {e}")
         return []
-    
+
+def save_profile_pic(account_id, image_data):
+    """Save profile picture (BLOB) to the database."""
+    db_session = SessionLocal()
+    try:
+        user = db_session.query(models.Accounts).filter_by(account_id=account_id).first()
+        if user:
+            user.profile_pic = image_data
+            db_session.commit()
+            print(f"✅ Profile picture updated for user {account_id}")
+            return True
+        print(f"❌ User {account_id} not found.")
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving profile picture: {e}")
+        return False
+
+
+def get_profile_pic(account_id):
+    """Retrieve the profile picture BLOB from the database."""
+    db_session = SessionLocal()
+    try:
+        user = db_session.query(models.Accounts).filter_by(account_id=account_id).first()
+        return user.profile_pic if user and user.profile_pic else None
+    except Exception as e:
+        print(f"Error fetching profile picture: {e}")
+        return None
+
+
 def update_user_details(account_id, first_name, middle_name, last_name, birth_date, contact_no, email):
     # Find the user by their account_id
     session = SessionLocal()  # create a session instance
