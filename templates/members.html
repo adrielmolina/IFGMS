@@ -1038,6 +1038,29 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     });
 
+    document.getElementById('bdate').addEventListener('change', function () {
+        const birthdateInput = this.value;
+        const ageInput = document.getElementById('age');
+
+        if (!birthdateInput) {
+            ageInput.value = '';
+            return;
+        }
+
+        const birthDate = new Date(birthdateInput);
+        const today = new Date();
+
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        // adjust if birthday hasn’t happened yet this year
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        ageInput.value = age;
+    });
+
 
 </script>
 

@@ -517,9 +517,12 @@ def save_entry_details():
         last_name = data.get('last_name').upper()
         suffix = data.get('suffix')
         
-        birthdate_string = data.get('birth_date')
-        birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
-        
+        birthdate_string = data.get('birth_date')        
+        if birthdate_string:
+            birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
+        else:
+            birthdate = None
+            
         age = data.get('age')
         
         sex = data.get('sex')
@@ -537,20 +540,24 @@ def save_entry_details():
         id_received = data.get('id_received')
         declared = data.get('declared')
         declaration_date_string = data.get('declaration_date')
-        declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
-        
+        if declaration_date_string:
+            declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
+        else:
+            declaration_date = None
+                
         paid = data.get('paid')
-        OR_num = data.get('OR_num')
+        OR_num = int(data.get('OR_num')) if data.get('OR_num') else None
         OR_date_string = data.get('OR_date')
-        OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
-        
+        if OR_date_string:
+            OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
+        else:
+            OR_date = None
+            
         remarks = data.get('remarks')
         tags = data.get('tags')
         dispatch_ready = data.get('dispatch_ready')
-        dispatch_id = data.get('dispatch_id')  
         
-        # TODO change this
-        result = db_conn.add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, bloodtype, contact, email, municipality, address, maab_cat, origin)
+        result = db_conn.save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birthdate, age, sex, bloodtype, contact, email, address, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready)
 
         if result:
             return jsonify({"success": True})

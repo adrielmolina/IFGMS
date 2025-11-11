@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
 	`user_level` ENUM('admin', 'superadmin', 'staff') DEFAULT 'staff',
 	`acct_status` ENUM('pending', 'approved', 'declined', 'archived') DEFAULT 'pending',
 	`acct_review_date` DATE,
+	`profile_pic` BLOB,
 	PRIMARY KEY(`account_id`)
 );
 

@@ -874,16 +874,47 @@ def add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, b
         return False
 
 
-def save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birth_date, age, sex, contact_no, email, address, blood_type, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready, dispatch_id):
+def save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birthdate, age, sex, bloodtype, contact, email, address, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready):
     db_session = SessionLocal()
     try:
-        pass
+        new_member_info = models.Members(
+            first_name=first_name,
+            middle_name=middle_name,
+            last_name=last_name,
+            suffix=suffix,
+            birth_date=birthdate,
+            age=age,
+            sex=sex,
+            contact_no=contact,
+            email=email,
+            address=address,
+            blood_type=bloodtype
+        )
+        db_session.add(new_member_info)
+        db_session.commit()
+
+        member_id = new_member_info.member_id
         
-        # TODO WIP FINISH THIS TOMORROW
-    
-    
-    
+        new_entry_content = models.Entries(
+            record_id=record_id,
+            maab_category=maab_category,
+            maab_no=maab_no,
+            member_id=member_id,
+            id_received=id_received,
+            declared=declared,
+            declaration_date=declaration_date,
+            paid=paid,
+            OR_num=OR_num,
+            OR_date=OR_date,
+            remarks=remarks,
+            tags=tags,
+            dispatch_ready=dispatch_ready
+        )
+        db_session.add(new_entry_content)
+        db_session.commit()
+        
         return True
+    
     except Exception as e:
         db_session.rollback()
         print(f"Error adding entry content: {e}")
