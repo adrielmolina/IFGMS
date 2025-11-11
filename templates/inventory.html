@@ -10,6 +10,11 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <link rel="stylesheet" href="/static/styles/toast.css">
+    <script src="/static/js/toast.js"></script>
 {% endblock %}
 
 <!--todo ADD COLOR CODING BASED ON CATEGORY IN CSS-->
@@ -92,7 +97,7 @@
                 <input type="text" id="idNumberBox" name="idNumberBox" placeholder="0000000" readonly>
             </div>
 
-            <button type="submit">Submit</button>
+            <button type="submit" id="add_ID">Add ID</button>
         </form>
     </div>
 </div>
@@ -246,6 +251,31 @@ countInput.addEventListener('input', () => {
 // Initialize prefix and series end on page load
 updatePrefix();
 
+const addIdForm = document.querySelector('#popupForm1 form');
+  const addIdButton = document.getElementById('add_ID');
+
+  addIdForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const category = categorySelect.value;
+      const prefix = prefixBox.value.trim();
+      const startNum = numberInput.value.trim();
+      const countVal = parseInt(countInput.value.trim(), 10);
+      const seriesEnd = seriesEndBox.value.trim();
+
+      if (!category || !prefix || !startNum || isNaN(countVal) || countVal <= 0) {
+          toastAlert("Incomplete Form","Please fill in all fields correctly before adding an ID.");
+          return;
+      }
+
+      toastSuccess("IDs Added Successfully",`Added ${countVal} new ID(s) for ${category} series.`);
+
+      // Optionally clear inputs
+      numberInput.value = "";
+      countInput.value = "";
+      seriesEndBox.value = "";
+      updatePrefix();
+  });
 
     
 

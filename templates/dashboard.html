@@ -55,26 +55,46 @@
 <div class="cards-container">
     <div class="card yellow">
         <h3><i class="fa-solid fa-user card-icon"></i> Sales</h3>
-        <h2 class="numbercount" id="salesCurrentTotal">100,000</h2> 
-        <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p> 
-        <p class="subtext">Target: <span id="targetTotalSubtext">1,000,000</span></p> 
+        <h2 class="numbercount" id="salesCurrentTotal">₱37,400,000</h2> 
+        <p class="subtext">Current Total: <span id="currentTotalSubtext">₱40,250,000</span></p> 
+        <p class="subtext">Target: <span id="targetTotalSubtext">₱40,250,000</span></p>
+        <div class="progress-bar">
+            <div class="progress" style="width: 92.92%"></div>
+        </div>
+        <div class="change">
+            <span class="arrow up">▲</span>
+            <span class="percentage">5.26% Increased from last month</span>
+        </div>
     </div>
 
     <div class="card violet">
         <h3><i class="fa-solid fa-users card-icon"></i> Total Member Count</h3>
         <h2 class="numbercount">8,000</h2>
+        <div class="change">
+            <span class="arrow up">▲</span>
+            <span class="percentage">5.26% Increased from last month</span>
+        </div>
     </div>
     
     <div class="card blue">
-        <h3><i class="fa-solid fa-hourglass-half card-icon"></i> Expiring soon</h3>
+        <h3><i class="fa-solid fa-hourglass-half card-icon"></i> Expiring Soon</h3>
         <h2 class="numbercount">100</h2>
+        <div class="change">
+            <span class="arrow down">▼</span>
+            <span class="percentage">15.45% Decreased from last month</span>
+        </div>
     </div>
 
     <div class="card green" onclick="window.location.href='/claims?status=pending'">
         <h3><i class="fa-solid fa-file-circle-exclamation card-icon"></i> Pending Claims</h3>
-        <h2 id="pending_claims_count" class="numbercount">0</h2>
+        <h2 id="pending_claims_count" class="numbercount">26</h2>
+        <div class="change">
+            <span class="arrow down">▼</span>
+            <span class="percentage">13.33% Decreased from last month</span>
+        </div>
     </div>
 </div>
+
 
 
 <hr class="divider">
