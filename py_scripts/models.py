@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, ForeignKey, Enum, SmallInteger, DateTime, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, ForeignKey, Enum, SmallInteger, DateTime, TIMESTAMP, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from flask_login import UserMixin
 
@@ -23,6 +23,7 @@ class Accounts(Base, UserMixin):
     user_level = Column(Enum('staff', 'admin', 'superadmin'))
     acct_status = Column(String(255))
     acct_review_date = Column(Date)
+    profile_pic = Column(LargeBinary, nullable=True)
     
 
     def get_id(self):

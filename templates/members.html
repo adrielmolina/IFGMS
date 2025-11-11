@@ -11,6 +11,12 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <link rel="stylesheet" href="/static/styles/toast.css">
+    <script src="/static/js/toast.js"></script>
 {% endblock %}
 
 
@@ -759,7 +765,7 @@ document.querySelector('.btn-add').addEventListener('click', function () {
     })
     .then(response => response.json())
     .then(result => {
-        alert("✅ Record Added Successfully!");
+        toastSuccess("Record Added Successfully!", "The record has been successfully saved to the database.");
 
         return fetch("/api/members/records").then(res => res.json());
     })
@@ -778,7 +784,7 @@ document.querySelector('.btn-add').addEventListener('click', function () {
     })
     .catch(err => {
         console.error("Add Record Error:", err);
-        alert("⚠️ Error adding record. Check console.");
+        toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
     });
 });
 
@@ -812,11 +818,11 @@ document.getElementById('save_record_details').addEventListener('click', functio
     .then(response => response.json())
     .then(result => {
         if (!result.success) {
-            alert("❌ Failed to save record details.");
+            toastError("Failed to Save Record", "Something went wrong while saving the record. Please try again.");
             return;
         }
 
-        alert("✅ Record saved successfully!");
+        toastSuccess("Record Saved Successfully!", "The record was successfully added to the database.");
 
         // ✅ Refresh table the correct way (pagination-safe)
         return fetch("/api/members/records")
@@ -835,7 +841,7 @@ document.getElementById('save_record_details').addEventListener('click', functio
     })
     .catch(error => {
         console.error("Save Error:", error);
-        alert("⚠️ Error saving record. Check console for details.");
+        toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
     });
 });
 
