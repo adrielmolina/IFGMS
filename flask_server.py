@@ -7,6 +7,8 @@ import os
 import pandas as pd
 import openpyxl
 from functools import wraps
+from io import BytesIO
+from flask import send_file
 
 
 server = Flask(__name__)
@@ -236,7 +238,8 @@ def show_user_accounts():
 @server.route('/settings')
 @login_required
 def settings():
-    return render_template('settings.html')
+    has_profile_pic = current_user.profile_pic is not None
+    return render_template('settings.html', has_profile_pic=has_profile_pic)
 
 
 #? -------------------- END -------------------- ?#
@@ -448,7 +451,54 @@ def settings_save_changes():
 
     return redirect(url_for('settings'))
 
+# === Upload profile picture ===
+@server.route('/api/upload_profile_pic', methods=['POST'])
+@login_required
+def upload_profile_pic():
+    try:
+        # Debug print
+        print("=== /api/upload_profile_pic called ===")
+        if 'profile_pic' not in request.files:
+            print("No 'profile_pic' in request.files. Keys:", request.files.keys())
+            return jsonify({"success": False, "error": "No file part 'profile_pic'"}), 400
 
+        file = request.files['profile_pic']
+        if file.filename == '':
+            print("Empty filename")
+            return jsonify({"success": False, "error": "Empty filename"}), 400
+
+        file_data = file.read()
+        print(f"Received file: name={file.filename}, size={len(file_data)} bytes, content_type={file.content_type}")
+
+        # Call DB helper to save the profile pic
+        saved = db_conn.save_profile_pic(current_user.account_id, file_data)
+        if saved:
+            print("Saved profile pic to DB for user", current_user.account_id)
+            # Return updated state (whether the user has a profile pic)
+            return jsonify({"success": True, "has_profile_pic": True})
+        else:
+            print("db_conn.save_profile_pic returned False")
+            return jsonify({"success": False, "error": "DB save failed"}), 500
+
+    except Exception as e:
+        print("Exception in upload_profile_pic:", e)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# === Fetch profile picture ===
+@server.route('/api/get_profile_pic/<int:user_id>')
+@login_required
+def get_profile_pic(user_id):
+    image_data = db_conn.get_profile_pic(user_id)
+    if image_data:
+        return send_file(BytesIO(image_data), mimetype='image/jpeg')
+    else:
+        return send_file('static/assets/pfp.jpg', mimetype='image/jpeg')
+
+@server.route('/api/delete_profile_pic', methods=['DELETE'])
+@login_required
+def delete_profile_pic():
+    success = db_conn.save_profile_pic(current_user.account_id, None)
+    return jsonify({"success": success})
 
 # API FOR DASHBOARD
 @server.route('/api/get_pending_claims_count')

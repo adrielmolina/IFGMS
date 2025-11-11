@@ -1,0 +1,179 @@
+/* Toastify Custom Themes */
+.toast-success {
+    background: #f6fff9;
+    color: #4CAF50;
+    font-weight: 500;
+    border-radius: 6px;
+    height: 80px;
+    display: flex;
+    align-items: center; /* Vertically align items */
+    padding: 0 20px; /* Optional: Adds horizontal padding */
+    border: 1px solid #4CAF50;
+}
+
+.toast-error {
+    background: #fff5f3;
+    color: #E53935;
+    font-weight: 500;
+    border-radius: 6px;
+    height: 80px;
+    display: flex;
+    align-items: center; /* Vertically align items */
+    padding: 0 20px; /* Optional: Adds horizontal padding */
+    border: 1px solid #E53935;
+}
+
+.toast-info {
+    background: #f5f9ff;
+    color: #2196F3;
+    font-weight: 500;
+    border-radius: 6px;
+    height: 80px;
+    display: flex;
+    align-items: center; /* Vertically align items */
+    padding: 0 20px; /* Optional: Adds horizontal padding */
+    border: 1px solid #2196F3;
+}
+
+.toast-alert {
+    background: #fff8ec;
+    color: #FFB300;
+    font-weight: 500;
+    border-radius: 6px;
+    height: 80px;
+    display: flex;
+    align-items: center; /* Vertically align items */
+    padding: 0 20px; /* Optional: Adds horizontal padding */
+    border: 1px solid #FFB300;
+}
+
+/* Icon and content alignment */
+.toast-content {
+    display: flex;
+    align-items: center; /* Vertically align icon and text */
+    justify-content: flex-start; /* Align them to the left */
+    width: 100%;
+}
+
+.toast-icon {
+    width: 50px;  /* Icon size */
+    height: 50px; /* Icon size */
+    margin-right: 15px; /* Space between icon and text */
+}
+
+/* Dark Mode Auto Brightness */
+body.dark .toast-info,
+body.dark .toast-alert {
+    filter: brightness(1.15);
+}
+
+/* Light Mode Shadow */
+.toastify.on-light {
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Dark Mode Style */
+body.dark .toast-success,
+body.dark .toast-error {
+    filter: brightness(1.15);
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px; /* Height of the progress bar */
+    background: rgba(255, 255, 255, 0.85); /* Default progress bar color (white) */
+    width: 100%;
+    animation: toast-progress linear forwards;
+}
+
+/* Different progress bar colors based on toast type */
+.toast-success .toast-progress {
+    background: #4CAF50; /* Green for success */
+}
+
+.toast-error .toast-progress {
+    background: #E53935; /* Red for error */
+}
+
+.toast-info .toast-progress {
+    background: #2196F3; /* Blue for info */
+}
+
+.toast-alert .toast-progress {
+    background: #FFB300; /* Yellow for alert */
+}
+
+/* Animation for the progress bar */
+@keyframes toast-progress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* Optional: Add shadow or glow effect */
+.toast-progress {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+/* Make text wrap and stay inside the toast */
+.toast-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Take remaining width so icon doesn't push out */
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+/* Title + subtitle spacing */
+.toast-title {
+    font-size: 1.10rem !important;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.toast-sub {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    margin-top: 5px;
+    line-height: 1.2;
+    color: black;
+}
+
+/* Replace fixed width with max-width and min-width */
+.toast-success,
+.toast-error,
+.toast-info,
+.toast-alert {
+    min-width: 300px;
+    max-width: 500px;
+    height: 100px;
+    word-wrap: break-word;
+}
+
+.toast-close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: inherit;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 0;
+}
+
+.toastify-close {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}

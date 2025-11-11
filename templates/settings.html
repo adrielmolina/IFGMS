@@ -4,6 +4,11 @@
 
 {% block head %}
     <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/settings.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <link rel="stylesheet" href="/static/styles/toast.css">
+    <script src="/static/js/toast.js"></script>
 
     <script>
         function toggleLoginHistory() {
@@ -17,10 +22,24 @@
 {% block content %}
 <div class="module_name">
     <h1>Settings</h1>
+      <div class="search_box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="searchInput" placeholder="Search..." autocomplete="off">
+      <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
+    </div>
 </div>
+
+
 <div class="main-container">
     <div class="left-container">
-        <img src="/static/assets/pfp.jpg" class="prof" alt="Profile Image" id="profileImage" />
+        <img 
+        src="{{ url_for('get_profile_pic', user_id=current_user.account_id) if has_profile_pic else url_for('static', filename='assets/pfp.jpg') }}"
+        class="prof" 
+        alt="Profile Image" 
+        id="profileImage"
+        />
+
+
         
         <input type="file" id="profileImageInput" accept="image/*" style="display: none;" />
         
@@ -203,11 +222,13 @@
         fontStyleSelect.addEventListener("change", e => {
             applyFontStyle(e.target.value);
             localStorage.setItem("appFontKey", e.target.value);
+            toastSuccess("Font Style Updated",`Font style changed to: ${fontStyleSelect.options[fontStyleSelect.selectedIndex].text}`);
         });
 
         fontSizeSelect.addEventListener("change", e => {
             applyFontSize(e.target.value);
             localStorage.setItem("appFontSizeKey", e.target.value);
+            toastSuccess("Font Style Updated",`Font size changed to: ${fontSizeSelect.options[fontSizeSelect.selectedIndex].text}`);
         });
 
         // Helpers
@@ -295,36 +316,37 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Handle profile picture upload
-    profileImageInput.addEventListener("change", function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            // Check file size (5MB max)
-            if (file.size > 5 * 1024 * 1024) {
-                alert("File size exceeds 5MB limit. Please choose a smaller image.");
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const imageDataUrl = event.target.result;
-                // Save to localStorage
-                localStorage.setItem("profileImage", imageDataUrl);
-                // Update both images
-                profileImage.src = imageDataUrl;
-                updateNavigationBarImage(imageDataUrl);
-                
-                // Trigger storage event to update other tabs/pages
-                window.dispatchEvent(new StorageEvent('storage', {
-                    key: 'profileImage',
-                    newValue: imageDataUrl
-                }));
-                
-                // Show success message
-                showSuccessMessage();
-            };
-            reader.readAsDataURL(file);
+    profileImageInput.addEventListener("change", async function (e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            toastAlert("File size exceeds 5MB limit.");
+            return;
         }
-    });
+
+        const formData = new FormData();
+        formData.append("profile_pic", file);
+
+        const response = await fetch("/api/upload_profile_pic", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update image preview instantly
+            const reader = new FileReader();
+            reader.onload = e => profileImage.src = e.target.result;
+            reader.readAsDataURL(file);
+
+            toastSuccess("Profile picture updated successfully!");
+        } else {
+            toastAlert("Failed to update picture: " + result.error);
+        }
+    }
+});
+
 });
 
 function updateNavigationBarImage(imageUrl) {
@@ -334,44 +356,52 @@ function updateNavigationBarImage(imageUrl) {
     }
 }
 
-function showImageOptions() {
-    const currentImage = localStorage.getItem("profileImage");
-    const defaultImage = "/static/assets/pfp.jpg";
-    
-    if (currentImage && currentImage !== defaultImage) {
-        // Show popup with both options
-        document.getElementById('imageOptionsPopup').style.display = 'flex';
-    } else {
-        // If no custom picture, just upload directly
-        document.getElementById('profileImageInput').click();
-    }
-}
+  function showImageOptions() {
+      const hasProfilePic = {{ has_profile_pic | tojson }};
+      
+      if (hasProfilePic) {
+          document.getElementById('imageOptionsPopup').style.display = 'flex';
+      } else {
+          document.getElementById('profileImageInput').click();
+      }
+  }
 
 function uploadNewPhoto() {
     closeOptionsPopup();
     document.getElementById('profileImageInput').click();
 }
 
-function deleteCurrentPhoto() {
+async function deleteCurrentPhoto() {
     closeOptionsPopup();
-    // Remove from localStorage
-    localStorage.removeItem("profileImage");
-    const defaultImage = "/static/assets/pfp.jpg";
-    
-    // Reset to default image
-    document.getElementById('profileImage').src = defaultImage;
-    // Also update navigation bar image
-    updateNavigationBarImage(defaultImage);
-    
-    // Trigger storage event
-    window.dispatchEvent(new StorageEvent('storage', {
-        key: 'profileImage',
-        newValue: null
-    }));
-    
-    // Show success message
-    showSuccessMessage();
+
+    try {
+        const response = await fetch("/api/delete_profile_pic", { method: "DELETE" });
+        const result = await response.json();
+
+        if (result.success) {
+            const defaultImage = "/static/assets/pfp.jpg";
+
+            // Reset to default image locally
+            document.getElementById("profileImage").src = defaultImage;
+            updateNavigationBarImage(defaultImage);
+            localStorage.removeItem("profileImage");
+
+            // Trigger UI update
+            window.dispatchEvent(new StorageEvent("storage", {
+                key: "profileImage",
+                newValue: null
+            }));
+
+            toastSuccess("Profile picture deleted successfully!");
+        } else {
+            toastAlert("Failed to delete photo: " + (result.error || "Unknown error"));
+        }
+    } catch (error) {
+        console.error("Error deleting photo:", error);
+        toastAlert("An error occurred while deleting the photo.");
+    }
 }
+
 
 function closeOptionsPopup() {
     document.getElementById('imageOptionsPopup').style.display = 'none';
