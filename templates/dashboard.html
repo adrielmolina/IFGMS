@@ -68,6 +68,10 @@
     <div class="card blue">
         <h3><img class="icons" src="{{ url_for('static', filename='assets/time.png') }}" alt="logo"> Expiring Soon</h3>
         <h2 class="numbercount">100</h2>
+        <div class="change">
+            <span class="arrow down">▼</span>
+            <span class="percentage">15.45% Decreased from last month</span>
+        </div>
     </div>
 
     <div class="card green" onclick="window.location.href='/claims?status=pending'">
@@ -75,6 +79,7 @@
         <h2 id="pending_claims_count" class="numbercount">0</h2>
     </div>
 </div>
+
 
 
 <hr class="divider">

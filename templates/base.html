@@ -48,8 +48,9 @@
             <br>
 
             <div class="user-account">
+    <!-- TODO fix profile pic in other modules -->
     <div class="user-profile">
-        <img src="/static/assets/pfp.jpg" alt="Profile Image" id="navProfileImage" />
+        <img src="{{ url_for('get_profile_pic', user_id=current_user.account_id) if has_profile_pic else url_for('static', filename='assets/pfp.jpg') }}" alt="Profile Image" id="navProfileImage" />
         
         <div class="user-detail">
             {% if current_user.is_authenticated %}
@@ -79,7 +80,7 @@
                 </li>
 
                 <li id="declaration" hidden>
-                    <a href="/declaration"><img class="icons" src="{{ url_for('static', filename='assets/declaration.svg') }}" alt="logo"/>Declaration</a>
+                    <a href="/declaration"><img class="icons" src="{{ url_for('static', filename='assets/declaration.svg') }}" alt="logo"/>Dispatch</a>
                 </li>
 
                 <li id="inventory">

@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
 	`user_level` ENUM('admin', 'superadmin', 'staff') DEFAULT 'staff',
 	`acct_status` ENUM('pending', 'approved', 'declined', 'archived') DEFAULT 'pending',
 	`acct_review_date` DATE,
+	`profile_pic` BLOB,
 	PRIMARY KEY(`account_id`)
 );
 
@@ -207,7 +208,7 @@ CREATE TABLE IF NOT EXISTS `entry_contents` (
 	`remarks` TEXT(65535),
 	`tags` ENUM() COMMENT 'late-declare, overage, underage',
 	`dispatch_ready` BOOLEAN,
-	`dispatch_id` INTEGER UNIQUE,
+	`dispatch_id` INTEGER,
 	PRIMARY KEY(`entry_id`)
 ) COMMENT='table for contents of a membership_record entry';
 
