@@ -208,7 +208,7 @@ CREATE TABLE IF NOT EXISTS `entry_contents` (
 	`remarks` TEXT(65535),
 	`tags` ENUM() COMMENT 'late-declare, overage, underage',
 	`dispatch_ready` BOOLEAN,
-	`dispatch_id` INTEGER UNIQUE,
+	`dispatch_id` INTEGER,
 	PRIMARY KEY(`entry_id`)
 ) COMMENT='table for contents of a membership_record entry';
 

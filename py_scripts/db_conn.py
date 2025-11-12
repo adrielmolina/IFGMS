@@ -921,6 +921,65 @@ def save_entry_details(record_id, maab_category, maab_no, first_name, middle_nam
         return False
 
 
+def get_current_active_dispatch():
+    db_session = SessionLocal()
+    try:
+
+        last_dispatch = (
+            db_session.query(models.Dispatch)
+            .filter(models.Dispatch.dispatch_status == 'current')
+            .order_by(models.Dispatch.dispatch_id.desc())  # or .order_by(models.Dispatch.created_at.desc())
+            .first()
+        )
+        print('db_conn - current active dispatch', last_dispatch.dispatch_id)
+        return last_dispatch
+    except Exception as e:
+        print(f"Error fetching current active dispatch: {e}")
+        return None
+
+
+def get_current_dispatch_contents(dispatch_id):
+    db_session = SessionLocal()
+    try:
+        current_dispatch_contents = (
+            db_session.query(
+                models.Entries.entry_id,
+                models.Entries.record_id,
+                models.Entries.maab_category,
+                models.Entries.maab_no,
+                models.Entries.member_id,
+                models.Members.first_name,
+                models.Members.middle_name,
+                models.Members.last_name,
+                models.Members.suffix,
+                models.Members.birth_date,
+                models.Records.effectivity_date,
+                models.Records.location_particular
+            )
+            .join(models.Members, models.Entries.member_id == models.Members.member_id)
+            .join(models.Records, models.Entries.record_id == models.Records.record_id)
+            .filter(models.Entries.dispatch_id == dispatch_id)
+            .all()
+        )
+        print('db_conn - current dispatch contents', current_dispatch_contents)
+        return current_dispatch_contents
+    except Exception as e:
+        print(f"Error fetching current dispatch contents: {e}")
+        return None
+
+def get_all_dispatch_records():
+    db_session = SessionLocal()
+    try:
+        dispatch_records = (
+            db_session.query(models.Dispatch)
+            .order_by(models.Dispatch.dispatch_id.desc())
+            .all()
+        )
+        return dispatch_records
+    except Exception as e:
+        print(f"Error fetching dispatch records: {e}")
+        return []   
+
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
     """

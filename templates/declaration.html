@@ -13,7 +13,7 @@
 
 {% block content %}
 <div class="module_name">
-  <h1>Declaration</h1>
+  <h1>Dispatch</h1>
 
   <div class="search_box">
     <i class="fa-solid fa-magnifying-glass"></i>
@@ -38,6 +38,7 @@
       </select>
     </div>
 
+    <!-- TODO fix this. remove hardcoded values and replace with dispatch_contents.location_particular -->
     <div class="filter">
       <label for="filterLocation">Location:</label>
       <select id="filterLocation">
@@ -54,13 +55,21 @@
     </button>
 
     <button type="button" class="btn transmit" disabled>
-        <i class="fa-solid fa-paper-plane"></i> Transmit (0)
+        <i class="fa-solid fa-paper-plane"></i>
+        {% if current_user.office_location == 'Chapter' %}
+          Declare
+        {% elif current_user.office_location in ['Dasmarinas', 'Silang'] %}
+          Transmit
+        {% else %}
+          Action
+        {% endif %}
     </button>
 
     <button type="button" class="btn history" onclick="showHistory()">
         <i class="fa-solid fa-clock-rotate-left"></i> History
     </button>
 
+    <!-- TODO replace this with remove from declaration since theres already a select all button in the table header -->
     <button type="button" class="btn select-all">
         <i class="fa-solid fa-check-double"></i> Select All
     </button>
@@ -80,6 +89,23 @@
     entries
   </div>
 
+<div>
+  <fieldset style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; margin: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+    <legend>Dispatch Details</legend>
+    <p><strong>Dispatch ID:</strong> {{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Type:</strong> {{ active_dispatch.dispatch_type if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Origin:</strong> {{ active_dispatch.dispatch_origin if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Year:</strong> {{ active_dispatch.dispatch_year if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Cutoff:</strong> {{ active_dispatch.dispatch_cutoff if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Status:</strong> {{ active_dispatch.dispatch_status if active_dispatch else 'N/A' }}</p>
+    <p><strong>Date Dispatched:</strong> {{ active_dispatch.date_dispatched if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Total:</strong> {{ active_dispatch.dispatch_total if active_dispatch else 'N/A' }}</p>
+    <p><strong>Late Declare:</strong> {{ active_dispatch.late_declare if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Remarks:</strong> {{ active_dispatch.dispatch_remarks if active_dispatch else 'N/A' }}</p>
+  </fieldset>
+</div>
+
+
 <div class="declaration_table">
   <h4 id="tableTitle">
     <i class="fa-solid fa-file-lines"></i> Dispatch Contents
@@ -89,7 +115,7 @@
       <thead>
         <tr>
           <th><input type="checkbox" id="selectAll"></th>
-          <th>Dispatch Content ID</th>
+          <th>Dispatch ID</th>
           <th>Entry ID</th>
           <th>MAAB Category</th>
           <th>MAAB No.</th>
@@ -102,18 +128,18 @@
       </thead>
       <tbody>
         <!-- Dummy data for viewing and testing -->
-        {% for i in range(1, 201) %}
+        {% for row in dispatch_contents %}
         <tr>
           <td><input type="checkbox" class="row-check"></td>
-          <td>DC{{'%03d' % i}}</td>
-          <td>EN{{'%03d' % i}}</td>
-          <td>{{ ['Gold','Silver','Bronze','Platinum'][i % 4] }}</td>
-          <td>MAAB{{'%03d' % i}}</td>
-          <td>Member {{ i }}</td>
-          <td>199{{ i % 10 }}-0{{ (i % 9)+1 }}-10</td>
-          <td>2025-0{{ (i % 9)+1 }}-15</td>
-          <td>{{ ['Cavite','Dasma','Silang'][i % 3] }}</td>
-          <td>{{ 'No' if i % 2 == 0 else 'Yes' }}</td>
+          <td>{{ active_dispatch.dispatch_id }}</td>
+          <td>{{ row.entry_id }}</td>
+          <td>{{ row.maab_category }}</td>
+          <td>{{ row.maan_no}}</td>
+          <td>{{ row.fisrt_name }} {{ row.middle_name }} {{ row.last_name }} {{ row.suffix or '' }}</td>
+          <td>{{ row.birth_date }}</td>
+          <td>{{ row.effectivity_date }}</td>
+          <td>{{ row.location_particular }}</td>
+          <td>{{ active_dispatch.late_declare if active_dispatch else '' }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -147,6 +173,8 @@
 <!-- ✅ Existing scripts kept intact -->
 <script>
   // ✅ Main table data for JS
+
+/*
 const mainTableData = [];
 for (let i = 1; i <= 200; i++) {
   mainTableData.push({
@@ -161,7 +189,27 @@ for (let i = 1; i <= 200; i++) {
     lateDeclare: i % 2 === 0 ? 'No' : 'Yes'
   });
 }
+*/
+const mainTableData = [
+    {% for row in dispatch_contents %}
+    {
+      dispatchContentID: "{{ active_dispatch.dispatch_id }}",
+      entryID: "{{ row.entry_id }}",
+      category: "{{ row.maab_category }}",
+      maabNo: "{{ row.maab_no }}",
+      memberName: "{{ row.first_name }} {{ row.middle_name }} {{ row.last_name }} {{ '' if row.suffix == 'NA' else row.suffix }}",
+      birthDate: "{{ row.birth_date.strftime('%m/%d/%Y') if row.birth_date else '' }}",
+      effectivityDate: "{{ row.effectivity_date.strftime('%m/%d/%Y') if row.effectivity_date else '' }}",
+      location: "{{ row.location_particular }}",
+      lateDeclare: "{{ active_dispatch.late_declare if active_dispatch else '' }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
 let filteredData = [...mainTableData];
+
+
+//const mainTableData = dispatch_contents;
 
 // (Your selection logic)
 document.addEventListener("DOMContentLoaded", () => {
@@ -172,6 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectAllBtn = document.querySelector(".btn.select-all");
   const summaryText = document.getElementById("summaryText");
   const tableRows = document.querySelectorAll("#dataTable tbody tr");
+});
 
 function updateSelection() {
   const summaryText = document.getElementById("summaryText");
@@ -181,16 +230,16 @@ function updateSelection() {
   const tableRows = Array.from(document.querySelectorAll("#dataTable tbody tr"));
   const visibleRows = tableRows.filter(r => r.style.display !== "none"); // Filter visible rows
 
-   transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit (${checkedCount})`;
-if (checkedCount === 0) {
-    transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
-}
+  transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit (${checkedCount})`;
+  if (checkedCount === 0) {
+      transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
+  }
 
-historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History (${checkedCount})`;
-if (checkedCount === 0) {
-    historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History`;
-}
-
+  historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History (${checkedCount})`;
+  if (checkedCount === 0) {
+      historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History`;
+  }
+};
 
 
 
@@ -217,8 +266,6 @@ if (checkedCount === 0) {
 });
 
 
-  updateSelection();
-});
 </script>
 
 <!-- 🔎 Search Function -->
@@ -249,7 +296,7 @@ document.getElementById('btn_create_dispatch').addEventListener('click', functio
   const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):");
   const late_declare = prompt("Include Late Declarations? (yes/no):").toLowerCase() === 'yes';
   const dispatch_remarks = prompt("Enter Remarks (optional):");
-
+// TODO fix this fetch
   fetch('/api/declaration', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -259,14 +306,37 @@ document.getElementById('btn_create_dispatch').addEventListener('click', functio
 </script>
 
 <!-- 📜 History Toggle -->
+
+
 <script>
-function showHistory() {
+  // TODO fix the slow loading of data here. add loading while fetching data
+  const dispatchData = [];
+
+  function showHistory() {
+  fetch('/api/get_all_dispatch')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok ' + response.statusText);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Fetched dispatch data:', data);
+      // later you'll use this data to build the table
+      dispatchData.length = 0;
+      dispatchData.push(...data);
+
+      showDispatchTable();
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+    });
+
+
   document.querySelector(".action-buttons").classList.add("hidden");
   document.getElementById("historyButtons").classList.remove("hidden");
   document.getElementById("backButton").classList.remove("hidden");
   document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Dispatch History';
-  
-  showDispatchTable();
 }
 
 function backToMain() {
@@ -283,7 +353,8 @@ function backToMain() {
     <th><input type="checkbox" id="selectAll"></th>
     <th>Dispatch Content ID</th>
     <th>Entry ID</th>
-    <th>MAAB Category</th>
+    <th>
+       Category</th>
     <th>MAAB No.</th>
     <th>Member Name</th>
     <th>Member Birth Date</th>
@@ -322,8 +393,14 @@ function showDispatchTable() {
     <th>Remarks</th>
   `;
 
+  /*
   // ✅ Sample dispatch history data
   const dispatchData = [
+
+
+
+
+    /*
     {
       dispatch_id: "DISP001",
       dispatch_type: "Regular",
@@ -357,7 +434,9 @@ function showDispatchTable() {
       late_declare: "No",
       dispatch_remarks: "Quarter-end dispatch"
     }
+  
   ];
+*/
 
   // ✅ Set the filtered data to the dispatch data
   filteredData = [...dispatchData];
@@ -384,7 +463,7 @@ function showMainTable() {
   
   tableHead.innerHTML = `
     <th><input type="checkbox" id="selectAll"></th>
-    <th>Dispatch Content ID</th>
+    <th>Dispatch ID</th>
     <th>Entry ID</th>
     <th>MAAB Category</th>
     <th>MAAB No.</th>
@@ -395,10 +474,11 @@ function showMainTable() {
     <th>Late Declare</th>
   `;
 
+  
   tableBody.innerHTML = mainTableData.map(item => `
     <tr>
       <td><input type="checkbox" class="row-check"></td>
-      <td>${item.dispatchContentID}</td>
+      <td>${item.dispatchContentID}<  /td>
       <td>${item.entryID}</td>
       <td>${item.category}</td>
       <td>${item.maabNo}</td>
@@ -410,6 +490,7 @@ function showMainTable() {
     </tr>
   `).join('');
 initializeCheckboxListeners();
+
 
 // ✅ Reset all rows to visible before pagination recalculates
 document.querySelectorAll("#dataTable tbody tr").forEach(row => row.style.display = "");

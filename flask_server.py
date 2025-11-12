@@ -188,8 +188,20 @@ def members_page():
 @login_required
 @roles_required('admin', 'superadmin')
 def declaration_page():
-    return render_template('declaration.html')
-
+    
+    active_dispatch = db_conn.get_current_active_dispatch()
+    if active_dispatch:
+        dispatch_contents = db_conn.get_current_dispatch_contents(active_dispatch.dispatch_id)
+        if dispatch_contents:      
+            print('current_dispatch', active_dispatch)
+            print('dispatch_contents', dispatch_contents)  
+            return render_template('declaration.html', active_dispatch=active_dispatch, dispatch_contents=dispatch_contents)
+            
+        else:
+            # if empty or error
+            return render_template('declaration.html', active_dispatch=active_dispatch, dispatch_contents=[])
+    else:
+        return render_template('declaration.html', active_dispatch=False)
 
 @server.route('/inventory')
 @login_required
@@ -505,6 +517,15 @@ def delete_profile_pic():
 def get_pending_claims_count():
     count = db_conn.get_pending_claims_count()
     return jsonify({"pending_claims_count": count})
+
+
+@server.route('/api/get_all_dispatch')
+def get_dispatch_records():
+    dispatch_records = db_conn.get_all_dispatch_records()
+    if dispatch_records is None:
+        return jsonify({"success": False, "error": "Failed to fetch dispatch records"}), 500
+    print('flask_server: dispatch_records', [record.to_dict() for record in dispatch_records])
+    return jsonify([record.to_dict() for record in dispatch_records])
 
 
 # API FOR MEMBERS PAGE
