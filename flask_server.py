@@ -653,7 +653,7 @@ def add_to_dispatch():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-
+                        
 
 
 # TODO check if a record exist for Online Registration on the same day. if yes put the entry on that record
