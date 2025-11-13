@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
 
-
 {% block title %}Inventory{% endblock %}
-
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/inventory.css') }}">
@@ -18,9 +16,6 @@
     <script src="/static/js/toast.js"></script>
 {% endblock %}
 
-<!--todo ADD COLOR CODING BASED ON CATEGORY IN CSS-->
-<!--todo ADD COLOR CODING ON THE TABLE HEADER BASED ON MODULE IN CSS-->
-
 {% block content %}
 <div class="module_name">
     <h1>Inventory</h1>
@@ -30,7 +25,6 @@
       <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
     </div>
 </div>
-
 <div class="filter_search_container">
   <div class="filters_box">
     <div class="filter">
@@ -64,8 +58,6 @@
 
 </div>
 
-  
-
 <div id="popupForm1" class="popup-form">
     <div class="form-container1">
         <span id="closeBtn1" class="close-btn">&times;</span>
@@ -93,7 +85,6 @@
                 </div>
             </div>
 
-
             <div class="form-row">
                 <label for="numIds">ID Count:</label>
                 <input type="number" id="numIds" name="numIds" min="1" required>
@@ -118,29 +109,13 @@
       <option value="100">100</option>
     </select>
     entries
-  </div>
-
-<div id="inventory_table" class="inventory-table">
-  <div class="category-table-section" id="table-all">
-  <div class="table_wrapper">
-    <div class="category-label">All Categories</div>
-    <div id="hot-all"></div>
-  </div>
 </div>
-  </div>
 
-  <!-- 🔹 PER-CATEGORY TABLES -->
-  {% for cat in [
-    'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 
-    'Enhanced Platinum', 'Senior', 'Senior+'
-] %}
-  <div class="category-table-section" id="table-{{ cat|replace(' ', '_') }}">
-    <div class="table_wrapper">
-      <div class="category-label">{{ cat }}</div>
-      <div id="hot-{{ cat|replace(' ', '_') }}"></div>
-    </div>
+<!-- SINGLE TABLE CONTAINER - magch-change based on selected category -->
+<div id="inventory_table" class="inventory-table">
+  <div class="table_wrapper" id="current_table_wrapper" data-category="All Categories">
+    <div id="current_hot_container"></div>
   </div>
-{% endfor %}
 </div>
 
 <!-- Pagination and summary area -->
@@ -155,17 +130,44 @@
 <div id="popupForm2" class="popup-form">
     <div class="form-container2">
         <span id="closeBtn2" class="close-btn">&times;</span>
-        <h2>ID Descriptions</h2>
-        <form action="#">
-            <div class="carousel"></div>
+        
+        <!-- ===== MAAB ID GALLERY ===== -->
+        <section class="gallery-section section-fade">
+            <h2 class="gallery-title">MAAB ID Category</h2>
 
-            <div class="desc_container">
-                <h2 id="description-title"></h2>
-                <p id="description-age"></p>
-                <br>
-                <ul id="description-list"></ul>
+            <div class="gallery-wrapper">
+                <!-- Left Button -->
+                <button class="nav-btn left-btn" id="leftBtn">&#10094;</button>
+
+                <!-- Main Card -->
+                <div class="gallery-card">
+                    <div class="gallery-content">
+                        <!-- Image Area -->
+                        <div class="image-area">
+                            <div class="image-wrapper">
+                                <img id="galleryImage" src="{{ url_for('static', filename='assets/ID1.png') }}" alt="MAAB ID">
+                            </div>
+                            <p class="image-caption" id="caption">CLASSIC ID</p>
+                        </div>
+
+                        <!-- Description Area -->
+                        <div class="description-area">
+                            <div id="idDescription">
+                                <p> Issuance Age is 3 - 65 years old</p>
+                                <p> Php 12,000.00 - Accident Death, Disablement & Dismemberment</p>
+                                <p> Php 12,000.00 - Unprovoked Murder and Assault</p>
+                                <p> Php 5,000.00 - Accidental Medical Reimbursement</p>
+                                <p> Php 5,000.00 - Burial Assistance (if Accident)</p>
+                                <p> Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Button -->
+                <button class="nav-btn right-btn" id="rightBtn">&#10095;</button>
             </div>
-        </form>
+        </section>
     </div>
 </div>
 {% endblock %}
@@ -173,17 +175,15 @@
 {% block extra_scripts %}
     <script>
       // ADD ID FORM
-
       const inventoryData = JSON.parse('{{ inventory_data | tojson | safe }}');
       console.log(inventoryData);
-        // Max limit for ID Number input
-       const prefixBox = document.getElementById('prefixBox'); // readonly prefix input
-      const numberInput = document.getElementById('ID_Number'); // numeric part input
+
+      const prefixBox = document.getElementById('prefixBox');
+      const numberInput = document.getElementById('ID_Number');
       const countInput = document.getElementById('numIds');
       const seriesEndBox = document.getElementById('idNumberBox');
-      const categorySelect = document.getElementById('cards'); // category select
+      const categorySelect = document.getElementById('cards');
 
-      // Map category prefixes
       const categoryPrefixes = {
           "Classic": "PC",
           "Bronze": "PB",
@@ -195,708 +195,605 @@
           "Senior+": "SP"
       };
 
-      // Pad numbers with leading zeros
       function padNumber(num, length) {
           return num.toString().padStart(length, '0');
       }
 
-      // Update prefix based on category selection
       function updatePrefix() {
           const prefix = categoryPrefixes[categorySelect.value] || '';
           prefixBox.value = prefix;
           updateSeriesEnd();
       }
 
-      // Update Series End value
       function updateSeriesEnd() {
           const prefix = prefixBox.value;
           let startVal = parseInt(numberInput.value, 10);
           const countVal = parseInt(countInput.value, 10);
 
-          // Ensure valid startVal, default 0 if invalid or negative
           if (isNaN(startVal) || startVal < 0) {
               startVal = 0;
               numberInput.value = '0';
           }
 
-          // Ensure valid countVal (must be > 0)
           if (!isNaN(countVal) && countVal > 0) {
               const endNumber = startVal + countVal - 1;
-              seriesEndBox.value = prefix + padNumber(endNumber, 7); // prefix + 7-digit zero padded number
+              seriesEndBox.value = prefix + padNumber(endNumber, 7);
           } else {
               seriesEndBox.value = '';
           }
       }
 
-// Event listeners
+      categorySelect.addEventListener('change', updatePrefix);
 
-// When category changes, update prefix and series end
-categorySelect.addEventListener('change', updatePrefix);
+      numberInput.addEventListener('input', () => {
+          numberInput.value = numberInput.value.replace(/\D/g, '');
+          if (numberInput.value.length > 7) {
+              numberInput.value = numberInput.value.slice(0, 7);
+          }
+          updateSeriesEnd();
+      });
 
-// When number input changes, enforce numeric and max length, then update
-numberInput.addEventListener('input', () => {
-    // Remove non-digit characters
-    numberInput.value = numberInput.value.replace(/\D/g, '');
+      countInput.addEventListener('input', () => {
+          let val = parseInt(countInput.value, 10);
+          if (isNaN(val) || val < 1) {
+              countInput.value = '0';
+          }
+          updateSeriesEnd();
+      });
 
-    // Limit length to 7 digits
-    if (numberInput.value.length > 7) {
-        numberInput.value = numberInput.value.slice(0, 7);
-    }
-
-    updateSeriesEnd();
-});
-
-// When count input changes, ensure positive number then update
-countInput.addEventListener('input', () => {
-    let val = parseInt(countInput.value, 10);
-    if (isNaN(val) || val < 1) {
-        countInput.value = '0';
-    }
-    updateSeriesEnd();
-});
-
-// Initialize prefix and series end on page load
-updatePrefix();
-
-const addIdForm = document.querySelector('#popupForm1 form');
-  const addIdButton = document.getElementById('add_ID');
-
-  addIdForm.addEventListener('submit', function (event) {
-      event.preventDefault();
-
-      const category = categorySelect.value;
-      const prefix = prefixBox.value.trim();
-      const startNum = numberInput.value.trim();
-      const countVal = parseInt(countInput.value.trim(), 10);
-      const seriesEnd = seriesEndBox.value.trim();
-
-      if (!category || !prefix || !startNum || isNaN(countVal) || countVal <= 0) {
-          toastAlert("Incomplete Form","Please fill in all fields correctly before adding an ID.");
-          return;
-      }
-
-      toastSuccess("IDs Added Successfully",`Added ${countVal} new ID(s) for ${category} series.`);
-
-      // Optionally clear inputs
-      numberInput.value = "";
-      countInput.value = "";
-      seriesEndBox.value = "";
       updatePrefix();
-  });
 
-    
+      const addIdForm = document.querySelector('#popupForm1 form');
+      const addIdButton = document.getElementById('add_ID');
 
-// Get references to elements for Form 1
-const openFormBtn1 = document.getElementById('openFormBtn1');
-const popupForm1 = document.getElementById('popupForm1');
-const closeBtn1 = document.getElementById('closeBtn1');
+      addIdForm.addEventListener('submit', function (event) {
+          event.preventDefault();
 
-// Open the popup form when the first button is clicked
-openFormBtn1.addEventListener('click', () => {
-    popupForm1.style.display = 'flex'; // Show the first popup
-});
+          const category = categorySelect.value;
+          const prefix = prefixBox.value.trim();
+          const startNum = numberInput.value.trim();
+          const countVal = parseInt(countInput.value.trim(), 10);
+          const seriesEnd = seriesEndBox.value.trim();
 
-// Close the first popup form when the close button (X) is clicked
-closeBtn1.addEventListener('click', () => {
-    popupForm1.style.display = 'none'; // Hide the first popup
-});
+          if (!category || !prefix || !startNum || isNaN(countVal) || countVal <= 0) {
+              toastAlert("Incomplete Form","Please fill in all fields correctly before adding an ID.");
+              return;
+          }
 
-// Close the first popup form if user clicks outside the form
-window.addEventListener('click', (event) => {
-    if (event.target === popupForm1) {
-        popupForm1.style.display = 'none'; // Hide the first popup
-    }
-});
+          toastSuccess("IDs Added Successfully",`Added ${countVal} new ID(s) for ${category} series.`);
 
-// Get references to elements for Form 2
-const openFormBtn2 = document.getElementById('openFormBtn2');
-const popupForm2 = document.getElementById('popupForm2');
-const closeBtn2 = document.getElementById('closeBtn2');
+          numberInput.value = "";
+          countInput.value = "";
+          seriesEndBox.value = "";
+          updatePrefix();
+      });
 
-// Open the popup form when the second button is clicked
-openFormBtn2.addEventListener('click', () => {
-    popupForm2.style.display = 'flex'; // Show the second popup
-});
+      // POPUP FORMS
+      const openFormBtn1 = document.getElementById('openFormBtn1');
+      const popupForm1 = document.getElementById('popupForm1');
+      const closeBtn1 = document.getElementById('closeBtn1');
 
-// Close the second popup form when the close button (X) is clicked
-closeBtn2.addEventListener('click', () => {
-    popupForm2.style.display = 'none'; // Hide the second popup
-});
+      openFormBtn1.addEventListener('click', () => {
+          popupForm1.style.display = 'flex';
+      });
 
-// Close the second popup form if user clicks outside the form
-window.addEventListener('click', (event) => {
-    if (event.target === popupForm2) {
-        popupForm2.style.display = 'none'; // Hide the second popup
-    }
-});
+      closeBtn1.addEventListener('click', () => {
+          popupForm1.style.display = 'none'; 
+      });
 
-'use strict';
+      window.addEventListener('click', (event) => {
+          if (event.target === popupForm1) {
+              popupForm1.style.display = 'none'; 
+          }
+      });
 
-class Carousel {
-  constructor(el) {
-    this.el = el;
-    this.carouselOptions = ['previous','next'];
-    this.carouselData = [
-      {
-        'id': '1',
-        'src': '/static/assets/senior+_id.png',
-        title: 'Senior+ ID - ₱350.00',
-        Age: '81-85 Years Old',
-        description: [
-            'Accidental Death, Disablement, and Dismemberment - ₱50,000.00',
-            'Unprovoked Murder and Assault - ₱50,000.00',
-            'Accidental Medical Reimbursement - ₱5,000.00',
-            'Accidental Burial Assistance - ₱5,000.00',
-            'Daily Hospital Allowance (Max 60 Days) - ₱100.00/Day'
-        ]
-      },
-      {
-        'id': '2',
-        'src': '/static/assets/classic_id.png',
-        title: 'Classic ID - ₱60.00',
-        Age: '5-25 Years Old',
-        description: [
-            'Accidental Death, Disablement, and Dismemberment - ₱12,000.00',
-            'Unprovoked Murder and Assault - ₱12,000.00',
-            'Accidental Medical Reimbursement - ₱5,000.00',
-            'Accidental Burial Assistance - ₱5,000.00',
-            'Daily Hospital Allowance (Max 60 Days) - ₱150.00/Day' 
-        ]
-      },
-      {
-        'id': '3',
-        'src': '/static/assets/bronze_id.png',
-        title: 'Premier Bronze ID - ₱150.00',
-        Age: '5-65 Years Old',
-        description: [
-            'Accidental Death, Disablement, and Dismemberment - ₱35,000.00',
-            'Unprovoked Murder and Assault - ₱35,000.00',
-            'Accidental Medical Reimbursement - ₱5,000.00',
-            'Accidental Burial Assistance - ₱5,000.00',
-            'Daily Hospital Allowance (Max 60 Days) - ₱150.00/Day'
-        ]
-      },
-      {
-        'id': '4',
-        'src': '/static/assets/silver_id.png',
-        title: 'Premier Silver ID - ₱300.00',
-        Age: '5-65 Years Old',
-        description: [
-            'Accidental Death, Disablement, and Dismemberment - ₱100,000.00',
-            'Unprovoked Murder and Assault - ₱100,000.00',
-            'Accidental Medical Reimbursement - ₱10,000.00',
-            'Accidental Burial Assistance - ₱5,000.00',
-            'Daily Hospital Allowance (Max 60 Days) - ₱200.00/Day'
-        ]
-      },
-      {
-        'id': '5',
-        'src': '/static/assets/gold_id.png',
-        title: 'Premier Gold ID - ₱500.00',
-        Age: '5-65 Years Old',
-        description: [
-            'Accidental Death, Disablement, and Dismemberment - ₱200,000.00',
-            'Unprovoked Murder and Assault - ₱200,000.00',
-            'Accidental Medical Reimbursement - ₱10,000.00',
-            'Accidental Burial Assistance - ₱5,000.00',
-            'Daily Hospital Allowance (Max 60 Days) - ₱200.00/Day'
-        ]
-      },
-      {
-        'id': '6',
-        'src': '/static/assets/platinum_id.png',
-        title: 'Premier Platinum ID - ₱1,00.00',
-        Age: '5-65 Years Old',
-        description: [
-            'Accidental Death, Disablement, and Dismemberment - ₱300,000.00',
-            'Unprovoked Murder and Assault - ₱300,000.00',
-            'Accidental Medical Reimbursement - ₱10,000.00',
-            'Accidental Burial Assistance - ₱5,000.00',
-            'Daily Hospital Allowance (Max 60 Days) - ₱200.00/Day'
-        ]
-      },
-      {
-        'id': '7',
-        'src': '/static/assets/enhanced_platinum_id.png',
-        title: 'Enhanced Platinum ID - ₱1,2000.00',
-        Age: '3-85 Years Old',
-        description: [
-            'Accidental Death, Disablement, and Dismemberment - ₱300,000.00',
-            'Unprovoked Murder and Assault - ₱300,000.00',
-            'Accidental Medical Reimbursement - ₱10,000.00',
-            'Accidental Burial Assistance - ₱5,000.00',
-            'Daily Hospital Allowance (Max 60 Days) - ₱200.00/Day',
+      const openFormBtn2 = document.getElementById('openFormBtn2');
+      const popupForm2 = document.getElementById('popupForm2');
+      const closeBtn2 = document.getElementById('closeBtn2');
 
-            'Free 1 Unit Ambulance Service due to Accident (Max 7km)',
-            'Free 1 Unit Blood due to Accident'
-        ]
-      },
-      {
-        'id': '8',
-        'src': '/static/assets/senior_id.png',
-        title: 'Senior ID - ₱300.00',
-        Age: '66-80 Years Old',
-        description: [
-            'Accidental Death, Disablement, and Dismemberment - ₱50,000.00',
-            'Unprovoked Murder and Assault - ₱50,000.00',
-            'Accidental Medical Reimbursement - ₱5,000.00',
-            'Accidental Burial Assistance - ₱5,000.00',
-            'Daily Hospital Allowance (Max 60 Days) - ₱100.00/Day'
-        ]
-      }
-    ];
-    this.carouselInView = [1, 2, 3];
-    this.carouselContainer;
-    this.carouselPlayState;
-  }
-  
-  updateDescription() {
-  const centerItem = this.carouselData[1];
-  const titleEl = document.getElementById('description-title');
-  const ageEl = document.getElementById('description-age');
-  const listEl = document.getElementById('description-list');
+      openFormBtn2.addEventListener('click', () => {
+          popupForm2.style.display = 'flex'; 
+      });
 
-  if (!centerItem) return;
+      closeBtn2.addEventListener('click', () => {
+          popupForm2.style.display = 'none'; 
+      });
 
-  titleEl.textContent = centerItem.title || '';
-  ageEl.textContent = centerItem.Age || '';
+      window.addEventListener('click', (event) => {
+          if (event.target === popupForm2) {
+              popupForm2.style.display = 'none'; 
+          }
+      });
 
-  listEl.innerHTML = '';
-  (centerItem.description || []).forEach(desc => {
-    const li = document.createElement('li');
-    li.textContent = desc;
-    listEl.appendChild(li);
-  });
-}
-
-
-
-  mounted() {
-    this.setupCarousel();
-    this.updateDescription();
-
-  }
-
-  // Build carousel html
-  setupCarousel() {
-    const container = document.createElement('div');
-    const controls = document.createElement('div');
-
-    // Add container for carousel items and controls
-    this.el.append(container, controls);
-    container.className = 'carousel-container';
-    controls.className = 'carousel-controls';
-
-    // Take dataset array and append items to container
-    this.carouselData.forEach((item, index) => {
-      const carouselItem = item.src ? document.createElement('img') : document.createElement('div');
-
-      container.append(carouselItem);
-      
-      // Add item attributes
-      carouselItem.className = `carousel-item carousel-item-${index + 1}`;
-      carouselItem.src = item.src;
-      carouselItem.setAttribute('loading', 'lazy');
-      // Used to keep track of carousel items, infinite items possible in carousel however min 5 items required
-      carouselItem.setAttribute('data-index', `${index + 1}`);
-    });
-
-    this.carouselOptions.forEach((option) => {
-      const btn = document.createElement('button');
-      const axSpan = document.createElement('span');
-
-      // Add accessibilty spans to button
-      axSpan.innerText = option;
-      axSpan.className = 'ax-hidden';
-      btn.append(axSpan);
-
-      // Add button attributes
-      btn.className = `carousel-control carousel-control-${option}`;
-      btn.setAttribute('data-name', option);
-
-      // Add carousel control options
-      controls.append(btn);
-    });
-
-    // After rendering carousel to our DOM, setup carousel controls' event listeners
-    this.setControls([...controls.children]);
-
-    // Set container property
-    this.carouselContainer = container;
-  }
-
-  setControls(controls) {
-    controls.forEach(control => {
-      control.onclick = (event) => {
-        event.preventDefault();
-
-        // Manage control actions, update our carousel data first then with a callback update our DOM
-        this.controlManager(control.dataset.name);
+      /* ---------------- GALLERY DATA ---------------- */
+      const descriptions = {
+          classic: {
+              title: "CLASSIC ID",
+              details: [
+                  "Issuance Age is 3 - 65 years old",
+                  "Php 12,000.00 - Accident Death, Disablement & Dismemberment",
+                  "Php 12,000.00 - Unprovoked Murder and Assault",
+                  "Php 5,000.00 - Accidental Medical Reimbursement",
+                  "Php 5,000.00 - Burial Assistance (if Accident)",
+                  "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+              ]
+          },
+          "premier-bronze": {
+              title: "PREMIER BRONZE ID",
+              details: [
+                  "Issuance Age is 3 - 65 years old",
+                  "Php 35,000.00 - Accident Death, Disablement & Dismemberment",
+                  "Php 35,000.00 - Unprovoked Murder and Assault",
+                  "Php 5,000.00 - Accidental Medical Reimbursement",
+                  "Php 5,000.00 - Burial Assistance (if Accident)",
+                  "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+              ]
+          },
+          "premier-silver": {
+              title: "PREMIER SILVER ID",
+              details: [
+                  "Issuance Age is 3 - 65 years old",
+                  "Php 100,000.00 - Accident Death, Disablement & Dismemberment",
+                  "Php 100,000.00 - Unprovoked Murder and Assault",
+                  "Php 10,000.00 - Accidental Medical Reimbursement",
+                  "Php 5,000.00 - Burial Assistance (if Accident)",
+                  "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+              ]
+          },
+          "premier-gold": {
+              title: "PREMIER GOLD ID",
+              details: [
+                  "Issuance Age is 3 - 65 years old",
+                  "Php 200,000.00 - Accident Death, Disablement & Dismemberment",
+                  "Php 200,000.00 - Unprovoked Murder and Assault",
+                  "Php 10,000.00 - Accidental Medical Reimbursement",
+                  "Php 5,000.00 - Burial Assistance (if Accident)",
+                  "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+              ]
+          },
+          "premier-platinum": {
+              title: "PREMIER PLATINUM ID",
+              details: [
+                  "Issuance Age is 3 - 65 years old",
+                  "Php 300,000.00 - Accident Death, Disablement & Dismemberment",
+                  "Php 300,000.00 - Unprovoked Murder and Assault",
+                  "Php 10,000.00 - Accidental Medical Reimbursement",
+                  "Php 5,000.00 - Burial Assistance (if Accident)",
+                  "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+              ]
+          },
+          senior: {
+              title: "SENIOR ID",
+              details: [
+                  "Issuance Age is 66 - 80 years old",
+                  "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+                  "Php 50,000.00 - Unprovoked Murder and Assault",
+                  "Php 5,000.00 - Accidental Medical Reimbursement",
+                  "Php 5,000.00 - Burial Assistance (if Accident)",
+                  "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+              ]
+          },
+          seniorplus: {
+              title: "SENIOR PLUS ID",
+              details: [
+                  "Issuance Age is 81 - 85 years old",
+                  "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+                  "Php 50,000.00 - Unprovoked Murder and Assault",
+                  "Php 5,000.00 - Accidental Medical Reimbursement",
+                  "Php 5,000.00 - Burial Assistance (if Accident)",
+                  "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+              ]
+          }
       };
-    });
+
+      const galleryData = [
+          {
+              id: "classic",
+              image: "{{ url_for('static', filename='assets/ID1.png') }}",
+              title: "CLASSIC ID",
+              description: descriptions.classic.details
+          },
+          {
+              id: "premier-bronze", 
+              image: "{{ url_for('static', filename='assets/ID2.png') }}",
+              title: "PREMIER BRONZE ID",
+              description: descriptions["premier-bronze"].details
+          },
+          {
+              id: "premier-silver",
+              image: "{{ url_for('static', filename='assets/ID3.png') }}", 
+              title: "PREMIER SILVER ID",
+              description: descriptions["premier-silver"].details
+          },
+          {
+              id: "premier-gold",
+              image: "{{ url_for('static', filename='assets/ID4.png') }}", 
+              title: "PREMIER GOLD ID",
+              description: descriptions["premier-gold"].details
+          },
+          {
+              id: "premier-platinum",
+              image: "{{ url_for('static', filename='assets/ID5.png') }}",
+              title: "PREMIER PLATINUM ID",
+              description: descriptions["premier-platinum"].details
+          },
+          {
+              id: "senior",
+              image: "{{ url_for('static', filename='assets/ID6.png') }}",
+              title: "SENIOR ID",
+              description: descriptions.senior.details
+          },
+          {
+              id: "seniorplus", 
+              image: "{{ url_for('static', filename='assets/ID7.png') }}",
+              title: "SENIOR PLUS ID",
+              description: descriptions.seniorplus.details
+          }
+      ];
+
+      let currentImageIndex = 0;
+
+      function updateGalleryDisplay() {
+          const currentData = galleryData[currentImageIndex];
+          
+          const galleryImage = document.getElementById('galleryImage');
+          if (galleryImage) {
+              galleryImage.src = currentData.image;
+              galleryImage.alt = currentData.title;
+          }
+          
+          const caption = document.getElementById('caption');
+          if (caption) caption.textContent = currentData.title;
+          
+          const descriptionDiv = document.getElementById('idDescription');
+          if (descriptionDiv) {
+              descriptionDiv.innerHTML = '';
+              currentData.description.forEach(item => {
+                  const p = document.createElement('p');
+                  p.textContent = item;
+                  descriptionDiv.appendChild(p);
+              });
+          }
+      }
+
+      function nextImage() {
+          currentImageIndex = (currentImageIndex + 1) % galleryData.length;
+          updateGalleryDisplay();
+      }
+
+      function prevImage() {
+          currentImageIndex = (currentImageIndex - 1 + galleryData.length) % galleryData.length;
+          updateGalleryDisplay();
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+          const leftBtn = document.getElementById('leftBtn');
+          const rightBtn = document.getElementById('rightBtn');
+          
+          if (leftBtn) leftBtn.addEventListener('click', prevImage);
+          if (rightBtn) rightBtn.addEventListener('click', nextImage);
+          
+          const openFormBtn2 = document.getElementById('openFormBtn2');
+          if (openFormBtn2) {
+              openFormBtn2.addEventListener('click', function() {
+                  currentImageIndex = 0;
+                  updateGalleryDisplay();
+              });
+          }
+          
+          updateGalleryDisplay();
+      });
+
+      // ============================================================
+      // 🔸 Handsontable Columns
+      // ============================================================
+      const hotColumns = [
+        { data: 'inv_id', type: 'text', title: 'ID' },
+        { data: 'maab_category', type: 'text', title: 'Maab Category' },
+        { data: 'maab_no', type: 'text', title: 'Maab No.' },
+        { data: 'used', type: 'text', title: 'Used' },
+        { data: 'allocated_to', type: 'text', title: 'Allocated To' },
+        { data: 'remarks', type: 'text', title: 'Remarks' }
+      ];
+
+      let currentHotInstance = null;
+      let currentCategory = 'all';
+      let currentPage = 1;
+      let entriesPerPage = parseInt(document.getElementById('entriesPerPage').value, 10);
+      let searchQuery = '';
+
+      const summaryText = document.getElementById('summaryText');
+      const paginationControls = document.getElementById('paginationControls');
+      const entriesSelect = document.getElementById('entriesPerPage');
+
+      // ============================================================
+      // 🔹 Helper Functions
+      // ============================================================
+      function getCategoryColor(cat) {
+        switch (cat) {
+          case 'Classic': return '#f07474';
+          case 'Bronze': return '#c97a57';
+          case 'Silver': return '#a0a0a0';
+          case 'Gold': return '#e0b84c';
+          case 'Platinum': return '#7fbcd2';
+          case 'Enhanced Platinum': return '#4d8fac';
+          case 'Senior': return '#b86bbf';
+          case 'Senior+': return '#6a4fbf';
+          default: return '#f07474'; // 'all'
+        }
+      }
+
+      function darkenColor(hex, amount = 20) {
+        let usePound = false;
+        if (hex[0] === "#") {
+          hex = hex.slice(1);
+          usePound = true;
+        }
+        let num = parseInt(hex, 16);
+        let r = Math.max(0, (num >> 16) - amount);
+        let g = Math.max(0, ((num >> 8) & 0x00FF) - amount);
+        let b = Math.max(0, (num & 0x0000FF) - amount);
+        return (usePound ? "#" : "") + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
+      }
+
+      function safeLower(v) {
+        return (v && typeof v === 'string') ? v.toLowerCase() : '';
+      }
+
+      function getFilteredData() {
+        return inventoryData.filter(item => {
+          if (currentCategory !== 'all' && item.maab_category !== currentCategory) return false;
+          return (
+            safeLower(item.inv_id).includes(searchQuery) ||
+            safeLower(item.maab_no).includes(searchQuery) ||
+            safeLower(item.maab_category).includes(searchQuery) ||
+            safeLower(item.allocated_to).includes(searchQuery) ||
+            safeLower(item.remarks).includes(searchQuery)
+          );
+        });
+      }
+
+      // ============================================================
+      // 🔹 SINGLE TABLE APPROACH - isang table lang ang visible
+      // ============================================================
+      function showCategory(cat) {
+        currentCategory = cat;
+        
+        // Update the table wrapper category attribute for CSS styling
+        const tableWrapper = document.getElementById('current_table_wrapper');
+        const displayName = cat === 'all' ? 'All Categories' : cat;
+        tableWrapper.setAttribute('data-category', displayName);
+        
+        // Destroy previous instance if exists
+        if (currentHotInstance) {
+          currentHotInstance.destroy();
+        }
+        
+        // Get filtered data for current category
+        const filteredData = getFilteredData();
+        const totalItems = filteredData.length;
+        const startIndex = (currentPage - 1) * entriesPerPage;
+        const endIndex = startIndex + entriesPerPage;
+        const pageData = filteredData.slice(startIndex, endIndex);
+        
+        // Create new Handsontable instance
+        currentHotInstance = new Handsontable(document.getElementById('current_hot_container'), {
+          data: pageData,
+          colHeaders: hotColumns.map(c => c.title),
+          columns: hotColumns,
+          rowHeaders: true,
+          stretchH: 'all',
+          width: '100%',
+          height: 520,
+          licenseKey: 'non-commercial-and-evaluation',
+          readOnly: true,  // ADD THIS LINE
+          afterRender: function() {
+          applyHeaderColor(this, cat);
   }
-
-  controlManager(control) {
-    if (control === 'previous') return this.previous();
-    if (control === 'next') return this.next();
-
-    return;
-  }
-
-  previous() {
-    // Update order of items in data array to be shown in carousel
-    this.carouselData.unshift(this.carouselData.pop());
-
-    // Push the first item to the end of the array so that the previous item is front and center
-    this.carouselInView.push(this.carouselInView.shift());
-
-    // Update the css class for each carousel item in view
-    this.carouselInView.forEach((item, index) => {
-      this.carouselContainer.children[index].className = `carousel-item carousel-item-${item}`;
-    });
-
-    // Using the first 5 items in data array update content of carousel items in view
-    this.carouselData.slice(0, 3).forEach((data, index) => {
-      document.querySelector(`.carousel-item-${index + 1}`).src = data.src;
-    });
-    this.updateDescription();
-  }
-
-  next() {
-    // Update order of items in data array to be shown in carousel
-    this.carouselData.push(this.carouselData.shift());
-
-    // Take the last item and add it to the beginning of the array so that the next item is front and center
-    this.carouselInView.unshift(this.carouselInView.pop());
-
-    // Update the css class for each carousel item in view
-    this.carouselInView.forEach((item, index) => {
-      this.carouselContainer.children[index].className = `carousel-item carousel-item-${item}`;
-    });
-
-    // Using the first 5 items in data array update content of carousel items in view
-    this.carouselData.slice(0, 3).forEach((data, index) => {
-      document.querySelector(`.carousel-item-${index + 1}`).src = data.src;
-    });
-    this.updateDescription();
-  }
-}
-
-// Refers to the carousel root element you want to target, use specific class selectors if using multiple carousels
-const el = document.querySelector('.carousel');
-// Create a new carousel object
-const exampleCarousel = new Carousel(el);
-// Setup carousel and methods
-exampleCarousel.mounted();
-
-
-
-
-// ============================================================
-// 🔸 Handsontable Columns
-// ============================================================
-const hotColumns = [
-  { data: 'inv_id', type: 'text', title: 'ID' },
-  { data: 'maab_category', type: 'text', title: 'Maab Category' },
-  { data: 'maab_no', type: 'text', title: 'Maab No.' },
-  { data: 'used', type: 'text', title: 'Used' },
-  { data: 'allocated_to', type: 'text', title: 'Allocated To' },
-  { data: 'remarks', type: 'text', title: 'Remarks' }
-];
-
-const hotInstances = {};
-const categories = [
-  'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 
-  'Enhanced Platinum', 'Senior', 'Senior+'
-];
-
-// ============================================================
-// 🔹 Helper Functions
-// ============================================================
-function getCategoryColor(cat) {
-  switch (cat) {
-    case 'Classic': return '#f07474';
-    case 'Bronze': return '#c97a57';
-    case 'Silver': return '#a0a0a0';
-    case 'Gold': return '#e0b84c';
-    case 'Platinum': return '#7fbcd2';
-    case 'Enhanced Platinum': return '#4d8fac';
-    case 'Senior': return '#b86bbf';
-    case 'Senior+': return '#6a4fbf';
-    default: return '#fafafa'; // 'all'
-  }
-}
-
-function darkenColor(hex, amount = 20) {
-  let usePound = false;
-  if (hex[0] === "#") {
-    hex = hex.slice(1);
-    usePound = true;
-  }
-  let num = parseInt(hex, 16);
-  let r = Math.max(0, (num >> 16) - amount);
-  let g = Math.max(0, ((num >> 8) & 0x00FF) - amount);
-  let b = Math.max(0, (num & 0x0000FF) - amount);
-  return (usePound ? "#" : "") + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
-}
-
-// ============================================================
-// 🔹 Initialize Handsontable
-// ============================================================
-function initHot(containerId, data) {
-  const container = document.getElementById(containerId);
-  if (!container) return null;
-  return new Handsontable(container, {
-    data: data,
-    colHeaders: hotColumns.map(c => c.title),
-    columns: hotColumns,
-    rowHeaders: true,
-    stretchH: 'all',
-    width: '100%',
-    height: 520,
-    licenseKey: 'non-commercial-and-evaluation'
-  });
-}
-
-// Create "All" table
-hotInstances['all'] = initHot('hot-all', inventoryData);
-
-// Per-category tables
-categories.forEach(cat => {
-  const filteredData = inventoryData.filter(item => item.maab_category === cat);
-  hotInstances[cat] = initHot('hot-' + cat.replace(/ /g, '_'), filteredData);
 });
+        
+        renderPagination(totalItems);
+      }
 
-// ============================================================
-// 🔹 Pagination Setup
-// ============================================================
-let currentCategory = 'all';
-let currentPage = 1;
-let entriesPerPage = parseInt(document.getElementById('entriesPerPage').value, 10);
-
-const summaryText = document.getElementById('summaryText');
-const paginationControls = document.getElementById('paginationControls');
-const entriesSelect = document.getElementById('entriesPerPage');
-
-entriesSelect.addEventListener('change', () => {
-  entriesPerPage = parseInt(entriesSelect.value, 10);
-  currentPage = 1;
-  renderCurrentTable();
-});
-
-// ============================================================
-// 🔹 Render current table with search & pagination
-// ============================================================
-let searchQuery = '';
-
-function safeLower(v) {
-  return (v && typeof v === 'string') ? v.toLowerCase() : '';
-}
-
-function getFilteredData() {
-  return inventoryData.filter(item => {
-    if (currentCategory !== 'all' && item.maab_category !== currentCategory) return false;
-    return (
-      safeLower(item.inv_id).includes(searchQuery) ||
-      safeLower(item.maab_no).includes(searchQuery) ||
-      safeLower(item.maab_category).includes(searchQuery) ||
-      safeLower(item.allocated_to).includes(searchQuery) ||
-      safeLower(item.remarks).includes(searchQuery)
-    );
-  });
-}
-
-function renderCurrentTable() {
-  const instance = hotInstances[currentCategory];
-  if (!instance) return;
-
-  const filtered = getFilteredData();
-  const totalItems = filtered.length;
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const endIndex = startIndex + entriesPerPage;
-  const pageData = filtered.slice(startIndex, endIndex);
-
-  instance.loadData(pageData);
-  instance.render();
-  applyHeaderColor(instance, currentCategory);
-
-  renderPagination(totalItems);
-}
-
-function renderPagination(totalItems) {
-  const totalPages = Math.ceil(totalItems / entriesPerPage) || 1;
-  paginationControls.innerHTML = '';
-
-  // --- Previous button ---
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = 'Previous';
-  prevBtn.disabled = currentPage === 1;
-  prevBtn.addEventListener('click', () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderCurrentTable();
-    }
-  });
-  paginationControls.appendChild(prevBtn);
-
-  // --- Helper to create a page button ---
-  function createPageButton(page) {
-    const btn = document.createElement('button');
-    btn.textContent = page;
-    btn.classList.add('page-btn');
-    if (page === currentPage) btn.classList.add('active');
-    btn.addEventListener('click', () => {
-      currentPage = page;
-      renderCurrentTable();
-    });
-    paginationControls.appendChild(btn);
-  }
-
-  // --- Helper to add ellipsis ---
-  function addEllipsis() {
-    const span = document.createElement('span');
-    span.textContent = '...';
-    span.classList.add('ellipsis');
-    paginationControls.appendChild(span);
-  }
-
-  // --- Page buttons logic ---
-  if (totalPages <= 10) {
-    // Show all if 10 or fewer pages
-    for (let i = 1; i <= totalPages; i++) createPageButton(i);
-  } else {
-    const visiblePages = 5;
-
-    if (currentPage <= visiblePages) {
-      for (let i = 1; i <= visiblePages; i++) createPageButton(i);
-      addEllipsis();
-      createPageButton(totalPages);
-    } else if (currentPage >= totalPages - visiblePages + 1) {
-      createPageButton(1);
-      addEllipsis();
-      for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
-    } else {
-      createPageButton(1);
-      addEllipsis();
-      for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
-      addEllipsis();
-      createPageButton(totalPages);
-    }
-  }
-
-  // --- Next button ---
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = 'Next';
-  nextBtn.disabled = currentPage === totalPages;
-  nextBtn.addEventListener('click', () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderCurrentTable();
-    }
-  });
-  paginationControls.appendChild(nextBtn);
-
-  // --- Summary text ---
-  const start = totalItems === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
-  const end = Math.min(currentPage * entriesPerPage, totalItems);
-  summaryText.textContent = `Showing ${start} to ${end} of ${totalItems} entries`;
-}
-
-
-
-// ============================================================
-// 🔹 Show/Hide category & apply header color
-// ============================================================
-function showCategory(cat) {
-  currentCategory = cat;
-  document.querySelectorAll('.category-table-section').forEach(section => {
-    section.classList.remove('active');
-  });
-  const section = document.getElementById('table-' + cat.replace(/ /g, '_'));
-  if (section) section.classList.add('active');
-
-  currentPage = 1;
-  renderCurrentTable();
-}
+      function renderCurrentTable() {
+        if (!currentHotInstance) return;
+        
+        const filtered = getFilteredData();
+        const totalItems = filtered.length;
+        const startIndex = (currentPage - 1) * entriesPerPage;
+        const endIndex = startIndex + entriesPerPage;
+        const pageData = filtered.slice(startIndex, endIndex);
+        
+        currentHotInstance.loadData(pageData);
+        currentHotInstance.render();
+        
+        // Re-apply header color after render
+        setTimeout(() => {
+          applyHeaderColor(currentHotInstance, currentCategory);
+        }, 0);
+        
+        renderPagination(totalItems);
+      }
 
 function applyHeaderColor(hotInstance, cat) {
-  const color = getCategoryColor(cat);
-  const borderColor = darkenColor(color, 30);
+    const color = getCategoryColor(cat);
+    const borderColor = darkenColor(color, 30);
 
-  hotInstance.updateSettings({
-    afterRender: function() {
-      const ths = hotInstance.rootElement.querySelectorAll('th');
-      ths.forEach(th => {
-        th.style.backgroundColor = color;
+    const ths = hotInstance.rootElement.querySelectorAll('th');
+    ths.forEach(th => {
+        // Check if this is the row header column (first column)
+        if (th.classList.contains('ht_clone_left') || 
+            th.classList.contains('htRowHeaders') ||
+            th.cellIndex === 0) {
+            th.style.backgroundColor = '#fff';
+            th.style.color = '#333';
+        } else {
+            th.style.backgroundColor = color;
+            th.style.color = '#fff';
+        }
         th.style.borderColor = borderColor;
-        th.style.color = (cat === 'all') ? '#333' : '#fff';
-      });
-    }
-  });
+    });
 }
 
-// ============================================================
-// 🔹 Custom Dropdown
-// ============================================================
-const customSelect = document.querySelector('.custom-select');
-const selected = customSelect.querySelector('.selected');
-const options = customSelect.querySelectorAll('.options li');
+      function renderPagination(totalItems) {
+        const totalPages = Math.ceil(totalItems / entriesPerPage) || 1;
+        paginationControls.innerHTML = '';
 
-selected.addEventListener('click', () => {
-  customSelect.classList.toggle('open');
-});
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = 'Previous';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.addEventListener('click', () => {
+          if (currentPage > 1) {
+            currentPage--;
+            renderCurrentTable();
+          }
+        });
+        paginationControls.appendChild(prevBtn);
 
-options.forEach(option => {
-  option.addEventListener('click', () => {
-    const cat = option.dataset.value;
-    selected.textContent = option.textContent;
-    selected.dataset.value = cat;
-    const color = getCategoryColor(cat);
-    selected.style.background = color;
-    selected.style.color = (cat === 'all') ? '#333' : '#fff';
-    selected.style.borderColor = darkenColor(color, 30);
+        // Page buttons
+        function createPageButton(page) {
+          const btn = document.createElement('button');
+          btn.textContent = page;
+          btn.classList.add('page-btn');
+          if (page === currentPage) btn.classList.add('active');
+          btn.addEventListener('click', () => {
+            currentPage = page;
+            renderCurrentTable();
+          });
+          paginationControls.appendChild(btn);
+        }
 
-    options.forEach(opt => opt.classList.remove('active'));
-    option.classList.add('active');
+        function addEllipsis() {
+          const span = document.createElement('span');
+          span.textContent = '...';
+          span.classList.add('ellipsis');
+          paginationControls.appendChild(span);
+        }
 
-    showCategory(cat);
-    customSelect.classList.remove('open');
-  });
-});
+        if (totalPages <= 10) {
+          for (let i = 1; i <= totalPages; i++) createPageButton(i);
+        } else {
+          const visiblePages = 5;
 
-document.addEventListener('click', e => {
-  if (!customSelect.contains(e.target)) customSelect.classList.remove('open');
-});
+          if (currentPage <= visiblePages) {
+            for (let i = 1; i <= visiblePages; i++) createPageButton(i);
+            addEllipsis();
+            createPageButton(totalPages);
+          } else if (currentPage >= totalPages - visiblePages + 1) {
+            createPageButton(1);
+            addEllipsis();
+            for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
+          } else {
+            createPageButton(1);
+            addEllipsis();
+            for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
+            addEllipsis();
+            createPageButton(totalPages);
+          }
+        }
 
-// ============================================================
-// 🔹 Search
-// ============================================================
-const searchInput = document.getElementById('searchInput');
-const clearBtn = document.getElementById('search_clear');
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = 'Next';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.addEventListener('click', () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            renderCurrentTable();
+          }
+        });
+        paginationControls.appendChild(nextBtn);
 
-searchInput.addEventListener('input', function () {
-  searchQuery = this.value.trim().toLowerCase();
-  currentPage = 1;
-  renderCurrentTable();
+        // Summary text
+        const start = totalItems === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
+        const end = Math.min(currentPage * entriesPerPage, totalItems);
+        summaryText.textContent = `Showing ${start} to ${end} of ${totalItems} entries`;
+      }
 
-  clearBtn.classList.toggle('visible', searchQuery !== '');
-});
+      // ============================================================
+      // 🔹 Event Listeners
+      // ============================================================
+      entriesSelect.addEventListener('change', () => {
+        entriesPerPage = parseInt(entriesSelect.value, 10);
+        currentPage = 1;
+        renderCurrentTable();
+      });
 
-clearBtn.addEventListener('click', function () {
-  searchQuery = '';
-  searchInput.value = '';
-  currentPage = 1;
-  renderCurrentTable();
-  searchInput.focus();
-});
+      // Custom Dropdown
+      const customSelect = document.querySelector('.custom-select');
+      const selected = customSelect.querySelector('.selected');
+      const options = customSelect.querySelectorAll('.options li');
 
-// ============================================================
-// 🔹 Initialize page
-// ============================================================
-showCategory('all');
+      selected.addEventListener('click', () => {
+        customSelect.classList.toggle('open');
+      });
 
+      options.forEach(option => {
+        option.addEventListener('click', () => {
+          const cat = option.dataset.value;
+          selected.textContent = option.textContent;
+          selected.dataset.value = cat;
+          const color = getCategoryColor(cat);
+          selected.style.background = color;
+          selected.style.color = (cat === 'all') ? '#333' : '#fff';
+          selected.style.borderColor = darkenColor(color, 30);
 
+          options.forEach(opt => opt.classList.remove('active'));
+          option.classList.add('active');
 
-        
-</script>
+          showCategory(cat);
+          customSelect.classList.remove('open');
+        });
+      });
+
+      document.addEventListener('click', e => {
+        if (!customSelect.contains(e.target)) customSelect.classList.remove('open');
+      });
+
+      // Search
+      const searchInput = document.getElementById('searchInput');
+      const clearBtn = document.getElementById('search_clear');
+
+      searchInput.addEventListener('input', function () {
+        searchQuery = this.value.trim().toLowerCase();
+        currentPage = 1;
+        renderCurrentTable();
+
+        clearBtn.classList.toggle('visible', searchQuery !== '');
+      });
+
+      clearBtn.addEventListener('click', function () {
+        searchQuery = '';
+        searchInput.value = '';
+        currentPage = 1;
+        renderCurrentTable();
+        searchInput.focus();
+      });
+
+      // ============================================================
+      // 🔹 Initialize page
+      // ============================================================
+      showCategory('all');
+
+      // UPLOADED IMAGE
+      document.addEventListener("DOMContentLoaded", function() {
+          const navProfileImage = document.getElementById("navProfileImage");
+          if (navProfileImage) {
+              const savedProfileImage = localStorage.getItem("profileImage");
+              if (savedProfileImage) {
+                  navProfileImage.src = savedProfileImage;
+              }
+          }
+          
+          window.addEventListener('storage', function(e) {
+              if (e.key === 'profileImage') {
+                  const navProfileImage = document.getElementById("navProfileImage");
+                  if (navProfileImage) {
+                      navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+                  }
+              }
+          });
+      });
+    </script>
 {% endblock %}

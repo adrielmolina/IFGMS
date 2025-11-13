@@ -9,42 +9,39 @@ label {
     font-weight: bold;
 }
 
-/* --- Title: centered, fixed at top --- */
 .module_name {
     position: fixed;
-    top: 12px;              /* distance from top - adjust if needed */
+    top: 12px;              
     left: 0;
     right: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;          /* keep it above other elements */
-    pointer-events: none;   /* allows clicks to pass through the bar (h1 clickable if needed below) */
-    white-space: nowrap;    /* keep the spaced letters on one line */
+    z-index: 1000;        
+    pointer-events: none;   
+    white-space: nowrap;    
 }
 
-/* Keep the h1 styling inside the fixed bar; allow clicks on text if needed */
 .module_name h1 {
     margin: 0;
     color: rgb(232, 57, 57);
     text-align: center;
     font-weight: 700;
-    pointer-events: auto;   /* make the H1 itself interactive/selectable if needed */
+    pointer-events: auto;   
 }
 
-/* push the page content down so the header doesn't overlap controls */
 .controls_box {
-    margin-top: 70px; /* adjust this to match the height of your header */
+    margin-top: 70px; 
 }
 
-/* responsive tweak for small screens */
+
 @media (max-width: 600px) {
     .module_name h1 {
         font-size: 18px;
-        white-space: normal; /* allow wrapping on small screens */
+        white-space: normal; 
     }
     .controls_box {
-        margin-top: 88px; /* slightly larger if h1 wraps into two lines */
+        margin-top: 88px; 
     }
 }
 
