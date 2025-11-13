@@ -861,165 +861,245 @@ input:checked + .slider:before {
 
 /* === CLAIM STATUS SECTION (Modern Two-Column Layout) === */
 /* Keep consistent with other card sections */
-.release_section {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  padding: 24px 20px;
-  margin: 10px 0 16px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  width: 100%;
-  box-sizing: border-box;
-  grid-column: 1 / -1;  
-}
-
-/* Restore two-column structure */
-.columns {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-}
-
-/* Column styling */
-.release_sectin_column {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* Remarks below columns */
-.release_remarks_section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Form controls */
-.release_section input,
-.release_section select {
-  padding: 8px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  box-sizing: border-box;
-}
-
-/* Buttons */
-.release_section button {
-  background-color: #64748b;
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease-in-out;
-}
-
-.release_section button:hover {
-  background-color: #475569;
-}
-
-/* Links */
-.release_section a {
-  color: #1d4ed8;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.release_section a:hover {
-  text-decoration: underline;
-}
-
-/* Responsive: stack columns on smaller screens */
-@media (max-width: 900px) {
-  .columns {
-    grid-template-columns: 1fr;
+  .release_section {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    padding: 24px 20px;
+    margin: 10px 0 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    box-sizing: border-box;
+    grid-column: 1 / -1;  
   }
+
+  /* Restore two-column structure */
+  .columns {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  /* Column styling */
+  .release_sectin_column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Remarks below columns */
+  .release_remarks_section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Form controls */
+  .release_section input,
+  .release_section select {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  /* Buttons */
+  .release_section button {
+    background-color: #64748b;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+  }
+
+  .release_section button:hover {
+    background-color: #475569;
+  }
+
+  /* Links */
+  .release_section a {
+    color: #1d4ed8;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .release_section a:hover {
+    text-decoration: underline;
+  }
+
+  /* Responsive: stack columns on smaller screens */
+  @media (max-width: 900px) {
+    .columns {
+      grid-template-columns: 1fr;
+    }
+  }
+
+
+  /* Labels and inputs alignment */
+  .release_sectin_column label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 4px;
+  }
+
+  .release_sectin_column input,
+  .release_sectin_column select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    background-color: #fff;
+    transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+
+  .release_sectin_column input:focus,
+  .release_sectin_column select:focus {
+    outline: none;
+    border-color: #64748b;
+    box-shadow: 0 0 0 2px rgba(100,116,139,0.2);
+  }
+
+  /* Buttons */
+  .release_sectin_column button,
+  .generate_prm,
+  .generate_quit_claim {
+    background-color: #64748b;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+    width: fit-content;
+  }
+
+  .release_sectin_column button:hover,
+  .generate_prm:hover,
+  .generate_quit_claim:hover {
+    background-color: #475569;
+  }
+
+  /* File links (View PRM File, etc.) */
+  a.prm_file,
+  a.quit_claim_file {
+    background-color: #64748b;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease-in-out;
+    width: fit-content;
+  }
+
+  a.prm_file:hover,
+  a.quit_claim_file:hover {
+    background-color: #475569;
+  }
+
+  /* Release Remarks Section */
+  .release_remarks_section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .release_remarks_section input {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    background-color: #fff;
+  }
+
+/* Center and slightly compress the release section */
+.release_section {
+  max-width: 85%; /* Adjust this (e.g., 80%, 70%) for how "compressed" you want it */
+  margin: 0 auto; /* Centers it horizontally */
 }
 
-
-/* Labels and inputs alignment */
-.release_sectin_column label {
-  font-weight: 500;
-  color: #374151;
+/* Make the Date Released label span a normal block again */
+.release_sectin_column span {
+  display: block;
   margin-bottom: 4px;
 }
 
-.release_sectin_column input,
-.release_sectin_column select {
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 14px;
-  background-color: #fff;
-  transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+/* Make the date input and button sit on the same line */
+#date_released {
+  width: calc(100% - 90px); /* leave space for button */
+  display: inline-block;
+  vertical-align: middle;
 }
 
-.release_sectin_column input:focus,
-.release_sectin_column select:focus {
-  outline: none;
-  border-color: #64748b;
-  box-shadow: 0 0 0 2px rgba(100,116,139,0.2);
-}
-
-/* Buttons */
-.release_sectin_column button,
-.generate_prm,
-.generate_quit_claim {
+#date_released + span button,
+span button[onclick*="date_released"] {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+  padding: 8px 14px;
   background-color: #64748b;
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 8px 14px;
   font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
   transition: background 0.2s ease-in-out;
-  width: fit-content;
+  height: 36px; /* matches input height */
+  line-height: 20px;
+  position: relative;
+  top: 3px; /* fine-tune alignment */
 }
 
-.release_sectin_column button:hover,
-.generate_prm:hover,
-.generate_quit_claim:hover {
+span button[onclick*="date_released"]:hover {
   background-color: #475569;
 }
 
-/* File links (View PRM File, etc.) */
-a.prm_file,
-a.quit_claim_file {
-  background-color: #64748b;
-  color: #fff;
-  text-decoration: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease-in-out;
-  width: fit-content;
+
+/* Base positioning context */
+#claim_status_info {
+  position: relative;
+  padding-top: 40px;
 }
 
-a.prm_file:hover,
-a.quit_claim_file:hover {
-  background-color: #475569;
+/* Checkbox and label (already correct) */
+#claim_status_info #picked_up {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  margin: 0;
 }
 
-/* Release Remarks Section */
-.release_remarks_section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+#claim_status_info label[for="picked_up"] {
+  position: absolute;
+  top: 10px;
+  left: 38px;
+  font-weight: 500;
+  color: #374151;
 }
 
-.release_remarks_section input {
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 14px;
-  background-color: #fff;
+/* Date picker and its label beside the Picked Up field */
+#claim_status_info label[for="date_picked_up"] {
+  position: absolute;
+  top: 10px;
+  left: 150px; /* adjust this spacing as needed */
+  font-weight: 500;
+  color: #374151;
+}
+
+#claim_status_info #date_picked_up {
+  position: absolute;
+  top: 8px;
+  left: 270px; /* align visually with the label */
 }
 
