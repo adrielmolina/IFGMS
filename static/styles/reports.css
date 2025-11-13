@@ -1,50 +1,87 @@
-body {
-
-}
-
-.ht_master .wtHolder {
-    padding-bottom: 1%; 
-}
-
-.ht_clone_top {
-    z-index: 1 !important; 
-}
-
-.ht_clone_left {
-    z-index: 1 !important; 
-}
-
-.ht_clone_top_left_corner {
-    z-index: 1 !important; 
-}
-
-.ht_master th, .ht_clone_top th, .ht_clone_top_left_corner th {
-    font-weight: bold !important;
-}
-
-.handsontable td, 
-.handsontable th {
-    border: 1px solid #22222287 !important; 
-}
-
-h1 {
-    border: 2px solid;
-    margin: 5px;
-}
-
-.collapse_box_header {
-    background-color: #4e474732;
-    width: 99%;
-    height: 4vh;
-    border-radius: 10px;
-    margin: 5px;
-    flex-shrink: 0;
+.module_name {
     display: flex;
+    justify-content: space-between; 
     align-items: center;
+    padding: 15px 20px;
+    margin-left: 0; 
+    margin-right: 0; 
+    position: relative;
+    z-index: 1;
+    margin-top: 0; 
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    background-color: #fff;
+    margin-bottom: 10px;
+    color: #B92F2F
 }
+
+body {
+    background-color: #f3e8e8;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Collapse headers */
+.collapse_box_header {
+  background-color: #f07474; /* full red header */
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  padding: 10px 16px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  margin: 5px 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  height: 6vh;
+  box-sizing: border-box;
+}
+
 .collapse_box_header:hover {
-    border: #000000 1px solid;
-    cursor: pointer;
+  border: #000000 1px solid;
+  cursor: pointer;
+}
+
+/* Labels inside headers */
+.collapse_box_header .collapse_box_label {
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+}
+
+/* Tabulator header cells for all tables */
+#budget_v_expense_table .tabulator-col,
+#target_v_actual_table .tabulator-col,
+#per_district_table .tabulator-col {
+    background-color: #ffffff !important;  /* white header */
+    color: #1f1313 !important;             /* dark text */
+}
+
+/* Center header text */
+#budget_v_expense_table .tabulator-col .tabulator-col-content,
+#target_v_actual_table .tabulator-col .tabulator-col-content,
+#per_district_table .tabulator-col .tabulator-col-content {
+    justify-content: center !important;
+}
+
+/* Row colors: light gray for even rows */
+#budget_v_expense_table .tabulator-row,
+#target_v_actual_table .tabulator-row,
+#per_district_table .tabulator-row {
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #efefef !important;
 }
 
 .collapse_box_checkbox {
@@ -53,13 +90,10 @@ h1 {
 
 .collapse_box_label {
     cursor: pointer;
-    font-size: 20px;
+    font-size: 5rem; /* updated font size */
     user-select: none;
     margin: 1%;
-    font-weight: bold;
-}
-.collapse_box_label:hover {
-    text-decoration: underline;
+    font-weight: 600; /* matches previous inline style */
 }
 
 .collapse_box_label::before {
@@ -83,5 +117,75 @@ h1 {
     flex-direction: column;
     background-color: #f9f9f9;
     border-radius: 6px;
+}
+
+.filter_search_container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 15px 20px;
+  margin: 0 0 25px 0; 
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-top: 20px;
+  margin-bottom: 20px;
+  width: auto;
+}
+
+.filters_box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filters_box label {
+  font-weight: 600;
+  color: #333;
+}
+
+.filters_box select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: border 0.2s;
+}
+
+.filters_box select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+.filter_search_container .search_box {
+  margin: 0;
+  margin-left: auto;
+}
+
+.filter_search_container .search_box input {
+  width: 280px;
+}
+
+.search_box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  margin-top: 10px;
+  margin-left: auto; 
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+#district-search {
+  padding: 6px 8px 6px 30px;
+  width: 250px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fff url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/svgs/solid/magnifying-glass.svg') no-repeat 8px center;
+  background-size: 14px 14px;
 }
 
