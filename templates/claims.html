@@ -570,18 +570,19 @@
                             </div>
 
                             <div class="release_sectin_column">
+                                <label for="date_released">Date Released</label>
+
                                 <span>
-                                    <label for="date_released">Date Released</label>
+                                <input type="date" id="date_released" name="date_released" required autocomplete="off">
                                     <button style="float: right;" type="button" onclick="document.getElementById('date_released').value = new Date().toISOString().slice(0, 10);">
                                         Today
                                     </button>
                                 </span>
-                                <input type="date" id="date_released" name="date_released" required autocomplete="off">
 
                                 <label for="chinabank_amount">Chinabank Amount</label>
                                 <input type="text" id="chinabank_amount" name="chinabank_amount" required autocomplete="off">
                                                                 
-                    
+                                
                                 <label for="bpi_amount">BPI Amount</label>  
                                 <input type="text" id="bpi_amount" name="bpi_amount" required autocomplete="off">
 
@@ -620,7 +621,7 @@
             </div>
         </div>
     </div>
-{% endblock %}
+{% endblock %}`
 
 <!--TODO fix the order of columns in sql file-->
 <!--TODO fix the flickering when scrolling-->
