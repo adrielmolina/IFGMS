@@ -171,7 +171,7 @@ class Inventory(Base):
     inv_id = Column(Integer, primary_key=True)
     maab_category = Column(Enum(
         'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 
-        'Enhanced Platinum', 'Senior', 'Senior+'))
+        'Enhanced Platinum', 'Safe Card', 'Senior', 'Senior+'))
     maab_no = Column(String(255))
     used = Column(SmallInteger)
     remarks = Column(Text)
