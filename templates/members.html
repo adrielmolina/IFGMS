@@ -63,7 +63,7 @@
 
             <div class="controls_box">
                 <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
-                <button class="btn-declare"><i class="fa-solid fa-list"></i> Add to Declaration</button>
+                <button id="add_to_dispatch" class="btn-declare"><i class="fa-solid fa-list"></i> Add to Dispatch</button>
                 <button class="btn-export"><i class="fa-solid fa-file-export"></i> Export to Excel</button>
             </div>
         </div>
@@ -118,6 +118,12 @@
         <div id="record_details" class="record_details">           
         <table class="record_details_table">
             <tr>
+                <!-- TODO WIP remove if not needed -->
+                <td>
+                    <label for="dispatch_ready">Add to Dispatch</label>
+                    <input type="text" id="add_to_dispatch" name="add_to_dispatch" value="add_to_dispatch" value="0" autocomplete="off" readonly placeholder=" ">
+                </td>
+
                 <td>
                     <div class="input-container">
                         <label for="record_id">Record ID</label>
@@ -679,10 +685,12 @@ let entriesPerPage = 10;
             hotInstance = new Handsontable(container, {
                 data,
                 colHeaders: [
+                    //'Add to Dispatch',
                     'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
                     'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
                 ],
                 columns: [
+                //{ data: 'declare_check', type: 'checkbox', readOnly: false},
                 { renderer: openLinkRenderer },
                 { data: 'record_id', readOnly: true},
                 { data: 'year' },
@@ -1108,6 +1116,28 @@ document.querySelector('.btn-export').addEventListener('click', function () {
         mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
 });
+
+    document.getElementById('add_to_dispatch').addEventListener('click', function () {
+        fetch('/api/add_to_dispatch', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}) // optional, keeps it valid JSON
+    })
+    .then(response => response.json())
+    .then(data => {
+    if (data.success) {
+        toastSuccess(`${data.added_to_dispatch_count} Entries Added to Dispatch Successfully!`, "The selected records have been added to dispatch.");
+    } else {
+        toastError("Failed to Add to Dispatch", data.error || "An error occurred while adding records to dispatch.");
+    }
+    })
+    .catch(error => {
+    console.error('Error:', error);
+    toastError("Network Error", "Could not connect to server.");
+    });
+    });
+
+
 
 </script>
 
