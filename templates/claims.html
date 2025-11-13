@@ -30,31 +30,26 @@
 
     <!-- Filter container -->
     <div class="filter_search_container">
-        <div class="filters_box">
-            <label for="filter_year">Filter by:</label>
-            <select id="filter_year">
-                <option value="">Year</option>
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
-            </select>
+            <div class="filters_box">
+                <label for="filter_status">Filter by:</label>
+                <select id="filter_status" class="status">
+                    <option value="">Status</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Denied">Denied</option>
+                </select>
 
-            <select id="filter_category">
-                <option value="Month">Month</option>
-                <option value="January">January</option>
-                <option value="February">February</option>
-                <option value="March">March</option>
-                <option value="April">April</option>
-                <option value="May">May</option>
-                <option value="June">June</option>
-                <option value="July">July</option>
-                <option value="August">August</option>
-                <option value="September">September</option>
-                <option value="October">October</option>
-                <option value="November">November</option>
-                <option value="December">December</option>
-            </select>
+                <select id="filter_origin">
+                    <option value="">Origin</option>
+                    <option value="Chapter">Chapter</option>
+                    <option value="Dasmariñas">Dasmariñas</option>
+                    <option value="Silang">Silang</option>
+                </select>
+            </div>
+ 
+            <div class="controls_box">
+                <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
+            </div>
         </div>
 
         <input id="search_input" type="text" placeholder="Search...">
