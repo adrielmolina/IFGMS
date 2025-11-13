@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, ForeignKey, Enum, SmallInteger, DateTime, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, ForeignKey, Enum, SmallInteger, DateTime, TIMESTAMP, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from flask_login import UserMixin
 
@@ -23,6 +23,7 @@ class Accounts(Base, UserMixin):
     user_level = Column(Enum('staff', 'admin', 'superadmin'))
     acct_status = Column(String(255))
     acct_review_date = Column(Date)
+    profile_pic = Column(LargeBinary, nullable=True)
     
 
     def get_id(self):
@@ -306,6 +307,31 @@ class Dispatch(Base):
     dispatch_total = Column(DECIMAL(10, 0))
     late_declare = Column(Boolean)
     dispatch_remarks = Column(Text)
+    
+    @property
+    def dispatch_cutoff_YMD(self):
+        return self.dispatch_cutoff.strftime('%Y-%m-%d') if self.dispatch_cutoff else None
+    
+    @property
+    def date_dispatched_YMD(self):
+        return self.date_dispatched.strftime('%Y-%m-%d') if self.date_dispatched else None
+    
+    def to_dict(self):
+        def safe(value):
+            return value if value is not None else ''
+        
+        return {
+            'dispatch_id': safe(self.dispatch_id),
+            'dispatch_type': safe(self.dispatch_type),
+            'dispatch_origin': safe(self.dispatch_origin),
+            'dispatch_year': safe(self.dispatch_year),
+            'dispatch_cutoff': safe(self.dispatch_cutoff_YMD),
+            'dispatch_status': safe(self.dispatch_status),
+            'date_dispatched': safe(self.date_dispatched_YMD),
+            'dispatch_total': int(self.dispatch_total) if self.dispatch_total is not None else 0,
+            'late_declare': safe(self.late_declare),
+            'dispatch_remarks': safe(self.dispatch_remarks)
+        }
     
 
 class Logs(Base):

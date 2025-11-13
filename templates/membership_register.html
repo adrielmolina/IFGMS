@@ -2,500 +2,901 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>MAAB Registration</title>
-  <!-- Link to your single cleaned CSS file -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
+    <meta charset="UTF-8" />
+    <title>MAAB Registration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
+
+
 </head>
 
-<body style="background: url('{{ url_for('static', filename='assets/blurred what.png') }}') no-repeat center center fixed; background-size: cover;">
-  <header class="main-header">
-    <div class="header-content">
-      <img src="{{ url_for('static', filename='assets/favicon.ico') }}" alt="PRC Logo" class="header-logo">
-      <h1 class="header-title">Membership Registration</h1>
-    </div>
-  </header>
-
-
-  <div class="main-section">
-
-    <!-- ===== GALLERY CONTAINER ===== -->
-    <div class="gallery-wrapper">
-      <button id="prevBtn" class="slide-btn">&#10094;</button> <!-- left arrow -->
-      <div class="gallery" id="gallery">
-      
-        <!-- Use url_for to ensure Flask serves the files correctly -->
-        <div class="card" data-id="classic" data-image="{{ url_for('static', filename='assets/ID1.png') }}">
-          <img src="{{ url_for('static', filename='assets/ID1.png') }}" alt="Classic ID">
-          <p>Classic ID</p>
-        </div>
-
-        <div class="card" data-id="premier-bronze" data-image="{{ url_for('static', filename='assets/ID2.png') }}">
-          <img src="{{ url_for('static', filename='assets/ID2.png') }}" alt="Premier Bronze ID">
-          <p>Premier Bronze ID</p>
-        </div>
-
-        <div class="card" data-id="premier-silver" data-image="{{ url_for('static', filename='assets/ID3.png') }}">
-          <img src="{{ url_for('static', filename='assets/ID3.png') }}" alt="Premier Silver ID">
-          <p>Premier Silver ID</p>
-        </div>
-
-        <div class="card" data-id="premier-gold" data-image="{{ url_for('static', filename='assets/ID4.png') }}">
-          <img src="{{ url_for('static', filename='assets/ID4.png') }}" alt="Premier Gold ID">
-          <p>Premier Gold ID</p>
-        </div>
-
-        <div class="card" data-id="premier-platinum" data-image="{{ url_for('static', filename='assets/ID5.png') }}">
-          <img src="{{ url_for('static', filename='assets/ID5.png') }}" alt="Premier Platinum ID">
-          <p>Premier Platinum ID</p>
-        </div>
-
-        <div class="card" data-id="senior" data-image="{{ url_for('static', filename='assets/ID6.png') }}">
-          <img src="{{ url_for('static', filename='assets/ID6.png') }}" alt="Senior ID">
-          <p>Senior ID</p>
-        </div>
-
-        <div class="card" data-id="seniorplus" data-image="{{ url_for('static', filename='assets/ID7.png') }}">
-          <img src="{{ url_for('static', filename='assets/ID7.png') }}" alt="Senior Plus ID">
-          <p>Senior Plus ID</p>
-        </div>
-        <button id="nextBtn" class="slide-btn">&#10095;</button> <!-- right arrow -->
-      </div> <!-- /.gallery -->
-
-    </div> <!-- /.gallery-container -->
-
-    <!-- ===== DESCRIPTION / DETAILS MODAL (hidden by default) ===== -->
-    <div id="descriptionModal" class="modal" aria-hidden="true">
-      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="idTitle">
-        <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
-
-        <div class="modal-body">
-          <div class="modal-left">
-            <img id="idImage" src="" alt="Selected MAAB ID">
-          </div>
-
-          <div class="modal-right">
-            <h3 id="idTitle"></h3>
-            <div id="idDescription" class="id-description"></div>
-            <div class="modal-actions">
-              <button id="beMemberBtn" class="member-btn">Be a Member</button>
+<body>
+    <div class="main-section">
+        <div class="hero-banner">
+            <img src="{{ url_for('static', filename='assets/bg4.png') }}" alt="Hero Background" class="hero-bg">
+            <div class="hero-content">
+                <h1>Be a Red Cross Member and help save lives!</h1>
+                <p>Join our mission to provide humanitarian assistance and accident protection</p>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
 
-
-    
-    <!-- ===== BLUE BANNER SECTION ===== -->
-    <section class="blue-banner">
-      <div class="banner-content">
-        <h2>Be Part of Something Bigger</h2>
-        <p>Join the Philippine Red Cross and help save lives today.</p>
-      </div>
-    </section>
-
-    <!-- ===== IMAGE SECTION (After Blue Banner) ===== -->
-    <section class="banner-image-section">
-      <img 
-        src="{{ url_for('static', filename='assets/gallery.jpg') }}" 
-        alt="Gallery Image" 
-        class="banner-image">
-    </section>
-
-    <!-- ===================== Registration form (unchanged) ===================== -->
-    <section class="form-container">
-       <section class="form-container">
-      
-
-        <form id="registrationForm">
-            <!-- Row 1 -->
-            <div class="form-row">
-                <div class="form-group">
-                    <label>First Name <span class="required">*</span></label>
-                    <input type="text" name="fname" required>
-                </div>
-                <div class="form-group">
-                    <label>Middle Name</label>
-                    <input type="text" name="mname" placeholder="Optional">
-                </div>
-                <div class="form-group">
-                    <label>Surname <span class="required">*</span></label>
-                    <input type="text" name="sname" required>
-                </div>
-                <div class="form-group">
-                    <label>Suffix <span class="optional">(if applicable)</span></label>
-                    <select name="suffix">
-                        <option value="">Not applicable</option>
-                        <option>Jr.</option>
-                        <option>Sr.</option>
-                        <option>II</option>
-                        <option>III</option>
-                        <option>IV</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Row 2 -->
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Birthdate <span class="required">*</span></label>
-                    <input type="date" id="birthdate" name="birthdate" required>
-                </div>
-                <div class="form-group">
-                    <label>Age <span class="required">*</span></label>
-                    <input type="number" id="age" name="age" readonly maxlength="3" max="150" placeholder="Auto" required>
-                </div>
-                <div class="form-group">
-                    <label>Sex <span class="required">*</span></label>
-                    <select name="sex" required>
-                        <option value="">Select</option>
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Prefer not to say</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Blood Type <span class="required">*</span></label>
-                    <select name="bloodtype" required>
-                        <option value="">Select</option>
-                        <option>A+</option>
-                        <option>A-</option>
-                        <option>B+</option>
-                        <option>B-</option>
-                        <option>O+</option>
-                        <option>O-</option>
-                        <option>AB+</option>
-                        <option>AB-</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Row 3 -->
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Contact Number <span class="required">*</span></label>
-                    <div class="contact-field">
-                        <span class="country-code">+63</span>
-                        <input type="tel" name="contact" placeholder="9xxxxxxxxx" maxlength="10" required>
+        <!-- ===== MAAB FEATURES ===== -->
+        <div class="features-section section-fade">
+            <section class="features-section">
+                <h2 class="features-title">Membership with Accident Assistance Benefits Features</h2>
+                <div class="features-container">
+                    <div class="feature-card">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>Accident Assistance Coverage</h3>
+                        <p>Benefits for accidental death, disablement, and dismemberment to protect you and your loved ones</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🪪</div>
+                        <h3>Annual Membership ID</h3>
+                        <p>Official MAAB ID card valid for one (1) year with comprehensive accident protection benefits</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">❤️</div>
+                        <h3>Supports Red Cross Programs</h3>
+                        <p>Membership fees serve as donation to sustain humanitarian activities and emergency response</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">👨‍👩‍👧‍👦</div>
+                        <h3>Open to Ages 3–85</h3>
+                        <p>Individuals of various ages can enroll under different membership categories to their specific needs</p>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Email Address <span class="required">*</span></label>
-                    <input type="email" name="email" required>
-                </div>
-            </div>
+            </section>
+        </div>
 
-            <!-- Row 4 -->
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Province <span class="required">*</span></label>
-                    <input type="text" name="province" required>
-                </div>
-                <div class="form-group">
-                    <label>Municipality <span class="required">*</span></label>
-                    <input type="text" name="municipality" required>
-                </div>
-                <div class="form-group">
-                    <label>Street / Barangay <span class="required">*</span></label>
-                    <input type="text" name="street" required>
-                </div>
-                <div class="form-group">
-                    <label>City <span class="required">*</span></label>
-                    <input type="text" name="city" required>
-                </div>
+        <div class="maab-info section-fade">
+            <div id="maab-icon">🪪</div>
+            <div class="maab-text">
+                <h4>What is MAAB?</h4>
+                <p>MAAB (Membership Accident Assistance Benefits) is a Red Cross Philippines program that provides emergency medical assistance, accident insurance, and financial support for hospitalization expenses to registered members.</p>
+                <p>To become a member, register now or just visit our nearest PRC Chapter in your area.</p>
             </div>
+        </div>
 
-            <!-- Row 5 -->
-            <div class="form-row">
-                <div class="form-group">
-                    <label>MAAB Category</label>
-                    <select id="maab" name="maab" required disabled>
-                        <option value="">Select</option>
-                        <option>Classic</option>
-                        <option>Bronze</option>
-                        <option>Silver</option>
-                        <option>Gold</option>
-                        <option>Platinum</option>
-                        <option>Senior</option>
-                        <option>Senior+</option>
-                    </select>
-                    <small id="maabMessage" class="maab-note"></small>
+        <!-- ===== MAAB ID GALLERY ===== -->
+        <section class="gallery-section section-fade">
+            <h2 class="gallery-title">MAAB ID Category</h2>
+
+            <div class="gallery-wrapper">
+                <!-- Left Button -->
+                <button class="nav-btn left-btn" id="leftBtn">&#10094;</button>
+
+                <!-- Main Card -->
+                <div class="gallery-card">
+                    <div class="gallery-content">
+                        <!-- Image Area -->
+                        <div class="image-area">
+                            <div class="image-wrapper">
+                                <img id="galleryImage" src="{{ url_for('static', filename='assets/ID1.png') }}" alt="MAAB ID">
+                            </div>
+                            <p class="image-caption" id="caption">CLASSIC ID</p>
+                        </div>
+
+                        <!-- Description Area -->
+                        <div class="description-area">
+                            <div id="idDescription">
+                                <p> Issuance Age is 3 - 65 years old</p>
+                                <p> Php 12,000.00 - Accident Death, Disablement & Dismemberment</p>
+                                <p> Php 12,000.00 - Unprovoked Murder and Assault</p>
+                                <p> Php 5,000.00 - Accidental Medical Reimbursement</p>
+                                <p> Php 5,000.00 - Burial Assistance (if Accident)</p>
+                                <p> Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Office <span class="required">*</span></label>
-                    <select name="office" required>
-                        <option value="">Select Branch</option>
-                        <option>Cavite City Branch</option>
-                        <option>Silang Branch</option>
-                        <option>Dasma Branch</option>
-                    </select>
+
+                <!-- Right Button -->
+                <button class="nav-btn right-btn" id="rightBtn">&#10095;</button>
+            </div>
+        </section>
+
+        <!-- ===== REGISTRATION STEPS ===== -->
+        <div class="registration-steps-section section-fade">
+            <h2 class="steps-title">Get Your MAAB ID in 3 Easy Steps!</h2>
+            
+            <div class="registration-steps">
+                <div class="step active">
+                    <div class="step-icon">📝</div>
+                    <div class="step-text">
+                        <h4>Step 1</h4>
+                        <p>Fill out the registration form</p>
+                    </div>
+                    <div class="step-arrow">→</div>
                 </div>
-            </div>
-
-            <div class="form-actions">
-                <button type="button" class="back-btn" id="backBtn">Back</button>
-                <button type="submit" class="submit-btn">Submit</button>
-            </div>
-        </form>
-      </section>
-</div>
-
-
-
-<footer class="footer-ash">
-        <div class="footer-container">
-            <div class="footer-description">
-                <h3>PHILIPPINE RED CROSS</h3>
-                <p>
-                    Born officially in 1947, but with roots that trace back to the revolutionary days,
-                    the Philippine Red Cross has truly become the premier humanitarian organization in
-                    the country, committed to provide quality life-saving services that protect life
-                    and dignity especially of indigent Filipinos in vulnerable situations.
-                </p>
-            </div>
-            <div class="footer-button">
-                <a href="https://redcross.org.ph/about-us/" target="_blank" class="learn-more-btn">Learn More</a>
-            </div>
-            <div class="footer-follow">
-                <h3>FOLLOW US</h3>
-                <div class="social-links">
-                    <a href="https://www.facebook.com/BatangRedCross" target="_blank">Facebook</a>
-                    <a href="https://x.com/philredcross" target="_blank">X (Twitter)</a>
-                    <a href="https://www.instagram.com/philredcross/" target="_blank">Instagram</a>
+                
+                <div class="step">
+                    <div class="step-icon">🖥️</div>
+                    <div class="step-text">
+                        <h4>Step 2</h4>
+                        <p>Submit information online</p>
+                    </div>
+                    <div class="step-arrow">→</div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-icon">🏢</div>
+                    <div class="step-text">
+                        <h4>Step 3</h4>
+                        <p>Visit Red Cross to pay & claim ID</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </footer>
 
-    <footer class="footer-dark">
-        <p>© 2025 Philippine Red Cross Cavite Chapter | All Rights Reserved</p>
-    </footer>
+        <!-- ===================== Registration form ===================== -->
+        <section class="form-container section-fade">
+            <h2 class="features-title">Register Here!</h2>
 
-      <form id="registrationForm">
-        <!-- your full form fields ... (I left them out here for brevity) -->
-      </form>
-    </section>
+            <form id="registrationForm">
+                <!-- Row 1 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name <span class="required">*</span></label>
+                        <input id="fname" type="text" name="fname" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Middle Name</label>
+                        <input id="mname" type="text" name="mname" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name <span class="required">*</span></label>
+                        <input id="lname" type="text" name="sname" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Suffix <span class="optional">(if applicable)</span></label>
+                        <select name="suffix" id="suffix" required>
+                            <option value="NA">NA</option>
+                            <option value="Jr">Jr</option>
+                            <option value="Sr">Sr</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                            <option value="V">V</option>
+                            <option value="VI">VI</option>
+                            <option value="VII">VII</option>
+                        </select>
+                    </div>
+                </div>
 
-    <!-- footer omitted here for brevity — keep your existing footer HTML as-is -->
+                <!-- Row 2 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Birthdate <span class="required">*</span></label>
+                        <input type="date" id="birthdate" name="birthdate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Age <span class="required">*</span></label>
+                        <input type="number" id="age" name="age" readonly maxlength="3" max="150" placeholder="Auto">
+                    </div>
+                    <div class="form-group">
+                        <label>Sex <span class="required">*</span></label>
+                        <select name="sex" id="sex" required>
+                            <option value="">Select</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Blood Type <span class="required">*</span></label>
+                        <select name="bloodtype" id="bloodtype" required>
+                            <option value="">Select</option>
+                            <option>A+</option>
+                            <option>A-</option>
+                            <option>B+</option>
+                            <option>B-</option>
+                            <option>O+</option>
+                            <option>O-</option>
+                            <option>AB+</option>
+                            <option>AB-</option>
+                        </select>
+                    </div>
+                </div>
 
-  </div>
+                <!-- Row 3 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contact Number <span class="required">*</span></label>
+                        <div class="contact-field">
+                            <span class="country-code">+63</span>
+                            <input type="tel" id="contact" name="contact" placeholder="9xxxxxxxxx" maxlength="10" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                </div>
 
-  <!-- Put the JS at the end of body so DOM elements exist -->
-  <script>
-    /* ---------------- DATA (descriptions) ---------------- */
-    const descriptions = {
-      classic: {
-        title: "CLASSIC ID",
-        details: [
-          "⛑ Issuance Age is 5 - 65 years old",
-          "⛑ Php 12,000.00 - Accident Death, Disablement & Dismemberment",
-          "⛑ Php 12,000.00 - Unprovoked Murder and Assault",
-          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
-          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
-          "⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-        ]
-      },
-      "premier-bronze": {
-        title: "PREMIER BRONZE ID",
-        details: [
-          "⛑ Issuance Age is 5 - 65 years old",
-          "⛑ Php 35,000.00 - Accident Death, Disablement & Dismemberment",
-          "⛑ Php 35,000.00 - Unprovoked Murder and Assault",
-          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
-          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
-          "⛑ Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-        ]
-      },
-      "premier-silver": {
-        title: "PREMIER SILVER ID",
-        details: [
-          "⛑ Issuance Age is 5 - 65 years old",
-          "⛑ Php 100,000.00 - Accident Death, Disablement & Dismemberment",
-          "⛑ Php 100,000.00 - Unprovoked Murder and Assault",
-          "⛑ Php 10,000.00 - Accidental Medical Reimbursement",
-          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
-          "⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-        ]
-      },
-      "premier-gold": {
-        title: "PREMIER GOLD ID",
-        details: [
-          "⛑ Issuance Age is 5 - 65 years old",
-          "⛑ Php 200,000.00 - Accident Death, Disablement & Dismemberment",
-          "⛑ Php 200,000.00 - Unprovoked Murder and Assault",
-          "⛑ Php 10,000.00 - Accidental Medical Reimbursement",
-          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
-          "⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-        ]
-      },
-      "premier-platinum": {
-        title: "PREMIER PLATINUM ID",
-        details: [
-          "⛑ Issuance Age is 5 - 65 years old",
-          "⛑ Php 300,000.00 - Accident Death, Disablement & Dismemberment",
-          "⛑ Php 300,000.00 - Unprovoked Murder and Assault",
-          "⛑ Php 10,000.00 - Accidental Medical Reimbursement",
-          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
-          "⛑ Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-        ]
-      },
-      senior: {
-        title: "SENIOR ID",
-        details: [
-          "⛑ Issuance Age is 66 - 80 years old",
-          "⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment",
-          "⛑ Php 50,000.00 - Unprovoked Murder and Assault",
-          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
-          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
-          "⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-        ]
-      },
-      seniorplus: {
-        title: "SENIOR PLUS ID",
-        details: [
-          "⛑ Issuance Age is 81 - 85 years old",
-          "⛑ Php 50,000.00 - Accident Death, Disablement & Dismemberment",
-          "⛑ Php 50,000.00 - Unprovoked Murder and Assault",
-          "⛑ Php 5,000.00 - Accidental Medical Reimbursement",
-          "⛑ Php 5,000.00 - Burial Assistance (if Accident)",
-          "⛑ Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-        ]
-      }
-    };
+                <!-- Row 4 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Province <span class="required">*</span></label>
+                        <input type="text" id="province" name="province" value="Cavite" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Municipality <span class="required">*</span></label>
+                        <select name="municipality" id="municipality" required>
+                            <option value="Cavite City">Cavite City</option>
+                            <option value="Kawit">Kawit</option>
+                            <option value="Noveleta">Noveleta</option>
+                            <option value="Rosario">Rosario</option>
+                            <option value="Bacoor">Bacoor</option>
+                            <option value="Imus">Imus</option>
+                            <option value="Dasmariñas">Dasmariñas</option>
+                            <option value="Carmona">Carmona</option>
+                            <option value="General Mariano Alvarez (GMA)">General Mariano Alvarez (GMA)</option>
+                            <option value="Silang">Silang</option>
+                            <option value="General Trias">General Trias</option>
+                            <option value="Amadeo">Amadeo</option>
+                            <option value="Indang">Indang</option>
+                            <option value="Tanza">Tanza</option>
+                            <option value="Trece Martires">Trece Martires</option>
+                            <option value="Alfonso">Alfonso</option>
+                            <option value="Gen. Emilio Aguinaldo (Bailen)">Gen. Emilio Aguinaldo (Bailen)</option>
+                            <option value="Magallanes">Magallanes</option>
+                            <option value="Maragondon">Maragondon</option>
+                            <option value="Mendez">Mendez</option>
+                            <option value="Naic">Naic</option>
+                            <option value="Tagaytay City">Tagaytay City</option>
+                            <option value="Ternate">Ternate</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Barangay<span class="required"></span></label>
+                        <input type="text" id="brgy_no" name="street">
+                    </div>
+                    <div class="form-group">
+                        <label>Street <span class="required"></span></label>
+                        <input type="text" id="street" name="city">
+                    </div>
+                </div>
 
-    /* ---------------- DOM ELEMENTS ---------------- */
-    const modal = document.getElementById('descriptionModal');
-    const modalContent = document.querySelector('.modal-content');
-    const modalClose = document.getElementById('modalClose');
-    const idImage = document.getElementById('idImage');
-    const idTitle = document.getElementById('idTitle');
-    const idDescription = document.getElementById('idDescription');
-    const beMemberBtn = document.getElementById('beMemberBtn');
+                <!-- Row 5 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>MAAB Category</label>
+                        <select id="maab_cat" name="maab" required>
+                            <option>Classic</option>
+                            <option>Bronze</option>
+                            <option>Silver</option>
+                            <option>Gold</option>
+                            <option>Safe Card</option>
+                            <option>Platinum</option>
+                            <option>Senior</option>
+                            <option>Senior+</option>
+                        </select>
+                        <small id="maabMessage" class="maab-note"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Office <span class="required">*</span></label>
+                        <select name="office" id="origin" required>
+                            <option value="chapter">Cavite Chapter</option>
+                            <option value="dasma">Dasma Branch</option>
+                            <option value="silang">Silang Branch</option>
+                        </select>
+                    </div>
+                </div>
 
-    /* ---------------- HANDLERS ---------------- */
-    // Open modal when clicking a card
-    document.querySelectorAll('.card').forEach(card => {
-      card.addEventListener('click', () => {
-        const idKey = card.dataset.id;
-        const imgSrcFromAttr = card.dataset.image || card.querySelector('img').src;
-        const data = descriptions[idKey];
-        if (!data) return console.warn('No description found for', idKey);
+                <!-- ================= CHECKBOX & LINK ================= -->
+                <label class="terms-check">
+                    <input type="checkbox" required>
+                    I agree to the 
+                    <a href="#" id="openTerms">Terms and Conditions</a>
+                </label>
 
-        // Populate modal
-        idImage.src = imgSrcFromAttr;
-        idImage.alt = data.title;
-        idTitle.textContent = data.title;
+                <div class="form-actions">
+                    <button type="button" class="back-btn" id="back_btn">Back</button>
+                    <button type="button" class="submit-btn" id="submit_btn">Submit</button>
+                </div>
+            </form>
+        </section>
 
-        // Build description HTML (list)
-        idDescription.innerHTML = '';
-        const ul = document.createElement('ul');
-        ul.className = 'modal-desc-list';
-        data.details.forEach(text => {
-          const li = document.createElement('li');
-          li.innerHTML = text; // safe because content is controlled by you
-          ul.appendChild(li);
+        <!-- ================= MODAL ================= -->
+        <div id="termsModal" class="modal" aria-hidden="true">
+            <div class="modal-content">
+                <button class="modal-close" id="closeTerms">&times;</button>
+                <div class="modal-header">
+                    <img src="{{ url_for('static', filename='assets/prc_logo.png') }}" alt="Red Cross" class="modal-logo">
+                    <h2>MAAB Membership <br><span>Terms and Conditions</span></h2>
+                </div>
+                <div class="modal-body">
+                    <p>By registering for the <strong>Membership and Accident Assistance Benefit (MAAB)</strong> program of the <strong>Philippine Red Cross (PRC)</strong>, you agree to the following terms and conditions:</p>
+
+                    <ol>
+                        <li><strong>Membership Validity</strong> — Valid for one (1) year from the date of issuance. Renewal must be done before expiration.</li>
+                        <li><strong>Membership Fee and ID Claiming</strong> — Payment must be made upon claiming your MAAB ID at the nearest PRC Chapter.</li>
+                        <li><strong>Accident Assistance Coverage</strong> — Benefits apply only to active members with valid MAAB IDs within the coverage period.</li>
+                        <li><strong>Accuracy of Information</strong> — Members must ensure all provided details are correct. PRC is not liable for incorrect or falsified information.</li>
+                        <li><strong>Non-transferability</strong> — Membership and benefits are strictly non-transferable.</li>
+                        <li><strong>Lost or Damaged IDs</strong> — Replacement IDs may incur additional charges.</li>
+                    </ol>
+
+                    <p class="disclaimer">For more details, visit your nearest Philippine Red Cross Chapter.</p>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= CONFIRMATION MODAL ================= -->
+<div id="confirmationModal" class="modal" aria-hidden="true" style="display: none;">
+    <div class="modal-content confirmation-modal">
+        <div class="modal-header">
+            <img src="{{ url_for('static', filename='assets/prc_logo.png') }}" alt="Red Cross" class="modal-logo">
+            <h2>Registration Successful! 🎉</h2>
+        </div>
+        <div class="modal-body">
+            <div class="success-icon">✅</div>
+            <p class="congrats-message">Congratulations <span id="confirmName"></span>! You are now registered for MAAB.</p>
+            
+            <div class="registration-details">
+                <h3>Registration Details:</h3>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <strong>MAAB Category:</strong>
+                        <span id="confirmCategory"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Reference No:</strong>
+                        <span id="referenceNumber"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Branch to Visit:</strong>
+                        <span id="confirmBranch"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Registration Date:</strong>
+                        <span id="confirmDate"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="important-notice">
+                <h4>📋 Important: What to Do Next</h4>
+                <ol>
+                    <li><strong>Screenshot or Download</strong> this confirmation</li>
+                    <li>Visit your chosen Red Cross branch: <strong id="branchAddress"></strong></li>
+                    <li>Present this confirmation and pay the membership fee</li>
+                    <li>Claim your MAAB ID on the spot!</li>
+                </ol>
+            </div>
+
+            <div class="action-buttons">
+                <button class="download-btn" id="downloadConfirmation">📥 Download Confirmation</button>
+                <button class="screenshot-btn" id="takeScreenshot">📸 Take Screenshot</button>
+                <button class="close-btn" id="closeConfirmation">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+        <!--- ================= FAQ ========================== -->
+        <section id="faq" class="faq-section scroll-animate fade-up">
+            <h2>Frequently Asked Questions (FAQs)</h2>
+
+            <div class="faq-container">
+              <div class="faq-item">
+                <button class="faq-question">What is the Membership Accident Assistance Benefits (MAAB) Program?</button>
+              <div class="faq-answer">
+                <p>The MAAB Program is an initiative of the Philippine Red Cross that provides accident insurance and emergency medical benefits to its members. It allows individuals to support Red Cross humanitarian activities while receiving protection in case of accidents, death, or medical emergencies.</p>
+            </div>
+          </div>
+
+
+          <div class="faq-item">
+              <button class="faq-question">How can I become a member?</button>
+          <div class="faq-answer">
+              <p>You can register by completing a membership form at your local Red Cross branch or using the membership registration online! After payment, your information will be encoded into the Membership Information System, and your MAAB ID will be issued by the Cavite Chapter.</p>
+          </div>
+        </div>
+
+          <div class="faq-item">
+              <button class="faq-question">Where and when can I get the MAAB ID?</button>
+          <div class="faq-answer">
+              <p>You can visit the nearest local branch in your area, Cavite-Chapter(MAIN) in Cavite City, Silang branch, & Dasma branch. Show a screenshot of your confirmation upon register and pay, your MAAB ID will release on the spot!</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+              <button class="faq-question">What are the benefits included in the MAAB membership?</button>
+        <div class="faq-answer">
+              <p>Depending on your chosen membership type, benefits may include coverage for accident death, disablement, medical reimbursement, unprovoked assault, and daily hospital allowance.</p>
+        </div>
+      </div>
+
+        <div class="faq-item">
+              <button class="faq-question">How does the MAAB ID work?</button>
+        <div class="faq-answer">
+    <p>Your MAAB ID serves as proof of membership and eligibility for Red Cross accident assistance benefits. The MAAB ID can be used when you're involved in an accident and need to claim insurance benefits or assistance.</p>
+    
+    <p><strong>How to claim benefits:</strong></p>
+    <ul>
+        <li>Contact your nearest Red Cross branch</li>
+        <li>Walk-in to any Red Cross office</li>
+    </ul>
+    
+    <p><strong>Required documents for claiming:</strong></p>
+    <div class="requirements-grid">
+        <div class="requirement-column">
+            <ul>
+                <li>✅ Claim Form</li>
+                <li>✅ PRC ID</li>
+                <li>✅ Medical Certificate</li>
+                <li>✅ Hospital Bill/OR</li>
+                <li>✅ Statement of Account</li>
+                <li>✅ Doctor's Prescription</li>
+                <li>✅ Purchased Medicines</li>
+                <li>✅ Medical Records</li>
+                <li>✅ Animal Bite Treatment</li>
+            </ul>
+        </div>
+        <div class="requirement-column">
+            <ul>
+                <li>✅ Incident Report</li>
+                <li>✅ Police Report</li>
+                <li>✅ Barangay Report</li>
+                <li>✅ Driver's License</li>
+                <li>✅ Birth Certificate</li>
+                <li>✅ Marriage Certificate</li>
+                <li>✅ Death Certificate</li>
+                <li>✅ Burial Receipts</li>
+            </ul>
+        </div>
+    </div>
+    
+    <p>Present your MAAB ID and complete requirements at any Red Cross facility to process your accident assistance benefits.</p>
+</div>
+
+        <div class="faq-item">
+              <button class="faq-question">How can I claim my accident assistance benefit?</button>
+        <div class="faq-answer">
+              <p>Members can submit their claims at their nearest Red Cross branch with the necessary documents. Claims are processed and verified through the Fund Generations’ MIS, ensuring faster and more accurate benefit distribution.</p>
+        </div>
+      </div>
+
+        <div class="faq-item">
+              <button class="faq-question">Can I renew or replace my MAAB ID?</button>
+        <div class="faq-answer">
+              <p>Yes. The system automatically notifies staff when a member’s ID is nearing expiration. Members can request renewal or replacement by visiting their local branch or the Cavite Chapter office.</p>
+        </div>
+      </div>
+    </div>
+</section>
+
+
+
+
+
+
+        <!---- ================= FOOTER ================= -->
+        <footer class="footer-ash">
+            <div class="footer-container">
+                <div class="footer-button">
+                    <a href="https://redcross.org.ph/about-us/" target="_blank" class="learn-more-btn">Learn More</a>
+                </div>
+                <div class="footer-follow">
+                    <h3>FOLLOW US</h3>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/BatangRedCross" target="_blank">Facebook</a>
+                        <a href="https://x.com/philredcross" target="_blank">X (Twitter)</a>
+                        <a href="https://www.instagram.com/philredcross/" target="_blank">Instagram</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <footer class="footer-dark">
+            <p>© 2025 Philippine Red Cross Cavite Chapter | All Rights Reserved</p>
+        </footer>
+    </div>
+
+    <!-- ================= javascript ======================================================= -->
+    <script>
+        const heroImages = [
+            "{{ url_for('static', filename='assets/bg4.png') }}",
+            "{{ url_for('static', filename='assets/bg5.png') }}",
+            "{{ url_for('static', filename='assets/bg6.png') }}"
+        ];
+        const changeInterval = 4000; 
+        const fadeDuration = 1000;  
+
+        // === CREATE STYLE FOR HERO IMAGES ===
+        const style = document.createElement("style");
+        style.textContent = `
+            .hero-bg {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-size: cover;
+                background-position: center;
+                transition: opacity ${fadeDuration}ms ease-in-out;
+                background-color: black; /* Added black background for fade effect */
+            }
+            .hero-bg.hidden {
+                opacity: 0;
+            }
+        `;
+
+        // === PRELOAD IMAGES ===
+        heroImages.forEach(src => {
+            const img = new Image();
+            img.src = src;
         });
-        idDescription.appendChild(ul);
 
-        // Place Be a Member link -> navigate to registration page
-        beMemberBtn.onclick = () => {
-          // use route path you want (Flask route)
-          window.location.href = '/membership_register';
+        // === HERO IMAGE SWITCH LOGIC ===
+        let currentHero = 0;
+
+        function changeHeroImage() {
+            const nextHero = (currentHero + 1) % heroImages.length;
+            
+            const heroImage = document.querySelector('.hero-bg');
+            if (heroImage) {
+                heroImage.classList.add("hidden");
+                setTimeout(() => {
+                    heroImage.src = heroImages[nextHero];
+                    heroImage.classList.remove("hidden");
+                }, fadeDuration);
+            }
+
+            currentHero = nextHero;
+        }
+
+        // Rotate hero images
+        setInterval(changeHeroImage, changeInterval);
+
+        /* ---------------- DATA (descriptions) ---------------- */
+        const descriptions = {
+            classic: {
+                title: "CLASSIC ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 12,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 12,000.00 - Unprovoked Murder and Assault",
+                    "Php 5,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            "premier-bronze": {
+                title: "PREMIER BRONZE ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 35,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 35,000.00 - Unprovoked Murder and Assault",
+                    "Php 5,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            "premier-silver": {
+                title: "PREMIER SILVER ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 100,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 100,000.00 - Unprovoked Murder and Assault",
+                    "Php 10,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            "premier-gold": {
+                title: "PREMIER GOLD ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 200,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 200,000.00 - Unprovoked Murder and Assault",
+                    "Php 10,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            "premier-platinum": {
+                title: "PREMIER PLATINUM ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 300,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 300,000.00 - Unprovoked Murder and Assault",
+                    "Php 10,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            senior: {
+                title: "SENIOR ID",
+                details: [
+                    "Issuance Age is 66 - 80 years old",
+                    "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 50,000.00 - Unprovoked Murder and Assault",
+                    "Php 5,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            seniorplus: {
+                title: "SENIOR PLUS ID",
+                details: [
+                    "Issuance Age is 81 - 85 years old",
+                    "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 50,000.00 - Unprovoked Murder and Assault",
+                    "Php 5,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            }
         };
 
-        // Show modal
-        modal.style.display = 'flex';
-        modal.setAttribute('aria-hidden', 'false');
+        /* -==== GALLERY FUNCTIONALITY ====- */
+        const galleryData = [
+            {
+                id: "classic",
+                image: "{{ url_for('static', filename='assets/ID1.png') }}",
+                title: "CLASSIC ID",
+                description: descriptions.classic.details
+            },
+            {
+                id: "premier-bronze", 
+                image: "{{ url_for('static', filename='assets/ID2.png') }}",
+                title: "PREMIER BRONZE ID",
+                description: descriptions["premier-bronze"].details
+            },
+            {
+                id: "premier-silver",
+                image: "{{ url_for('static', filename='assets/ID3.png') }}", 
+                title: "PREMIER SILVER ID",
+                description: descriptions["premier-silver"].details
+            },
+            {
+                id: "premier-gold",
+                image: "{{ url_for('static', filename='assets/ID4.png') }}", 
+                title: "PREMIER GOLD ID",
+                description: descriptions["premier-gold"].details
+            },
+            {
+                id: "premier-platinum",
+                image: "{{ url_for('static', filename='assets/ID5.png') }}",
+                title: "PREMIER PLATINUM ID",
+                description: descriptions["premier-platinum"].details
+            },
+            {
+                id: "senior",
+                image: "{{ url_for('static', filename='assets/ID6.png') }}",
+                title: "SENIOR ID",
+                description: descriptions.senior.details
+            },
+            {
+                id: "seniorplus", 
+                image: "{{ url_for('static', filename='assets/ID7.png') }}",
+                title: "SENIOR PLUS ID",
+                description: descriptions.seniorplus.details
+            }
+        ];
 
-        // add class for animations if you want (optional)
-        modalContent.classList.add('open');
-      });
-    });
+        let currentImageIndex = 0;
 
-    // Close handlers
-    modalClose.addEventListener('click', closeModal);
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModal();
-    });
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
+        function updateGalleryDisplay() {
+            console.log('Updating gallery to index:', currentImageIndex);
+            const currentData = galleryData[currentImageIndex];
+            
+            // Update image
+            const galleryImage = document.getElementById('galleryImage');
+            if (galleryImage) {
+                galleryImage.src = currentData.image;
+                galleryImage.alt = currentData.title;
+            }
+            
+            // Update caption
+            const caption = document.getElementById('caption');
+            if (caption) caption.textContent = currentData.title;
+            
+            // Update title
+            const idTitle = document.getElementById('idTitle');
+            if (idTitle) idTitle.textContent = currentData.title;
+            
+            // Update description
+            const descriptionDiv = document.getElementById('idDescription');
+            if (descriptionDiv) {
+                descriptionDiv.innerHTML = '';
+                currentData.description.forEach(item => {
+                    const p = document.createElement('p');
+                    p.textContent = item;
+                    descriptionDiv.appendChild(p);
+                });
+            }
+        }
 
-    function closeModal() {
-      // play close animation (if desired) then hide
-      modalContent.classList.remove('open');
-      modal.style.display = 'none';
-      modal.setAttribute('aria-hidden', 'true');
-      // clear image src to avoid stale image
-      idImage.src = '';
-      idTitle.textContent = '';
-      idDescription.innerHTML = '';
+        function nextImage() {
+            console.log('Next button clicked');
+            currentImageIndex = (currentImageIndex + 1) % galleryData.length;
+            updateGalleryDisplay();
+        }
+
+        function prevImage() {
+            console.log('Prev button clicked');
+            currentImageIndex = (currentImageIndex - 1 + galleryData.length) % galleryData.length;
+            updateGalleryDisplay();
+        }
+
+        /* ---------------- STEP INDICATOR LOGIC ---------------- */
+        function updateStepsProgress() {
+            const steps = document.querySelectorAll('.step');
+            const requiredFields = [
+                'fname', 'lname', 'birthdate', 'age', 'sex', 'bloodtype', 
+                'contact', 'email', 'municipality', 'maab_cat', 'origin'
+            ];
+            
+            let filledCount = 0;
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field && field.value.trim() !== '') {
+                    filledCount++;
+                }
+            });
+            
+            // Update step progress
+            const progress = filledCount / requiredFields.length;
+            
+            if (progress >= 0.8) {
+                // All steps complete
+                steps.forEach(step => step.classList.add('active'));
+            } else if (progress >= 0.4) {
+                // Step 2 active
+                steps[0].classList.add('active');
+                steps[1].classList.add('active');
+                steps[2].classList.remove('active');
+            } else {
+                // Only step 1 active
+                steps[0].classList.add('active');
+                steps[1].classList.remove('active');
+                steps[2].classList.remove('active');
+            }
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded - setting up gallery');
+            
+            // Set up gallery button event listeners
+            const leftBtn = document.getElementById('leftBtn');
+            const rightBtn = document.getElementById('rightBtn');
+            const selectBtn = document.querySelector('.select-category-btn');
+            
+            if (leftBtn) {
+                console.log('Left button found');
+                leftBtn.addEventListener('click', prevImage);
+            } else {
+                console.log('Left button NOT found');
+            }
+            
+            if (rightBtn) {
+                console.log('Right button found');
+                rightBtn.addEventListener('click', nextImage);
+            } else {
+                console.log('Right button NOT found');
+            }
+            
+            if (selectBtn) {
+                selectBtn.addEventListener('click', function() {
+                    const currentData = galleryData[currentImageIndex];
+                    const dropdownMap = {
+                        'CLASSIC ID': 'Classic',
+                        'PREMIER BRONZE ID': 'Bronze', 
+                        'PREMIER SILVER ID': 'Silver',
+                        'PREMIER GOLD ID': 'Gold',
+                        'PREMIER PLATINUM ID': 'Platinum',
+                        'SENIOR ID': 'Senior',
+                        'SENIOR PLUS ID': 'Senior+'
+                    };
+                    
+                    const dropdownValue = dropdownMap[currentData.title] || 'Classic';
+                    document.getElementById('maab_cat').value = dropdownValue;
+                    updateStepsProgress();
+                    alert(`Selected: ${currentData.title}`);
+                });
+            }
+
+            // Initialize gallery
+            updateGalleryDisplay();
+
+            // Set up form field listeners for step progression
+            document.querySelectorAll('#registrationForm input, #registrationForm select').forEach(field => {
+                field.addEventListener('input', updateStepsProgress);
+                field.addEventListener('change', updateStepsProgress);
+            });
+
+            // Initialize steps
+            updateStepsProgress();
+
+            // Fade in sections on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all sections with section-fade class
+            document.querySelectorAll('.section-fade').forEach(section => {
+                observer.observe(section);
+            });
+
+            // Optional: Add parallax effect to hero background
+            window.addEventListener('scroll', () => {
+                const heroBg = document.querySelector('.hero-bg');
+                const scrolled = window.pageYOffset;
+                const rate = scrolled * -0.5;
+                heroBg.style.transform = `translateY(${rate}px)`;
+            });
+        });
+
+        // Form submission and other existing functionality
+        document.getElementById('back_btn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+        // Form submission with confirmation
+        document.getElementById('submit_btn').addEventListener('click', () => {
+            street = document.getElementById('street').value.toUpperCase();
+            const brgy_no = document.getElementById('brgy_no').value;
+            const municipality = document.getElementById('municipality').value;
+            const province = document.getElementById('province').value;
+
+        const member_info = {
+            from: 'online_register',
+            fname: document.getElementById('fname').value,
+            mname: document.getElementById('mname').value,
+            lname: document.getElementById('lname').value,
+            suffix: document.getElementById('suffix').value,
+            birthdate: document.getElementById('birthdate').value,
+            age: document.getElementById('age').value,
+            sex: document.getElementById('sex').value,
+            bloodtype: document.getElementById('bloodtype').value,
+            contact: document.getElementById('contact').value,
+            email: document.getElementById('email').value,
+            municipality: municipality,
+            address: `${street}, Brgy. ${brgy_no}, ${municipality}, ${province}`,
+            maab_cat: document.getElementById('maab_cat').value,
+            origin: document.getElementById('origin').value  
     }
 
-    /* -------------- End of modal logic -------------- */
+    // Validate required fields
+    const requiredFields = ['fname', 'lname', 'birthdate', 'age', 'sex', 'bloodtype', 'contact', 'email', 'municipality', 'maab_cat', 'origin'];
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        const element = document.getElementById(field);
+        if (!element.value.trim()) {
+            isValid = false;
+            element.style.borderColor = 'red';
+        } else {
+            element.style.borderColor = '';
+        }
+    });
 
-/* ---------------- SLIDESHOW LOGIC ---------------- */
-const gallery = document.getElementById('gallery');
-const cards = document.querySelectorAll('.card');
-let currentIndex = 7;
-const cardsPerView = 1; // show 3 IDs per view (adjust if you want)
-const totalCards = cards.length;
-const slideInterval = 1000; // milliseconds between slides
+    if (!isValid) {
+        alert('Please fill in all required fields marked with *');
+        return;
+    }
 
-// Move gallery smoothly
-function updateGallery() {
-  const offset = -(currentIndex * (cards[0].offsetWidth + 100)); // card width + gap
-  gallery.style.transform = `translateX(${offset}px)`;
-  gallery.style.transition = 'transform 0.6s ease';
-}
-
-// Next and previous controls
-document.getElementById('nextBtn').addEventListener('click', () => {
-  currentIndex = (currentIndex + cardsPerView) % totalCards;
-  updateGallery();
-});
-
-document.getElementById('prevBtn').addEventListener('click', () => {
-  currentIndex = (currentIndex - cardsPerView + totalCards) % totalCards;
-  updateGallery();
-});
-
-// Auto-slideshow (like a ticking clock)
-setInterval(() => {
-  currentIndex = (currentIndex + cardsPerView) % totalCards;
-  updateGallery();
-}, slideInterval);
-
-document.getElementById('back_btn').addEventListener('click', () => {
-    window.location.href = '/';
-});
-
-// TODO add age checking for MAAB category; check if age fits category every age input update
-// submit btn logic
-document.getElementById('submit_btn').addEventListener('click', () => {
-  const street = document.getElementById('street').value.toUpperCase();
-  const brgy_no = document.getElementById('brgy_no').value;
-  const municipality = document.getElementById('municipality').value;
-  const province = document.getElementById('province').value;
-
-    const member_info = {
-        from: 'online_register',
-
-        fname: document.getElementById('fname').value,
-        mname: document.getElementById('mname').value,
-        lname: document.getElementById('lname').value,
-        suffix: document.getElementById('suffix').value,
-        birthdate: document.getElementById('birthdate').value,
-        age: document.getElementById('age').value,
-        sex: document.getElementById('sex').value,
-        bloodtype: document.getElementById('bloodtype').value,
-        contact: document.getElementById('contact').value,
-        email: document.getElementById('email').value,
-        municipality: municipality,
-        address: `${street}, Brgy. ${brgy_no}, ${municipality}, ${province}`,
-        maab_cat: document.getElementById('maab_cat').value,
-        origin: document.getElementById('origin').value  
+    // Check terms and conditions
+    const termsCheckbox = document.querySelector('input[type="checkbox"]');
+    if (!termsCheckbox.checked) {
+        alert('Please agree to the Terms and Conditions');
+        return;
     }
 
     fetch('/api/member_register', {
@@ -508,50 +909,203 @@ document.getElementById('submit_btn').addEventListener('click', () => {
     .then(response => response.json())
     .then(data => {
         if (data.success === true) {
-            alert('Registration successful!');
-            window.location.href = '/';
+            // Show confirmation modal
+            showConfirmationModal(member_info, data.reference_id);
         } else {
             alert('Registration failed: ' + data.error);
         }
-    }) .catch(error => {
+    }).catch(error => {
         console.error('Error:', error);
         alert('An error occurred during registration.');
-    })
+    });
 });
 
-document.getElementById('birthdate').addEventListener('change', function () {
-    const birthdateInput = this.value;
-    const ageInput = document.getElementById('age');
+// Update the showConfirmationModal function
+function showConfirmationModal(memberInfo, referenceId) {
+    const modal = document.getElementById('confirmationModal');
+    const branchInfo = {
+        'chapter': 'Cavite Chapter - Main Office, Cavite City',
+        'dasma': 'Dasma Branch - Dasmariñas City, Cavite', 
+        'silang': 'Silang Branch - Silang, Cavite'
+    };
 
-    if (!birthdateInput) {
-        ageInput.value = '';
-        return;
+    // Populate confirmation details
+    document.getElementById('confirmName').textContent = `${memberInfo.fname} ${memberInfo.lname}`;
+    document.getElementById('confirmCategory').textContent = memberInfo.maab_cat;
+    document.getElementById('confirmBranch').textContent = document.getElementById('origin').options[document.getElementById('origin').selectedIndex].text;
+    document.getElementById('branchAddress').textContent = branchInfo[memberInfo.origin] || branchInfo.chapter;
+    document.getElementById('referenceNumber').textContent = referenceId || `MAAB-${Date.now()}`;
+    document.getElementById('confirmDate').textContent = new Date().toLocaleDateString('en-PH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    // Show modal
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+    
+    // Focus management for accessibility
+    modal.focus();
+}
+
+// Update close functions
+function closeConfirmationModal() {
+    const modal = document.getElementById('confirmationModal');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = ''; // Restore body scroll
+}
+
+document.getElementById('closeConfirmation').addEventListener('click', closeConfirmationModal);
+
+// Close modal when clicking outside or pressing Escape
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('confirmationModal');
+    if (event.target === modal) {
+        closeConfirmationModal();
     }
-
-    const birthDate = new Date(birthdateInput);
-    const today = new Date();
-
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-
-    // adjust if birthday hasn’t happened yet this year
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
-
-    ageInput.value = age;
 });
 
+// Close on Escape key
+document.addEventListener('keydown', function(event) {
+    const modal = document.getElementById('confirmationModal');
+    if (event.key === 'Escape' && modal.style.display === 'flex') {
+        closeConfirmationModal();
+    }
+});
+
+// Handle window resize and zoom
+window.addEventListener('resize', function() {
+    const modal = document.getElementById('confirmationModal');
+    if (modal.style.display === 'flex') {
+        // Force re-render to adjust to new viewport size
+        modal.style.display = 'none';
+        setTimeout(() => {
+            modal.style.display = 'flex';
+        }, 10);
+    }
+});
+
+        document.getElementById('birthdate').addEventListener('change', function () {
+            const birthdateInput = this.value;
+            const ageInput = document.getElementById('age');
+
+            if (!birthdateInput) {
+                ageInput.value = '';
+                return;
+            }
+
+            const birthDate = new Date(birthdateInput);
+            const today = new Date();
+
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+
+            // adjust if birthday hasn't happened yet this year
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            ageInput.value = age;
+            updateStepsProgress(); // Update steps when age is calculated
+        });
+
+        // Modal event listeners
+        const termsModal = document.getElementById('termsModal');
+        const openTermsLink = document.getElementById('openTerms');
+        const closeTermsBtn = document.getElementById('closeTerms');
+
+        if (openTermsLink) {
+            openTermsLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                termsModal.style.display = 'block';
+                termsModal.setAttribute('aria-hidden', 'false');
+            });
+        }
+
+        if (closeTermsBtn) {
+            closeTermsBtn.addEventListener('click', function() {
+                termsModal.style.display = 'none';
+                termsModal.setAttribute('aria-hidden', 'true');
+            });
+        }
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', function(event) {
+            if (event.target === termsModal) {
+                termsModal.style.display = 'none';
+                termsModal.setAttribute('aria-hidden', 'true');
+            }
+        });
+
+       // Fade in sections on scroll - WITH RE-ANIMATION WHEN SCROLLING BACK UP
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+        } else {
+        // Remove the class when section goes out of view
+        entry.target.classList.remove('visible');
+        }
+      });
+    }, observerOptions);
+
+        // Observe all sections with section-fade class
+        document.querySelectorAll('.section-fade').forEach(section => {
+        observer.observe(section);
+      });
 
 
-  </script>
+      // FAQ toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    
+    faqQuestions.forEach(question => {
+        question.addEventListener('click', function() {
+            const answer = this.nextElementSibling;
+            const isActive = answer.classList.contains('active');
+            
+            // Close all answers
+            document.querySelectorAll('.faq-answer').forEach(ans => {
+                ans.classList.remove('active');
+            });
+            
+            // Remove active class from all questions
+            document.querySelectorAll('.faq-question').forEach(q => {
+                q.classList.remove('active');
+            });
+            
+            // If clicked question wasn't active, open it
+            if (!isActive) {
+                answer.classList.add('active');
+                this.classList.add('active');
+            }
+        });
+    });
+    
+    // Scroll animation
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate');
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    document.querySelectorAll('.scroll-animate').forEach(el => {
+        observer.observe(el);
+    });
+});
+
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-
-

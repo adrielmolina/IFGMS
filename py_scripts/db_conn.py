@@ -874,21 +874,149 @@ def add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, b
         return False
 
 
-def save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birth_date, age, sex, contact_no, email, address, blood_type, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready, dispatch_id):
+def save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birthdate, age, sex, bloodtype, contact, email, address, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready):
     db_session = SessionLocal()
     try:
-        pass
+        new_member_info = models.Members(
+            first_name=first_name,
+            middle_name=middle_name,
+            last_name=last_name,
+            suffix=suffix,
+            birth_date=birthdate,
+            age=age,
+            sex=sex,
+            contact_no=contact,
+            email=email,
+            address=address,
+            blood_type=bloodtype
+        )
+        db_session.add(new_member_info)
+        db_session.commit()
+
+        member_id = new_member_info.member_id
         
-        # TODO WIP FINISH THIS TOMORROW
-    
-    
-    
+        new_entry_content = models.Entries(
+            record_id=record_id,
+            maab_category=maab_category,
+            maab_no=maab_no,
+            member_id=member_id,
+            id_received=id_received,
+            declared=declared,
+            declaration_date=declaration_date,
+            paid=paid,
+            OR_num=OR_num,
+            OR_date=OR_date,
+            remarks=remarks,
+            tags=tags,
+            dispatch_ready=dispatch_ready
+        )
+        db_session.add(new_entry_content)
+        db_session.commit()
+        
         return True
+    
     except Exception as e:
         db_session.rollback()
         print(f"Error adding entry content: {e}")
         return False
 
+
+def get_current_active_dispatch():
+    db_session = SessionLocal()
+    try:
+
+        last_dispatch = (
+            db_session.query(models.Dispatch)
+            .filter(models.Dispatch.dispatch_status == 'current')
+            .order_by(models.Dispatch.dispatch_id.desc())  # or .order_by(models.Dispatch.created_at.desc())
+            .first()
+        )
+        print('db_conn - current active dispatch', last_dispatch.dispatch_id)
+        return last_dispatch
+    except Exception as e:
+        print(f"Error fetching current active dispatch: {e}")
+        return None
+
+def add_to_dispatch():
+    db_session = SessionLocal()
+    try:
+        # 1️⃣ Get current active dispatch
+        current_dispatch = get_current_active_dispatch()
+        if not current_dispatch:
+            print("No active dispatch found.")
+            return None
+
+        # 2️⃣ Get all eligible entries
+        entries_to_dispatch = (
+            db_session.query(models.Entries)
+            .filter(
+                (models.Entries.dispatch_ready.is_(True)) &
+                ((models.Entries.declared.is_(False)) | (models.Entries.declared.is_(None))) &
+                ((models.Entries.dispatch_id.is_(None)) | (models.Entries.dispatch_id == 0))
+            )
+            .all()
+        )
+
+        if not entries_to_dispatch:
+            print("No entries found for dispatch.")
+            return None
+
+        # 3️⃣ Assign each entry to the current active dispatch
+        for entry in entries_to_dispatch:
+            entry.dispatch_id = current_dispatch.dispatch_id
+
+        # 4️⃣ Commit all changes
+        db_session.commit()
+        print(f"Assigned {len(entries_to_dispatch)} entries to dispatch {current_dispatch.dispatch_id}")
+
+        return len(entries_to_dispatch)
+
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error assigning entries to active dispatch: {e}")
+        return None
+
+def get_current_dispatch_contents(dispatch_id):
+    db_session = SessionLocal()
+    try:
+        current_dispatch_contents = (
+            db_session.query(
+                models.Entries.entry_id,
+                models.Entries.record_id,
+                models.Entries.maab_category,
+                models.Entries.maab_no,
+                models.Entries.member_id,
+                models.Members.first_name,
+                models.Members.middle_name,
+                models.Members.last_name,
+                models.Members.suffix,
+                models.Members.birth_date,
+                models.Records.effectivity_date,
+                models.Records.location_particular
+            )
+            .join(models.Members, models.Entries.member_id == models.Members.member_id)
+            .join(models.Records, models.Entries.record_id == models.Records.record_id)
+            .filter(models.Entries.dispatch_id == dispatch_id)
+            .all()
+        )
+        print('db_conn - current dispatch contents', current_dispatch_contents)
+        return current_dispatch_contents
+    except Exception as e:
+        print(f"Error fetching current dispatch contents: {e}")
+        return None
+
+def get_all_dispatch_records():
+    db_session = SessionLocal()
+    try:
+        dispatch_records = (
+            db_session.query(models.Dispatch)
+            .order_by(models.Dispatch.dispatch_id.desc())
+            .all()
+        )
+        return dispatch_records
+    except Exception as e:
+        print(f"Error fetching dispatch records: {e}")
+        return []   
 
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
@@ -968,7 +1096,36 @@ def GET_audit_logs():
     except Exception as e:
         print(f"Error fetching audit logs: {e}")
         return []
-    
+
+def save_profile_pic(account_id, image_data):
+    """Save profile picture (BLOB) to the database."""
+    db_session = SessionLocal()
+    try:
+        user = db_session.query(models.Accounts).filter_by(account_id=account_id).first()
+        if user:
+            user.profile_pic = image_data
+            db_session.commit()
+            print(f"✅ Profile picture updated for user {account_id}")
+            return True
+        print(f"❌ User {account_id} not found.")
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving profile picture: {e}")
+        return False
+
+
+def get_profile_pic(account_id):
+    """Retrieve the profile picture BLOB from the database."""
+    db_session = SessionLocal()
+    try:
+        user = db_session.query(models.Accounts).filter_by(account_id=account_id).first()
+        return user.profile_pic if user and user.profile_pic else None
+    except Exception as e:
+        print(f"Error fetching profile picture: {e}")
+        return None
+
+
 def update_user_details(account_id, first_name, middle_name, last_name, birth_date, contact_no, email):
     # Find the user by their account_id
     session = SessionLocal()  # create a session instance

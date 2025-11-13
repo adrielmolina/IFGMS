@@ -1,5 +1,5 @@
 body {
-    background-color: #f3e8e8;
+    background-color: #cccccc41;
     padding: 10px;
     display: flex;
     flex-direction: column;
@@ -314,7 +314,7 @@ h2{
 #closeBtn1 {
     position: absolute;
     top: 30px;
-    right: 800px;
+    right: 865px;
     font-size: 30px;
     cursor: pointer;
     color: rgb(241, 68, 68);

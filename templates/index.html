@@ -15,7 +15,7 @@
 
 <!-- Intro Screen -->
 <div class="intro-screen" id="introScreen">
-    <img src="/static/assets/IFGMS-login_logo.png" alt="Logo" class="intro-logo" />
+    <img src="/static/assets/CAVITE.png" alt="Logo" class="intro-logo" />
 </div>
 
 <!-- Loading Overlay -->
@@ -207,10 +207,25 @@ setInterval(changeBackground, changeInterval);
     });
 
     function handleLogin(event) {
-        event.preventDefault();
-        document.getElementById("loadingOverlay").style.display = "flex";
-        setTimeout(() => { event.target.submit(); }, 300);
+    event.preventDefault();
+
+    // Show loading overlay
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.style.display = "flex";
+
+    // Disable the submit button to prevent multiple clicks
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Logging in..."; // optional: change button text
     }
+
+    // Wait a short moment so the overlay appears before submission
+    setTimeout(() => {
+        event.target.submit();
+    }, 300);
+}
+
 
     function togglePassword() {
         const passwordInput = document.getElementById("password");
