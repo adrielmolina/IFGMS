@@ -1092,12 +1092,13 @@ document.addEventListener("DOMContentLoaded", function () {
         currentSearchQuery = this.value.trim();
         applySearchFilter();
     });
-
+    /*
     document.getElementById('search_clear').addEventListener('click', function() {
         document.getElementById('search_input').value = '';
         currentSearchQuery = '';
         applySearchFilter();
     });
+    */
 
     // Add event listeners for filter changes
     document.getElementById('filter_status').addEventListener('change', applyFilters);
