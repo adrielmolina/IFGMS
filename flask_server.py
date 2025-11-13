@@ -7,6 +7,8 @@ import os
 import pandas as pd
 import openpyxl
 from functools import wraps
+from io import BytesIO
+from flask import send_file
 
 
 server = Flask(__name__)
@@ -183,8 +185,20 @@ def members_page():
 @login_required
 @roles_required('admin', 'superadmin')
 def declaration_page():
-    return render_template('declaration.html')
-
+    
+    active_dispatch = db_conn.get_current_active_dispatch()
+    if active_dispatch:
+        dispatch_contents = db_conn.get_current_dispatch_contents(active_dispatch.dispatch_id)
+        if dispatch_contents:      
+            print('current_dispatch', active_dispatch)
+            print('dispatch_contents', dispatch_contents)  
+            return render_template('declaration.html', active_dispatch=active_dispatch, dispatch_contents=dispatch_contents)
+            
+        else:
+            # if empty or error
+            return render_template('declaration.html', active_dispatch=active_dispatch, dispatch_contents=[])
+    else:
+        return render_template('declaration.html', active_dispatch=False)
 
 @server.route('/inventory')
 @login_required
@@ -233,8 +247,8 @@ def show_user_accounts():
 @server.route('/settings')
 @login_required
 def settings():
-    user_details = db_conn.get_user_details_by_username(current_user.username)
-    return render_template('settings.html', user_details=user_details)
+    has_profile_pic = current_user.profile_pic is not None
+    return render_template('settings.html', has_profile_pic=has_profile_pic)
 
 
 #? -------------------- END -------------------- ?#
@@ -426,13 +440,69 @@ def settings_save_changes():
 
     return redirect(url_for('settings'))
 
+# === Upload profile picture ===
+@server.route('/api/upload_profile_pic', methods=['POST'])
+@login_required
+def upload_profile_pic():
+    try:
+        # Debug print
+        print("=== /api/upload_profile_pic called ===")
+        if 'profile_pic' not in request.files:
+            print("No 'profile_pic' in request.files. Keys:", request.files.keys())
+            return jsonify({"success": False, "error": "No file part 'profile_pic'"}), 400
 
+        file = request.files['profile_pic']
+        if file.filename == '':
+            print("Empty filename")
+            return jsonify({"success": False, "error": "Empty filename"}), 400
+
+        file_data = file.read()
+        print(f"Received file: name={file.filename}, size={len(file_data)} bytes, content_type={file.content_type}")
+
+        # Call DB helper to save the profile pic
+        saved = db_conn.save_profile_pic(current_user.account_id, file_data)
+        if saved:
+            print("Saved profile pic to DB for user", current_user.account_id)
+            # Return updated state (whether the user has a profile pic)
+            return jsonify({"success": True, "has_profile_pic": True})
+        else:
+            print("db_conn.save_profile_pic returned False")
+            return jsonify({"success": False, "error": "DB save failed"}), 500
+
+    except Exception as e:
+        print("Exception in upload_profile_pic:", e)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# === Fetch profile picture ===
+@server.route('/api/get_profile_pic/<int:user_id>')
+@login_required
+def get_profile_pic(user_id):
+    image_data = db_conn.get_profile_pic(user_id)
+    if image_data:
+        return send_file(BytesIO(image_data), mimetype='image/jpeg')
+    else:
+        return send_file('static/assets/pfp.jpg', mimetype='image/jpeg')
+
+@server.route('/api/delete_profile_pic', methods=['DELETE'])
+@login_required
+def delete_profile_pic():
+    success = db_conn.save_profile_pic(current_user.account_id, None)
+    return jsonify({"success": success})
 
 # API FOR DASHBOARD
 @server.route('/api/get_pending_claims_count')
 def get_pending_claims_count():
     count = db_conn.get_pending_claims_count()
     return jsonify({"pending_claims_count": count})
+
+
+@server.route('/api/get_all_dispatch')
+def get_dispatch_records():
+    dispatch_records = db_conn.get_all_dispatch_records()
+    if dispatch_records is None:
+        return jsonify({"success": False, "error": "Failed to fetch dispatch records"}), 500
+    print('flask_server: dispatch_records', [record.to_dict() for record in dispatch_records])
+    return jsonify([record.to_dict() for record in dispatch_records])
 
 
 # API FOR MEMBERS PAGE
@@ -495,9 +565,12 @@ def save_entry_details():
         last_name = data.get('last_name').upper()
         suffix = data.get('suffix')
         
-        birthdate_string = data.get('birth_date')
-        birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
-        
+        birthdate_string = data.get('birth_date')        
+        if birthdate_string:
+            birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
+        else:
+            birthdate = None
+            
         age = data.get('age')
         
         sex = data.get('sex')
@@ -515,20 +588,24 @@ def save_entry_details():
         id_received = data.get('id_received')
         declared = data.get('declared')
         declaration_date_string = data.get('declaration_date')
-        declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
-        
+        if declaration_date_string:
+            declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
+        else:
+            declaration_date = None
+                
         paid = data.get('paid')
-        OR_num = data.get('OR_num')
+        OR_num = int(data.get('OR_num')) if data.get('OR_num') else None
         OR_date_string = data.get('OR_date')
-        OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
-        
+        if OR_date_string:
+            OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
+        else:
+            OR_date = None
+            
         remarks = data.get('remarks')
         tags = data.get('tags')
         dispatch_ready = data.get('dispatch_ready')
-        dispatch_id = data.get('dispatch_id')  
         
-        # TODO change this
-        result = db_conn.add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, bloodtype, contact, email, municipality, address, maab_cat, origin)
+        result = db_conn.save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birthdate, age, sex, bloodtype, contact, email, address, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready)
 
         if result:
             return jsonify({"success": True})
@@ -536,6 +613,22 @@ def save_entry_details():
             return jsonify({"success": False, "error": result}), 500
     else:
         return jsonify({"success": False, "error": "No data provided"}), 400
+
+
+@server.route('/api/add_to_dispatch', methods=['PATCH'])
+@login_required
+@roles_required('admin', 'superadmin')
+def add_to_dispatch():
+    data = request.get_json()  # optional — for future if you need to pass something
+    try:
+        result = db_conn.add_to_dispatch()
+        print('add_to_dispatch result:', result)
+        if result:
+            return jsonify({"success": True, "added_to_dispatch_count": result})
+        else:
+            return jsonify({"success": False, "error": "No entries to add to dispatch"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 

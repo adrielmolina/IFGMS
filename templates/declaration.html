@@ -4,7 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
@@ -13,7 +13,7 @@
 
 {% block content %}
 <div class="module_name">
-  <h1>Declaration</h1>
+  <h1>Dispatch</h1>
 
   <div class="search_box">
     <i class="fa-solid fa-magnifying-glass"></i>
@@ -28,9 +28,10 @@
       <label for="filterCategory">Category:</label>
       <select id="filterCategory">
         <option value="all">All Categories</option>
-        <option>Gold</option>
-        <option>Silver</option>
+        <option>Classic</option>
         <option>Bronze</option>
+        <option>Silver</option>
+        <option>Gold</option>
         <option>Platinum</option>
         <option>Safecard</option>
         <option>Senior</option>
@@ -38,6 +39,7 @@
       </select>
     </div>
 
+    <!-- TODO fix this. remove hardcoded values and replace with dispatch_contents.location_particular -->
     <div class="filter">
       <label for="filterLocation">Location:</label>
       <select id="filterLocation">
@@ -49,17 +51,32 @@
   </div>
 
   <div class="action-buttons">
-      <button id="btn_create_dispatch" type="button" class="btn_create_dispatch">Create Dispatch</button>
-      <button type="button" class="btn transmit" disabled>Transmit (0)</button>
-      <button type="button" class="btn history" onclick="showHistory()">History </button>
-      <button type="button" class="btn select-all">Select All</button>
-      <button type="button" class="btn archive">Archive</button>
-  </div>
+    <button id="btn_create_dispatch" type="button" class="btn_create_dispatch">
+        <i class="fa-solid fa-plus"></i> Create Dispatch
+    </button>
+
+    <button type="button" class="btn transmit" disabled>
+        <i class="fa-solid fa-paper-plane"></i>
+        {% if current_user.office_location == 'Chapter' %}
+          Declare
+        {% elif current_user.office_location in ['Dasmarinas', 'Silang'] %}
+          Transmit
+        {% else %}
+          Action
+        {% endif %}
+    </button>
+
+    <button type="button" class="btn history" onclick="showHistory()">
+        <i class="fa-solid fa-clock-rotate-left"></i> History
+    </button>
+
+    <!-- TODO replace this with remove from declaration since theres already a select all button in the table header -->
+    <button type="button" class="btn select-all">
+        <i class="fa-solid fa-check-double"></i> Select All
+    </button>
+
 </div>
 
-<!-- Hidden alternate buttons for History view -->
-<div class="action-buttons hidden" id="historyButtons">
-  <button type="button" class="btn export"><i class="fa-solid fa-file-export"></i> Export</button>
 </div>
 
 <div class="entries-select">
@@ -73,22 +90,33 @@
     entries
   </div>
 
+<div>
+  <fieldset style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; margin: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+    <legend>Dispatch Details</legend>
+    <p><strong>Dispatch ID:</strong> {{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Type:</strong> {{ active_dispatch.dispatch_type if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Origin:</strong> {{ active_dispatch.dispatch_origin if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Year:</strong> {{ active_dispatch.dispatch_year if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Cutoff:</strong> {{ active_dispatch.dispatch_cutoff if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Status:</strong> {{ active_dispatch.dispatch_status if active_dispatch else 'N/A' }}</p>
+    <p><strong>Date Dispatched:</strong> {{ active_dispatch.date_dispatched if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Total:</strong> {{ active_dispatch.dispatch_total if active_dispatch else 'N/A' }}</p>
+    <p><strong>Late Declare:</strong> {{ active_dispatch.late_declare if active_dispatch else 'N/A' }}</p>
+    <p><strong>Dispatch Remarks:</strong> {{ active_dispatch.dispatch_remarks if active_dispatch else 'N/A' }}</p>
+  </fieldset>
+</div>
+
+
 <div class="declaration_table">
   <h4 id="tableTitle">
     <i class="fa-solid fa-file-lines"></i> Dispatch Contents
   </h4>
-
-  <!-- Back button shown only in History view -->
-  <button class="btn back hidden" id="backButton" onclick="backToMain()">
-    <i class="fa-solid fa-arrow-left"></i> Back
-  </button>
-
   <div class="table_wrapper">
     <table id="dataTable" class="styled_table">
       <thead>
         <tr>
           <th><input type="checkbox" id="selectAll"></th>
-          <th>Dispatch Content ID</th>
+          <th>Dispatch ID</th>
           <th>Entry ID</th>
           <th>MAAB Category</th>
           <th>MAAB No.</th>
@@ -101,18 +129,18 @@
       </thead>
       <tbody>
         <!-- Dummy data for viewing and testing -->
-        {% for i in range(1, 201) %}
+        {% for row in dispatch_contents %}
         <tr>
           <td><input type="checkbox" class="row-check"></td>
-          <td>DC{{'%03d' % i}}</td>
-          <td>EN{{'%03d' % i}}</td>
-          <td>{{ ['Gold','Silver','Bronze','Platinum'][i % 4] }}</td>
-          <td>MAAB{{'%03d' % i}}</td>
-          <td>Member {{ i }}</td>
-          <td>199{{ i % 10 }}-0{{ (i % 9)+1 }}-10</td>
-          <td>2025-0{{ (i % 9)+1 }}-15</td>
-          <td>{{ ['Cavite','Dasma','Silang'][i % 3] }}</td>
-          <td>{{ 'No' if i % 2 == 0 else 'Yes' }}</td>
+          <td>{{ active_dispatch.dispatch_id }}</td>
+          <td>{{ row.entry_id }}</td>
+          <td>{{ row.maab_category }}</td>
+          <td>{{ row.maan_no}}</td>
+          <td>{{ row.fisrt_name }} {{ row.middle_name }} {{ row.last_name }} {{ row.suffix or '' }}</td>
+          <td>{{ row.birth_date }}</td>
+          <td>{{ row.effectivity_date }}</td>
+          <td>{{ row.location_particular }}</td>
+          <td>{{ active_dispatch.late_declare if active_dispatch else '' }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -129,16 +157,61 @@
   <div id="paginationControls" class="pagination-controls"></div>
 </div>
 
-<div class="form-buttons">
-  <button type="button" class="btn print">
-    <i class="fa-solid fa-print"></i> Print Report
+<!-- Hidden alternate buttons for History view -->
+<div class="action-buttons hidden" id="historyButtons">
+  <!-- Back button shown only in History view -->
+  <button class="btn back hidden" id="backButton" onclick="backToMain()">
+    <i class="fa-solid fa-arrow-left"></i> Back
   </button>
+  <button type="button" class="btn export"><i class="fa-solid fa-file-export"></i> Export</button>
 </div>
+
+
+
 {% endblock %}
 
 {% block extra_scripts %}
 <!-- ✅ Existing scripts kept intact -->
 <script>
+  // ✅ Main table data for JS
+
+/*
+const mainTableData = [];
+for (let i = 1; i <= 200; i++) {
+  mainTableData.push({
+    dispatchContentID: `DC${String(i).padStart(3, '0')}`,
+    entryID: `EN${String(i).padStart(3, '0')}`,
+    category: ['Gold','Silver','Bronze','Platinum'][i % 4],
+    maabNo: `MAAB${String(i).padStart(3, '0')}`,
+    memberName: `Member ${i}`,
+    birthDate: `199${i % 10}-0${(i % 9)+1}-10`,
+    effectivityDate: `2025-0${(i % 9)+1}-15`,
+    location: ['Cavite','Dasma','Silang'][i % 3],
+    lateDeclare: i % 2 === 0 ? 'No' : 'Yes'
+  });
+}
+*/
+const mainTableData = [
+    {% for row in dispatch_contents %}
+    {
+      dispatchContentID: "{{ active_dispatch.dispatch_id }}",
+      entryID: "{{ row.entry_id }}",
+      category: "{{ row.maab_category }}",
+      maabNo: "{{ row.maab_no }}",
+      memberName: "{{ row.first_name }} {{ row.middle_name }} {{ row.last_name }} {{ '' if row.suffix == 'NA' else row.suffix }}",
+      birthDate: "{{ row.birth_date.strftime('%m/%d/%Y') if row.birth_date else '' }}",
+      effectivityDate: "{{ row.effectivity_date.strftime('%m/%d/%Y') if row.effectivity_date else '' }}",
+      location: "{{ row.location_particular }}",
+      lateDeclare: "{{ active_dispatch.late_declare if active_dispatch else '' }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+let filteredData = [...mainTableData];
+
+
+//const mainTableData = dispatch_contents;
+
 // (Your selection logic)
 document.addEventListener("DOMContentLoaded", () => {
   const rowChecks = document.querySelectorAll(".row-check");
@@ -148,21 +221,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectAllBtn = document.querySelector(".btn.select-all");
   const summaryText = document.getElementById("summaryText");
   const tableRows = document.querySelectorAll("#dataTable tbody tr");
+});
 
-  function updateSelection() {
-    const checkedCount = document.querySelectorAll(".row-check:checked").length;
-    const totalCount = tableRows.length;
+function updateSelection() {
+  const summaryText = document.getElementById("summaryText");
+  const selectAllCheckbox = document.getElementById("selectAll");
+  const rowChecks = document.querySelectorAll(".row-check");
 
-    transmitBtn.disabled = checkedCount === 0;
-    historyBtn.disabled = false;
+  const tableRows = Array.from(document.querySelectorAll("#dataTable tbody tr"));
+  const visibleRows = tableRows.filter(r => r.style.display !== "none"); // Filter visible rows
 
-    transmitBtn.textContent = checkedCount > 0 ? `Transmit (${checkedCount})` : "Transmit";
-    historyBtn.textContent = checkedCount > 0 ? `History (${checkedCount})` : "History";
-
-    summaryText.textContent = `Showing ${totalCount} of ${totalCount} declarations • ${checkedCount} selected`;
-
-    selectAllCheckbox.checked = checkedCount === totalCount;
+  transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit (${checkedCount})`;
+  if (checkedCount === 0) {
+      transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
   }
+
+  historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History (${checkedCount})`;
+  if (checkedCount === 0) {
+      historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History`;
+  }
+};
+
+
 
   rowChecks.forEach(cb => cb.addEventListener("change", updateSelection));
 
@@ -172,68 +252,94 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   selectAllBtn.addEventListener("click", () => {
-    const isSelecting = selectAllBtn.textContent === "Select All";
-    rowChecks.forEach(cb => cb.checked = isSelecting);
-    selectAllCheckbox.checked = isSelecting;
-    selectAllBtn.textContent = isSelecting ? "Deselect All" : "Select All";
-    updateSelection();
+  const isSelecting = selectAllBtn.textContent === "Select All";
+  
+  // Get only the visible rows
+  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+  visibleRows.forEach(row => {
+    const checkbox = row.querySelector(".row-check");
+    if (checkbox) checkbox.checked = isSelecting;
   });
-
+  
+  selectAllCheckbox.checked = isSelecting;
+  selectAllBtn.textContent = isSelecting ? "Deselect All" : "Select All";
   updateSelection();
 });
+
+
 </script>
 
-<!-- 🔎 Search functionality -->
-const searchInput = document.getElementById('search_input');
-const table = document.getElementById('dataTable');
-const rows = table.getElementsByTagName('tr');
+<!-- 🔎 Search Function -->
+<script>
+// ✅ Smart Search that filters full dataset + updates pagination
+document.getElementById('search_input').addEventListener('keyup', function () {
+  const filter = this.value.toLowerCase();
 
-searchInput.addEventListener('keyup', function () {
-  const filter = searchInput.value.toLowerCase();
+  // Filter the ENTIRE dataset, not just visible rows
+  filteredData = mainTableData.filter(item =>
+    Object.values(item).some(value =>
+      String(value).toLowerCase().includes(filter)
+    )
+  );
 
-  for (let i = 1; i < rows.length; i++) {
-    let cells = rows[i].getElementsByTagName('td');
-    let rowText = '';
+  // Reset to first page after searching
+  window.currentPage = 1;
 
-    for (let j = 0; j < cells.length; j++) {
-      rowText += cells[j].textContent.toLowerCase();
-    }
-
-    rows[i].style.display = rowText.indexOf(filter) > -1 ? '' : 'none';
-  }
+  // Re-render the table with filtered data
+  renderTable();
 });
 
+</script>
+
+<!-- 📦 Dispatch Create -->
+<script>
 document.getElementById('btn_create_dispatch').addEventListener('click', function() {
-    const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):"); // TODO use a date picker in a prmopt box
-    const late_declare = prompt("Include Late Declarations? (yes/no):").toLowerCase() === 'yes';
-    const dispatch_remarks = prompt("Enter Remarks (optional):");
-
-
-    fetch('/api/declaration', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            dispatch_cutoff,
-            late_declare,
-            dispatch_remarks
-        })
-    })
+  const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):");
+  const late_declare = prompt("Include Late Declarations? (yes/no):").toLowerCase() === 'yes';
+  const dispatch_remarks = prompt("Enter Remarks (optional):");
+// TODO fix this fetch
+  fetch('/api/declaration', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ dispatch_cutoff, late_declare, dispatch_remarks })
+  });
 });
 
 
 </script>
 
 <!-- 📜 History Toggle -->
+
+
 <script>
-function showHistory() {
+  // TODO fix the slow loading of data here. add loading while fetching data
+  const dispatchData = [];
+
+  function showHistory() {
+  fetch('/api/get_all_dispatch')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok ' + response.statusText);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Fetched dispatch data:', data);
+      // later you'll use this data to build the table
+      dispatchData.length = 0;
+      dispatchData.push(...data);
+
+      showDispatchTable();
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+    });
+
+
   document.querySelector(".action-buttons").classList.add("hidden");
   document.getElementById("historyButtons").classList.remove("hidden");
   document.getElementById("backButton").classList.remove("hidden");
   document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Dispatch History';
-  
-  showDispatchTable();
 }
 
 function backToMain() {
@@ -241,14 +347,63 @@ function backToMain() {
   document.getElementById("historyButtons").classList.add("hidden");
   document.getElementById("backButton").classList.add("hidden");
   document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-file-lines"></i> Dispatch Contents';
-  
-  showMainTable();
+
+  const tableHead = document.querySelector("#dataTable thead tr");
+  const tableBody = document.querySelector("#dataTable tbody");
+
+  // ✅ Restore original headers
+  tableHead.innerHTML = `
+    <th><input type="checkbox" id="selectAll"></th>
+    <th>Dispatch Content ID</th>
+    <th>Entry ID</th>
+    <th>
+       Category</th>
+    <th>MAAB No.</th>
+    <th>Member Name</th>
+    <th>Member Birth Date</th>
+    <th>Effectivity Date</th>
+    <th>Location Particular</th>
+    <th>Late Declare</th>
+  `;
+
+  // ✅ Reset filteredData to full declaration dataset
+  filteredData = [...mainTableData];
+
+  // ✅ Reset page and re-render
+  window.currentPage = 1;
+  renderTable();
+
+  // ✅ Restore checkbox functionality
+  initializeCheckboxListeners();
+  document.querySelector(".btn.select-all").disabled = false;
+  document.querySelector(".btn.transmit").disabled = false;
 }
 
 function showDispatchTable() {
   const tableBody = document.querySelector("#dataTable tbody");
-  
+  const tableHead = document.querySelector("#dataTable thead tr");
+
+  // ✅ Replace table header for history view
+  tableHead.innerHTML = `
+    <th>Dispatch ID</th>
+    <th>Type</th>
+    <th>Origin</th>
+    <th>Year</th>
+    <th>Dispatch Cutoff</th>
+    <th>Date Dispatched</th>
+    <th>Dispatch Total</th>
+    <th>Late Declare</th>
+    <th>Remarks</th>
+  `;
+
+  /*
+  // ✅ Sample dispatch history data
   const dispatchData = [
+
+
+
+
+    /*
     {
       dispatch_id: "DISP001",
       dispatch_type: "Regular",
@@ -282,36 +437,27 @@ function showDispatchTable() {
       late_declare: "No",
       dispatch_remarks: "Quarter-end dispatch"
     }
+  
   ];
+*/
 
-  const tableHead = document.querySelector("#dataTable thead tr");
-  tableHead.innerHTML = `
-    <th>Dispatch ID</th>
-    <th>Type</th>
-    <th>Origin</th>
-    <th>Year</th>
-    <th>Dispatch Cutoff</th>
-    <th>Date Dispatched</th>
-    <th>Dispatch Total</th>
-    <th>Late Declare</th>
-    <th>Remarks</th>
-  `;
+  // ✅ Set the filtered data to the dispatch data
+  filteredData = [...dispatchData];
 
-  tableBody.innerHTML = dispatchData.map(item => `
-    <tr>
-      <td>${item.dispatch_id}</td>
-      <td>${item.dispatch_type}</td>
-      <td>${item.dispatch_origin}</td>
-      <td>${item.dispatch_year}</td>
-      <td>${item.dispatch_cutoff}</td>
-      <td>${item.date_dispatched}</td>
-      <td>${item.dispatch_total}</td>
-      <td>${item.late_declare}</td>
-      <td>${item.dispatch_remarks}</td>
-    </tr>
-  `).join('');
+  // ✅ Reuse the same renderTable() for pagination
+  window.currentPage = 1;
+  renderTable();
 
+  // ✅ Update summary text
   document.getElementById("summaryText").textContent = `Showing ${dispatchData.length} dispatch history records`;
+
+  // ✅ Hide unnecessary buttons if needed
+  const selectAll = document.getElementById("selectAll");
+  if (selectAll) selectAll.checked = false;
+
+  // Disable selection buttons during history view
+  document.querySelector(".btn.select-all").disabled = true;
+  document.querySelector(".btn.transmit").disabled = true;
 }
 
 function showMainTable() {
@@ -320,7 +466,7 @@ function showMainTable() {
   
   tableHead.innerHTML = `
     <th><input type="checkbox" id="selectAll"></th>
-    <th>Dispatch Content ID</th>
+    <th>Dispatch ID</th>
     <th>Entry ID</th>
     <th>MAAB Category</th>
     <th>MAAB No.</th>
@@ -331,37 +477,34 @@ function showMainTable() {
     <th>Late Declare</th>
   `;
 
-  tableBody.innerHTML = `
+  
+  tableBody.innerHTML = mainTableData.map(item => `
     <tr>
       <td><input type="checkbox" class="row-check"></td>
-      <td>DC001</td>
-      <td>EN001</td>
-      <td>Regular</td>
-      <td>MAAB001</td>
-      <td>Juan Dela Cruz</td>
-      <td>1998-05-10</td>
-      <td>2025-01-10</td>
-      <td>Cavite</td>
-      <td>No</td>
+      <td>${item.dispatchContentID}<  /td>
+      <td>${item.entryID}</td>
+      <td>${item.category}</td>
+      <td>${item.maabNo}</td>
+      <td>${item.memberName}</td>
+      <td>${item.birthDate}</td>
+      <td>${item.effectivityDate}</td>
+      <td>${item.location}</td>
+      <td>${item.lateDeclare}</td>
     </tr>
-    <tr>
-      <td><input type="checkbox" class="row-check"></td>
-      <td>DC002</td>
-      <td>EN002</td>
-      <td>Associate</td>
-      <td>MAAB002</td>
-      <td>Maria Santos</td>
-      <td>1996-08-22</td>
-      <td>2025-02-05</td>
-      <td>Cavite</td>
-      <td>Yes</td>
-    </tr>
-  `;
+  `).join('');
+initializeCheckboxListeners();
 
-  initializeCheckboxListeners();
+
+// ✅ Reset all rows to visible before pagination recalculates
+document.querySelectorAll("#dataTable tbody tr").forEach(row => row.style.display = "");
+
+// ✅ Run pagination AFTER DOM updates
+setTimeout(() => {
+  window.currentPage = 1;
+  renderTable();
   updateSelection();
+}, 0);
 }
-
 function initializeCheckboxListeners() {
   const rowChecks = document.querySelectorAll(".row-check");
   const selectAllCheckbox = document.getElementById("selectAll");
@@ -396,99 +539,134 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
-<!-- ✅ NEW: Pagination + Show Entries Integration -->
+<!-- ✅ FULL Pagination + Show Entries (kept intact, only fixed) -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const rows = Array.from(document.querySelectorAll("#dataTable tbody tr"));
+  function getTableRows() {
+    return Array.from(document.querySelectorAll("#dataTable tbody tr"));
+  }
+
   const paginationControls = document.getElementById("paginationControls");
   const entriesSelect = document.getElementById("entriesPerPage");
   const summaryText = document.getElementById("summaryText");
 
-  let currentPage = 1;
+  // ✅ Make page state GLOBAL so history/back can use it
+  window.currentPage = 1;
   let entriesPerPage = parseInt(entriesSelect.value);
 
-  function renderTable() {
-    const start = (currentPage - 1) * entriesPerPage;
-    const end = start + entriesPerPage;
-    rows.forEach((row, i) => {
-      row.style.display = i >= start && i < end ? "" : "none";
-    });
-    updatePagination();
-    updateSummary();
+  // ✅ Make renderTable GLOBAL so history/back/search can call it
+  window.renderTable = function() {
+  const tableBody = document.querySelector("#dataTable tbody");
+  const start = (currentPage - 1) * entriesPerPage;
+  const end = start + entriesPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (filteredData[0]?.dispatch_id) {
+    // Dispatch table
+    tableBody.innerHTML = paginatedData.map(item => `
+      <tr>
+        <td>${item.dispatch_id}</td>
+        <td>${item.dispatch_type}</td>
+        <td>${item.dispatch_origin}</td>
+        <td>${item.dispatch_year}</td>
+        <td>${item.dispatch_cutoff}</td>
+        <td>${item.date_dispatched}</td>
+        <td>${item.dispatch_total}</td>
+        <td>${item.late_declare}</td>
+        <td>${item.dispatch_remarks}</td>
+      </tr>
+    `).join('');
+    document.querySelector(".btn.select-all").disabled = true;
+    document.querySelector(".btn.transmit").disabled = true;
+  } else {
+    // Main table
+    tableBody.innerHTML = paginatedData.map(item => `
+      <tr>
+        <td><input type="checkbox" class="row-check"></td>
+        <td>${item.dispatchContentID}</td>
+        <td>${item.entryID}</td>
+        <td>${item.category}</td>
+        <td>${item.maabNo}</td>
+        <td>${item.memberName}</td>
+        <td>${item.birthDate}</td>
+        <td>${item.effectivityDate}</td>
+        <td>${item.location}</td>
+        <td>${item.lateDeclare}</td>
+      </tr>
+    `).join('');
+    initializeCheckboxListeners();
   }
+
+  updatePagination();
+  updateSummary();
+  updateSelection();
+};
 
   function updatePagination() {
-  const totalPages = Math.ceil(rows.length / entriesPerPage);
-  paginationControls.innerHTML = "";
+    const totalPages = Math.ceil(filteredData.length / entriesPerPage);
+    paginationControls.innerHTML = "";
 
-  // Previous button
-  const prev = document.createElement("button");
-  prev.textContent = "Previous";
-  prev.disabled = currentPage === 1;
-  prev.onclick = () => {
-    currentPage--;
-    renderTable();
-  };
-  paginationControls.appendChild(prev);
-
-  // Helper to create a page button
-  function createPageButton(page) {
-    const btn = document.createElement("button");
-    btn.textContent = page;
-    if (page === currentPage) btn.classList.add("active");
-    btn.onclick = () => {
-      currentPage = page;
+    const prev = document.createElement("button");
+    prev.textContent = "Previous";
+    prev.disabled = currentPage === 1;
+    prev.onclick = () => {
+      currentPage--;
       renderTable();
     };
-    paginationControls.appendChild(btn);
-  }
+    paginationControls.appendChild(prev);
 
-  // Helper to add ellipsis (...)
-  function addEllipsis() {
-    const ellipsis = document.createElement("span");
-    ellipsis.textContent = "...";
-    ellipsis.classList.add("ellipsis");
-    paginationControls.appendChild(ellipsis);
-  }
-
-  // Always show first page
-  if (totalPages <= 10) {
-    // If total pages small, just show all
-    for (let i = 1; i <= totalPages; i++) createPageButton(i);
-  } else {
-    // If too many pages, show condensed view
-    const visiblePages = 5;
-
-    if (currentPage <= visiblePages) {
-      for (let i = 1; i <= visiblePages; i++) createPageButton(i);
-      addEllipsis();
-      createPageButton(totalPages);
-    } else if (currentPage >= totalPages - visiblePages + 1) {
-      createPageButton(1);
-      addEllipsis();
-      for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
-    } else {
-      createPageButton(1);
-      addEllipsis();
-      for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
-      addEllipsis();
-      createPageButton(totalPages);
+    function createPageButton(page) {
+      const btn = document.createElement("button");
+      btn.textContent = page;
+      if (page === currentPage) btn.classList.add("active");
+      btn.onclick = () => {
+        currentPage = page;
+        renderTable();
+      };
+      paginationControls.appendChild(btn);
     }
+
+    function addEllipsis() {
+      const ellipsis = document.createElement("span");
+      ellipsis.textContent = "...";
+      ellipsis.classList.add("ellipsis");
+      paginationControls.appendChild(ellipsis);
+    }
+
+    if (totalPages <= 10) {
+      for (let i = 1; i <= totalPages; i++) createPageButton(i);
+    } else {
+      const visiblePages = 5;
+
+      if (currentPage <= visiblePages) {
+        for (let i = 1; i <= visiblePages; i++) createPageButton(i);
+        addEllipsis();
+        createPageButton(totalPages);
+      } else if (currentPage >= totalPages - visiblePages + 1) {
+        createPageButton(1);
+        addEllipsis();
+        for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
+      } else {
+        createPageButton(1);
+        addEllipsis();
+        for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
+        addEllipsis();
+        createPageButton(totalPages);
+      }
+    }
+
+    const next = document.createElement("button");
+    next.textContent = "Next";
+    next.disabled = currentPage === totalPages;
+    next.onclick = () => {
+      currentPage++;
+      renderTable();
+    };
+    paginationControls.appendChild(next);
   }
-
-  // Next button
-  const next = document.createElement("button");
-  next.textContent = "Next";
-  next.disabled = currentPage === totalPages;
-  next.onclick = () => {
-    currentPage++;
-    renderTable();
-  };
-  paginationControls.appendChild(next);
-}
-
 
   function updateSummary() {
+    const rows = getTableRows();
     const total = rows.length;
     const start = (currentPage - 1) * entriesPerPage + 1;
     const end = Math.min(currentPage * entriesPerPage, total);

@@ -10,7 +10,14 @@
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/handsontable/plugins/exportFile/exportFile.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <link rel="stylesheet" href="/static/styles/toast.css">
+    <script src="/static/js/toast.js"></script>
 {% endblock %}
 
 
@@ -18,8 +25,8 @@
     <!-- TODO add sort button  -->
      <!-- TODO DONE make the scrollbars always visible -->
       <!-- TODO add auto district number based on municipality selected -->
-       <!-- TODO add select options for accepted tags -->
-        <!-- TODO add origin select options -->
+       <!-- TODO DONE add select options for accepted tags -->
+        <!-- TODO DONE add origin select options -->
          <!-- TODO add js function to set location particular to all caps while typing -->
             <!-- TODO DONE center the title -->
              <!-- TODO add flat list of members -->
@@ -56,7 +63,7 @@
 
             <div class="controls_box">
                 <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
-                <button class="btn-declare"><i class="fa-solid fa-list"></i> Add to Declaration</button>
+                <button id="add_to_dispatch" class="btn-declare"><i class="fa-solid fa-list"></i> Add to Dispatch</button>
                 <button class="btn-export"><i class="fa-solid fa-file-export"></i> Export to Excel</button>
             </div>
         </div>
@@ -112,6 +119,12 @@
             <form action="/api/members/entries" method="POST" id="record_entries">                 
         <table class="record_details_table">
             <tr>
+                <!-- TODO WIP remove if not needed -->
+                <td>
+                    <label for="dispatch_ready">Add to Dispatch</label>
+                    <input type="text" id="add_to_dispatch" name="add_to_dispatch" value="add_to_dispatch" value="0" autocomplete="off" readonly placeholder=" ">
+                </td>
+
                 <td>
                     <div class="input-container">
                         <label for="record_id">Record ID</label>
@@ -136,15 +149,15 @@
 
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="paid" name="paid" autocomplete="off">
                         <label for="paid">Paid</label>
+                        <input type="checkbox" id="paid" name="paid" autocomplete="off">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="declared" name="declared" autocomplete="off">
                         <label for="declared">Declared</label>
+                        <input type="checkbox" id="declared" name="declared" autocomplete="off">
                     </div>
                 </td>
 
@@ -167,7 +180,7 @@
                 <td>
                     <!-- TODO add js function to set location particular to all caps while typing -->
                     <div class="input-container">
-                         <label for="loc_par">Location Particular</label>
+                        <label for="loc_par">Location Particular</label>
                         <input type="text" id="loc_par" name="loc_par" required autocomplete="off" placeholder=" ">
                     </div>
                 </td>
@@ -255,8 +268,14 @@
                 <!-- TODO change this to select so it is still modifiable -->
                     <div class="input-container">
                         <label for="origin">Origin</label>
-                        <input type="text" id="origin" name="origin" required autocomplete="off" placeholder=" ">
+                        <select id="origin" name="origin" required>
+                            <option value="" disabled selected>Select origin...</option>
+                            <option value="Silang">Silang</option>
+                            <option value="Dasma">Dasma</option>
+                            <option value="Chapter">Chapter</option>
+                        </select>
                     </div>
+
                 </td>
             </tr>
 
@@ -271,17 +290,27 @@
 
                 <td>
                     <div class="input-container">
-                        <input type="text" id="tags" name="tags" autocomplete="off" placeholder=" ">
                         <label for="tags">Tags</label>
-                        <input type="text" id="tags" name="tags" autocomplete="off" placeholder=" ">
+                        <select id="tags" name="tags">
+                            <option value="" selected>No Tag</option>
+                            <option value="Underage">Underage</option>
+                            <option value="Overage">Overage</option>
+                            <option value="Late-declare">Late-declare</option>
+                        </select>
                     </div>
+
                 </td>
             </tr>
         </table>
 
-        <div class="controls_box" style="justify-content: flex-end; margin-top: 20px;">
-            <button id="save_record_details" class="save_record_details">Save</button>
-            <button id="delete_record" class="delete_record">Delete Record</button>
+        <div class="controls_box">
+            <button id="save_record_details" class="save_record_details">
+                <img src="/static/assets/save.png" alt="save" class="btn-icon"> Save
+            </button>
+            <button id="delete_record" class="delete_record">
+                <img src="/static/assets/delete.png" alt="delete" class="btn-icon"> Delete
+            </button>
+        </div>
             <!-- TODO add delete record function -->
         </div>
     </form>
@@ -399,10 +428,13 @@
 
                 <td>
                     <div class="input-container">
-                        <label for="contact">Contact No</label>
-                        <input type="text" id="contact" name="contact" required autocomplete="off" placeholder=" ">
+                    <label for="contact">Contact No</label>
+                        <div class="contact-wrapper">
+                            <span class="prefix">+63</span>
+                            <input type="text" id="contact" name="contact" maxlength="10" required autocomplete="off">
+                        </div>
                     </div>
-                </td>                               
+                </td>
 
                 <td>
                     <div class="input-container">
@@ -439,15 +471,15 @@
             <tr>
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="id_received" name="id_received" autocomplete="off">
                         <label for="id_received">ID Received</label>
+                        <input type="checkbox" id="id_received" name="id_received" autocomplete="off">
                     </div>
                 </td>
 
                 <td>
                     <div class="input-container checkbox-container">
-                        <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
                         <label for="entry_declared">Declared</label>
+                        <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
                     </div>
                 </td>
 
@@ -467,12 +499,15 @@
                 </td>
 
 
+
                 <td>
                     <div class="input-container">
                         <label for="declare_date">Declaration Date</label>
                         <input type="date" id="declare_date" name="declare_date" autocomplete="off">
                     </div>
                 </td>
+
+
 
                 <td>
                     <div class="input-container checkbox-container">
@@ -487,11 +522,11 @@
                         <input type="text" id="entry_or_no" name="entry_or_no" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
-
+                
                 <td>
                     <div class="input-container">
                         <label for="entry_or_date">OR Date</label>
-                        <input type="text" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
+                        <input type="date" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
             </tr>
@@ -514,8 +549,11 @@
             
             </tr>
         </table>
-        <div class="controls_box";>
-            <button id="add_entry_details" class="add_entry_details">Add</button>
+            <div class="controls_box">
+                <button id="add_entry_details" class="add_entry_details">
+                    <img src="/static/assets/add.png" alt="add" class="btn-icon"> Add Entry
+                </button>
+                </div>    
         </div>
     </form>
 </div>
@@ -530,7 +568,11 @@
 <script src="{{ url_for('static', filename='js/entries_table.js')}}"></script>
 
 <script>
-    let hotInstance = null;
+let hotInstance = null;
+let allData = [];
+let filteredData = [];
+let currentPage = 1;
+let entriesPerPage = 10;
     function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
     Handsontable.renderers.TextRenderer.apply(this, arguments); // Use default text renderer
     td.innerHTML = '<a href="javascript:void(0);" class="open-link">Open</a>';
@@ -643,10 +685,12 @@
             hotInstance = new Handsontable(container, {
                 data,
                 colHeaders: [
+                    //'Add to Dispatch',
                     'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
                     'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
                 ],
                 columns: [
+                //{ data: 'declare_check', type: 'checkbox', readOnly: false},
                 { renderer: openLinkRenderer },
                 { data: 'record_id', readOnly: true},
                 { data: 'year' },
@@ -685,10 +729,9 @@
             });
 
             // ✅ ADDED: Pagination + Show Entries + Summary
-            let allData = [...data];
-            let filteredData = [...data];
-            let currentPage = 1;
-            let entriesPerPage = 10;
+            allData = [...data];        // ✅ assign to global variable
+filteredData = [...data];   // ✅ assign to global variable
+
 
             const summaryText = document.getElementById('summaryText');
             const paginationControls = document.getElementById('paginationControls');
@@ -762,8 +805,95 @@
                 renderTable();
             });
 
+            // ✅ Add Record logic (correct scope)
+document.querySelector('.btn-add').addEventListener('click', function () {
+
+    fetch('/api/add_record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(result => {
+        toastSuccess("Record Added Successfully!", "The record has been successfully saved to the database.");
+
+        return fetch("/api/members/records").then(res => res.json());
+    })
+    .then(data => {
+
+        data.forEach(row => {
+            if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
+            if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
+        });
+
+        allData = [...data];
+        filteredData = [...data];
+        currentPage = 1;
+
+        renderTable(); // ✅ Works now
+    })
+    .catch(err => {
+        console.error("Add Record Error:", err);
+        toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
+    });
+});
+
             renderTable();
             // ✅ END OF ADDED PAGINATION CODE
+            // ✅ SAVE FUNCTION (correct conversion for DB)
+document.getElementById('save_record_details').addEventListener('click', function () {
+
+    const payload = {
+        record_id: document.getElementById('record_id').value,
+        year: document.getElementById('year').value,
+        id_received: document.getElementById('id_rcv').checked ? 1 : 0,
+        paid: document.getElementById('paid').checked ? 1 : 0,
+        declared: document.getElementById('declared').checked ? 1 : 0,
+        declaration_date: document.getElementById('dec_date').value || null,
+        effectivity_date: document.getElementById('eff_date').value || null,
+        location_particular: document.getElementById('loc_par').value || null,
+        location_category: document.getElementById('loc_cat').value || null,
+        municipality: document.getElementById('municipality').value || null,
+        district: document.getElementById('district').value || null,
+        origin: document.getElementById('origin').value || null,
+        remarks: document.getElementById('remarks').value || null,
+        tags: document.getElementById('tags').value || null
+    };
+
+    fetch('/api/save_record_details', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (!result.success) {
+            toastError("Failed to Save Record", "Something went wrong while saving the record. Please try again.");
+            return;
+        }
+
+        toastSuccess("Record Saved Successfully!", "The record was successfully added to the database.");
+
+        // ✅ Refresh table the correct way (pagination-safe)
+        return fetch("/api/members/records")
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(row => {
+                    if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
+                    if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
+                });
+
+                allData = [...data];
+                filteredData = [...data];
+                renderTable();
+                document.getElementById('overlay').style.display = 'none';
+            });
+    })
+    .catch(error => {
+        console.error("Save Error:", error);
+        toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
+    });
+});
+
 
 
             const searchPlugin = hotInstance.getPlugin('search');
@@ -828,99 +958,7 @@
             });
     }
 
-    // Add Record button logic
-    document.querySelector('.btn-add').addEventListener('click', function () {
-        // Call backend to add a new record
-        fetch('/api/add_record', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-            // Optionally, send default values here if needed
-        })
-        .then(response => response.json())
-        .then(result => {
-            // After adding, refresh the table data
-            
-            // open the new record entry window
-            fetch("/api/members/records")
-                .then(response => response.json())
-                .then(data => {
-                    data.forEach(row => {
-                        if (row.declaration_date) {
-                            const date = new Date(row.declaration_date);
-                            row.declaration_date = date.toLocaleDateString('en-US');
-                        }
-                        if (row.effectivity_date) {
-                            const date = new Date(row.effectivity_date);
-                            row.effectivity_date = date.toLocaleDateString('en-US');
-                        }
-                    });
-                    if (hotInstance) {
-                        hotInstance.loadData(data);
-
-                        // find index of the new record
-                        const rowIndex = data.findIndex(row => row.record_id == result.record_id);
-                        if (rowIndex !== -1) {
-                            // Wait for Handsontable to render, then trigger the open link
-                            setTimeout(() => {
-                                const cell = hotInstance.getCell(rowIndex, 0); // 0 = "Open" column
-                                if (cell) {
-                                    const openLink = cell.querySelector('.open-link');
-                                    if (openLink) openLink.click();
-                                }
-                            }, 300); // Adjust timeout if needed
-                        }
-                    }
-                });
-
-                // refreshMembersTable();
-
-        })
-        .catch(error => {
-            alert('Error adding record');
-            console.error(error);
-        });
-    });
-
-    // save function
-    document.getElementById('save_record_details').addEventListener('click', function () {
-        // Gather data from the form fields
-        const payload = {
-            record_id: document.getElementById('record_id').value,
-            year: document.getElementById('year').value,
-            id_received: document.getElementById('id_rcv').checked,
-            paid: document.getElementById('paid').checked,
-            declared: document.getElementById('declared').checked,
-            declaration_date: document.getElementById('dec_date').value,
-            effectivity_date: document.getElementById('eff_date').value,
-            location_particular: document.getElementById('loc_par').value,
-            location_category: document.getElementById('loc_cat').value,
-            municipality: document.getElementById('municipality').value,
-            district: document.getElementById('district').value,
-            origin: document.getElementById('origin').value,
-            remarks: document.getElementById('remarks').value,
-            tags: document.getElementById('tags').value
-        };
-
-        // Send data to backend
-        fetch('/api/save_record_details', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                alert('Record details saved!');
-                refreshMembersTable()
-            } else {
-                alert('Failed to save record details.');
-            }
-        })
-        .catch(error => {
-            alert('Error saving record details.');
-            console.error(error);
-        });
-    });
+    
 
 <!-- Clear filters button logic -->
 document.addEventListener('DOMContentLoaded', () => {
@@ -1037,6 +1075,67 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('An error occurred during entry adding.');
         })
     });
+
+    document.getElementById('bdate').addEventListener('change', function () {
+        const birthdateInput = this.value;
+        const ageInput = document.getElementById('age');
+
+        if (!birthdateInput) {
+            ageInput.value = '';
+            return;
+        }
+
+        const birthDate = new Date(birthdateInput);
+        const today = new Date();
+
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        // adjust if birthday hasn’t happened yet this year
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        ageInput.value = age;
+    });
+
+
+ // ✅ Export to Excel Button
+document.querySelector('.btn-export').addEventListener('click', function () {
+    if (!hotInstance) {
+        console.error("hotInstance is not defined.");
+        return;
+    }
+
+    const exportPlugin = hotInstance.getPlugin('exportFile');
+    exportPlugin.downloadFile('xlsx', {
+        filename: 'members_records',
+        sheetName: 'Records',
+        fileExtension: 'xlsx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+});
+
+    document.getElementById('add_to_dispatch').addEventListener('click', function () {
+        fetch('/api/add_to_dispatch', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}) // optional, keeps it valid JSON
+    })
+    .then(response => response.json())
+    .then(data => {
+    if (data.success) {
+        toastSuccess(`${data.added_to_dispatch_count} Entries Added to Dispatch Successfully!`, "The selected records have been added to dispatch.");
+    } else {
+        toastError("Failed to Add to Dispatch", data.error || "An error occurred while adding records to dispatch.");
+    }
+    })
+    .catch(error => {
+    console.error('Error:', error);
+    toastError("Network Error", "Could not connect to server.");
+    });
+    });
+
 
 
 </script>

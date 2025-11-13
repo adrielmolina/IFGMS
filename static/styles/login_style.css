@@ -32,7 +32,7 @@ body {
 .intro-logo {
     width: 180px;
     opacity: 0;
-    animation: fadeIn 1s forwards;
+    animation: fadeIn 2s forwards;
 }
 
 @keyframes fadeIn {
@@ -82,11 +82,12 @@ body {
 /* Outer rotating rings */
 .box {
   position: relative;
-  width: 10rem;
-  height: 10rem;
+  width: 7.5rem;
+  height: 7.5rem;
   border-top: solid 10px #bf112e;
   border-radius: 50%;
   animation: rotate 3s infinite linear;
+  box-shadow: 0 0 25px 4px rgba(191, 17, 46, 0.6);
 }
 
 .box:before {
@@ -99,6 +100,7 @@ body {
   border-top: solid 9px #e63946;
   border-radius: 50%;
   animation: rotate 2s infinite linear;
+  box-shadow: 0 0 20px 3px rgba(230, 57, 70, 0.6);
 }
 
 .box:after {
@@ -111,6 +113,7 @@ body {
   border-top: solid 8px #8b0f23;
   border-radius: 50%;
   animation: rotate 1s infinite linear;
+  box-shadow: 0 0 15px 2px rgba(139, 15, 35, 0.6);
 }
 
 /* Logo inside loader */
@@ -118,8 +121,8 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 95px;
-  height: 95px;
+  width: 55px;
+  height: 55px;
   transform: translate(-50%, -50%);
   animation: spinFast 0.6s linear infinite;  /* fast infinite spin */
 }

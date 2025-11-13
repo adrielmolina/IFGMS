@@ -219,34 +219,6 @@ label {
   margin-bottom: 10px;
 }
 
-.btn.print {
-  background-color: #2f31b9;
-  color: white;
-  border: none;
-  padding: 8px 18px;
-  font-size: 14px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  display: center;
-  align-items: center;
-  gap: 8px;
-  transition: background 0.25s ease, transform 0.1s ease;
-}
-
-.btn.print i {
-  font-size: 15px;
-}
-
-.btn.print:hover {
-  background-color: #a82828;
-  transform: translateY(-1px);
-}
-
-.btn.print:active {
-  transform: translateY(0);
-}
-
 .summary {
   margin-top: 4px;
   text-align: center;
@@ -296,6 +268,21 @@ label {
 
 .btn.print i {
   margin-right: 6px;
+}
+
+
+/* Apply to all buttons inside historyButtons */
+#historyButtons .btn {
+    display: inline-flex;
+    align-items: center; /* vertical center */
+    justify-content: center;
+    gap: 6px; /* space between icon and text */
+}
+
+/* Optional: para consistent ang height at spacing */
+#historyButtons .btn i {
+    display: inline-flex;
+    align-items: center;
 }
 
 
