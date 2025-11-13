@@ -491,7 +491,7 @@ def get_pending_claims_count():
 def get_member_records():
     db_session = SessionLocal()
     try:
-        records = db_session.query(models.Records).all()
+        records = db_session.query(models.Records).order_by(models.Records.record_id.desc()).all()
         return records
     except Exception as e:
         return "Error fetching member records: {e}"
@@ -1087,6 +1087,94 @@ def get_inventory_entries(allocated_to=None):
         ]
         return [dict(zip(col_names, row)) for row in results]
 
+def add_inventory_ids(category, prefix, start_num, count, username=None, user_level=None, account_id=None):
+    """Add multiple IDs to inventory with sequential numbers"""
+    db_session = SessionLocal()
+    
+    try:
+        added_count = 0
+        duplicate_count = 0
+        error_count = 0
+        added_ids = []
+        duplicate_ids = []
+        
+        # Pre-check for existing IDs in the range
+        end_num = start_num + count - 1
+        existing_ids = db_session.query(models.Inventory.maab_no).filter(
+            models.Inventory.maab_no.between(
+                f"{prefix}{start_num:07d}", 
+                f"{prefix}{end_num:07d}"
+            )
+        ).all()
+        
+        existing_set = {id[0] for id in existing_ids}
+        
+        if existing_set:
+            duplicate_count = len(existing_set)
+            duplicate_ids = sorted(list(existing_set))
+            print(f"Found {duplicate_count} existing IDs in the range")
+        
+        # Generate and add new IDs
+        for i in range(count):
+            current_num = start_num + i
+            maab_no = f"{prefix}{current_num:07d}"
+            
+            # Skip if already exists
+            if maab_no in existing_set:
+                continue
+            
+            try:
+                # Create new inventory entry
+                new_id = models.Inventory(
+                    maab_category=category,
+                    maab_no=maab_no,
+                    used=False,
+                    allocated_to=None,
+                    remarks=f"Added in batch - {datetime.now().strftime('%Y-%m-%d')}"
+                )
+                
+                db_session.add(new_id)
+                added_ids.append(maab_no)
+                added_count += 1
+                
+            except Exception as e:
+                print(f"Error adding ID {maab_no}: {e}")
+                error_count += 1
+        
+        db_session.commit()
+        
+        # Log the action if user info is provided
+        if username and user_level and account_id:
+            POST_action_log(
+                username,
+                user_level,
+                'Add Inventory Stock',
+                f'Added {added_count} IDs for {category} (Range: {prefix}{start_num:07d}-{prefix}{end_num:07d}). '
+                f'Duplicates: {duplicate_count}, Errors: {error_count}',
+                account_id
+            )
+        
+        return {
+            "success": True,
+            "added_count": added_count,
+            "duplicate_count": duplicate_count,
+            "error_count": error_count,
+            "added_ids": added_ids,
+            "duplicate_ids": duplicate_ids
+        }
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error adding inventory IDs: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "added_count": 0,
+            "duplicate_count": 0,
+            "error_count": count
+        }
+    finally:
+        db_session.close()
 
 def GET_audit_logs():
     db_session = SessionLocal()

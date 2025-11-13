@@ -405,24 +405,31 @@ def reset_password():
     return render_template("reset_password.html")
 
 
+# KEEP ONLY THIS VERSION OF THE ROUTE - REMOVE THE DUPLICATE LATER IN THE FILE
 @server.route('/api/declaration', methods=['POST'])
 def declaration_api():
-    method = request.method
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
 
-    if method == 'POST':
         dispatch_type = 'transmission' if current_user.office_location != 'Chapter' else 'declaration' 
         dispatch_origin = current_user.office_location
         dispatch_year = datetime.now().year
         dispatch_cutoff = data.get('dispatch_cutoff')
-        #date_dispatched = data.get('date_dispatched')
-        #dispatch_total = data.get('dispatch_total')
         late_declare = data.get('late_declare')
         dispatch_remarks = data.get('dispatch_remarks')
         
         result = db_conn.create_dispatch(dispatch_type, dispatch_origin, dispatch_year, dispatch_cutoff, late_declare, dispatch_remarks)
-        return jsonify({"success": True}) if result == True else jsonify({"success": False, "error": result}), 500 
         
+        if result == True:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": result}), 500
+            
+    except Exception as e:
+        print(f"Declaration API error: {e}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
 @server.route('/settings_save_changes', methods=['POST'])
@@ -637,6 +644,77 @@ def save_entry_details():
     else:
         return jsonify({"success": False, "error": "No data provided"}), 400
 
+@server.route('/api/inventory/add_stock', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def add_inventory_stock():
+    try:
+        data = request.get_json()
+        
+        # Extract form data
+        category = data.get('category')
+        prefix = data.get('prefix')
+        start_num = data.get('start_num')
+        count = data.get('count')
+        
+        # Validate required fields
+        if not all([category, prefix, start_num, count]):
+            return jsonify({
+                "success": False, 
+                "error": "All fields are required"
+            }), 400
+        
+        # Convert to integers
+        try:
+            start_num = int(start_num)
+            count = int(count)
+        except ValueError:
+            return jsonify({
+                "success": False, 
+                "error": "Invalid number format"
+            }), 400
+        
+        # Validate count
+        if count <= 0:
+            return jsonify({
+                "success": False, 
+                "error": "Count must be greater than 0"
+            }), 400
+        
+        # Validate count isn't too large (performance protection)
+        if count > 10000:
+            return jsonify({
+                "success": False,
+                "error": "Cannot add more than 10,000 IDs at once"
+            }), 400
+        
+        # Call the database function
+        result = db_conn.add_inventory_ids(category, prefix, start_num, count)
+        
+        if result["success"]:
+            response_data = {
+                "success": True,
+                "message": f"Successfully added {result['added_count']} ID(s) for {category} category",
+                "details": result
+            }
+            
+            # Add warning if there were duplicates
+            if result['duplicate_count'] > 0:
+                response_data["warning"] = f"Skipped {result['duplicate_count']} duplicate ID(s)"
+                
+            return jsonify(response_data)
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get("error", "Failed to add IDs to inventory")
+            }), 500
+            
+    except Exception as e:
+        print(f"Error adding inventory stock: {e}")
+        return jsonify({
+            "success": False,
+            "error": "Internal server error"
+        }), 500
 
 @server.route('/api/add_to_dispatch', methods=['PATCH'])
 @login_required
@@ -655,6 +733,100 @@ def add_to_dispatch():
 
 
 
+# FIXED EXPORT DISPATCH ROUTE - ONLY ONE VERSION
+@server.route('/api/export_dispatch', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def export_dispatch():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No JSON data provided"}), 400
+            
+        selected_rows = data.get('selected_rows', [])
+        
+        if not selected_rows:
+            return jsonify({"success": False, "error": "No rows selected"}), 400
+
+        # Create DataFrame from selected rows
+        df_data = []
+        for i, row in enumerate(selected_rows, 1):
+            df_data.append({
+                'No.': i,
+                'Name': row.get('name', ''),
+                'Category': row.get('category', ''),
+                'Effectivity': row.get('effectivity', ''),
+                'Birthday': row.get('birthday', ''),
+                'Location': row.get('location', '')
+            })
+
+        df = pd.DataFrame(df_data)
+
+        # Define the export folder path
+        export_folder = os.path.join(os.path.dirname(__file__), 'exports', 'dispatch_reports')
+        
+        # Create folder if it doesn't exist
+        os.makedirs(export_folder, exist_ok=True)
+
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"Dispatch_Report_{timestamp}.xlsx"
+        file_path = os.path.join(export_folder, filename)
+
+        # Create Excel writer with styling
+        with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
+            # Write the data
+            df.to_excel(writer, sheet_name='Dispatch Report', index=False, startrow=2)
+            
+            # Get workbook and worksheet
+            workbook = writer.book
+            worksheet = writer.sheets['Dispatch Report']
+            
+            # Add title
+            title_format = workbook.add_format({
+                'bold': True,
+                'size': 16,
+                'align': 'center',
+                'valign': 'vcenter'
+            })
+            
+            worksheet.merge_range('A1:F1', 'DISPATCH REPORT', title_format)
+            
+            # Header format
+            header_format = workbook.add_format({
+                'bold': True,
+                'align': 'center',
+                'valign': 'vcenter',
+                'bg_color': '#D3D3D3',
+                'border': 1
+            })
+            
+            # Apply header format
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(2, col_num, value, header_format)
+            
+            # Set column widths
+            worksheet.set_column('A:A', 5)   # No.
+            worksheet.set_column('B:B', 30)  # Name
+            worksheet.set_column('C:C', 15)  # Category
+            worksheet.set_column('D:D', 12)  # Effectivity
+            worksheet.set_column('E:E', 12)  # Birthday
+            worksheet.set_column('F:F', 25)  # Location
+            
+            # Center the number column
+            number_format = workbook.add_format({'align': 'center'})
+            worksheet.set_column('A:A', 5, number_format)
+
+        return jsonify({
+            "success": True, 
+            "message": "File saved successfully",
+            "filename": filename,
+            "file_path": file_path
+        })
+
+    except Exception as e:
+        print(f"Export error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # TODO check if a record exist for Online Registration on the same day. if yes put the entry on that record
 @server.route('/api/member_register', methods=['POST'])
@@ -1011,6 +1183,3 @@ if __name__ == '__main__':
         flask_server.watch('static/*.*')
         flask_server.watch('templates/*.html')
         flask_server.serve(port=5000, host="127.0.0.1")
-        
-
-        
