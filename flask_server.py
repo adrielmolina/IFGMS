@@ -638,6 +638,22 @@ def save_entry_details():
         return jsonify({"success": False, "error": "No data provided"}), 400
 
 
+@server.route('/api/add_to_dispatch', methods=['PATCH'])
+@login_required
+@roles_required('admin', 'superadmin')
+def add_to_dispatch():
+    data = request.get_json()  # optional — for future if you need to pass something
+    try:
+        result = db_conn.add_to_dispatch()
+        print('add_to_dispatch result:', result)
+        if result:
+            return jsonify({"success": True, "added_to_dispatch_count": result})
+        else:
+            return jsonify({"success": False, "error": "No entries to add to dispatch"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 
 
 # TODO check if a record exist for Online Registration on the same day. if yes put the entry on that record

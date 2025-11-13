@@ -937,6 +937,44 @@ def get_current_active_dispatch():
         print(f"Error fetching current active dispatch: {e}")
         return None
 
+def add_to_dispatch():
+    db_session = SessionLocal()
+    try:
+        # 1️⃣ Get current active dispatch
+        current_dispatch = get_current_active_dispatch()
+        if not current_dispatch:
+            print("No active dispatch found.")
+            return None
+
+        # 2️⃣ Get all eligible entries
+        entries_to_dispatch = (
+            db_session.query(models.Entries)
+            .filter(
+                (models.Entries.dispatch_ready.is_(True)) &
+                ((models.Entries.declared.is_(False)) | (models.Entries.declared.is_(None))) &
+                ((models.Entries.dispatch_id.is_(None)) | (models.Entries.dispatch_id == 0))
+            )
+            .all()
+        )
+
+        if not entries_to_dispatch:
+            print("No entries found for dispatch.")
+            return None
+
+        # 3️⃣ Assign each entry to the current active dispatch
+        for entry in entries_to_dispatch:
+            entry.dispatch_id = current_dispatch.dispatch_id
+
+        # 4️⃣ Commit all changes
+        db_session.commit()
+        print(f"Assigned {len(entries_to_dispatch)} entries to dispatch {current_dispatch.dispatch_id}")
+
+        return len(entries_to_dispatch)
+
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error assigning entries to active dispatch: {e}")
+        return None
 
 def get_current_dispatch_contents(dispatch_id):
     db_session = SessionLocal()
