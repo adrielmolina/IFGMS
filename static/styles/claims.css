@@ -48,6 +48,59 @@ label {
     color: #B92F2F
 }
 
+/* FILTER BOX */
+.filter_search_container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 15px 20px;
+  margin: 0 0 25px 0; 
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.249);
+  margin-top: 20px;
+  margin-bottom: 20px;
+  width: auto;
+}
+
+.filters_box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;     /* prevent wrapping to a new line */
+  justify-content: flex-start;
+  white-space: nowrap;   /* keep label and selects on one line */
+} 
+
+.filters_box label {
+  font-weight: 600;
+  color: #333;
+}
+
+.filters_box select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: border 0.2s;
+}
+
+.filters_box select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+.filter_search_container .search_box {
+  margin: 0;
+  margin-left: auto;
+}
+
+.filter_search_container .search_box input {
+  width: 280px;
+}
+
 
 /* SEARCH BOX  */
 .search_box {
@@ -169,7 +222,7 @@ label {
   padding: 10px 16px;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  width: 144.5%;
+  width: 97.8%;
 }
 
 #claims_table .ht_clone_top thead th {
@@ -234,6 +287,28 @@ label {
 
 .handsontable tr:hover td {
   background: #fff !important;
+}
+
+/* Status color classes */
+.status-approved {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    font-weight: bold;
+    text-align: center;
+}
+
+.status-denied {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    font-weight: bold;
+    text-align: center;
+}
+
+.status-pending {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    font-weight: bold;
+    text-align: center;
 }
 /* ========================================================= */
 /* END CLAIMS TABLE DESIGN                                   */
@@ -355,25 +430,36 @@ input:checked + .slider:before {
 }
 
 .controls_box {
-    border-bottom: 1px solid black;
-    width: 99%;
-    height: fit-content;
-    padding: 5px;
-    margin: 5px;
-    display: flex;
-    flex-direction: row;
-    gap: 15px;;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 10px;
+  margin-top: auto;
+  width: 80%;
 }
 .controls_box button {
-    background-color: #4e4747;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
 }
 .controls_box button:hover {
-    background-color: #3c3c3c;
+  background-color: #3c3c3c;
+}
+
+.btn-add {
+  background-color: #22c55e !important;
+  color:#fff; 
+}
+.btn-add:hover {
+  background-color: #16a34a !important; 
+  color:hsl(0, 0%, 21%); 
 }
 
 .collapse_box_header {
@@ -477,4 +563,25 @@ input:checked + .slider:before {
   align-items: center;
   gap: 5px;
   margin-bottom: 10px;
+}
+
+/* Make scrollbars more visible */
+.table-container::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
