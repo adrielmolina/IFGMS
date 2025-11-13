@@ -23,6 +23,7 @@
         <div class="filters_box">
             <label for="filter_year">Filter by:</label>
             <select id="filter_year">
+                
                 <option value="">Year</option>
                 <option value="2025">2025</option>
                 <option value="2024">2024</option>
@@ -385,6 +386,37 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
+    
+
+    // GENERATE TARGET VS ACTUAL PLACEHOLDER DATA WITH ZEROS
+    const generateTargetVsActualPlaceholder = () => {
+        const membershipCategories = ["Classic", "Bronze", "Silver", "Gold", "Platinum", "Safe Card", "Senior", "Senior+"];
+        const placeholderData = [];
+        
+        membershipCategories.forEach(category => {
+            const placeholderRow = { category: category, target_PCS: 0, target_AMT: 0 };
+            
+            // Add zero values for all months
+            ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach(month => {
+                placeholderRow[month + "_PCS"] = 0;
+                placeholderRow[month + "_AMT"] = 0;
+            });
+            
+            placeholderData.push(placeholderRow);
+        });
+        
+        return placeholderData;
+    };
+
+    const targetVsActualTable = new Tabulator("#target_v_actual_table", {
+        columns: targetColumns,
+        autoColumns: false,
+        data: generateTargetVsActualPlaceholder(),
+        layout: "fitColumns"
+    });
+
+    
 
     </script>
 {% endblock %}
+
