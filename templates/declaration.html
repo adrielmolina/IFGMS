@@ -69,41 +69,95 @@
     <button type="button" class="btn history" onclick="showHistory()">
         <i class="fa-solid fa-clock-rotate-left"></i> History
     </button>
-
-    <!-- TODO replace this with remove from declaration since theres already a select all button in the table header -->
-    <button type="button" class="btn select-all">
-        <i class="fa-solid fa-check-double"></i> Select All
-    </button>
-
+    
+    <!-- Dispatch Details Toggle Button -->
+  <button type="button" class="btn dispatch-details" onclick="toggleDispatchDetails()">
+    <i class="fa-solid fa-circle-info"></i> Dispatch Details
+  </button>
 </div>
 
+
+    </div>
 </div>
 
-<div class="entries-select">
-    Show
-    <select id="entriesPerPage">
-      <option value="10" selected>10</option>
-      <option value="25">25</option>
-      <option value="50">50</option>
-      <option value="100">100</option>
-    </select>
-    entries
+
+<!-- Dispatch Details Overlay -->
+<div class="dispatch-overlay" id="dispatchOverlay" style="display: none;">
+  <div class="dispatch-modal">
+    <div class="dispatch-header">
+      <h3>Dispatch Details</h3>
+      <button class="close-btn" onclick="closeDispatchDetails()">&times;</button>
+    </div>
+    
+    <div class="dispatch-content">
+      <div class="details-grid">
+        <div class="detail-item">
+          <label><strong>Dispatch ID:</strong></label>
+          <span>{{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label><strong>Dispatch Type:</strong></label>
+          <span>{{ active_dispatch.dispatch_type if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label><strong>Dispatch Origin:</strong></label>
+          <span>{{ active_dispatch.dispatch_origin if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label><strong>Dispatch Year:</strong></label>
+          <span>{{ active_dispatch.dispatch_year if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="detail-item full-width">
+          <label for="dispatch_cutoff"><strong>Dispatch Cutoff:</strong></label>
+          <input type="date" id="dispatch_cutoff" name="dispatch_cutoff" 
+                 value="{% if active_dispatch and active_dispatch.dispatch_cutoff %}{{ active_dispatch.dispatch_cutoff }}{% endif %}">
+        </div>
+        
+        <div class="detail-item full-width">
+          <label><strong>Late Declare:</strong></label>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="late_declare" value="yes" {% if active_dispatch and active_dispatch.late_declare == 'yes' %}checked{% endif %}>
+              Yes
+            </label>
+            <label>
+              <input type="radio" name="late_declare" value="no" {% if active_dispatch and active_dispatch.late_declare == 'no' %}checked{% endif %}>
+              No
+            </label>
+          </div>
+        </div>
+        
+        <div class="detail-item full-width">
+          <label for="dispatch_remarks"><strong>Dispatch Remarks:</strong></label>
+          <textarea id="dispatch_remarks" name="dispatch_remarks" rows="3" placeholder="Enter remarks here...">{% if active_dispatch %}{{ active_dispatch.dispatch_remarks }}{% endif %}</textarea>
+        </div>
+        
+        <div class="detail-item">
+          <label><strong>Dispatch Status:</strong></label>
+          <span>{{ active_dispatch.dispatch_status if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label><strong>Date Dispatched:</strong></label>
+          <span>{{ active_dispatch.date_dispatched if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label><strong>Dispatch Total:</strong></label>
+          <span>{{ active_dispatch.dispatch_total if active_dispatch else 'N/A' }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dispatch-footer">
+      <button type="button" class="btn btn-primary" onclick="saveDispatchDetails()">Save Changes</button>
+      <button type="button" class="btn btn-secondary" onclick="closeDispatchDetails()">Cancel</button>
+    </div>
   </div>
-
-<div>
-  <fieldset style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; margin: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-    <legend>Dispatch Details</legend>
-    <p><strong>Dispatch ID:</strong> {{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}</p>
-    <p><strong>Dispatch Type:</strong> {{ active_dispatch.dispatch_type if active_dispatch else 'N/A' }}</p>
-    <p><strong>Dispatch Origin:</strong> {{ active_dispatch.dispatch_origin if active_dispatch else 'N/A' }}</p>
-    <p><strong>Dispatch Year:</strong> {{ active_dispatch.dispatch_year if active_dispatch else 'N/A' }}</p>
-    <p><strong>Dispatch Cutoff:</strong> {{ active_dispatch.dispatch_cutoff if active_dispatch else 'N/A' }}</p>
-    <p><strong>Dispatch Status:</strong> {{ active_dispatch.dispatch_status if active_dispatch else 'N/A' }}</p>
-    <p><strong>Date Dispatched:</strong> {{ active_dispatch.date_dispatched if active_dispatch else 'N/A' }}</p>
-    <p><strong>Dispatch Total:</strong> {{ active_dispatch.dispatch_total if active_dispatch else 'N/A' }}</p>
-    <p><strong>Late Declare:</strong> {{ active_dispatch.late_declare if active_dispatch else 'N/A' }}</p>
-    <p><strong>Dispatch Remarks:</strong> {{ active_dispatch.dispatch_remarks if active_dispatch else 'N/A' }}</p>
-  </fieldset>
 </div>
 
 
@@ -210,9 +264,6 @@ const mainTableData = [
 let filteredData = [...mainTableData];
 
 
-//const mainTableData = dispatch_contents;
-
-// (Your selection logic)
 document.addEventListener("DOMContentLoaded", () => {
   const rowChecks = document.querySelectorAll(".row-check");
   const selectAllCheckbox = document.getElementById("selectAll");
@@ -287,6 +338,52 @@ document.getElementById('search_input').addEventListener('keyup', function () {
 
   // Re-render the table with filtered data
   renderTable();
+});
+
+
+// ====================== DISPATCH OVERLAY =================================================
+function toggleDispatchDetails() {
+  const overlay = document.getElementById('dispatchOverlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+function closeDispatchDetails() {
+  const overlay = document.getElementById('dispatchOverlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = ''; // Restore scrolling
+}
+
+function saveDispatchDetails() {
+  // Add your save logic here
+  const dispatchCutoff = document.getElementById('dispatch_cutoff').value;
+  const lateDeclare = document.querySelector('input[name="late_declare"]:checked')?.value;
+  const dispatchRemarks = document.getElementById('dispatch_remarks').value;
+  
+  console.log('Saving dispatch details:', {
+    dispatchCutoff,
+    lateDeclare,
+    dispatchRemarks
+  });
+  
+  // TODO: Add your API call here to save the changes
+  // fetch('/api/update_dispatch', { ... })
+  
+  closeDispatchDetails();
+}
+
+// Close overlay when clicking outside content
+document.getElementById('dispatchOverlay').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeDispatchDetails();
+  }
+});
+
+// Close with Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeDispatchDetails();
+  }
 });
 
 </script>

@@ -7,8 +7,10 @@ import os
 import pandas as pd
 import openpyxl
 from functools import wraps
-from io import BytesIO
-from flask import send_file
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
 
 
 server = Flask(__name__)
@@ -20,6 +22,19 @@ if os.getenv("FLASK_ENV") == "production":
     server.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
 else:
     server.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+# Load email credentials from creds.env 
+load_dotenv('creds.env')
+
+EMAIL_CONFIG = {
+    'smtp_server': os.getenv('SMTP_SERVER', 'smtp.gmail.com'),
+    'smtp_port': int(os.getenv('SMTP_PORT', '587')),
+    'sender_email': os.getenv('SENDER_EMAIL'),
+    'sender_password': os.getenv('SENDER_PASSWORD'),
+    'use_tls': os.getenv('USE_TLS', 'True').lower() == 'true'
+}
+
+print(f"📧 Email configured: {EMAIL_CONFIG['sender_email']}")
 
 
 login_manager = LoginManager()
@@ -124,6 +139,50 @@ def logout():
 
 #? -------------------- END -------------------- ?#
 
+
+#? -------------- EMAIL SENDING FUNCTION ------- ?#
+EMAIL_CONFIG = {
+    'smtp_server': os.getenv('SMTP_SERVER', 'smtp.gmail.com'),
+    'smtp_port': int(os.getenv('SMTP_PORT', '587')),
+    'sender_email': os.getenv('SENDER_EMAIL'),
+    'sender_password': os.getenv('SENDER_PASSWORD'),
+    'use_tls': os.getenv('USE_TLS', 'True').lower() == 'true'
+}
+
+def send_email(recipient_email, subject, message):
+    """
+    Send email - WORKS IN ALL MODES
+    """
+    try:
+        # Check if credentials are set
+        if not EMAIL_CONFIG['sender_email'] or not EMAIL_CONFIG['sender_password']:
+            print("❌ Email credentials missing in creds.env")
+            return False
+        
+        # Create email
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_CONFIG['sender_email']
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(message, 'plain'))
+        
+        # Send email
+        server = smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port'])
+        if EMAIL_CONFIG['use_tls']:
+            server.starttls()
+        server.login(EMAIL_CONFIG['sender_email'], EMAIL_CONFIG['sender_password'])
+        server.send_message(msg)
+        server.quit()
+        
+        print(f"✅ Email sent to: {recipient_email}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Email error: {e}")
+        return False
+#? -------------- END EMAIL SENDING FUNCTION ------- ?#
+
+
 #? -------------------- NAVIGATIONS -------------------- ?#
 
 @server.route('/')
@@ -188,20 +247,8 @@ def members_page():
 @login_required
 @roles_required('admin', 'superadmin')
 def declaration_page():
-    
-    active_dispatch = db_conn.get_current_active_dispatch()
-    if active_dispatch:
-        dispatch_contents = db_conn.get_current_dispatch_contents(active_dispatch.dispatch_id)
-        if dispatch_contents:      
-            print('current_dispatch', active_dispatch)
-            print('dispatch_contents', dispatch_contents)  
-            return render_template('declaration.html', active_dispatch=active_dispatch, dispatch_contents=dispatch_contents)
-            
-        else:
-            # if empty or error
-            return render_template('declaration.html', active_dispatch=active_dispatch, dispatch_contents=[])
-    else:
-        return render_template('declaration.html', active_dispatch=False)
+    return render_template('declaration.html')
+
 
 @server.route('/inventory')
 @login_required
@@ -250,8 +297,7 @@ def show_user_accounts():
 @server.route('/settings')
 @login_required
 def settings():
-    has_profile_pic = current_user.profile_pic is not None
-    return render_template('settings.html', has_profile_pic=has_profile_pic)
+    return render_template('settings.html')
 
 
 #? -------------------- END -------------------- ?#
@@ -463,69 +509,13 @@ def settings_save_changes():
 
     return redirect(url_for('settings'))
 
-# === Upload profile picture ===
-@server.route('/api/upload_profile_pic', methods=['POST'])
-@login_required
-def upload_profile_pic():
-    try:
-        # Debug print
-        print("=== /api/upload_profile_pic called ===")
-        if 'profile_pic' not in request.files:
-            print("No 'profile_pic' in request.files. Keys:", request.files.keys())
-            return jsonify({"success": False, "error": "No file part 'profile_pic'"}), 400
 
-        file = request.files['profile_pic']
-        if file.filename == '':
-            print("Empty filename")
-            return jsonify({"success": False, "error": "Empty filename"}), 400
-
-        file_data = file.read()
-        print(f"Received file: name={file.filename}, size={len(file_data)} bytes, content_type={file.content_type}")
-
-        # Call DB helper to save the profile pic
-        saved = db_conn.save_profile_pic(current_user.account_id, file_data)
-        if saved:
-            print("Saved profile pic to DB for user", current_user.account_id)
-            # Return updated state (whether the user has a profile pic)
-            return jsonify({"success": True, "has_profile_pic": True})
-        else:
-            print("db_conn.save_profile_pic returned False")
-            return jsonify({"success": False, "error": "DB save failed"}), 500
-
-    except Exception as e:
-        print("Exception in upload_profile_pic:", e)
-        return jsonify({"success": False, "error": str(e)}), 500
-
-# === Fetch profile picture ===
-@server.route('/api/get_profile_pic/<int:user_id>')
-@login_required
-def get_profile_pic(user_id):
-    image_data = db_conn.get_profile_pic(user_id)
-    if image_data:
-        return send_file(BytesIO(image_data), mimetype='image/jpeg')
-    else:
-        return send_file('static/assets/pfp.jpg', mimetype='image/jpeg')
-
-@server.route('/api/delete_profile_pic', methods=['DELETE'])
-@login_required
-def delete_profile_pic():
-    success = db_conn.save_profile_pic(current_user.account_id, None)
-    return jsonify({"success": success})
 
 # API FOR DASHBOARD
 @server.route('/api/get_pending_claims_count')
 def get_pending_claims_count():
     count = db_conn.get_pending_claims_count()
     return jsonify({"pending_claims_count": count})
-
-
-@server.route('/api/get_all_dispatch')
-def get_dispatch_records():
-    dispatch_records = db_conn.get_all_dispatch_records()
-    if dispatch_records is None:
-        return jsonify({"success": False, "error": "Failed to fetch dispatch records"}), 500
-    print('flask_server: dispatch_records', [record.to_dict() for record in dispatch_records])
-    return jsonify([record.to_dict() for record in dispatch_records])
 
 
 # API FOR MEMBERS PAGE
@@ -555,6 +545,85 @@ def get_members():
 
     return jsonify(members_list)
     '''
+@server.route('/api/members/count', methods=['GET'])
+def get_members_count():
+    try:
+        # Count all entries across all records
+        total_count = 0
+        all_records = db_conn.get_member_records()
+        
+        for record in all_records:
+            entries = db_conn.get_entries(record.record_id)  # or record.id
+            total_count += len(entries)
+            
+        return jsonify({
+            'success': True,
+            'total_members': total_count
+        })
+    except Exception as e:
+        print(f"Error in get_members_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@server.route('/api/members/expiring_soon', methods=['GET'])
+def get_expiring_soon_count():
+    try:
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        thirty_days_from_now = today + timedelta(days=30)
+        last_month = today - timedelta(days=30)
+        
+        # Get all records and their entries
+        all_records = db_conn.get_member_records()
+        
+        current_expiring = 0
+        previous_expiring = 0
+        
+        for record in all_records:
+            # Get entries for this record
+            entries = db_conn.get_entries(record.record_id)
+            
+            for entry in entries:
+                # Check OR_date for expiration
+                if hasattr(entry, 'OR_date') and entry.OR_date:
+                    # Convert to date object if it's string
+                    if isinstance(entry.OR_date, str):
+                        or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
+                    else:
+                        or_date = entry.OR_date
+                    
+                    # Calculate expiration date (OR_date + 1 year)
+                    expiration_date = or_date + timedelta(days=365)
+                    
+                    # Current period: expiring in next 30 days
+                    if today <= expiration_date <= thirty_days_from_now:
+                        current_expiring += 1
+                    
+                    # Previous period: expired in last 30 days
+                    if last_month <= expiration_date <= today:
+                        previous_expiring += 1
+        
+        # Calculate percentage change
+        if previous_expiring > 0:
+            percentage_change = ((current_expiring - previous_expiring) / previous_expiring) * 100
+        else:
+            percentage_change = 0
+        
+        return jsonify({
+            'success': True,
+            'expiring_soon_count': current_expiring,
+            'previous_period_count': previous_expiring,
+            'percentage_change': round(percentage_change, 2),
+            'timeframe_days': 30
+        })
+    except Exception as e:
+        print(f"Error in get_expiring_soon_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
     
 @server.route('/api/add_record', methods=['POST'])
 def add_new_record():
@@ -567,7 +636,6 @@ def save_record_details():
     if data:
         db_conn.save_record_details(data)
         return jsonify({"success": True})
-
 
 @server.route('/api/members/<int:record_id>/entries', methods=['GET'])
 def get_entries(record_id):
@@ -588,12 +656,9 @@ def save_entry_details():
         last_name = data.get('last_name').upper()
         suffix = data.get('suffix')
         
-        birthdate_string = data.get('birth_date')        
-        if birthdate_string:
-            birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
-        else:
-            birthdate = None
-            
+        birthdate_string = data.get('birth_date')
+        birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
+        
         age = data.get('age')
         
         sex = data.get('sex')
@@ -611,24 +676,20 @@ def save_entry_details():
         id_received = data.get('id_received')
         declared = data.get('declared')
         declaration_date_string = data.get('declaration_date')
-        if declaration_date_string:
-            declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
-        else:
-            declaration_date = None
-                
+        declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
+        
         paid = data.get('paid')
-        OR_num = int(data.get('OR_num')) if data.get('OR_num') else None
+        OR_num = data.get('OR_num')
         OR_date_string = data.get('OR_date')
-        if OR_date_string:
-            OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
-        else:
-            OR_date = None
-            
+        OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
+        
         remarks = data.get('remarks')
         tags = data.get('tags')
         dispatch_ready = data.get('dispatch_ready')
+        dispatch_id = data.get('dispatch_id')  
         
-        result = db_conn.save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birthdate, age, sex, bloodtype, contact, email, address, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready)
+        # TODO change this
+        result = db_conn.add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, bloodtype, contact, email, municipality, address, maab_cat, origin)
 
         if result:
             return jsonify({"success": True})
@@ -958,6 +1019,144 @@ def generate_report():
         print(f"Error generating report: {e}")
         flash("Error generating the report. Please try again later.", "error")
         return render_template('error_page.html')  # Render an error page
+    
+
+#? -------------------- NOTIFICATIONS -------------------- ?#
+
+@server.route('/api/notifications', methods=['GET'])
+def get_notifications():
+    try:
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        notifications = []
+        
+        print("🔍 Starting notifications check...")
+        
+        # Get all member records
+        all_records = db_conn.get_member_records()
+        print(f"📊 Found {len(all_records)} records")
+        
+        # 1. Check for birthdays today
+        birthday_count = 0
+        for record in all_records:
+            try:
+                # Get record ID safely
+                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
+                if not record_id:
+                    continue
+                    
+                # Get entries for this record
+                entries = db_conn.get_entries(record_id)
+                
+                for entry in entries:
+                    # Check if entry has birth_date
+                    birth_date = getattr(entry, 'birth_date', None)
+                    if birth_date:
+                        # Convert to date object if string
+                        if isinstance(birth_date, str):
+                            try:
+                                birth_date = datetime.strptime(birth_date, '%Y-%m-%d').date()
+                            except:
+                                continue
+                        elif isinstance(birth_date, datetime):
+                            birth_date = birth_date.date()
+                        
+                        # Check if birthday is today
+                        if birth_date.month == today.month and birth_date.day == today.day:
+                            first_name = getattr(entry, 'first_name', '')
+                            last_name = getattr(entry, 'last_name', '')
+                            email = getattr(entry, 'email', '')
+                            
+                            notifications.append({
+                                'type': 'birthday',
+                                'message': f"🎂 {first_name} {last_name} has birthday today!",
+                                'member_name': f"{first_name} {last_name}",
+                                'member_email': email,
+                                'priority': 'high'
+                            })
+                            birthday_count += 1
+            except Exception as e:
+                print(f"❌ Error processing record: {e}")
+                continue
+        
+        print(f"🎂 Found {birthday_count} birthdays today")
+        
+        # 2. Check for expiring memberships (30 days)
+        expiring_count = 0
+        thirty_days_from_now = today + timedelta(days=30)
+        
+        for record in all_records:
+            try:
+                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
+                if not record_id:
+                    continue
+                    
+                entries = db_conn.get_entries(record_id)
+                
+                for entry in entries:
+                    or_date = getattr(entry, 'OR_date', None)
+                    if or_date:
+                        # Convert to date object if string
+                        if isinstance(or_date, str):
+                            try:
+                                or_date = datetime.strptime(or_date, '%Y-%m-%d').date()
+                            except:
+                                continue
+                        elif isinstance(or_date, datetime):
+                            or_date = or_date.date()
+                        
+                        # Calculate expiration (OR_date + 1 year)
+                        expiration_date = or_date + timedelta(days=365)
+                        days_until_expiry = (expiration_date - today).days
+                        
+                        # Check if expiring within 30 days
+                        if 0 <= days_until_expiry <= 30:
+                            first_name = getattr(entry, 'first_name', '')
+                            last_name = getattr(entry, 'last_name', '')
+                            email = getattr(entry, 'email', '')
+                            
+                            notifications.append({
+                                'type': 'expiring',
+                                'message': f"⏰ {first_name} {last_name} membership expires in {days_until_expiry} days",
+                                'member_name': f"{first_name} {last_name}",
+                                'member_email': email,
+                                'additional_data': {'days_left': days_until_expiry},
+                                'priority': 'medium'
+                            })
+                            expiring_count += 1
+            except Exception as e:
+                print(f"❌ Error processing record for expiring: {e}")
+                continue
+        
+        print(f"⏰ Found {expiring_count} expiring memberships")
+        print(f"📨 Total notifications: {len(notifications)}")
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications,
+            'total_count': len(notifications),
+            'summary': {
+                'birthdays': birthday_count,
+                'expiring': expiring_count
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Major error in get_notifications: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'notifications': [],
+            'total_count': 0
+        }), 500
+
+# TEST ROUTE - OPTIONAL
+@server.route('/api/notifications/test', methods=['GET'])
+def test_notifications_route():
+    return jsonify({"message": "Notifications route is working", "success": True})
 
 
 #? -------------------- MISC ROUTES -------------------- ?#
