@@ -19,7 +19,7 @@ label {
     justify-content: center;
     align-items: center;
     z-index: 1000;          /* keep it above other elements */
-    pointer-events: none;   /* allows clicks to pass through the bar (h1 clickable if needed below) */
+    pointer-events: auto;   /* allows clicks to pass through the bar (h1 clickable if needed below) */
     white-space: nowrap;    /* keep the spaced letters on one line */
 }
 
@@ -48,7 +48,10 @@ label {
     }
 }
 
-
+#members_table .wtHider table {
+  table-layout: fixed;
+  width: 100% !important;
+}
 
 .ht_master .wtHolder {
     padding-bottom: 1%;
@@ -89,7 +92,10 @@ label {
   display: flex;
   align-items: center;
   gap: 10px;
-}
+  flex-wrap: nowrap;     /* prevent wrapping to a new line */
+  justify-content: flex-start;
+  white-space: nowrap;   /* keep label and selects on one line */
+} 
 
 .filters_box label {
   font-weight: 600;
@@ -534,7 +540,6 @@ button,
     backdrop-filter: blur(6px);
     background: rgba(0, 0, 0, 0.4);
     z-index: 9999;
-    display: flex;
     justify-content: center;  
     align-items: center;      
     overflow: auto;           
@@ -668,7 +673,7 @@ tr:hover {
   padding: 10px 16px;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  width: 144.5%;
+  width: 98%;
 }
 
 #members_table .ht_clone_top thead th {
@@ -704,6 +709,32 @@ tr:hover {
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
   overflow: hidden;
+}
+
+/* More specific selector */
+div.table-container::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+div.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+div.table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+div.table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+div.table-container {
+    scrollbar-width: auto;
+    scrollbar-color: #888 #f1f1f1;
 }
 
 /* ========================================================= */
