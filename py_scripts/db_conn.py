@@ -113,7 +113,7 @@ def create_account(**kwargs):
             acct_created=kwargs.get('acct_created'),
             office_location=kwargs.get('branch'),
             user_level='staff',  # default user level
-            acct_status='pending',  # default status
+            acct_status='approved',  # default status
             acct_review_date=None  # default review date
         )
         db_session.add(new_account)
@@ -488,13 +488,45 @@ def get_pending_claims_count():
 
 
 
-def get_member_records():
+def get_member_records(office_loc):
     db_session = SessionLocal()
     try:
-        records = db_session.query(models.Records).order_by(models.Records.record_id.desc()).all()
+        if office_loc == 'Chapter':
+        # Chapter = all Chapter + declared Dasmariñas/Silang
+            records = (
+                db_session.query(models.Records)
+                .filter(
+                    (models.Records.origin == "Chapter") |
+                    ((models.Records.origin.in_(["Dasmariñas", "Silang"])) &
+                    (models.Records.tags == "transmitted"))
+                )
+                .order_by(models.Records.record_id.desc())
+                .all()
+            )
+
+        elif office_loc == 'Dasmarinas':
+            # Only Dasmariñas
+            records = (
+                db_session.query(models.Records)
+                .filter(models.Records.origin == "Dasmariñas")
+                .order_by(models.Records.record_id.desc())
+                .all()
+            )
+
+        elif office_loc == 'Silang':
+            # Only Silang
+            records = (
+                db_session.query(models.Records)
+                .filter(models.Records.origin == "Silang")
+                .order_by(models.Records.record_id.desc())
+                .all()
+            )
+
         return records
+
     except Exception as e:
-        return "Error fetching member records: {e}"
+        return f"Error fetching member records: {e}"
+    
     '''
         query = text("SELECT * FROM membership_records")
         result = conn.execute(query)

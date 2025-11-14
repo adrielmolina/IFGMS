@@ -51,7 +51,8 @@ CREATE TABLE IF NOT EXISTS `membership_records` (
 	`paid` BOOLEAN DEFAULT false COMMENT 'automatically mark as paid if all contents are paid',
 	`origin` ENUM('chapter', 'dasma', 'silang'),
 	`remarks` TEXT(65535),
-	`tags` ENUM() COMMENT 'late-declare, overage, underage',
+	`tags` VARCHAR(255) COMMENT 'late-declare, overage, underage',
+	`Status` ENUM('Active', 'Archived'),
 	PRIMARY KEY(`record_id`)
 );
 

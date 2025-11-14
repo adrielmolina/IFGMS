@@ -11,6 +11,12 @@
     <link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator.min.css" rel="stylesheet">
     <!-- Tabulator JS -->
     <script src="https://unpkg.com/tabulator-tables@6.2.1/dist/js/tabulator.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <link rel="stylesheet" href="/static/styles/toast.css">
+    <script src="/static/js/toast.js"></script>
 {% endblock %}
 
 
@@ -104,7 +110,7 @@
                 <!-- TODO disable autocomplte in all fields -  autocomplete="off" -->
                 <!-- TODO set all input field as required -->
                 <!-- TODO fix the route address for ID -->
-                <form action="/api/account/<id>/create" method="POST" id="account_info">
+                <form id="account_info">
                     <fieldset>
                         <legend>&nbsp;CREATE ACCOUNT&nbsp;</legend>
 
@@ -178,7 +184,7 @@
                                 </select>
                             </div>
                             <div class="div21">
-                                <button type="submit">CREATE ACCOUNT</button>   
+                                <button id="create_account_btn" type="button">CREATE ACCOUNT</button>   
                             </div>
                         </div>                         
                     </fieldset>                               
@@ -461,6 +467,45 @@ activeTable.on("rowSelectionChanged", () => updateTableInfo(activeTable, "active
             document.getElementById('overlay').style.display = 'none';
         }
     });
+
+    document.getElementById('create_account_btn').addEventListener('click', function () {
+        const payload = {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            conf_password: document.getElementById('conf_password').value,
+            email: document.getElementById('email').value,
+
+            fname: document.getElementById('fname').value,
+            mname: document.getElementById('mname').value,
+            lname: document.getElementById('lname').value,
+            suffix: document.getElementById('suffix').value,
+            
+            bdate: document.getElementById('bdate').value,
+            contact_no: document.getElementById('contact_no').value,
+            
+            branch: document.getElementById('branch').value
+        };
+
+        fetch('/create_acc_submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                toastSuccess('Account created successfully!');
+                document.getElementById('overlay').style.display = 'none';
+                fetchAccounts();
+            } else {
+                toastError('Account creation failed'); 
+            }
+        }) // ✅ you forgot this
+        .catch(err => console.error(err));
+    });
+
+
+
 
     // ====================== PROFILE IMAGE ======================
     const navProfileImage = document.getElementById("navProfileImage");

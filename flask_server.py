@@ -261,39 +261,32 @@ def settings():
 # TODO move to accounts api routes section
 @server.route('/create_acc_submit', methods=['POST'])
 def create_acc_submit():
-    user = request.form.get('username')
-    password = request.form.get('password')
-    email = request.form.get('email')
+    data = request.get_json()
+    print(data)
+    
+    user = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
 
-    fname = request.form.get('fname').upper()
-    mname = request.form.get('mname').upper()
-    lname = request.form.get('lname').upper()
-    suffix = request.form.get('suffix')
+    fname = data.get('fname').upper()
+    mname = data.get('mname').upper()
+    lname = data.get('lname').upper()
+    suffix = data.get('suffix')
 
-    bdate = request.form.get('bdate')
-    contact = request.form.get('contact_no')
+    bdate = data.get('bdate')
+    contact = data.get('contact_no')
 
     acct_created = date.today().strftime("%Y-%m-%d")
-    branch = request.form.get('branch')
+    branch = data.get('branch')
 
     if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
         create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
                             suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
     
     if not create_new_acc == True:
-        flash({
-            "title": "Account creation failed!",
-            "text": f"{create_new_acc}. Please try again.",
-            "redirect_url": url_for('create_acc')
-        }, "error")
-        return render_template('create_account.html')
+        return jsonify({"success": False, "error": 'Account Creation Failed'}), 500
     else:
-        flash({
-        "title": "Account created successfully!",
-        "text": "Click continue to go back to login screen.",
-        "redirect_url": url_for('landing_page')
-        }, "success")
-        return render_template('create_account.html')
+        return jsonify({"success": True})
 
 
     # TODO add condition to check if the username already exists
@@ -541,7 +534,9 @@ def get_dispatch_records():
 
 @server.route('/api/members/records', methods=['GET'])
 def get_members():
-    member_records = db_conn.get_member_records()
+    office_loc = current_user.office_location
+    
+    member_records = db_conn.get_member_records(office_loc)
     return jsonify([record.to_dict() for record in member_records])
     '''
     records = db_conn.get_member_records()
