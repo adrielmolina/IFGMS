@@ -16,7 +16,7 @@ body {
     z-index: 1;
     margin-top: 10px; 
     margin-left: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 40px !important;
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.249);
     background-color: #fff;
@@ -27,48 +27,191 @@ body {
 
 /* -------- search box style ------- */
 .search_box {
-    display: flex;
-    align-items: center;
+    display: inline-block;
     position: relative;
-    width: fit-content;
-}
-
-.search_box i.fa-magnifying-glass {
-    position: absolute;
-    left: 12px;
-    color: #888;
-    font-size: 16px;
+    width: 350px;
 }
 
 .search_box input {
-    width: 350px;
+    width: 100%;
     padding: 8px 35px 8px 35px !important;
     border: 1px solid #ccc;
     border-radius: 15px;
     font-size: 15px;
     outline: none;
+    box-sizing: border-box;
+}
+
+.search_box i.fa-magnifying-glass {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 16px;
+    pointer-events: none;
+    z-index: 1;
 }
 
 #search_clear {
     position: absolute;
     right: 10px;
-    background: transparent;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
     border: none;
     color: #888;
     cursor: pointer;
     font-size: 16px;
-    opacity: 0;
+    visibility: hidden !important;
     pointer-events: none;
     transition: opacity 0.2s ease-in-out;
+    z-index: 2;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
 }
 
 #search_clear.visible {
-    opacity: 1;
+    visibility: visible !important;
     pointer-events: auto;
 }
 
 .dataTables_filter {
     display: none !important;
+}
+
+/* ----------------- Filter ----------------- */
+
+.filter_search_container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 15px 20px;
+  margin: 0 0 25px 0; 
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.249);
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 15px;
+  width: auto;
+}
+
+.filters_box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;     
+  justify-content: flex-start;
+  white-space: nowrap;  
+} 
+
+.filters_box label {
+  font-weight: 600;
+  color: #333;
+}
+
+.filters_box select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: border 0.2s;
+  cursor: pointer;
+  color: #666;
+  
+}
+
+.filters_box select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+/* Date Filter Styles */
+.date-filter-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.filter_date {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: border 0.2s;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: right;
+  width: 160px;
+}
+
+.filter_date:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+.calendar-icon {
+  position: absolute;
+  right:50px;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  pointer-events: none;
+  font-size: 14px;
+}
+
+/* Hide the native calendar picker indicator and use our custom icon */
+.filter_date::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.filter_search_container .search_box {
+  margin: 0;
+  margin-left: auto;
+}
+
+.filter_search_container .search_box input {
+  width: 280px;
+}
+
+/* RESET FILTERS BUTTON */
+.btn-reset {
+  background: #3b82f6 !important; /* Same blue */
+  color: white !important;
+  padding: 10px 12px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 14px !important;
+  width: 80%;
+}
+
+.btn-reset:hover {
+  background: #2563eb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+  color: white !important;
 }
 
 /* ----------------- Data Table Length ----------------- */
@@ -104,7 +247,7 @@ body {
 .audit-logs_table {
     background: transparent;
     border-radius: 14px;
-    width: 99%;
+    width: 101%;
     transition: all 0.3s ease;
     margin-left: 10px !important;
     margin-right: 15px !important;
@@ -125,8 +268,8 @@ body {
     font-weight: 600;
     padding: 10px 14px;
     border-bottom: 1px solid #f0f0f0;
-    color: #444;
-    font-size: 13.5px;
+    color: black;
+    font-size: 14px;
     text-align: left;
     letter-spacing: 0.2px;
 }
@@ -181,6 +324,7 @@ body {
 .audit-logs_table.full {
     margin-top: 10px;
     margin-right: 10px;
+    margin-left: -15px !important;
     background: #fff;
     border-radius: 15px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
@@ -265,6 +409,7 @@ input[type="checkbox"] {
 .pending-requests-wrapper,
 .active-requests-wrapper {
     position: relative;
+    margin-left: 30px;
 }
 
 .audit-logs_table.full {
@@ -418,8 +563,7 @@ input[type="checkbox"] {
 /* Remove vertical lines (column borders) for both tables */
 #pending_table .tabulator-col,
 #active_table .tabulator-col,
-#pending_table .tabulator-cell,
-#active_table .tabulator-cell {
+#pending_table .tabulator-cell,#active_table .tabulator-cell {
     border-right: none !important;
     border-left: none !important;
 }
@@ -443,78 +587,213 @@ input[type="checkbox"] {
     align-items: center;
     height: 40px;
     background-color: transparent !important;
+    margin-top: 10px !important;
 }
 
 .table-bottom {
+    background: transparent !important;
     color: #444;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: relative !important;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 10px;
-    height: 40px;
-    pointer-events: none; /* if you want clicks to pass through */
+    padding: 20px 20px !important; 
+    height: auto !important;
+    margin-top: -60px !important; 
+    min-height: 80px !important; 
 }
 
-/* Pagination container */
-#pending_table .tabulator-paginator,
-#active_table .tabulator-paginator {
+/* AUDIT TRAIL Pagination Styling */
+.dataTables_paginate {
     display: flex;
     justify-content: center;
     gap: 6px;
     padding: 5px 0;
 }
 
-/* All buttons inside paginator */
-#pending_table .tabulator-paginator button,
-#active_table .tabulator-paginator button {
-    border: 1px solid #ccc;
-    padding: 4px 8px;
-    background: #f9f9f9;
-    border-radius: 4px;
+.dataTables_paginate .paginate_button {
+    border: 1px solid #ccc !important;
+    padding: 4px 8px !important;
+    background: #f9f9f9 !important;
+    border-radius: 4px !important;
     cursor: pointer;
-    color:black;
+    color: black !important;
     font-weight: 600;
+    margin: 0 2px !important;
 }
 
-/* Active page button */
-#pending_table .tabulator-paginator button.active,
-#active_table .tabulator-paginator button.active {
-  background: #d9534f;
-  color: white;
-  border-color: #d43f3a;
+.dataTables_paginate .paginate_button.current {
+    background: #d9534f !important;
+    color: white !important;
+    border-color: #d43f3a !important;
 }
 
-/* Hover effect */
-#pending_table .tabulator-paginator button:hover:not(.active),
-#active_table .tabulator-paginator button:hover:not(.active) {
-    background: #ffeaea;
+.dataTables_paginate .paginate_button:hover:not(.current) {
+    background: #ffeaea !important;
+}
+
+/* Remove default DataTables styling */
+.dataTables_paginate .paginate_button {
+    border: 1px solid #ccc !important;
+    background: #f9f9f9 !important;
+}
+
+.dataTables_paginate .paginate_button.disabled,
+.dataTables_paginate .paginate_button.disabled:hover {
+    background: #f9f9f9 !important;
+    color: #999 !important;
+    cursor: default;
 }
 
 
 
 
-/* ----------------- Buttons ----------------- */
-button, .clearSearch {
-    color: #212C62; 
-    background-color: white;
-    border: 1px solid #212C62;
-    border-radius: 50px;
-    font-weight: bolder;
+/* ================= ACCOUNTS PAGINATION ================ */
+.audit-logs_table.full {
+    background: transparent !important;
     margin-top: 10px;
-    margin-bottom: 20px;
-    padding: 5px 30px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 15px;
+    margin-right: 10px;
+    border-radius: 15px;
+    box-shadow: none !important;
+    overflow: hidden;
 }
 
-button:hover, .clearSearch:hover {
-    background-color: #212C62;
-    color: white;
+.table-container {
+    background: transparent !important;
+    position: relative;
+    padding-bottom: 60px;
+    min-height: 200px;
+}
+
+.table-bottom {
+    background: transparent !important;
+    color: #444;
+    position: relative !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px !important;
+    height: auto !important;
+    margin-top: -30px;
+    min-height: 60px;
+}
+
+#active_pagination,
+#pending_pagination {
+    min-height: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+}
+
+#pending_table .tabulator,
+#active_table .tabulator {
+    background: #fff !important;
+    border-radius: 14px !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.155) !important;
+    width: calc(100% - 40px) !important;
+    margin: 0 20px 20px 20px !important;
+    border: none !important;
+    font-size: 14px;
+}
+
+#pending_table .tabulator-header,
+#active_table .tabulator-header,
+#pending_table .tabulator-col,
+#active_table .tabulator-col {
+    background: #fff !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+}
+
+#pending_table .tabulator-row,
+#active_table .tabulator-row {
+    background: #fff !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+}
+
+#pending_table .tabulator-row:hover,
+#active_table .tabulator-row:hover {
+    background: #f8f8f8 !important;
+}
+
+#pending_table .tabulator-footer,
+#active_table .tabulator-footer,
+#pending_table .tabulator-footer-contents,
+#active_table .tabulator-footer-contents,
+#pending_table .tabulator-paginator,
+#active_table .tabulator-paginator {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10px 0 !important;
+}
+
+#pending_table .tabulator-page,
+#active_table .tabulator-page {
+    border: 1px solid #ccc !important;
+    padding: 4px 8px !important;
+    background: #f9f9f9 !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    color: black !important;
+    font-weight: 600;
+    margin: 0 2px !important;
+}
+
+#pending_table .tabulator-page.active,
+#active_table .tabulator-page.active {
+    background: #d9534f !important;
+    color: white !important;
+    border-color: #d43f3a !important;
+}
+
+#pending_table .tabulator-page:hover:not(.active),
+#active_table .tabulator-page:hover:not(.active) {
+    background: #ffeaea !important;
+}
+
+.btn_row {
+    background: transparent !important;
+    padding: 15px 20px !important;
+    margin-top: -70px !important;
+    display: flex;
+    gap: 10px;
+}
+/* ----------------- Buttons ----------------- */
+.btn_row button,
+.controls_box button:not(.clearSearch) {
+    background: #3b82f6 !important; 
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    margin-top: 10px !important;
+    margin-bottom: 20px !important;
+    padding: 8px 12px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+    font-size: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.btn_row button:hover,
+.controls_box button:not(.clearSearch):hover {
+    background: #2563eb !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+    color: white !important;
+}
+
+
+.btn_row, .btn_row * {
+    pointer-events: auto !important;
+}
+
+button {
+    pointer-events: auto !important;
 }
 
 /* ----------------- Overlay ----------------- */
