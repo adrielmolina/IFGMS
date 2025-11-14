@@ -488,20 +488,59 @@ def get_pending_claims_count():
 
 
 
-def get_member_records():
+def get_member_records(status='active'):
+    """
+    Get member records with optional status filter
+    """
     db_session = SessionLocal()
     try:
-        records = db_session.query(models.Records).order_by(models.Records.record_id.desc()).all()
+        print(f"DEBUG: Querying database for status: {status}")
+        
+        # Use the correct model name - check if it's Records or MemberRecords
+        # Try Records first (based on your add_new_record function)
+        query = db_session.query(models.Records)
+        
+        if status:
+            query = query.filter(models.Records.status == status)
+        
+        records = query.order_by(models.Records.record_id.desc()).all()
+        print(f"DEBUG: Found {len(records)} records")
         return records
+        
     except Exception as e:
-        return "Error fetching member records: {e}"
+        print(f"DEBUG: Error in get_member_records: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+    finally:
+        db_session.close()
     '''
         query = text("SELECT * FROM membership_records")
         result = conn.execute(query)
         records = result.fetchall()
         return records
     '''
+def archive_member_record(record_id):
+    """Archive a member record by setting its status to 'archived'"""
+    db_session = SessionLocal()
+    try:
+        record = db_session.query(models.Records).filter_by(record_id=record_id).first()
+        if record:
+            record.status = 'archived'
+            db_session.commit()
+            print(f"Record {record_id} archived successfully")
+            return True
+        else:
+            print(f"Record {record_id} not found")
+            return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error archiving record {record_id}: {e}")
+        return False
+    finally:
+        db_session.close()
 
+        
 def get_claim_records():
     db_session = SessionLocal()
     try:
@@ -1243,28 +1282,42 @@ def update_user_details(account_id, first_name, middle_name, last_name, birth_da
         return False
 
 
-def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=None, current_user_id=None):
-    """ for logging actions on audit_trails table """
-    
+def archive_member_record_with_log(record_id, account_id):
+    """Archive a member record and log the action in the same session"""
     db_session = SessionLocal()
-    
     try:
-        audit_log = models.Logs(
-            date=datetime.now(),
-            staff_name=current_user,
-            user_level=current_user_lvl,
-            action_name=action,
-            description=desc,
-            account_id=current_user_id
-        )
-        print(audit_log)
+        # Archive the record
+        record = db_session.query(models.Records).filter_by(record_id=record_id).first()
+        if not record:
+            print(f"Record {record_id} not found")
+            return False
         
-        db_session.add(audit_log)
+        record.status = 'archived'
+        
+        # Get user details for logging (using the same session)
+        user = db_session.query(models.Accounts).filter_by(account_id=account_id).first()
+        if user:
+            # Log the action
+            audit_log = models.Logs(
+                date=datetime.now(),
+                staff_name=user.username,
+                user_level=user.user_level,
+                action_name='Archive Record',
+                description=f'Archived record ID: {record_id}',
+                account_id=account_id
+            )
+            db_session.add(audit_log)
+        
         db_session.commit()
-        print("Action logged successfully.")
+        print(f"Record {record_id} archived successfully with logging")
+        return True
+        
     except Exception as e:
         db_session.rollback()
-        print(f"Error logging action: {e}")    
+        print(f"Error archiving record {record_id}: {e}")
+        return False
+    finally:
+        db_session.close()
     
     '''
     now = datetime.now()

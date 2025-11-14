@@ -89,6 +89,7 @@ class Records(Base):
     origin = Column(String(255))
     remarks = Column(Text)
     tags = Column(String(255))
+    status = Column(String(255), default='Active')
     
     @property
     def declaration_date_YMD(self):

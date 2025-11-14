@@ -50,7 +50,7 @@ label {
 
 #members_table .wtHider table {
   table-layout: fixed;
-  width: 100% !important;
+  width: 98% !important;
 }
 
 .ht_master .wtHolder {
@@ -248,12 +248,20 @@ label {
   background-color: #2563eb !important;
   color:hsl(0, 0%, 21%); 
 }
-.btn-export {
-  background-color: #f97316 !important;
+.btn-archive {
+  background-color: #ffd001 !important;
   color:#fff; 
 }
-.btn-export:hover {
-  background-color: #ea580c !important;
+.btn-archive:hover {
+  background-color: #ffbb00 !important;
+  color:hsl(0, 0%, 21%); 
+}
+.btn-back {
+  background-color: #f85050 !important;
+  color:#fff; 
+}
+.btn-back:hover {
+  background-color: #ff3636 !important;
   color:hsl(0, 0%, 21%); 
 }
 
@@ -276,6 +284,15 @@ label {
 .delete_record:hover {
   background-color: #ff3636 !important;
   color: hsl(0, 0%, 21%);
+}
+
+.btn-export {
+  background-color: #ffb47e !important;
+  color:#ea580c; 
+}
+.btn-export:hover {
+  background-color: #ea580c !important;
+  color:hsl(0, 0%, 21%); 
 }
 
 .add_entry_details {
@@ -965,6 +982,38 @@ div.table-container {
     cursor: pointer;
 }
 
+/* Delete modal specific styles */
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.3em;
+    border-bottom: 2px solid #e74c3c;
+    padding-bottom: 10px;
+}
+
+.modal-content p {
+    margin: 15px 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+/* Button hover effects (add to your existing button styles) */
+.btn-danger:hover {
+    background-color: #c0392b;
+    transform: translateY(-1px);
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+    transform: translateY(-1px);
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
 .btn-danger { background: #dc3545; color: white; }
 .btn-primary { background: #007bff; color: white; }
 .btn-secondary { background: #6c757d; color: white; }
+

@@ -181,7 +181,8 @@ def dashboard():
 @server.route('/members')
 @login_required
 def members_page():
-    return render_template('members.html')
+    user_location = current_user.office_location if current_user else 'Chapter'
+    return render_template('members.html', user_location=user_location)
 
 
 @server.route('/declaration')
@@ -541,8 +542,34 @@ def get_dispatch_records():
 
 @server.route('/api/members/records', methods=['GET'])
 def get_members():
-    member_records = db_conn.get_member_records()
-    return jsonify([record.to_dict() for record in member_records])
+    try:
+        status = request.args.get('status', 'active')
+        print(f"DEBUG: Fetching member records with status: {status}")
+        
+        member_records = db_conn.get_member_records(status=status)
+        print(f"DEBUG: Records fetched: {len(member_records) if member_records else 'None'}")
+        
+        if member_records is None:
+            print("DEBUG: No records returned from database")
+            return jsonify({"error": "Failed to fetch member records"}), 500
+            
+        records_list = []
+        for record in member_records:
+            try:
+                record_dict = record.to_dict()
+                records_list.append(record_dict)
+            except Exception as e:
+                print(f"DEBUG: Error converting record to dict: {e}")
+                continue
+                
+        print(f"DEBUG: Returning {len(records_list)} records")
+        return jsonify(records_list)
+        
+    except Exception as e:
+        print(f"DEBUG: Error in get_members: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Internal server error"}), 500
     '''
     records = db_conn.get_member_records()
     members_list = []
@@ -562,6 +589,30 @@ def get_members():
 
     return jsonify(members_list)
     '''
+
+@server.route('/api/archive_record', methods=['PATCH'])
+@login_required
+def archive_record():
+    try:
+        data = request.get_json()
+        record_id = data.get('record_id')
+        
+        if not record_id:
+            return jsonify({"success": False, "error": "No record ID provided"}), 400
+        
+        # Use the new function that handles both archiving and logging in one session
+        success = db_conn.archive_member_record_with_log(record_id, current_user.account_id)
+        
+        if success:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Failed to archive record"}), 500
+            
+    except Exception as e:
+        print(f"Error archiving record: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": "Internal server error"}), 500
     
 @server.route('/api/add_record', methods=['POST'])
 def add_new_record():
