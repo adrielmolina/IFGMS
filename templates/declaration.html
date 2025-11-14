@@ -4,11 +4,17 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/toast.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
+
+<!-- Include Toastify -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="/static/js/toast.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -189,8 +195,8 @@
           <td>{{ active_dispatch.dispatch_id }}</td>
           <td>{{ row.entry_id }}</td>
           <td>{{ row.maab_category }}</td>
-          <td>{{ row.maan_no}}</td>
-          <td>{{ row.fisrt_name }} {{ row.middle_name }} {{ row.last_name }} {{ row.suffix or '' }}</td>
+          <td>{{ row.maab_no}}</td>
+          <td>{{ row.first_name }} {{ row.middle_name }} {{ row.last_name }} {{ row.suffix or '' }}</td>
           <td>{{ row.birth_date }}</td>
           <td>{{ row.effectivity_date }}</td>
           <td>{{ row.location_particular }}</td>
@@ -217,34 +223,17 @@
   <button class="btn back hidden" id="backButton" onclick="backToMain()">
     <i class="fa-solid fa-arrow-left"></i> Back
   </button>
-  <button type="button" class="btn export"><i class="fa-solid fa-file-export"></i> Export</button>
 </div>
-
-
 
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- ✅ Existing scripts kept intact -->
-<script>
-  // ✅ Main table data for JS
+<!-- Include your custom toast.js -->
+<script src="{{ url_for('static', filename='js/toast.js') }}"></script>
 
-/*
-const mainTableData = [];
-for (let i = 1; i <= 200; i++) {
-  mainTableData.push({
-    dispatchContentID: `DC${String(i).padStart(3, '0')}`,
-    entryID: `EN${String(i).padStart(3, '0')}`,
-    category: ['Gold','Silver','Bronze','Platinum'][i % 4],
-    maabNo: `MAAB${String(i).padStart(3, '0')}`,
-    memberName: `Member ${i}`,
-    birthDate: `199${i % 10}-0${(i % 9)+1}-10`,
-    effectivityDate: `2025-0${(i % 9)+1}-15`,
-    location: ['Cavite','Dasma','Silang'][i % 3],
-    lateDeclare: i % 2 === 0 ? 'No' : 'Yes'
-  });
-}
-*/
+<!-- ✅ Main JavaScript Code -->
+<script>
+// ✅ Main table data for JS
 const mainTableData = [
     {% for row in dispatch_contents %}
     {
@@ -262,67 +251,146 @@ const mainTableData = [
   ];
 
 let filteredData = [...mainTableData];
+let currentPage = 1;
+let entriesPerPage = 10;
+const dispatchData = [];
 
-
+// ✅ Fixed Selection Logic
 document.addEventListener("DOMContentLoaded", () => {
-  const rowChecks = document.querySelectorAll(".row-check");
-  const selectAllCheckbox = document.getElementById("selectAll");
-  const transmitBtn = document.querySelector(".btn.transmit");
-  const historyBtn = document.querySelector(".btn.history");
-  const selectAllBtn = document.querySelector(".btn.select-all");
-  const summaryText = document.getElementById("summaryText");
-  const tableRows = document.querySelectorAll("#dataTable tbody tr");
+  initializeCheckboxListeners();
+  initializePagination();
+  setupEventListeners();
 });
+
+function setupEventListeners() {
+  // Transmit button event listener
+  const transmitBtn = document.querySelector('.btn.transmit');
+  if (transmitBtn) {
+    transmitBtn.addEventListener('click', exportSelectedToServer);
+  }
+}
 
 function updateSelection() {
   const summaryText = document.getElementById("summaryText");
   const selectAllCheckbox = document.getElementById("selectAll");
-  const rowChecks = document.querySelectorAll(".row-check");
-
-  const tableRows = Array.from(document.querySelectorAll("#dataTable tbody tr"));
-  const visibleRows = tableRows.filter(r => r.style.display !== "none"); // Filter visible rows
-
-  transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit (${checkedCount})`;
-  if (checkedCount === 0) {
-      transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
-  }
-
-  historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History (${checkedCount})`;
-  if (checkedCount === 0) {
-      historyBtn.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> History`;
-  }
-};
-
-
-
-  rowChecks.forEach(cb => cb.addEventListener("change", updateSelection));
-
-  selectAllCheckbox.addEventListener("change", () => {
-    rowChecks.forEach(cb => cb.checked = selectAllCheckbox.checked);
-    updateSelection();
-  });
-
-  selectAllBtn.addEventListener("click", () => {
-  const isSelecting = selectAllBtn.textContent === "Select All";
   
-  // Get only the visible rows
+  // Count checked checkboxes from VISIBLE rows only
   const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+  let checkedCount = 0;
+  
   visibleRows.forEach(row => {
     const checkbox = row.querySelector(".row-check");
-    if (checkbox) checkbox.checked = isSelecting;
+    if (checkbox && checkbox.checked) {
+      checkedCount++;
+    }
+  });
+
+  const totalVisible = visibleRows.length;
+  
+  // Update summary text
+  if (summaryText) {
+    const start = (currentPage - 1) * entriesPerPage + 1;
+    const end = Math.min(currentPage * entriesPerPage, totalVisible);
+    summaryText.textContent = `Showing ${start} to ${end} of ${filteredData.length} entries • ${checkedCount} selected`;
+  }
+
+  // Update buttons text and state
+  const transmitBtn = document.querySelector(".btn.transmit");
+  const historyBtn = document.querySelector(".btn.history");
+  
+  if (transmitBtn) {
+    transmitBtn.disabled = checkedCount === 0;
+    transmitBtn.innerHTML = checkedCount === 0 
+      ? `<i class="fa-solid fa-paper-plane"></i> Transmit`
+      : `<i class="fa-solid fa-paper-plane"></i> Transmit (${checkedCount})`;
+  }
+
+  // Update select all checkbox state
+  if (selectAllCheckbox && totalVisible > 0) {
+    selectAllCheckbox.checked = checkedCount === totalVisible;
+    selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalVisible;
+  }
+}
+
+function initializeCheckboxListeners() {
+  const rowChecks = document.querySelectorAll(".row-check");
+  const selectAllCheckbox = document.getElementById("selectAll");
+  const selectAllBtn = document.querySelector(".btn.select-all");
+  
+  // Remove existing listeners to prevent duplicates
+  rowChecks.forEach(cb => {
+    cb.replaceWith(cb.cloneNode(true));
+  });
+
+  // Get fresh references after clone
+  const freshRowChecks = document.querySelectorAll(".row-check");
+  
+  freshRowChecks.forEach(cb => {
+    cb.addEventListener("change", updateSelection);
+  });
+
+  if (selectAllCheckbox) {
+    selectAllCheckbox.removeEventListener("change", handleSelectAll);
+    selectAllCheckbox.addEventListener("change", handleSelectAll);
+  }
+
+  if (selectAllBtn) {
+    selectAllBtn.removeEventListener("click", handleSelectAllButton);
+    selectAllBtn.addEventListener("click", handleSelectAllButton);
+  }
+
+  // Initial selection update
+  updateSelection();
+}
+
+function handleSelectAll() {
+  const isChecked = this.checked;
+  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+  
+  visibleRows.forEach(row => {
+    const checkbox = row.querySelector(".row-check");
+    if (checkbox) {
+      checkbox.checked = isChecked;
+    }
   });
   
-  selectAllCheckbox.checked = isSelecting;
-  selectAllBtn.textContent = isSelecting ? "Deselect All" : "Select All";
   updateSelection();
-});
+}
 
+function handleSelectAllButton() {
+  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+  const allChecked = visibleRows.every(row => {
+    const checkbox = row.querySelector(".row-check");
+    return checkbox && checkbox.checked;
+  });
+  
+  // Toggle all checkboxes
+  const newState = !allChecked;
+  
+  visibleRows.forEach(row => {
+    const checkbox = row.querySelector(".row-check");
+    if (checkbox) {
+      checkbox.checked = newState;
+    }
+  });
+  
+  // Update select all checkbox
+  const selectAllCheckbox = document.getElementById("selectAll");
+  if (selectAllCheckbox) {
+    selectAllCheckbox.checked = newState;
+    selectAllCheckbox.indeterminate = false;
+  }
+  
+  // Update button text
+  const selectAllBtn = document.querySelector(".btn.select-all");
+  if (selectAllBtn) {
+    selectAllBtn.innerHTML = newState ? '<i class="fa-solid fa-check-double"></i> Deselect All' : '<i class="fa-solid fa-check-double"></i> Select All';
+  }
+  
+  updateSelection();
+}
 
-</script>
-
-<!-- 🔎 Search Function -->
-<script>
-// ✅ Smart Search that filters full dataset + updates pagination
+// 🔎 Search Function
 document.getElementById('search_input').addEventListener('keyup', function () {
   const filter = this.value.toLowerCase();
 
@@ -334,12 +402,20 @@ document.getElementById('search_input').addEventListener('keyup', function () {
   );
 
   // Reset to first page after searching
-  window.currentPage = 1;
+  currentPage = 1;
 
   // Re-render the table with filtered data
   renderTable();
 });
 
+// Clear search
+document.getElementById('search_clear').addEventListener('click', function() {
+  document.getElementById('search_input').value = '';
+  filteredData = [...mainTableData];
+  currentPage = 1;
+  renderTable();
+  this.classList.remove('visible');
+});
 
 // ====================== DISPATCH OVERLAY =================================================
 function toggleDispatchDetails() {
@@ -386,31 +462,54 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-</script>
+// Show/hide clear button based on search input
+document.getElementById('search_input').addEventListener('input', function(e) {
+  const clearBtn = document.getElementById('search_clear');
+  if (e.target.value.trim() !== "") {
+    clearBtn.classList.add('visible');
+  } else {
+    clearBtn.classList.remove('visible');
+  }
+});
 
-<!-- 📦 Dispatch Create -->
-<script>
+// 📦 Dispatch Create
 document.getElementById('btn_create_dispatch').addEventListener('click', function() {
   const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):");
-  const late_declare = prompt("Include Late Declarations? (yes/no):").toLowerCase() === 'yes';
+  if (!dispatch_cutoff) return; // User cancelled
+  
+  const late_declare = prompt("Include Late Declarations? (yes/no):");
+  if (late_declare === null) return; // User cancelled
+  
   const dispatch_remarks = prompt("Enter Remarks (optional):");
-// TODO fix this fetch
+
   fetch('/api/declaration', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ dispatch_cutoff, late_declare, dispatch_remarks })
+    body: JSON.stringify({ 
+      dispatch_cutoff, 
+      late_declare: late_declare.toLowerCase() === 'yes',
+      dispatch_remarks: dispatch_remarks || ''
+    })
+  })
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      toastSuccess('Success', 'Dispatch created successfully!');
+      setTimeout(() => {
+        location.reload(); // Refresh to show new dispatch
+      }, 1500);
+    } else {
+      toastError('Error', 'Failed to create dispatch: ' + result.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error creating dispatch:', error);
+    toastError('Error', 'Error creating dispatch');
   });
 });
-</script>
 
-<!-- 📜 History Toggle -->
-
-
-<script>
-  // TODO fix the slow loading of data here. add loading while fetching data
-  const dispatchData = [];
-
-  function showHistory() {
+// 📜 History Toggle
+function showHistory() {
   fetch('/api/get_all_dispatch')
     .then(response => {
       if (!response.ok) {
@@ -420,16 +519,14 @@ document.getElementById('btn_create_dispatch').addEventListener('click', functio
     })
     .then(data => {
       console.log('Fetched dispatch data:', data);
-      // later you'll use this data to build the table
       dispatchData.length = 0;
       dispatchData.push(...data);
-
       showDispatchTable();
     })
     .catch(error => {
       console.error('Fetch error:', error);
+      toastError('Error', 'Error loading dispatch history');
     });
-
 
   document.querySelector(".action-buttons").classList.add("hidden");
   document.getElementById("historyButtons").classList.remove("hidden");
@@ -444,15 +541,13 @@ function backToMain() {
   document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-file-lines"></i> Dispatch Contents';
 
   const tableHead = document.querySelector("#dataTable thead tr");
-  const tableBody = document.querySelector("#dataTable tbody");
 
   // ✅ Restore original headers
   tableHead.innerHTML = `
     <th><input type="checkbox" id="selectAll"></th>
-    <th>Dispatch Content ID</th>
+    <th>Dispatch ID</th>
     <th>Entry ID</th>
-    <th>
-       Category</th>
+    <th>MAAB Category</th>
     <th>MAAB No.</th>
     <th>Member Name</th>
     <th>Member Birth Date</th>
@@ -465,17 +560,19 @@ function backToMain() {
   filteredData = [...mainTableData];
 
   // ✅ Reset page and re-render
-  window.currentPage = 1;
+  currentPage = 1;
   renderTable();
 
   // ✅ Restore checkbox functionality
   initializeCheckboxListeners();
-  document.querySelector(".btn.select-all").disabled = false;
-  document.querySelector(".btn.transmit").disabled = false;
+  
+  const selectAllBtn = document.querySelector(".btn.select-all");
+  const transmitBtn = document.querySelector(".btn.transmit");
+  if (selectAllBtn) selectAllBtn.disabled = false;
+  if (transmitBtn) transmitBtn.disabled = false;
 }
 
 function showDispatchTable() {
-  const tableBody = document.querySelector("#dataTable tbody");
   const tableHead = document.querySelector("#dataTable thead tr");
 
   // ✅ Replace table header for history view
@@ -491,126 +588,278 @@ function showDispatchTable() {
     <th>Remarks</th>
   `;
 
-  /*
-  // ✅ Sample dispatch history data
-  const dispatchData = [
-
-
-
-
-    /*
-    {
-      dispatch_id: "DISP001",
-      dispatch_type: "Regular",
-      dispatch_origin: "Cavite",
-      dispatch_year: "2025",
-      dispatch_cutoff: "2025-01-15",
-      date_dispatched: "2025-01-16",
-      dispatch_total: "150",
-      late_declare: "No",
-      dispatch_remarks: "N/A"
-    },
-    {
-      dispatch_id: "DISP002",
-      dispatch_type: "Special",
-      dispatch_origin: "Silang",
-      dispatch_year: "2025",
-      dispatch_cutoff: "2025-02-14",
-      date_dispatched: "2025-02-15",
-      dispatch_total: "89",
-      late_declare: "Yes",
-      dispatch_remarks: "N/A"
-    },
-    {
-      dispatch_id: "DISP003",
-      dispatch_type: "Regular",
-      dispatch_origin: "Dasma",
-      dispatch_year: "2025",
-      dispatch_cutoff: "2025-03-15",
-      date_dispatched: "2025-03-16",
-      dispatch_total: "175",
-      late_declare: "No",
-      dispatch_remarks: "Quarter-end dispatch"
-    }
-  
-  ];
-*/
-
   // ✅ Set the filtered data to the dispatch data
   filteredData = [...dispatchData];
 
   // ✅ Reuse the same renderTable() for pagination
-  window.currentPage = 1;
+  currentPage = 1;
   renderTable();
 
   // ✅ Update summary text
   document.getElementById("summaryText").textContent = `Showing ${dispatchData.length} dispatch history records`;
 
-  // ✅ Hide unnecessary buttons if needed
-  const selectAll = document.getElementById("selectAll");
-  if (selectAll) selectAll.checked = false;
-
   // Disable selection buttons during history view
-  document.querySelector(".btn.select-all").disabled = true;
-  document.querySelector(".btn.transmit").disabled = true;
+  const selectAllBtn = document.querySelector(".btn.select-all");
+  const transmitBtn = document.querySelector(".btn.transmit");
+  if (selectAllBtn) selectAllBtn.disabled = true;
+  if (transmitBtn) transmitBtn.disabled = true;
 }
 
-function showMainTable() {
-  const tableBody = document.querySelector("#dataTable tbody");
-  const tableHead = document.querySelector("#dataTable thead tr");
-  
-  tableHead.innerHTML = `
-    <th><input type="checkbox" id="selectAll"></th>
-    <th>Dispatch ID</th>
-    <th>Entry ID</th>
-    <th>MAAB Category</th>
-    <th>MAAB No.</th>
-    <th>Member Name</th>
-    <th>Member Birth Date</th>
-    <th>Effectivity Date</th>
-    <th>Location Particular</th>
-    <th>Late Declare</th>
-  `;
+// ✅ FULL Pagination + Show Entries
+function initializePagination() {
+  const entriesSelect = document.getElementById("entriesPerPage");
 
-  
-  tableBody.innerHTML = mainTableData.map(item => `
-    <tr>
-      <td><input type="checkbox" class="row-check"></td>
-      <td>${item.dispatchContentID}<  /td>
-      <td>${item.entryID}</td>
-      <td>${item.category}</td>
-      <td>${item.maabNo}</td>
-      <td>${item.memberName}</td>
-      <td>${item.birthDate}</td>
-      <td>${item.effectivityDate}</td>
-      <td>${item.location}</td>
-      <td>${item.lateDeclare}</td>
-    </tr>
-  `).join('');
-initializeCheckboxListeners();
+  entriesPerPage = parseInt(entriesSelect.value);
 
+  entriesSelect.addEventListener("change", () => {
+    entriesPerPage = parseInt(entriesSelect.value);
+    currentPage = 1;
+    renderTable();
+  });
 
-// ✅ Reset all rows to visible before pagination recalculates
-document.querySelectorAll("#dataTable tbody tr").forEach(row => row.style.display = "");
-
-// ✅ Run pagination AFTER DOM updates
-setTimeout(() => {
-  window.currentPage = 1;
   renderTable();
-  updateSelection();
-}, 0);
 }
-function initializeCheckboxListeners() {
-  const rowChecks = document.querySelectorAll(".row-check");
-  const selectAllCheckbox = document.getElementById("selectAll");
-  
-  if (rowChecks.length > 0 && selectAllCheckbox) {
-    rowChecks.forEach(cb => cb.addEventListener("change", updateSelection));
-    selectAllCheckbox.addEventListener("change", () => {
-      rowChecks.forEach(cb => cb.checked = selectAllCheckbox.checked);
-      updateSelection();
-    });
+
+function renderTable() {
+  const tableBody = document.querySelector("#dataTable tbody");
+  const start = (currentPage - 1) * entriesPerPage;
+  const end = start + entriesPerPage;
+  const paginatedData = filteredData.slice(start, end);
+
+  if (filteredData[0]?.dispatch_id) {
+    // Dispatch table (history view)
+    tableBody.innerHTML = paginatedData.map(item => `
+      <tr>
+        <td>${item.dispatch_id || ''}</td>
+        <td>${item.dispatch_type || ''}</td>
+        <td>${item.dispatch_origin || ''}</td>
+        <td>${item.dispatch_year || ''}</td>
+        <td>${item.dispatch_cutoff || ''}</td>
+        <td>${item.date_dispatched || ''}</td>
+        <td>${item.dispatch_total || ''}</td>
+        <td>${item.late_declare || ''}</td>
+        <td>${item.dispatch_remarks || ''}</td>
+      </tr>
+    `).join('');
+    
+    // Disable selection buttons in history view
+    const selectAllBtn = document.querySelector(".btn.select-all");
+    const transmitBtn = document.querySelector(".btn.transmit");
+    if (selectAllBtn) selectAllBtn.disabled = true;
+    if (transmitBtn) transmitBtn.disabled = true;
+  } else {
+    // Main table
+    tableBody.innerHTML = paginatedData.map(item => `
+      <tr>
+        <td><input type="checkbox" class="row-check"></td>
+        <td>${item.dispatchContentID || ''}</td>
+        <td>${item.entryID || ''}</td>
+        <td>${item.category || ''}</td>
+        <td>${item.maabNo || ''}</td>
+        <td>${item.memberName || ''}</td>
+        <td>${item.birthDate || ''}</td>
+        <td>${item.effectivityDate || ''}</td>
+        <td>${item.location || ''}</td>
+        <td>${item.lateDeclare || ''}</td>
+      </tr>
+    `).join('');
+    
+    // Enable selection buttons in main view
+    const selectAllBtn = document.querySelector(".btn.select-all");
+    const transmitBtn = document.querySelector(".btn.transmit");
+    if (selectAllBtn) {
+      selectAllBtn.disabled = false;
+      selectAllBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Select All'; // Reset button text
+    }
+    if (transmitBtn) transmitBtn.disabled = false;
+    
+    // REINITIALIZE CHECKBOX LISTENERS AFTER RENDERING
+    setTimeout(() => {
+      initializeCheckboxListeners();
+    }, 0);
   }
+
+  updatePagination();
+  updateSummary();
+  updateSelection();
+}
+
+function updatePagination() {
+  const paginationControls = document.getElementById("paginationControls");
+  if (!paginationControls) return;
+  
+  const totalPages = Math.ceil(filteredData.length / entriesPerPage);
+  paginationControls.innerHTML = "";
+
+  if (totalPages <= 1) return;
+
+  // Previous button
+  const prev = document.createElement("button");
+  prev.textContent = "Previous";
+  prev.disabled = currentPage === 1;
+  prev.onclick = () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTable();
+    }
+  };
+  paginationControls.appendChild(prev);
+
+  // Page buttons
+  function createPageButton(page) {
+    const btn = document.createElement("button");
+    btn.textContent = page;
+    if (page === currentPage) btn.classList.add("active");
+    btn.onclick = () => {
+      currentPage = page;
+      renderTable();
+    };
+    paginationControls.appendChild(btn);
+  }
+
+  function addEllipsis() {
+    const ellipsis = document.createElement("span");
+    ellipsis.textContent = "...";
+    ellipsis.classList.add("ellipsis");
+    paginationControls.appendChild(ellipsis);
+  }
+
+  // Pagination logic
+  if (totalPages <= 10) {
+    for (let i = 1; i <= totalPages; i++) createPageButton(i);
+  } else {
+    const visiblePages = 5;
+
+    if (currentPage <= visiblePages) {
+      for (let i = 1; i <= visiblePages; i++) createPageButton(i);
+      addEllipsis();
+      createPageButton(totalPages);
+    } else if (currentPage >= totalPages - visiblePages + 1) {
+      createPageButton(1);
+      addEllipsis();
+      for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
+    } else {
+      createPageButton(1);
+      addEllipsis();
+      for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
+      addEllipsis();
+      createPageButton(totalPages);
+    }
+  }
+
+  // Next button
+  const next = document.createElement("button");
+  next.textContent = "Next";
+  next.disabled = currentPage === totalPages;
+  next.onclick = () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderTable();
+    }
+  };
+  paginationControls.appendChild(next);
+}
+
+function updateSummary() {
+  const summaryText = document.getElementById("summaryText");
+  if (!summaryText) return;
+  
+  const total = filteredData.length;
+  const start = total === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
+  const end = Math.min(currentPage * entriesPerPage, total);
+  
+  // Count checked items
+  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+  let checkedCount = 0;
+  visibleRows.forEach(row => {
+    const checkbox = row.querySelector(".row-check");
+    if (checkbox && checkbox.checked) checkedCount++;
+  });
+  
+  summaryText.textContent = `Showing ${start} to ${end} of ${total} entries • ${checkedCount} selected`;
+}
+
+// 📤 Export to Server Function
+function exportSelectedToServer() {
+  // Get all selected rows
+  const selectedRows = [];
+  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+  
+  visibleRows.forEach((row, index) => {
+    const checkbox = row.querySelector(".row-check");
+    if (checkbox && checkbox.checked) {
+      const cells = row.querySelectorAll("td");
+      if (cells.length >= 9) {
+        selectedRows.push({
+          name: cells[5]?.textContent?.trim() || '',
+          category: cells[3]?.textContent?.trim() || '',
+          effectivity: cells[7]?.textContent?.trim() || '',
+          birthday: cells[6]?.textContent?.trim() || '',
+          location: cells[8]?.textContent?.trim() || ''
+        });
+      }
+    }
+  });
+
+  if (selectedRows.length === 0) {
+    toastError('Export Failed', 'Please select at least one row to export.');
+    return;
+  }
+
+  console.log("Selected rows for export:", selectedRows);
+
+  // Show loading state
+  const transmitBtn = document.querySelector(".btn.transmit");
+  const originalText = transmitBtn.innerHTML;
+  transmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting...';
+  transmitBtn.disabled = true;
+
+  // Send data to server
+  fetch('/api/export_dispatch', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      selected_rows: selectedRows
+    })
+  })
+  .then(response => {
+    console.log("Response status:", response.status);
+    if (!response.ok) {
+      // Try to get error message from response
+      return response.text().then(text => {
+        let errorMsg = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = JSON.parse(text);
+          errorMsg = errorData.error || errorMsg;
+        } catch (e) {
+          // If not JSON, use the text as is
+          if (text) errorMsg = text;
+        }
+        throw new Error(errorMsg);
+      });
+    }
+    return response.json();
+  })
+  .then(result => {
+    console.log("Export result:", result);
+    if (result.success) {
+      toastSuccess("Export Successful!", `File saved as: ${result.filename}`);
+      console.log("File saved to:", result.file_path);
+    } else {
+      toastError("Export Failed", result.error || "Unknown error occurred");
+    }
+  })
+  .catch(error => {
+    console.error('Export error:', error);
+    toastError("Export Error", "Failed to export file: " + error.message);
+  })
+  .finally(() => {
+    // Restore button state
+    transmitBtn.innerHTML = originalText;
+    transmitBtn.disabled = false;
+  });
 }
 
 // UPLOADED IMAGE
@@ -632,150 +881,15 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
-</script>
 
-<!-- ✅ FULL Pagination + Show Entries (kept intact, only fixed) -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  function getTableRows() {
-    return Array.from(document.querySelectorAll("#dataTable tbody tr"));
-  }
+// Global error handlers
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+});
 
-  const paginationControls = document.getElementById("paginationControls");
-  const entriesSelect = document.getElementById("entriesPerPage");
-  const summaryText = document.getElementById("summaryText");
-
-  // ✅ Make page state GLOBAL so history/back can use it
-  window.currentPage = 1;
-  let entriesPerPage = parseInt(entriesSelect.value);
-
-  // ✅ Make renderTable GLOBAL so history/back/search can call it
-  window.renderTable = function() {
-  const tableBody = document.querySelector("#dataTable tbody");
-  const start = (currentPage - 1) * entriesPerPage;
-  const end = start + entriesPerPage;
-  const paginatedData = filteredData.slice(start, end);
-
-  if (filteredData[0]?.dispatch_id) {
-    // Dispatch table
-    tableBody.innerHTML = paginatedData.map(item => `
-      <tr>
-        <td>${item.dispatch_id}</td>
-        <td>${item.dispatch_type}</td>
-        <td>${item.dispatch_origin}</td>
-        <td>${item.dispatch_year}</td>
-        <td>${item.dispatch_cutoff}</td>
-        <td>${item.date_dispatched}</td>
-        <td>${item.dispatch_total}</td>
-        <td>${item.late_declare}</td>
-        <td>${item.dispatch_remarks}</td>
-      </tr>
-    `).join('');
-    document.querySelector(".btn.select-all").disabled = true;
-    document.querySelector(".btn.transmit").disabled = true;
-  } else {
-    // Main table
-    tableBody.innerHTML = paginatedData.map(item => `
-      <tr>
-        <td><input type="checkbox" class="row-check"></td>
-        <td>${item.dispatchContentID}</td>
-        <td>${item.entryID}</td>
-        <td>${item.category}</td>
-        <td>${item.maabNo}</td>
-        <td>${item.memberName}</td>
-        <td>${item.birthDate}</td>
-        <td>${item.effectivityDate}</td>
-        <td>${item.location}</td>
-        <td>${item.lateDeclare}</td>
-      </tr>
-    `).join('');
-    initializeCheckboxListeners();
-  }
-
-  updatePagination();
-  updateSummary();
-  updateSelection();
-};
-
-  function updatePagination() {
-    const totalPages = Math.ceil(filteredData.length / entriesPerPage);
-    paginationControls.innerHTML = "";
-
-    const prev = document.createElement("button");
-    prev.textContent = "Previous";
-    prev.disabled = currentPage === 1;
-    prev.onclick = () => {
-      currentPage--;
-      renderTable();
-    };
-    paginationControls.appendChild(prev);
-
-    function createPageButton(page) {
-      const btn = document.createElement("button");
-      btn.textContent = page;
-      if (page === currentPage) btn.classList.add("active");
-      btn.onclick = () => {
-        currentPage = page;
-        renderTable();
-      };
-      paginationControls.appendChild(btn);
-    }
-
-    function addEllipsis() {
-      const ellipsis = document.createElement("span");
-      ellipsis.textContent = "...";
-      ellipsis.classList.add("ellipsis");
-      paginationControls.appendChild(ellipsis);
-    }
-
-    if (totalPages <= 10) {
-      for (let i = 1; i <= totalPages; i++) createPageButton(i);
-    } else {
-      const visiblePages = 5;
-
-      if (currentPage <= visiblePages) {
-        for (let i = 1; i <= visiblePages; i++) createPageButton(i);
-        addEllipsis();
-        createPageButton(totalPages);
-      } else if (currentPage >= totalPages - visiblePages + 1) {
-        createPageButton(1);
-        addEllipsis();
-        for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
-      } else {
-        createPageButton(1);
-        addEllipsis();
-        for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
-        addEllipsis();
-        createPageButton(totalPages);
-      }
-    }
-
-    const next = document.createElement("button");
-    next.textContent = "Next";
-    next.disabled = currentPage === totalPages;
-    next.onclick = () => {
-      currentPage++;
-      renderTable();
-    };
-    paginationControls.appendChild(next);
-  }
-
-  function updateSummary() {
-    const rows = getTableRows();
-    const total = rows.length;
-    const start = (currentPage - 1) * entriesPerPage + 1;
-    const end = Math.min(currentPage * entriesPerPage, total);
-    const checked = document.querySelectorAll(".row-check:checked").length;
-    summaryText.textContent = `Showing ${start} to ${end} of ${total} entries • ${checked} selected`;
-  }
-
-  entriesSelect.addEventListener("change", () => {
-    entriesPerPage = parseInt(entriesSelect.value);
-    currentPage = 1;
-    renderTable();
-  });
-
-  renderTable();
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled promise rejection:', e.reason);
+    toastError('JavaScript Error', 'An unexpected error occurred: ' + e.reason);
 });
 </script>
 {% endblock %}

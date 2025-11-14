@@ -1,8 +1,12 @@
+
+let debounceTimer; // Timer identifier for debouncing
+
 function renderEntriesTable(data) {
     console.log("Entries data:", data);
     const container = document.getElementById('entries_table');
     document.getElementById('entries_table').innerHTML = '';
-
+                
+    
                 new Handsontable(container, {
                     data,
                     colHeaders: [
@@ -54,9 +58,56 @@ function renderEntriesTable(data) {
                     stretchH: 'all',
                     autoWrapRow: false,
                     autoWrapCol: false,
-                    licenseKey: 'non-commercial-and-evaluation'
+                    licenseKey: 'non-commercial-and-evaluation',
+
+                    // ADD THE EVENT LISTENER HERE
+                    afterChange: function(changes, source) {
+                        // Prevent firing during initial load
+                        if (source === 'loadData') return;
+                        
+                        // Clear the previous timer
+                        clearTimeout(debounceTimer);
+                        
+                        // Set a new timer
+                        debounceTimer = setTimeout(() => {
+                            if (changes) {
+                                changes.forEach(([row, prop, oldValue, newValue]) => {
+                                    console.log(`Changed: row ${row}, prop ${prop}, from "${oldValue}" to "${newValue}"`);
+                                    
+                                    // Get the entire row data
+                                    const rowData = this.getSourceDataAtRow(row);
+                                    
+                                    // Call your fetch function
+                                    updateEntryInBackend(rowData);
+                                });
+                            }
+                        }, 1000); // Wait 1 second after last change
+                    }
                 });
 
+}
+
+// Your fetch function
+async function updateEntryInBackend(entryData) {
+    try {
+        const response = await fetch('/api/save_entry_update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(entryData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const result = await response.json();
+        console.log('Update successful:', result);
+    } catch (error) {
+        console.error('Error updating entry:', error);
+        // You might want to show an error message to the user here
+    }
 }
 
 // Make the function available globally

@@ -116,10 +116,10 @@
         <table class="record_details_table">
             <tr>
                 <!-- TODO WIP remove if not needed -->
-                <td>
-                    <label for="dispatch_ready">Add to Dispatch</label>
-                    <input type="text" id="add_to_dispatch" name="add_to_dispatch" value="add_to_dispatch" value="0" autocomplete="off" readonly placeholder=" ">
-                </td>
+                <!-- <td> -->
+                    <!-- <label for="dispatch_ready">Add to Dispatch</label> -->
+                    <!-- <input type="text" id="add_to_dispatch" name="add_to_dispatch" value="add_to_dispatch" value="0" autocomplete="off" readonly placeholder=" "> -->
+                <!-- </td> -->
 
                 <td>
                     <div class="input-container">
@@ -267,7 +267,7 @@
                         <select id="origin" name="origin" required>
                             <option value="" disabled selected>Select origin...</option>
                             <option value="Silang">Silang</option>
-                            <option value="Dasma">Dasmariñas</option>
+                            <option value="Dasmariñas">Dasmariñas</option>
                             <option value="Chapter">Chapter</option>
                         </select>
                     </div>
@@ -471,9 +471,9 @@
                     </div>
                 </td>
 
-                <td>
+                <td hidden>
                     <div class="input-container checkbox-container">
-                        <label for="entry_declared">Declared</label>
+                        <label for="entry_declared" hidden>Declared</label>
                         <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
                     </div>
                 </td>
@@ -486,7 +486,7 @@
                     </div>
                 </td>
 
-                <td>
+                <td hidden>
                     <div class="input-container checkbox-container">
                         <input type="input" id="dispatch_id" name="dispatch_id" autocomplete="off" readonly>
                         <label for="dispatch_id">Dispatch ID</label>
@@ -555,6 +555,19 @@
                 <div id="entries_table" class="ht-theme-main"></div>
                 </div>
 
+                <!-- Unsaved Changes Confirmation Modal -->
+<div id="unsavedChangesModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Unsaved Changes</h3>
+        <p>You have unsaved changes. Are you sure you want to close without saving?</p>
+        <div class="modal-buttons">
+            <button id="confirmClose" class="btn btn-danger">Close Without Saving</button>
+            <button id="cancelClose" class="btn btn-secondary">Continue Editing</button>
+            <button id="saveAndClose" class="btn btn-primary">Save and Close</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 <!--TODO fix the order of columns in sql file-->
@@ -570,6 +583,340 @@ let allData = [];
 let filteredData = [];
 let currentPage = 1;
 let entriesPerPage = 10;
+
+// Track unsaved changes
+let hasUnsavedChanges = false;
+let originalRecordData = {};
+
+// Initialize change tracking
+function initializeChangeTracking() {
+    // Store original data when overlay opens
+    storeOriginalData();
+    
+    // Add event listeners to all form inputs
+    const formInputs = document.querySelectorAll('#overlay input, #overlay select, #overlay textarea');
+    formInputs.forEach(input => {
+        // Remove existing listeners to avoid duplicates
+        input.removeEventListener('input', handleFormChange);
+        input.removeEventListener('change', handleFormChange);
+        
+        // Add new listeners
+        input.addEventListener('input', handleFormChange);
+        input.addEventListener('change', handleFormChange);
+    });
+    
+    // Reset the flag when overlay opens
+    hasUnsavedChanges = false;
+    console.log('Change tracking initialized');
+}
+
+function storeOriginalData() {
+    // Store original record data
+    originalRecordData = {
+        year: document.getElementById('year').value,
+        id_rcv: document.getElementById('id_rcv').checked,
+        paid: document.getElementById('paid').checked,
+        declared: document.getElementById('declared').checked,
+        dec_date: document.getElementById('dec_date').value,
+        eff_date: document.getElementById('eff_date').value,
+        loc_par: document.getElementById('loc_par').value,
+        loc_cat: document.getElementById('loc_cat').value,
+        municipality: document.getElementById('municipality').value,
+        district: document.getElementById('district').value,
+        origin: document.getElementById('origin').value,
+        remarks: document.getElementById('remarks').value,
+        tags: document.getElementById('tags').value
+    };
+    console.log('Original data stored:', originalRecordData);
+}
+
+function handleFormChange() {
+    if (!hasUnsavedChanges) {
+        hasUnsavedChanges = true;
+        console.log('Unsaved changes detected - form changed');
+    }
+}
+
+function checkForChanges() {
+    if (!hasUnsavedChanges) {
+        console.log('No unsaved changes flag set');
+        return false;
+    }
+    
+    // Check record details for changes
+    const currentRecordData = {
+        year: document.getElementById('year').value,
+        id_rcv: document.getElementById('id_rcv').checked,
+        paid: document.getElementById('paid').checked,
+        declared: document.getElementById('declared').checked,
+        dec_date: document.getElementById('dec_date').value,
+        eff_date: document.getElementById('eff_date').value,
+        loc_par: document.getElementById('loc_par').value,
+        loc_cat: document.getElementById('loc_cat').value,
+        municipality: document.getElementById('municipality').value,
+        district: document.getElementById('district').value,
+        origin: document.getElementById('origin').value,
+        remarks: document.getElementById('remarks').value,
+        tags: document.getElementById('tags').value
+    };
+    
+    // Check if record data changed
+    const recordChanged = JSON.stringify(originalRecordData) !== JSON.stringify(currentRecordData);
+    
+    console.log('Record changed:', recordChanged);
+    console.log('Original:', originalRecordData);
+    console.log('Current:', currentRecordData);
+    
+    return recordChanged;
+}
+
+// Override the close overlay function
+function setupCloseOverlayWithConfirmation() {
+    const closeOverlay = document.getElementById('close-overlay');
+    const overlay = document.getElementById('overlay');
+    
+    // Close button click
+    closeOverlay.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Close button clicked');
+        attemptCloseOverlay();
+    });
+    
+    // ESC key press - REPLACE THE DUPLICATE ONE
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape" && overlay.style.display === 'flex') {
+            event.preventDefault();
+            console.log('ESC key pressed with overlay open');
+            attemptCloseOverlay();
+        }
+    });
+    
+    // Modal button handlers
+    document.getElementById('confirmClose').addEventListener('click', function() {
+        console.log('Close without saving confirmed');
+        closeOverlayWithoutSaving();
+    });
+    
+    document.getElementById('cancelClose').addEventListener('click', function() {
+        console.log('Continue editing selected');
+        hideUnsavedChangesModal();
+    });
+    
+    document.getElementById('saveAndClose').addEventListener('click', function() {
+        console.log('Save and close selected');
+        saveAndCloseOverlay();
+    });
+}
+
+function attemptCloseOverlay() {
+    console.log('Attempting to close overlay, checking for changes...');
+    if (checkForChanges()) {
+        console.log('Changes detected, showing modal');
+        showUnsavedChangesModal();
+    } else {
+        console.log('No changes detected, closing directly');
+        closeOverlayWithoutSaving();
+    }
+}
+
+function showUnsavedChangesModal() {
+    console.log('Showing unsaved changes modal');
+    document.getElementById('unsavedChangesModal').style.display = 'flex';
+}
+
+function hideUnsavedChangesModal() {
+    console.log('Hiding unsaved changes modal');
+    document.getElementById('unsavedChangesModal').style.display = 'none';
+}
+
+function closeOverlayWithoutSaving() {
+    console.log('Closing overlay without saving');
+    hideUnsavedChangesModal();
+    document.getElementById('overlay').style.display = 'none';
+    hasUnsavedChanges = false;
+}
+
+function saveAndCloseOverlay() {
+    console.log('Saving and closing overlay');
+    hideUnsavedChangesModal();
+    
+    // Trigger save for record
+    saveRecordDetails()
+        .then(() => {
+            document.getElementById('overlay').style.display = 'none';
+            hasUnsavedChanges = false;
+            console.log('Saved and closed successfully');
+            toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
+        })
+        .catch(error => {
+            console.error('Error saving before close:', error);
+            toastAlert("Save Error", "There was an error saving your changes. Please try again.");
+        });
+}
+
+// Modified saveRecordDetails function to reset hasUnsavedChanges on success
+// Enhanced saveRecordDetails function with proper table refresh
+function saveRecordDetails() {
+    return new Promise((resolve, reject) => {
+        const payload = {
+            record_id: document.getElementById('record_id').value,
+            year: document.getElementById('year').value,
+            id_received: document.getElementById('id_rcv').checked ? 1 : 0,
+            paid: document.getElementById('paid').checked ? 1 : 0,
+            declared: document.getElementById('declared').checked ? 1 : 0,
+            declaration_date: document.getElementById('dec_date').value || null,
+            effectivity_date: document.getElementById('eff_date').value || null,
+            location_particular: document.getElementById('loc_par').value || null,
+            location_category: document.getElementById('loc_cat').value || null,
+            municipality: document.getElementById('municipality').value || null,
+            district: document.getElementById('district').value || null,
+            origin: document.getElementById('origin').value || null,
+            remarks: document.getElementById('remarks').value || null,
+            tags: document.getElementById('tags').value || null
+        };
+
+        console.log('Saving record details:', payload);
+
+        fetch('/api/save_record_details', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (!result.success) {
+                console.error('Save failed:', result);
+                reject(new Error("Failed to save record"));
+                return;
+            }
+            
+            hasUnsavedChanges = false;
+            storeOriginalData(); // Update original data after successful save
+            console.log('Record saved successfully');
+            
+            // Refresh the main table data
+            return refreshTableData();
+        })
+        .then(() => {
+            resolve();
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            reject(error);
+        });
+    });
+}
+
+// Function to refresh table data from server
+function refreshTableData() {
+    return fetch("/api/members/records")
+        .then(response => response.json())
+        .then(data => {
+            // Format dates
+            data.forEach(row => {
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.effectivity_date) {
+                    const date = new Date(row.effectivity_date);
+                    row.effectivity_date = date.toLocaleDateString('en-US');
+                }
+            });
+
+            // Update the data arrays
+            allData = [...data];
+            filteredData = [...data];
+            
+            // Re-render the table
+            renderTable();
+            
+            console.log('Table data refreshed');
+        })
+        .catch(error => {
+            console.error('Error refreshing table data:', error);
+            throw error;
+        });
+}
+
+// Update the openRecordInOverlay function to initialize change tracking
+function openRecordInOverlay(recordData) {
+    function convertToYYYYMMDD(dateStr) {
+        const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
+        if (parts.length === 3) {
+            let [month, day, year] = parts;
+            month = month.padStart(2, '0');
+            day = day.padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        return '';
+    }
+
+    if (recordData.declaration_date) {
+        recordData.declaration_date = convertToYYYYMMDD(recordData.declaration_date);
+    }
+    if (recordData.effectivity_date) {
+        recordData.effectivity_date = convertToYYYYMMDD(recordData.effectivity_date);
+    }
+
+    document.getElementById('record_id').value = recordData.record_id;
+    document.getElementById('year').value = recordData.year;
+    document.getElementById('id_rcv').checked = recordData.id_received;
+    document.getElementById('paid').checked = recordData.paid;
+    document.getElementById('declared').checked = recordData.declared;
+    document.getElementById('dec_date').value = recordData.declaration_date;
+    document.getElementById('eff_date').value = recordData.effectivity_date;
+    document.getElementById('loc_par').value = recordData.location_particular;
+    document.getElementById('loc_cat').value = recordData.location_category;
+    document.getElementById('municipality').value = recordData.municipality;
+    document.getElementById('district').value = recordData.district;
+    document.getElementById('origin').value = recordData.origin;
+    document.getElementById('remarks').value = recordData.remarks;
+    document.getElementById('tags').value = recordData.tags;
+
+    // Clear any existing entries in the entries table
+    if (window.renderEntriesTable) {
+        window.renderEntriesTable([]);
+    }
+
+    // Show the overlay
+    document.getElementById('overlay').style.display = 'flex';
+
+    // Scroll to top of overlay
+    document.getElementById('overlay-content').scrollTop = 0;
+
+    // Initialize change tracking AFTER a short delay to ensure form is populated
+    setTimeout(() => {
+        initializeChangeTracking();
+    }, 100);
+
+    // Fetch entries for this record
+    fetch(`/api/members/${recordData.record_id}/entries`)
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(row => {
+                if (row.birth_date) {
+                    const date = new Date(row.birth_date);
+                    row.birth_date = date.toLocaleDateString('en-US');
+                }
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.OR_date) {
+                    const date = new Date(row.OR_date);
+                    row.OR_date = date.toLocaleDateString('en-US');
+                }
+            });
+            window.renderEntriesTable(data);
+        });
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, setting up close confirmation');
+    setupCloseOverlayWithConfirmation();
+});
 
 // Filter functionality
 function applyFilters() {
@@ -669,77 +1016,11 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
 
     td.querySelector('.open-link').addEventListener('click', function () {
         const rowData = instance.getSourceDataAtRow(row);
-
-        function convertToYYYYMMDD(dateStr) {
-            const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
-            if (parts.length === 3) {
-                let [month, day, year] = parts;
-                month = month.padStart(2, '0');
-                day = day.padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            }
-            return '';
-        }
-
-        if (rowData.declaration_date) {
-            rowData.declaration_date = convertToYYYYMMDD(rowData.declaration_date);
-        }
-        if (rowData.effectivity_date) {
-            rowData.effectivity_date = convertToYYYYMMDD(rowData.effectivity_date);
-        }
-
-        document.getElementById('record_id').value = rowData.record_id;
-        document.getElementById('year').value = rowData.year;
-        document.getElementById('id_rcv').checked = rowData.id_received;
-        document.getElementById('paid').checked = rowData.paid;
-        document.getElementById('declared').checked = rowData.declared;
-        document.getElementById('dec_date').value = rowData.declaration_date;
-        document.getElementById('eff_date').value = rowData.effectivity_date;
-        document.getElementById('loc_par').value = rowData.location_particular;
-        document.getElementById('loc_cat').value = rowData.location_category;
-        document.getElementById('municipality').value = rowData.municipality;
-        document.getElementById('district').value = rowData.district;
-        document.getElementById('origin').value = rowData.origin;
-        document.getElementById('remarks').value = rowData.remarks;
-        document.getElementById('tags').value = rowData.tags;
-
-        document.getElementById('overlay').style.display = 'flex';
-
-        fetch(`/api/members/${rowData.record_id}/entries`)
-            .then(response => response.json())
-            .then(data => {
-                data.forEach(row => {
-                    if (row.birth_date) {
-                        const date = new Date(row.birth_date);
-                        row.birth_date = date.toLocaleDateString('en-US');
-                    }
-                    if (row.declaration_date) {
-                        const date = new Date(row.declaration_date);
-                        row.declaration_date = date.toLocaleDateString('en-US');
-                    }
-                    if (row.OR_date) {
-                        const date = new Date(row.OR_date);
-                        row.OR_date = date.toLocaleDateString('en-US');
-                    }
-                });
-                window.renderEntriesTable(data);
-            });
+        openRecordInOverlay(rowData);
     });
 
     return td;
 }
-
-// Close overlay
-document.getElementById('close-overlay').addEventListener('click', function () {
-    document.getElementById('overlay').style.display = 'none';
-});
-
-// Close overlay on ESC key
-document.addEventListener('keydown', function(event) {
-    if (event.key === "Escape") {
-        document.getElementById('overlay').style.display = 'none';
-    }
-});
 
 // Calculate adaptive height based on entries per page
 function calculateTableHeight() {
@@ -941,153 +1222,24 @@ fetch("/api/members/records")
         });
 
         // Add Record button
-        // Add Record button - now opens the form after adding
-document.querySelector('.btn-add').addEventListener('click', function () {
-    fetch('/api/add_record', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (!result.success) {
-            toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
-            return;
-        }
-
-        toastSuccess("Record Added Successfully!", "The record has been successfully saved to the database.");
-        
-        // Get the newly created record ID
-        const newRecordId = result.record_id;
-        
-        return fetch("/api/members/records").then(res => res.json())
-            .then(data => {
-                data.forEach(row => {
-                    if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
-                    if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
-                });
-
-                allData = [...data];
-                filteredData = [...data];
-                currentPage = 1;
-                renderTable();
-
-                // Find and open the newly added record - use newRecordId from the outer scope
-                const newRecord = allData.find(record => record.record_id === newRecordId);
-                if (newRecord) {
-                    // Open the new record in overlay
-                    openRecordInOverlay(newRecord);
-                }
-            });
-    })
-    .catch(err => {
-        console.error("Add Record Error:", err);
-        toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
-    });
-});
-
-// Helper function to open record in overlay
-function openRecordInOverlay(recordData) {
-    function convertToYYYYMMDD(dateStr) {
-        const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
-        if (parts.length === 3) {
-            let [month, day, year] = parts;
-            month = month.padStart(2, '0');
-            day = day.padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-        return '';
-    }
-
-    if (recordData.declaration_date) {
-        recordData.declaration_date = convertToYYYYMMDD(recordData.declaration_date);
-    }
-    if (recordData.effectivity_date) {
-        recordData.effectivity_date = convertToYYYYMMDD(recordData.effectivity_date);
-    }
-
-    document.getElementById('record_id').value = recordData.record_id;
-    document.getElementById('year').value = recordData.year;
-    document.getElementById('id_rcv').checked = recordData.id_received;
-    document.getElementById('paid').checked = recordData.paid;
-    document.getElementById('declared').checked = recordData.declared;
-    document.getElementById('dec_date').value = recordData.declaration_date;
-    document.getElementById('eff_date').value = recordData.effectivity_date;
-    document.getElementById('loc_par').value = recordData.location_particular;
-    document.getElementById('loc_cat').value = recordData.location_category;
-    document.getElementById('municipality').value = recordData.municipality;
-    document.getElementById('district').value = recordData.district;
-    document.getElementById('origin').value = recordData.origin;
-    document.getElementById('remarks').value = recordData.remarks;
-    document.getElementById('tags').value = recordData.tags;
-
-    // Clear any existing entries in the entries table
-    if (window.renderEntriesTable) {
-        window.renderEntriesTable([]);
-    }
-
-    // Show the overlay
-    document.getElementById('overlay').style.display = 'flex';
-
-    // Scroll to top of overlay
-    document.getElementById('overlay-content').scrollTop = 0;
-
-    // Fetch entries for this record
-    fetch(`/api/members/${recordData.record_id}/entries`)
-        .then(response => response.json())
-        .then(data => {
-            data.forEach(row => {
-                if (row.birth_date) {
-                    const date = new Date(row.birth_date);
-                    row.birth_date = date.toLocaleDateString('en-US');
-                }
-                if (row.declaration_date) {
-                    const date = new Date(row.declaration_date);
-                    row.declaration_date = date.toLocaleDateString('en-US');
-                }
-                if (row.OR_date) {
-                    const date = new Date(row.OR_date);
-                    row.OR_date = date.toLocaleDateString('en-US');
-                }
-            });
-            window.renderEntriesTable(data);
-        });
-}
-
-        // Save record details
-        document.getElementById('save_record_details').addEventListener('click', function () {
-            const payload = {
-                record_id: document.getElementById('record_id').value,
-                year: document.getElementById('year').value,
-                id_received: document.getElementById('id_rcv').checked ? 1 : 0,
-                paid: document.getElementById('paid').checked ? 1 : 0,
-                declared: document.getElementById('declared').checked ? 1 : 0,
-                declaration_date: document.getElementById('dec_date').value || null,
-                effectivity_date: document.getElementById('eff_date').value || null,
-                location_particular: document.getElementById('loc_par').value || null,
-                location_category: document.getElementById('loc_cat').value || null,
-                municipality: document.getElementById('municipality').value || null,
-                district: document.getElementById('district').value || null,
-                origin: document.getElementById('origin').value || null,
-                remarks: document.getElementById('remarks').value || null,
-                tags: document.getElementById('tags').value || null
-            };
-
-            fetch('/api/save_record_details', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+        document.querySelector('.btn-add').addEventListener('click', function () {
+            fetch('/api/add_record', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
             })
             .then(response => response.json())
             .then(result => {
                 if (!result.success) {
-                    toastError("Failed to Save Record", "Something went wrong while saving the record. Please try again.");
+                    toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
                     return;
                 }
 
-                toastSuccess("Record Saved Successfully!", "The record was successfully added to the database.");
-
-                return fetch("/api/members/records")
-                    .then(res => res.json())
+                toastSuccess("Record Added Successfully!", "The record has been successfully saved to the database.");
+                
+                // Get the newly created record ID
+                const newRecordId = result.record_id;
+                
+                return fetch("/api/members/records").then(res => res.json())
                     .then(data => {
                         data.forEach(row => {
                             if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
@@ -1096,15 +1248,34 @@ function openRecordInOverlay(recordData) {
 
                         allData = [...data];
                         filteredData = [...data];
+                        currentPage = 1;
                         renderTable();
-                        document.getElementById('overlay').style.display = 'none';
+
+                        // Find and open the newly added record
+                        const newRecord = allData.find(record => record.record_id === newRecordId);
+                        if (newRecord) {
+                            openRecordInOverlay(newRecord);
+                        }
                     });
             })
-            .catch(error => {
-                console.error("Save Error:", error);
-                toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
+            .catch(err => {
+                console.error("Add Record Error:", err);
+                toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
             });
         });
+
+        // Save record details
+document.getElementById('save_record_details').addEventListener('click', function () {
+    saveRecordDetails()
+        .then(() => {
+            toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
+            document.getElementById('overlay').style.display = 'none';
+        })
+        .catch(error => {
+            console.error("Save Error:", error);
+            toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
+        });
+});
 
         // Initial render
         renderTable();

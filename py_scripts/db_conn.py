@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from sqlalchemy import create_engine, text, func
+from sqlalchemy import create_engine, text, func, extract
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, scoped_session
 import cryptography
@@ -491,7 +491,7 @@ def get_pending_claims_count():
 def get_member_records():
     db_session = SessionLocal()
     try:
-        records = db_session.query(models.Records).all()
+        records = db_session.query(models.Records).order_by(models.Records.record_id.desc()).all()
         return records
     except Exception as e:
         return "Error fetching member records: {e}"
@@ -921,6 +921,132 @@ def save_entry_details(record_id, maab_category, maab_no, first_name, middle_nam
         return False
 
 
+def save_entry_updates(data):
+    db_session = SessionLocal()
+    try:
+        entry_id = data.get("entry_id")
+        if not entry_id:
+            print("No entry_id provided.")
+            return None
+
+        # =======================
+        # UPDATE ENTRY
+        # =======================
+        entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
+        if not entry:
+            print("Entry not found.")
+            return None
+
+        entry.maab_category = data["maab_category"]
+        entry.maab_no = data["maab_no"]
+        entry.id_received = data["id_received"]
+        entry.declared = data["declared"]
+        entry.paid = data["paid"]
+        entry.OR_num = data["OR_num"]
+        entry.remarks = data["remarks"]
+        entry.tags = data["tags"]
+        entry.dispatch_ready = data["dispatch_ready"]
+        entry.dispatch_id = data["dispatch_id"]
+
+        entry.declaration_date = (
+            datetime.strptime(data["declaration_date"], "%m/%d/%Y").date()
+            if data["declaration_date"] else None
+        )
+
+        entry.OR_date = (
+            datetime.strptime(data["OR_date"], "%m/%d/%Y").date()
+            if data["OR_date"] else None
+        )
+
+        # =======================
+        # UPDATE MEMBER INFO
+        # =======================
+        member = db_session.query(models.Members).filter_by(member_id=entry.member_id).first()
+        if not member:
+            print("Member not found.")
+            return None
+
+        member.first_name = data["first_name"]
+        member.middle_name = data["middle_name"]
+        member.last_name = data["last_name"]
+        member.suffix = data["suffix"]
+        member.birth_date = (
+            datetime.strptime(data["birth_date"], "%m/%d/%Y").date()
+            if data["birth_date"] else None
+        )
+        member.age = data["age"]
+        member.sex = data["sex"]
+        member.contact_no = data["contact_no"]
+        member.email = data["email"]
+        member.address = data["address"]
+        member.blood_type = data["blood_type"]
+
+        # =======================
+        # SAVE ALL CHANGES
+        # =======================
+        db_session.commit()
+
+        return True
+
+    
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving entry updates: {e}")
+        return False
+
+
+def get_report_target_vs_actual(year):
+    db_session = SessionLocal()
+    try:
+        categories = [
+            "Classic", "Bronze", "Silver", "Gold",
+            "Platinum", "Safe Card", "Senior", "Senior+"
+        ]
+
+        # Query entries for monthly counts
+        rows = (
+            db_session.query(
+                models.Entries.maab_category.label("category"),
+                extract("month", models.Entries.OR_date).label("month"),
+                func.count(models.Entries.entry_id).label("count")
+            )
+            .filter(
+                extract("year", models.Entries.OR_date) == year,
+                models.Entries.maab_category.in_(categories)
+            )
+            .group_by(
+                models.Entries.maab_category,
+                extract("month", models.Entries.OR_date)
+            )
+            .all()
+        )
+
+        # Query target_per_year for the year
+        target_row = db_session.query(models.Report_TvA).filter(models.Report_TvA.year == year).first()
+
+        cat_to_col = {
+        "Senior+": "senior_plus"
+}
+        
+        # Build pivot output with target at front
+        output = {}
+        for cat in categories:
+            target_col = cat_to_col.get(cat, cat.lower().replace(" ", "_"))
+            target_value = getattr(target_row, target_col, 0)
+            output[cat] = {0: target_value, **{m: 0 for m in range(1, 13)}}
+
+        # Fill monthly counts from entries
+        for category, month, count in rows:
+            month = int(month)
+            if category in output:
+                output[category][month] = count
+
+        return output
+    except Exception as e:
+        print(f"Error fetching report data: {e}")
+        return []
+
+
 def get_current_active_dispatch():
     db_session = SessionLocal()
     try:
@@ -1087,6 +1213,94 @@ def get_inventory_entries(allocated_to=None):
         ]
         return [dict(zip(col_names, row)) for row in results]
 
+def add_inventory_ids(category, prefix, start_num, count, username=None, user_level=None, account_id=None):
+    """Add multiple IDs to inventory with sequential numbers"""
+    db_session = SessionLocal()
+    
+    try:
+        added_count = 0
+        duplicate_count = 0
+        error_count = 0
+        added_ids = []
+        duplicate_ids = []
+        
+        # Pre-check for existing IDs in the range
+        end_num = start_num + count - 1
+        existing_ids = db_session.query(models.Inventory.maab_no).filter(
+            models.Inventory.maab_no.between(
+                f"{prefix}{start_num:07d}", 
+                f"{prefix}{end_num:07d}"
+            )
+        ).all()
+        
+        existing_set = {id[0] for id in existing_ids}
+        
+        if existing_set:
+            duplicate_count = len(existing_set)
+            duplicate_ids = sorted(list(existing_set))
+            print(f"Found {duplicate_count} existing IDs in the range")
+        
+        # Generate and add new IDs
+        for i in range(count):
+            current_num = start_num + i
+            maab_no = f"{prefix}{current_num:07d}"
+            
+            # Skip if already exists
+            if maab_no in existing_set:
+                continue
+            
+            try:
+                # Create new inventory entry
+                new_id = models.Inventory(
+                    maab_category=category,
+                    maab_no=maab_no,
+                    used=False,
+                    allocated_to=None,
+                    remarks=f"Added in batch - {datetime.now().strftime('%Y-%m-%d')}"
+                )
+                
+                db_session.add(new_id)
+                added_ids.append(maab_no)
+                added_count += 1
+                
+            except Exception as e:
+                print(f"Error adding ID {maab_no}: {e}")
+                error_count += 1
+        
+        db_session.commit()
+        
+        # Log the action if user info is provided
+        if username and user_level and account_id:
+            POST_action_log(
+                username,
+                user_level,
+                'Add Inventory Stock',
+                f'Added {added_count} IDs for {category} (Range: {prefix}{start_num:07d}-{prefix}{end_num:07d}). '
+                f'Duplicates: {duplicate_count}, Errors: {error_count}',
+                account_id
+            )
+        
+        return {
+            "success": True,
+            "added_count": added_count,
+            "duplicate_count": duplicate_count,
+            "error_count": error_count,
+            "added_ids": added_ids,
+            "duplicate_ids": duplicate_ids
+        }
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error adding inventory IDs: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "added_count": 0,
+            "duplicate_count": 0,
+            "error_count": count
+        }
+    finally:
+        db_session.close()
 
 def GET_audit_logs():
     db_session = SessionLocal()

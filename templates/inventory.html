@@ -225,23 +225,100 @@
 
       categorySelect.addEventListener('change', updatePrefix);
 
-      numberInput.addEventListener('input', () => {
-          numberInput.value = numberInput.value.replace(/\D/g, '');
-          if (numberInput.value.length > 7) {
-              numberInput.value = numberInput.value.slice(0, 7);
-          }
-          updateSeriesEnd();
-      });
+    // Limit length to 7 digits
+    if (numberInput.value.length > 7) {
+        numberInput.value = numberInput.value.slice(0, 7);
+    }
 
-      countInput.addEventListener('input', () => {
-          let val = parseInt(countInput.value, 10);
-          if (isNaN(val) || val < 1) {
-              countInput.value = '0';
-          }
-          updateSeriesEnd();
-      });
+    updateSeriesEnd();
+});
 
-      updatePrefix();
+// When count input changes, ensure positive number then update
+countInput.addEventListener('input', () => {
+    let val = parseInt(countInput.value, 10);
+    if (isNaN(val) || val < 1) {
+        countInput.value = '0';
+    }
+    updateSeriesEnd();
+});
+
+// Initialize prefix and series end on page load
+updatePrefix();
+
+const addIdForm = document.querySelector('#popupForm1 form');
+const addIdButton = document.getElementById('add_ID');
+
+addIdForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const category = categorySelect.value;
+    const prefix = prefixBox.value.trim();
+    const startNum = numberInput.value.trim();
+    const countVal = parseInt(countInput.value.trim(), 10);
+    const seriesEnd = seriesEndBox.value.trim();
+
+    if (!category || !prefix || !startNum || isNaN(countVal) || countVal <= 0) {
+        toastAlert("Incomplete Form", "Please fill in all fields correctly before adding an ID.");
+        return;
+    }
+
+    // Show loading state
+    addIdButton.disabled = true;
+    addIdButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding IDs...';
+
+    try {
+        const response = await fetch('/api/inventory/add_stock', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                category: category,
+                prefix: prefix,
+                start_num: parseInt(startNum),
+                count: countVal
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            let message = result.message;
+            
+            // Add warning message if there were duplicates
+            if (result.warning) {
+                message += `<br><small>${result.warning}</small>`;
+            }
+            
+            // Show detailed success message
+            toastSuccess("IDs Added Successfully", message);
+            
+            // Clear form
+            numberInput.value = "";
+            countInput.value = "";
+            seriesEndBox.value = "";
+            updatePrefix();
+            
+            // Close the popup after delay
+            setTimeout(() => {
+                popupForm1.style.display = 'none';
+                
+                // Refresh the inventory table to show new IDs
+                location.reload();
+            }, 2000);
+            
+        } else {
+            toastAlert("Error Adding IDs", result.error || "Failed to add IDs to inventory.");
+        }
+    } catch (error) {
+        console.error('Error adding IDs:', error);
+        toastAlert("Network Error", "Failed to connect to server. Please try again.");
+    } finally {
+        // Reset button state
+        addIdButton.disabled = false;
+        addIdButton.innerHTML = 'Add ID';
+    }
+});
 
       const addIdForm = document.querySelector('#popupForm1 form');
       const addIdButton = document.getElementById('add_ID');
