@@ -258,6 +258,169 @@ def settings():
 #? -------------------- END -------------------- ?#
 
 #? -------------------- API ROUTES -------------------- ?#
+@server.route('/api/export_record_entries/<int:record_id>')
+@login_required
+def export_record_entries(record_id):
+    try:
+        # Fetch record details
+        db_session = db_conn.SessionLocal()
+        
+        record = db_session.query(db_conn.models.Records).filter_by(record_id=record_id).first()
+        
+        if not record:
+            return jsonify({'error': 'Record not found'}), 404
+        
+        # Fetch entries for this record
+        entries = (
+            db_session.query(
+                db_conn.models.Entries,
+                db_conn.models.Members
+            )
+            .join(db_conn.models.Members, db_conn.models.Entries.member_id == db_conn.models.Members.member_id)
+            .filter(db_conn.models.Entries.record_id == record_id)
+            .all()
+        )
+        
+        if not entries:
+            return jsonify({'error': 'No entries found for this record'}), 404
+        
+        # Prepare data for Excel with required fields only
+        data = []
+        for entry, member in entries:
+            data.append({
+                # Entry details
+                'Category': entry.maab_category or '',
+                'MAAB No': entry.maab_no or '',
+                'First Name': member.first_name or '',
+                'Middle Name': member.middle_name or '',
+                'Last Name': member.last_name or '',
+                'Suffix': member.suffix or 'NA',
+                'Birthdate': member.birth_date.strftime('%Y-%m-%d') if member.birth_date else '',
+                'Age': member.age or '',
+                'Sex': member.sex or '',
+                'Contact No': f"+63{member.contact_no}" if member.contact_no else '',
+                'Email': member.email or '',
+                'OR No': entry.OR_num or '',
+                'OR Date': entry.OR_date.strftime('%Y-%m-%d') if entry.OR_date else '',
+                'Declared': 'Yes' if entry.declared else 'No',
+                'Dispatch Ready': 'Yes' if entry.dispatch_ready else 'No',
+                'Dispatch ID': entry.dispatch_id or '',
+                'Remarks': entry.remarks or '',
+                # Record details (these will be the same for all entries in this record)
+                'Declaration Date': record.declaration_date.strftime('%Y-%m-%d') if record.declaration_date else '',
+                'Effectivity Date': record.effectivity_date.strftime('%Y-%m-%d') if record.effectivity_date else '',
+                'Location Category': record.location_category or '',
+                'Municipality': record.municipality or '',
+                'District': record.district or '',
+                'Origin': record.origin or ''
+            })
+        
+        # Create DataFrame
+        df = pd.DataFrame(data)
+        
+        # Create the record_exports folder if it doesn't exist
+        export_folder = os.path.join(os.path.dirname(__file__), 'record_exports')
+        os.makedirs(export_folder, exist_ok=True)
+        
+        # Generate filename
+        loc_particular = record.location_particular or 'Unknown_Location'
+        dec_date = record.declaration_date.strftime('%Y-%m-%d') if record.declaration_date else 'no_date'
+        
+        # Clean filename (remove special characters)
+        clean_location = "".join(c for c in loc_particular if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        clean_location = clean_location.replace(' ', '_')
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{clean_location}_{dec_date}_{timestamp}.xlsx"
+        file_path = os.path.join(export_folder, filename)
+        
+        # Create Excel file and save to server folder
+        with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+            # Write the main title first
+            workbook = writer.book
+            worksheet = workbook.create_sheet('Entries')
+            
+            # Add main title
+            worksheet.merge_cells('A1:W1')
+            worksheet['A1'] = f"{loc_particular} - {dec_date}"
+            worksheet['A1'].font = openpyxl.styles.Font(size=16, bold=True)
+            worksheet['A1'].alignment = openpyxl.styles.Alignment(horizontal='center')
+            
+            # Add record details as separate rows
+            record_details = [
+                f"Declaration Date: {record.declaration_date.strftime('%Y-%m-%d') if record.declaration_date else 'N/A'}",
+                f"Effectivity Date: {record.effectivity_date.strftime('%Y-%m-%d') if record.effectivity_date else 'N/A'}",
+                f"Location Category: {record.location_category or 'N/A'}",
+                f"Municipality: {record.municipality or 'N/A'}",
+                f"District: {record.district or 'N/A'}",
+                f"Origin: {record.origin or 'N/A'}"
+            ]
+            
+            # Write record details starting from row 2
+            for i, detail in enumerate(record_details, start=2):
+                worksheet[f'A{i}'] = detail
+            
+            # Write the DataFrame starting from row 8 (after title and record details)
+            start_row = 8
+            # Write headers
+            for col_num, column_name in enumerate(df.columns, 1):
+                cell = worksheet.cell(row=start_row, column=col_num)
+                cell.value = column_name
+                cell.font = openpyxl.styles.Font(bold=True)
+                cell.fill = openpyxl.styles.PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
+                cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+            
+            # Write data rows
+            for row_num, row_data in enumerate(df.values, start_row + 1):
+                for col_num, cell_value in enumerate(row_data, 1):
+                    worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            
+            # Adjust column widths for all required columns
+            column_widths = {
+                'A': 15,  # Category
+                'B': 15,  # MAAB No
+                'C': 15,  # First Name
+                'D': 15,  # Middle Name
+                'E': 15,  # Last Name
+                'F': 8,   # Suffix
+                'G': 12,  # Birthdate
+                'H': 6,   # Age
+                'I': 8,   # Sex
+                'J': 15,  # Contact No
+                'K': 20,  # Email
+                'L': 10,  # OR No
+                'M': 10,  # OR Date
+                'N': 10,  # Declared
+                'O': 15,  # Dispatch Ready
+                'P': 12,  # Dispatch ID
+                'Q': 20,  # Remarks
+                'R': 12,  # Declaration Date (record)
+                'S': 12,  # Effectivity Date (record)
+                'T': 20,  # Location Category (record)
+                'U': 15,  # Municipality (record)
+                'V': 10,  # District (record)
+                'W': 12   # Origin (record)
+            }
+            
+            for col_letter, width in column_widths.items():
+                worksheet.column_dimensions[col_letter].width = width
+        
+        # Return success response with file info
+        return jsonify({
+            'success': True,
+            'message': f'File exported successfully to record_exports folder',
+            'filename': filename,
+            'file_path': file_path,
+            'export_count': len(entries)
+        })
+        
+    except Exception as e:
+        print(f"Export error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+    finally:
+        db_session.close()
 
 # TODO move to accounts api routes section
 @server.route('/create_acc_submit', methods=['POST'])

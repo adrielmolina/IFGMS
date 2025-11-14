@@ -1014,3 +1014,57 @@ div.table-container {
 .btn-primary { background: #007bff; color: white; }
 .btn-secondary { background: #6c757d; color: white; }
 
+/* Ensure entries table container in overlay matches main table styling */
+#overlay .table-container {
+    width: 100%;
+    overflow-x: auto;
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+/* Ensure the entries table itself has proper styling */
+#entries_table {
+    width: 100% !important;
+}
+
+#entries_table .ht_clone_top {
+    width: 100% !important;
+}
+
+#entries_table .ht_clone_top th {
+    background: #f8f9fa !important;
+    color: #1f1313 !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 10px 14px !important;
+}
+
+#entries_table .ht_clone_left thead th,
+#entries_table .ht_clone_left tbody th {
+    background: #f8f9fa !important;
+    color: #1f1313 !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    border-right: 1px solid #e0e0e0 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    width: 40px !important;
+}
+
+#entries_table td {
+    border-top: 1px solid #e0e0e0 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+#entries_table .wtHolder {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    overflow: hidden;
+}
