@@ -160,6 +160,17 @@
   </div>
 </div>
 
+<!-- Show entries dropdown -->
+<div class="entries-select">
+  <label for="showEntries">Show:</label>
+  <select id="showEntries">
+    <option value="10">10</option>
+    <option value="25">25</option>
+    <option value="50">50</option>
+    <option value="100">100</option>
+  </select>
+  <span>entries</span>
+</div>
 
 <div class="declaration_table">
   <h4 id="tableTitle">
@@ -260,9 +271,10 @@ const mainTableData = [
     }{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
+    
 
 let filteredData = [...mainTableData];
-
+  
 
 document.addEventListener("DOMContentLoaded", () => {
   const rowChecks = document.querySelectorAll(".row-check");
@@ -634,47 +646,61 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
-<!-- ✅ FULL Pagination + Show Entries (kept intact, only fixed) -->
+<!-- ✅ FIXED Pagination + Show Entries -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  function getTableRows() {
-    return Array.from(document.querySelectorAll("#dataTable tbody tr"));
-  }
 
-  const paginationControls = document.getElementById("paginationControls");
-  const entriesSelect = document.getElementById("entriesPerPage");
-  const summaryText = document.getElementById("summaryText");
+  initializePagination();
+});
 
+function initializePagination() {
+  const showEntries = document.getElementById('showEntries');
+  
   // ✅ Make page state GLOBAL so history/back can use it
   window.currentPage = 1;
-  let entriesPerPage = parseInt(entriesSelect.value);
+  window.entriesPerPage = parseInt(showEntries.value);
 
-  // ✅ Make renderTable GLOBAL so history/back/search can call it
-  window.renderTable = function() {
+  // ✅ Add event listener for entries dropdown
+  showEntries.addEventListener('change', function() {
+    window.entriesPerPage = parseInt(this.value);
+    window.currentPage = 1;
+    window.renderTable();
+  });
+  
+  // ✅ Initial pagination setup
+  window.renderTable();
+}
+
+// ✅ Make renderTable GLOBAL so history/back/search can call it
+window.renderTable = function() {
   const tableBody = document.querySelector("#dataTable tbody");
-  const start = (currentPage - 1) * entriesPerPage;
-  const end = start + entriesPerPage;
+  const start = (window.currentPage - 1) * window.entriesPerPage;
+  const end = start + window.entriesPerPage;
   const paginatedData = filteredData.slice(start, end);
 
-  if (filteredData[0]?.dispatch_id) {
-    // Dispatch table
+  if (filteredData.length > 0 && filteredData[0]?.dispatch_id) {
+    // Dispatch History table
     tableBody.innerHTML = paginatedData.map(item => `
       <tr>
-        <td>${item.dispatch_id}</td>
-        <td>${item.dispatch_type}</td>
-        <td>${item.dispatch_origin}</td>
-        <td>${item.dispatch_year}</td>
-        <td>${item.dispatch_cutoff}</td>
-        <td>${item.date_dispatched}</td>
-        <td>${item.dispatch_total}</td>
-        <td>${item.late_declare}</td>
-        <td>${item.dispatch_remarks}</td>
+        <td>${item.dispatch_id || 'N/A'}</td>
+        <td>${item.dispatch_type || 'N/A'}</td>
+        <td>${item.dispatch_origin || 'N/A'}</td>
+        <td>${item.dispatch_year || 'N/A'}</td>
+        <td>${item.dispatch_cutoff || 'N/A'}</td>
+        <td>${item.date_dispatched || 'N/A'}</td>
+        <td>${item.dispatch_total || 'N/A'}</td>
+        <td>${item.late_declare || 'N/A'}</td>
+        <td>${item.dispatch_remarks || 'N/A'}</td>
       </tr>
     `).join('');
-    document.querySelector(".btn.select-all").disabled = true;
-    document.querySelector(".btn.transmit").disabled = true;
+    
+    // Disable selection buttons in history view
+    const selectAllBtn = document.querySelector(".btn.select-all");
+    const transmitBtn = document.querySelector(".btn.transmit");
+    if (selectAllBtn) selectAllBtn.disabled = true;
+    if (transmitBtn) transmitBtn.disabled = true;
   } else {
-    // Main table
+    // Main table (Dispatch Contents)
     tableBody.innerHTML = paginatedData.map(item => `
       <tr>
         <td><input type="checkbox" class="row-check"></td>
@@ -689,6 +715,13 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${item.lateDeclare}</td>
       </tr>
     `).join('');
+    
+    // Enable selection buttons in main view
+    const selectAllBtn = document.querySelector(".btn.select-all");
+    const transmitBtn = document.querySelector(".btn.transmit");
+    if (selectAllBtn) selectAllBtn.disabled = false;
+    if (transmitBtn) transmitBtn.disabled = false;
+    
     initializeCheckboxListeners();
   }
 
@@ -697,85 +730,106 @@ document.addEventListener("DOMContentLoaded", () => {
   updateSelection();
 };
 
-  function updatePagination() {
-    const totalPages = Math.ceil(filteredData.length / entriesPerPage);
-    paginationControls.innerHTML = "";
+function updatePagination() {
+  const paginationControls = document.getElementById("paginationControls");
+  const totalPages = Math.ceil(filteredData.length / window.entriesPerPage);
+  paginationControls.innerHTML = "";
 
-    const prev = document.createElement("button");
-    prev.textContent = "Previous";
-    prev.disabled = currentPage === 1;
-    prev.onclick = () => {
-      currentPage--;
-      renderTable();
+  // Previous button
+  const prev = document.createElement("button");
+  prev.innerHTML = "&laquo;";
+  prev.disabled = window.currentPage === 1;
+  prev.onclick = () => {
+    window.currentPage--;
+    window.renderTable();
+  };
+  paginationControls.appendChild(prev);
+
+  // Page number buttons
+  function createPageButton(page) {
+    const btn = document.createElement("button");
+    btn.textContent = page;
+    if (page === window.currentPage) btn.classList.add("active");
+    btn.onclick = () => {
+      window.currentPage = page;
+      window.renderTable();
     };
-    paginationControls.appendChild(prev);
+    paginationControls.appendChild(btn);
+  }
 
-    function createPageButton(page) {
-      const btn = document.createElement("button");
-      btn.textContent = page;
-      if (page === currentPage) btn.classList.add("active");
-      btn.onclick = () => {
-        currentPage = page;
-        renderTable();
-      };
-      paginationControls.appendChild(btn);
-    }
+  function addEllipsis() {
+    const ellipsis = document.createElement("span");
+    ellipsis.textContent = "...";
+    ellipsis.classList.add("ellipsis");
+    paginationControls.appendChild(ellipsis);
+  }
 
-    function addEllipsis() {
-      const ellipsis = document.createElement("span");
-      ellipsis.textContent = "...";
-      ellipsis.classList.add("ellipsis");
-      paginationControls.appendChild(ellipsis);
-    }
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) createPageButton(i);
+  } else {
+    const visiblePages = 3;
 
-    if (totalPages <= 10) {
-      for (let i = 1; i <= totalPages; i++) createPageButton(i);
+    if (window.currentPage <= visiblePages) {
+      for (let i = 1; i <= visiblePages + 1; i++) createPageButton(i);
+      addEllipsis();
+      createPageButton(totalPages);
+    } else if (window.currentPage >= totalPages - visiblePages + 1) {
+      createPageButton(1);
+      addEllipsis();
+      for (let i = totalPages - visiblePages; i <= totalPages; i++) createPageButton(i);
     } else {
-      const visiblePages = 5;
-
-      if (currentPage <= visiblePages) {
-        for (let i = 1; i <= visiblePages; i++) createPageButton(i);
-        addEllipsis();
-        createPageButton(totalPages);
-      } else if (currentPage >= totalPages - visiblePages + 1) {
-        createPageButton(1);
-        addEllipsis();
-        for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
-      } else {
-        createPageButton(1);
-        addEllipsis();
-        for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
-        addEllipsis();
-        createPageButton(totalPages);
-      }
+      createPageButton(1);
+      addEllipsis();
+      for (let i = window.currentPage - 1; i <= window.currentPage + 1; i++) createPageButton(i);
+      addEllipsis();
+      createPageButton(totalPages);
     }
-
-    const next = document.createElement("button");
-    next.textContent = "Next";
-    next.disabled = currentPage === totalPages;
-    next.onclick = () => {
-      currentPage++;
-      renderTable();
-    };
-    paginationControls.appendChild(next);
   }
 
-  function updateSummary() {
-    const rows = getTableRows();
-    const total = rows.length;
-    const start = (currentPage - 1) * entriesPerPage + 1;
-    const end = Math.min(currentPage * entriesPerPage, total);
-    const checked = document.querySelectorAll(".row-check:checked").length;
-    summaryText.textContent = `Showing ${start} to ${end} of ${total} entries • ${checked} selected`;
+  // Next button
+  const next = document.createElement("button");
+  next.innerHTML = "&raquo;";
+  next.disabled = window.currentPage === totalPages;
+  next.onclick = () => {
+    window.currentPage++;
+    window.renderTable();
+  };
+  paginationControls.appendChild(next);
+}
+
+function updateSummary() {
+  const summaryText = document.getElementById("summaryText");
+  const total = filteredData.length;
+  const start = total === 0 ? 0 : (window.currentPage - 1) * window.entriesPerPage + 1;
+  const end = Math.min(window.currentPage * window.entriesPerPage, total);
+  
+  const checkedCount = document.querySelectorAll(".row-check:checked").length;
+  
+  if (filteredData.length > 0 && filteredData[0]?.dispatch_id) {
+    // History view
+    summaryText.textContent = `Showing ${start} to ${end} of ${total} dispatch records`;
+  } else {
+    // Main view
+    summaryText.textContent = `Showing ${start} to ${end} of ${total} declarations • ${checkedCount} selected`;
   }
+}
 
-  entriesSelect.addEventListener("change", () => {
-    entriesPerPage = parseInt(entriesSelect.value);
-    currentPage = 1;
-    renderTable();
-  });
+// ✅ Update your search function to use the global renderTable
+document.getElementById('search_input').addEventListener('keyup', function () {
+  const filter = this.value.toLowerCase();
 
-  renderTable();
+  // Filter the ENTIRE dataset, not just visible rows
+  filteredData = mainTableData.filter(item =>
+    Object.values(item).some(value =>
+      String(value).toLowerCase().includes(filter)
+    )
+  );
+
+  // Reset to first page after searching
+  window.currentPage = 1;
+
+  // Re-render the table with filtered data
+  window.renderTable();
 });
 </script>
 {% endblock %}
