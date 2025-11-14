@@ -4,10 +4,19 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/reports.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/reports.css') }}">
-    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
-    <link href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css" rel="stylesheet">
+
+    <!-- <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet"> -->
+    <!-- <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script> -->
+    <!-- <link href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css" rel="stylesheet"> -->
+
+    <!-- Tabulator CSS v5.5.2 -->
+    <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+
+    <!-- Tabulator JS v5.5.2 -->
+    <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+
+
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
 
@@ -41,8 +50,9 @@
         </div>
     </div>
     
+    <!-- TODO hidden for now. fix later -->
     <!-- Budget vs Expenses -->
-    <div class="collapse_box">
+    <div class="collapse_box" hidden>
         <div class="collapse_box_header">
             <input id="bud_v_exp_check" class="collapse_box_checkbox" type="checkbox" checked data-target_div="bud_v_exp">
             <label for="bud_v_exp_check" class="collapse_box_label">BUDGET VS EXPENSES</label>
@@ -64,7 +74,8 @@
     </div>
 
     <!-- Per District -->
-    <div class="collapse_box">
+    <!-- TODO hidden for now. fix later -->
+    <div class="collapse_box" hidden>
         <div class="collapse_box_header" style="display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
                 <input id="per_dist_check" class="collapse_box_checkbox" type="checkbox" checked data-target_div="per_dist">
@@ -209,17 +220,69 @@
     "Silver",
     "Gold",
     "Platinum",
-    "Enhanced Platinum",
+    "Safe Card",
     "Senior",
     "Senior+"
     ];
 
-    const targetTable = new Tabulator("#target_v_actual_table", {
-    columns: targetColumns,
-    autoColumns: false,
-    data: categories.map(c => ({ category: c })),
-    layout: "fitColumns"
+    const target_vs_actual_table = new Tabulator("#target_v_actual_table", {
+        columns: targetColumns,
+        autoColumns: false,
+        data: categories.map(category => {
+            const row = { category, target_PCS: 0, target_AMT: 0 };
+            ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach(month => {
+                row[month + "_PCS"] = 0;
+                row[month + "_AMT"] = 0;
+            });
+            return row;
+        }),
+        layout: "fitColumns"
     });
+
+
+        
+    const categoryCost = {
+    "Classic": 60,
+    "Bronze": 150,
+    "Silver": 300,
+    "Gold": 500,
+    "Platinum": 1000,
+    "Safe Card": 1200,
+    "Senior": 150,
+    "Senior+": 300
+    };
+
+    // FETCH TARGET VS ACTUAL DATA FROM API
+    // TODO fix the year selection filter to change the year dynamically and not hardcoded 2025
+    fetch("/api/get_report/target_vs_actual/2025")
+    .then(res => res.json())
+    .then(apiResult => {
+
+        const tableData = categories.map(category => {
+        const cost = categoryCost[category] || 0;
+        const apiMonths = apiResult[category] || {};
+
+        // Pull target_PCS from key 0
+        const targetPCS = apiMonths[0] || 0;
+
+        const row = {
+            category,
+            target_PCS: targetPCS,
+            target_AMT: targetPCS * cost
+        };
+
+        // Fill monthly PCS and AMT
+        ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach((month, i) => {
+            const pcs = apiMonths[i + 1] || 0; // months in API are 1-12
+            row[month + "_PCS"] = pcs;
+            row[month + "_AMT"] = pcs * cost;
+        });
+
+        return row;
+    });
+
+    target_vs_actual_table.setData(tableData);
+});
 
 
      // TABLE FOR PER DISTRICT
@@ -406,8 +469,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
-    
 
+
+    /*
     // GENERATE TARGET VS ACTUAL PLACEHOLDER DATA WITH ZEROS
     const generateTargetVsActualPlaceholder = () => {
         const membershipCategories = ["Classic", "Bronze", "Silver", "Gold", "Platinum", "Safe Card", "Senior", "Senior+"];
@@ -434,7 +498,7 @@ document.addEventListener("DOMContentLoaded", function() {
         data: generateTargetVsActualPlaceholder(),
         layout: "fitColumns"
     });
-
+    */
     
 
     </script>

@@ -425,39 +425,32 @@ def export_record_entries(record_id):
 # TODO move to accounts api routes section
 @server.route('/create_acc_submit', methods=['POST'])
 def create_acc_submit():
-    user = request.form.get('username')
-    password = request.form.get('password')
-    email = request.form.get('email')
+    data = request.get_json()
+    print(data)
+    
+    user = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
 
-    fname = request.form.get('fname').upper()
-    mname = request.form.get('mname').upper()
-    lname = request.form.get('lname').upper()
-    suffix = request.form.get('suffix')
+    fname = data.get('fname').upper()
+    mname = data.get('mname').upper()
+    lname = data.get('lname').upper()
+    suffix = data.get('suffix')
 
-    bdate = request.form.get('bdate')
-    contact = request.form.get('contact_no')
+    bdate = data.get('bdate')
+    contact = data.get('contact_no')
 
     acct_created = date.today().strftime("%Y-%m-%d")
-    branch = request.form.get('branch')
+    branch = data.get('branch')
 
     if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
         create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
                             suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
     
     if not create_new_acc == True:
-        flash({
-            "title": "Account creation failed!",
-            "text": f"{create_new_acc}. Please try again.",
-            "redirect_url": url_for('create_acc')
-        }, "error")
-        return render_template('create_account.html')
+        return jsonify({"success": False, "error": 'Account Creation Failed'}), 500
     else:
-        flash({
-        "title": "Account created successfully!",
-        "text": "Click continue to go back to login screen.",
-        "redirect_url": url_for('landing_page')
-        }, "success")
-        return render_template('create_account.html')
+        return jsonify({"success": True})
 
 
     # TODO add condition to check if the username already exists
@@ -733,6 +726,11 @@ def get_members():
         import traceback
         traceback.print_exc()
         return jsonify({"error": "Internal server error"}), 500
+    # TODO fix this after merge  
+    office_loc = current_user.office_location
+    
+    member_records = db_conn.get_member_records(office_loc)
+    return jsonify([record.to_dict() for record in member_records])
     '''
     records = db_conn.get_member_records()
     members_list = []
@@ -857,6 +855,42 @@ def save_entry_details():
             return jsonify({"success": False, "error": result}), 500
     else:
         return jsonify({"success": False, "error": "No data provided"}), 400
+
+
+@server.route('/api/save_entry_update', methods=['POST'])
+@login_required
+def save_entry_update():
+    try:
+        
+        data = request.get_json()
+        print(data)
+        if data:
+            entry_id = data.get('entry_id')
+            print('entry_id:', entry_id)    
+            
+            result = db_conn.save_entry_updates(data)
+            
+            if result:
+                return jsonify({"success": True})
+            else:
+                return jsonify({"success": False, "error": result}), 500
+        else:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@server.route('/api/get_report/target_vs_actual/<int:year>', methods=['GET'])
+def target_vs_actual(year):
+    if not year:
+        return jsonify({"success": False, "error": "Year parameter is required"}), 400
+
+    report_data = db_conn.get_report_target_vs_actual(year)
+    if report_data is None:
+        return jsonify({"success": False, "error": "Failed to fetch report data"}), 500
+
+    return jsonify(report_data)
+
 
 @server.route('/api/inventory/add_stock', methods=['POST'])
 @login_required

@@ -121,10 +121,10 @@
         <table class="record_details_table">
             <tr>
                 <!-- TODO WIP remove if not needed -->
-                <td>
-                    <label for="dispatch_ready">Add to Dispatch</label>
-                    <input type="text" id="add_to_dispatch" name="add_to_dispatch" value="add_to_dispatch" value="0" autocomplete="off" readonly placeholder=" ">
-                </td>
+                <!-- <td> -->
+                    <!-- <label for="dispatch_ready">Add to Dispatch</label> -->
+                    <!-- <input type="text" id="add_to_dispatch" name="add_to_dispatch" value="add_to_dispatch" value="0" autocomplete="off" readonly placeholder=" "> -->
+                <!-- </td> -->
 
                 <td>
                     <div class="input-container">
@@ -480,9 +480,9 @@
                     </div>
                 </td>
 
-                <td>
+                <td hidden>
                     <div class="input-container checkbox-container">
-                        <label for="entry_declared">Declared</label>
+                        <label for="entry_declared" hidden>Declared</label>
                         <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
                     </div>
                 </td>
@@ -495,7 +495,7 @@
                     </div>
                 </td>
 
-                <td>
+                <td hidden>
                     <div class="input-container checkbox-container">
                         <input type="input" id="dispatch_id" name="dispatch_id" autocomplete="off" readonly>
                         <label for="dispatch_id">Dispatch ID</label>
