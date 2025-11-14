@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from sqlalchemy import create_engine, text, func
+from sqlalchemy import create_engine, text, func, extract
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, scoped_session
 import cryptography
@@ -995,6 +995,56 @@ def save_entry_updates(data):
         return False
 
 
+def get_report_target_vs_actual(year):
+    db_session = SessionLocal()
+    try:
+        categories = [
+            "Classic", "Bronze", "Silver", "Gold",
+            "Platinum", "Safe Card", "Senior", "Senior+"
+        ]
+
+        # Query entries for monthly counts
+        rows = (
+            db_session.query(
+                models.Entries.maab_category.label("category"),
+                extract("month", models.Entries.OR_date).label("month"),
+                func.count(models.Entries.entry_id).label("count")
+            )
+            .filter(
+                extract("year", models.Entries.OR_date) == year,
+                models.Entries.maab_category.in_(categories)
+            )
+            .group_by(
+                models.Entries.maab_category,
+                extract("month", models.Entries.OR_date)
+            )
+            .all()
+        )
+
+        # Query target_per_year for the year
+        target_row = db_session.query(models.Report_TvA).filter(models.Report_TvA.year == year).first()
+
+        cat_to_col = {
+        "Senior+": "senior_plus"
+}
+        
+        # Build pivot output with target at front
+        output = {}
+        for cat in categories:
+            target_col = cat_to_col.get(cat, cat.lower().replace(" ", "_"))
+            target_value = getattr(target_row, target_col, 0)
+            output[cat] = {0: target_value, **{m: 0 for m in range(1, 13)}}
+
+        # Fill monthly counts from entries
+        for category, month, count in rows:
+            month = int(month)
+            if category in output:
+                output[category][month] = count
+
+        return output
+    except Exception as e:
+        print(f"Error fetching report data: {e}")
+        return []
 
 
 def get_current_active_dispatch():

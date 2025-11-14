@@ -668,6 +668,18 @@ def save_entry_update():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@server.route('/api/get_report/target_vs_actual/<int:year>', methods=['GET'])
+def target_vs_actual(year):
+    if not year:
+        return jsonify({"success": False, "error": "Year parameter is required"}), 400
+
+    report_data = db_conn.get_report_target_vs_actual(year)
+    if report_data is None:
+        return jsonify({"success": False, "error": "Failed to fetch report data"}), 500
+
+    return jsonify(report_data)
+
+
 @server.route('/api/inventory/add_stock', methods=['POST'])
 @login_required
 @roles_required('admin', 'superadmin')
