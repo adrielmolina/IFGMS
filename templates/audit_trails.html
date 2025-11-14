@@ -10,9 +10,6 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 {% endblock %}
 
 <!--todo ADD COLOR CODING ON THE TABLE HEADER BASED ON MODULE IN CSS-->
@@ -27,25 +24,7 @@
     </div>
 </div>
 
-<div class="filter_search_container">
-    <div class="filters_box">
-        <label for="filter_user">Filter by:</label>
-        <select id="filter_user" class="filter_user">
-            <option value="">All Users</option>
-            <!-- Will be populated dynamically -->
-        </select>
 
-        <div class="date-filter-wrapper">
-            <input type="text" id="filter_date" class="filter_date" placeholder="Select Date">
-            <span class="calendar-icon">📅</span>
-        </div>
-        
-        <button onclick="resetFilters()" class="btn-reset">
-            <i class="fa-solid fa-arrow-rotate-left"></i> Reset Filters
-        </button>
-    </div>
-</div>
-        
     <form>
         <div class="audit-logs_table" spellcheck="false">
             <div class="audit-logs_table full">
@@ -159,147 +138,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-// ======================== FILTERS AND LOGS LOADING ===================== //
-console.log('🔧 Loading audit trails script...');
-
-// Wait for page to load
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 Page loaded, initializing...');
-    initSimpleAuditTrails();
-});
-
-function initSimpleAuditTrails() {
-    console.log('🎯 Starting simple initialization...');
-    
-    // Initialize components
-    initDatePicker();
-    loadUsers();
-    setupFilterListeners();
-}
-
-// Simple date picker
-function initDatePicker() {
-    const dateInput = document.getElementById('filter_date');
-    if (!dateInput) {
-        console.error('❌ Date input not found!');
-        return;
-    }
-    
-    console.log('📅 Initializing date picker...');
-    
-    if (typeof flatpickr !== 'undefined') {
-        flatpickr(dateInput, {
-            dateFormat: "Y-m-d"
-        });
-        console.log('✅ Flatpickr initialized');
-    } else {
-        dateInput.type = 'date';
-        console.log('✅ Native date input initialized');
-    }
-}
-
-// Load users
-async function loadUsers() {
-    try {
-        console.log('👥 Loading users...');
-        const response = await fetch('/api/get_users');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const users = await response.json();
-        console.log('✅ Users loaded:', users.length);
-        
-        const userSelect = document.getElementById('filter_user');
-        userSelect.innerHTML = '<option value="">All Users</option>';
-        
-        users.forEach(user => {
-            const option = document.createElement('option');
-            option.value = user.user_id;
-            option.textContent = `${user.first_name} ${user.last_name}`;
-            userSelect.appendChild(option);
-        });
-        
-    } catch (error) {
-        console.error('❌ Failed to load users:', error);
-    }
-}
-
-// Setup filter listeners
-function setupFilterListeners() {
-    const userSelect = document.getElementById('filter_user');
-    const dateInput = document.getElementById('filter_date');
-    
-    if (userSelect) {
-        userSelect.addEventListener('change', applyFilters);
-    }
-    
-    if (dateInput) {
-        dateInput.addEventListener('change', applyFilters);
-    }
-}
-
-// Apply filters to DataTable
-function applyFilters() {
-    const userFilter = document.getElementById('filter_user').value;
-    const dateFilter = document.getElementById('filter_date').value;
-    
-    console.log('Applying filters - User:', userFilter, 'Date:', dateFilter);
-    
-    const table = $('.editableTable').DataTable();
-    
-    // Custom filtering function
-    $.fn.dataTable.ext.search.push(
-        function(settings, data, dataIndex) {
-            // data[] contains column data
-            const username = data[3] || ''; // Username column
-            const date = data[2] || ''; // Date column
-            const accountId = data[7] || ''; // Account ID column
-            
-            let userMatch = true;
-            let dateMatch = true;
-            
-            // User filter - match by account ID or username
-            if (userFilter) {
-                userMatch = (accountId === userFilter) || (username.toLowerCase().includes(userFilter.toLowerCase()));
-            }
-            
-            // Date filter
-            if (dateFilter) {
-                dateMatch = date.includes(dateFilter);
-            }
-            
-            return userMatch && dateMatch;
-        }
-    );
-    
-    table.draw();
-    
-    // Remove the custom filter function after drawing
-    $.fn.dataTable.ext.search.pop();
-}
-
-// Reset filters
-function resetFilters() {
-    document.getElementById('filter_user').value = '';
-    document.getElementById('filter_date').value = '';
-    
-    // Clear DataTable search and redraw
-    const table = $('.editableTable').DataTable();
-    table.search('').draw();
-}
-
-// UPLOADED IMAGE
-document.addEventListener("DOMContentLoaded", function() {
-    const navProfileImage = document.getElementById("navProfileImage");
-    if (navProfileImage) {
-        const savedProfileImage = localStorage.getItem("profileImage");
-        if (savedProfileImage) {
-            navProfileImage.src = savedProfileImage;
-        }
-    }
-});
 </script>
 
 {% endblock %}

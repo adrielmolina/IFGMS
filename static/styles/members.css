@@ -19,8 +19,7 @@ label {
     align-items: center;
     z-index: 1000;        
     pointer-events: none;   
-    white-space: nowrap;
-    margin-left: 20px !important;
+    white-space: nowrap;    
 }
 
 .module_name h1 {
@@ -84,7 +83,6 @@ label {
   margin-top: 20px;
   margin-bottom: 20px;
   width: auto;
-  margin-left: 20px !important;
 }
 
 .filters_box {
@@ -206,85 +204,85 @@ label {
     margin-top: 18px;
     color: #2b2b2b;
 }
-/* ---------- BUTTONS SA LABAS NG OVERLAY ---------- */
-.controls_box button:not(.save_record_details):not(.delete_record):not(.add_entry_details),
-.btn-declare,
-.btn-export {
-  background: #3b82f6 !important; /* Blue for other buttons */
-  color: white !important;
-  padding: 8px 12px !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease-in-out !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
-  margin-top: 0;
-  margin-bottom: 10px;
+/* ---------- BUTTONS ---------- */
+.controls_box {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 10px;
+  margin-top: auto;
+  width: 80%;
+}
+.controls_box button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+.controls_box button:hover {
+  background-color: #3c3c3c;
 }
 
-.controls_box button:not(.save_record_details):not(.delete_record):not(.add_entry_details):hover,
-.btn-declare:hover,
-.btn-export:hover {
-  background: #2563eb !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
-  color: white !important;
-}
-
-/* ADD BUTTON - GREEN */
 .btn-add {
-  background: #22c55e !important; 
-  color: white !important;
-  padding: 8px 12px !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease-in-out !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
+  background-color: #22c55e !important;
+  color:#fff; 
 }
-
 .btn-add:hover {
-  background: #16a34a !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3) !important;
-  color: white !important;
+  background-color: #16a34a !important; 
+  color:hsl(0, 0%, 21%); 
+}
+.btn-declare {
+  background-color: #3b82f6 !important;
+  color:#fff; 
+}
+.btn-declare:hover {
+  background-color: #2563eb !important;
+  color:hsl(0, 0%, 21%); 
+}
+.btn-export {
+  background-color: #f97316 !important;
+  color:#fff; 
+}
+.btn-export:hover {
+  background-color: #ea580c !important;
+  color:hsl(0, 0%, 21%); 
 }
 
-/* ----------- BUTTONS SA OVERLAY (ORIGINAL STYLES) ------------- */
-.save_record_details,
-.delete_record,
-.add_entry_details {
+/* ----------- BUTTONS SA OVERLAY ------------- */
+.save_record_details {
   background-color: #8cf9b4 !important;
-  color: #0fa408 !important;
-  padding: 8px 12px !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease-in-out !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
+  color: #0fa408;
 }
 
-.save_record_details:hover,
-.add_entry_details:hover {
+.save_record_details:hover {
   background-color: #00ff5e !important;
-  color: hsl(0, 0%, 21%) !important;
+  color: hsl(0, 0%, 21%);
+}
+
+.delete_record {
+  background-color: #ffb3b3 !important;
+  color: #ff4040;
 }
 
 .delete_record:hover {
   background-color: #ff3636 !important;
-  color: hsl(0, 0%, 21%) !important;
+  color: hsl(0, 0%, 21%);
+}
+
+.add_entry_details {
+  background-color: #8cf9b4 !important; /* same as Save */
+  color: #0fa408;                       /* match Save text color */
+}
+
+.add_entry_details:hover {
+  background-color: #00ff5e !important;
+  color: hsl(0, 0%, 21%);
 }
 
 /* -------- ICON + BUTTON LAYOUT -------- */
@@ -311,6 +309,27 @@ button,
   gap: 10px;
   margin-top: 15px;
   margin-left: 300px !important;
+}
+
+.contact-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px 8px;
+    background-color: #fff;
+}
+
+.prefix {
+    margin-right: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+#contact {
+    border: none;
+    outline: none;
+    flex: 1;
 }
 
 
@@ -657,6 +676,7 @@ tr:hover {
 #members_table .ht_clone_top thead th {
   background-color: #fff !important;
   color: #1f1313 !important;
+  font-weight: 600 !important;
   text-align: center !important;
   border-left: none !important;
   border-right: none !important;
@@ -872,7 +892,6 @@ div.table-container {
   margin-top: 8px;
   flex-wrap: wrap;
   font-size: 14px;
-  margin-left: 20px !important;
 }
 
 .pagination-controls {
@@ -904,5 +923,4 @@ div.table-container {
   align-items: center;
   gap: 5px;
   margin-bottom: 10px;
-  margin-left: 20px !important;
 }

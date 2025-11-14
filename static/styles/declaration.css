@@ -20,110 +20,6 @@ label {
 .handsontable .ht_master {
     background-color: #f9f9f9;
 }
-/* ========================================================= */
-/* BUTTON BASE STYLES                                        */
-/* ========================================================= */
-
-.btn, .btn_create_dispatch {
-  background: #3b82f6 !important; /* Professional blue */
-  color: white;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  margin-top: 0;
-}
-
-.btn:hover, .btn_create_dispatch:hover {
-  background: #2563eb !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-}
-
-/* ========================================================= */
-/* SPECIFIC BUTTON STYLES                                    */
-/* ========================================================= */
-
-/* All action buttons use the same blue */
-.action-buttons .btn.transmit,
-.action-buttons .btn.history,
-.action-buttons .btn.select-all,
-.btn.export,
-.btn.dispatch-details,
-.btn-primary,
-.btn-secondary {
-  background: #3b82f6 !important;
-  color: white;
-  margin-top: 0;
-}
-
-/* Back button as outline */
-.btn.back {
-  background: transparent !important;
-  color: #3b82f6;
-  border: 1px solid #3b82f6 !important;
-  padding: 7px 11px !important;
-  margin-top: 0;
-}
-
-.btn.back:hover {
-  background: #3b82f6 !important;
-  color: white;
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-}
-
-/* Dispatch Details Button specific alignment */
-.btn.dispatch-details {
-  justify-content: flex-end;
-  margin-top: 0;
-}
-
-/* Modal Buttons */
-.btn-primary, .btn-secondary {
-  padding: 8px 12px !important;
-  margin-top: 0 !important;
-}
-
-/* ========================================================= */
-/* BUTTON GROUP ADJUSTMENTS                                  */
-/* ========================================================= */
-
-.action-buttons {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 12px;
-  margin: 25px 0 25px 25px;
-  flex-wrap: wrap;
-  padding-right: 20px;
-}
-
-.action-buttons .btn:hover {
-  transform: translateY(-1px);
-  color: #fff !important;
-  box-shadow: 0 4px 8px rgba(60, 135, 255, 0.701);
-}
-
-.action-buttons .btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none !important;
-}
-
-.form-buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 12px;
-  margin-bottom: 10px;
-}
 
 /* ========================================================= */
 /* FILTER + SEARCH SECTION                                   */
@@ -146,7 +42,6 @@ label {
   margin-bottom: 20px;
   width: auto;
   padding-left: 20px;
-  margin-left: 20px;
 }
 
 .filters_box {
@@ -167,7 +62,6 @@ label {
   border-radius: 8px;
   background: #fafafa;
   transition: border 0.2s;
-  cursor: pointer;
 }
 
 .filters_box select:focus {
@@ -263,12 +157,67 @@ label {
     margin-bottom: 10px;
     color: #d14d4d;
     font-weight: bold !important;
-    margin-left: 20px;
 }
 
 /* ========================================================= */
-/* CONTENT SECTIONS                                          */
+/* CONTROLS (BUTTONS)                                        */
 /* ========================================================= */
+
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-start;
+  align-items: right;
+  gap: 12px;
+  margin: 25px 0 25px 25px;
+  flex-wrap: wrap;
+  padding-right: 20px;
+}
+
+.action-buttons .btn {
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+}
+
+.action-buttons .btn.transmit {
+  background: #34a853; 
+  color: white;
+}
+
+.action-buttons .btn.history {
+  background: #fbbc05; 
+  color: black;
+}
+
+
+.action-buttons .btn.select-all {
+  background: #4285f4;  
+  color: white;
+}
+
+.action-buttons .btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.action-buttons .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+  margin-bottom: 10px;
+}
 
 .summary {
   margin-top: 4px;
@@ -289,25 +238,58 @@ label {
   display: none !important;
 }
 
+.btn.export {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.btn.export:hover {
+  background: #0056b3;
+}
+
+.btn.back {
+  background: none;
+  color: #b92f2f;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+
 .btn.print i {
   margin-right: 6px;
 }
 
+
+/* Apply to all buttons inside historyButtons */
 #historyButtons .btn {
     display: inline-flex;
-    align-items: center;
+    align-items: center; /* vertical center */
     justify-content: center;
-    gap: 6px;
+    gap: 6px; /* space between icon and text */
 }
 
+/* Optional: para consistent ang height at spacing */
 #historyButtons .btn i {
     display: inline-flex;
     align-items: center;
 }
 
+
 /* ========================================================= */
 /* STATIC DECLARATION TABLE (for #dataTable)                 */
 /* ========================================================= */
+
 
 .declaration_table {
     background: #fff;
@@ -319,7 +301,6 @@ label {
     opacity: 0;
     transform: translateY(10px);
     animation: fadeInCard 0.4s ease forwards;
-    margin-left: 20px;
 }
 
 .declaration_table:hover {
@@ -338,10 +319,11 @@ label {
 
 .declaration_table th {
     background: transparent;
+    font-weight: 600;
     padding: 10px 14px;
     border-bottom: 1px solid #f0f0f0;
-    color: #323232;
-    font-size: 14px;
+    color: #444;
+    font-size: 13.5px;
     text-align: left;
     letter-spacing: 0.2px;
 }
@@ -398,6 +380,9 @@ label {
   cursor: pointer;
 }
 
+
+
+
 .fa,
 .fas,
 .fa-solid,
@@ -417,10 +402,9 @@ label {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
+  margin-top: 6px;
   flex-wrap: wrap;
   font-size: 14px;
-  margin-left: 20px;
 }
 
 .pagination-controls {
@@ -452,19 +436,8 @@ label {
   align-items: center;
   gap: 5px;
   margin-bottom: 10px;
-  margin-left: 20px;
-  color: #383737;
 }
-
-.pagination-controls .ellipsis {
-  padding: 4px 8px;
-  color: #666;
-}
-
-/* ========================================================= */
-/* DISPATCH OVERLAY & MODAL                                  */
-/* ========================================================= */
-
+/* Dispatch Details Overlay */
 .dispatch-overlay {
   position: fixed;
   top: 0;
@@ -600,12 +573,30 @@ label {
   background-color: #f8f9fa;
 }
 
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 .btn-primary:hover {
-  background-color: #0056b3 !important;
+  background-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .btn-secondary:hover {
-  background-color: #545b62 !important;
+  background-color: #545b62;
 }
 
 /* Responsive */
