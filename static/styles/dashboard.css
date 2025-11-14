@@ -447,13 +447,164 @@ h2.numbercount {
     margin-bottom: 20px;
 }
 
+/* Notification Badge */
+.notification-badge {
+    background: #ffffff;
+    color: #f07474;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Notification List */
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Notification Items */
+.notification-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 14px;
+    border-left: 4px solid #ddd;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.notification-item:hover {
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+/* Notification Types */
+.notification-item.birthday {
+    border-left-color: #e74c3c;
+    background: #ffeaea;
+}
+
+.notification-item.expiring {
+    border-left-color: #f39c12;
+    background: #fff3cd;
+}
+
+.notification-item.expired {
+    border-left-color: #95a5a6;
+    background: #f8f9fa;
+}
+
+/* Priority Levels */
+.notification-item.high {
+    border-left-width: 6px;
+}
+
+.notification-item.medium {
+    border-left-width: 4px;
+}
+
+/* Notification Content */
+.notification-message {
+    font-size: 14px;
+    line-height: 1.4;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Buttons */
+.btn-action {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.btn-action:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+.btn-action:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Special button colors */
+.notification-item.birthday .btn-action {
+    background: #e74c3c;
+}
+
+.notification-item.birthday .btn-action:hover {
+    background: #c0392b;
+}
+
+.notification-item.expiring .btn-action {
+    background: #f39c12;
+}
+
+.notification-item.expiring .btn-action:hover {
+    background: #e67e22;
+}
+
+/* Status Items */
+.notification-item.loading,
+.notification-item.empty,
+.notification-item.error {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    background: #f8f9fa;
+    border-left-color: #3498db;
+}
+
+/* Scrollbar */
+.notification-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.notification-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
 .side-card.full {
     order: 4;
     margin: 0 40px 40px 40px;
 }
-
-
-/* ADD ONLY THESE LINES TO YOUR EXISTING CSS - NO CHANGES TO YOUR ORIGINAL CODE */
 
 * {
     box-sizing: border-box;
@@ -497,4 +648,19 @@ h2.numbercount {
     margin-top: -15px;
 }
 
+.arrow.warning {
+    color: #ffc107; /* Yellow/orange for warning */
+    font-size: 14px;
+}
 
+.card-subtext {
+    font-size: 14px;
+    color: #666;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.card blue .card-subtext {
+    color: #fff; /* White text for blue card */
+    opacity: 1;
+}
