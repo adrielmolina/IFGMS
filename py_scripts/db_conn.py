@@ -1057,6 +1057,30 @@ def get_all_dispatch_records():
         print(f"Error fetching dispatch records: {e}")
         return []   
 
+def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=None, current_user_id=None):
+    """ for logging actions on audit_trails table """
+    
+    db_session = SessionLocal()
+    
+    try:
+        audit_log = models.Logs(
+            date=datetime.now(),
+            staff_name=current_user,
+            user_level=current_user_lvl,
+            action_name=action,
+            description=desc,
+            account_id=current_user_id
+        )
+        print(audit_log)
+        
+        db_session.add(audit_log)
+        db_session.commit()
+        print("Action logged successfully.")
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error logging action: {e}")    
+
+
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
     """
