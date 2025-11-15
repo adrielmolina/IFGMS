@@ -1614,6 +1614,9 @@ html {
 .faq-section {
     padding: 50px 20px;
     background: #f8f9fa;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .faq-section h2 {
