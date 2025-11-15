@@ -4,6 +4,11 @@
 
 {% block head %}
     <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/settings.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <link rel="stylesheet" href="/static/styles/toast.css">
+    <script src="/static/js/toast.js"></script>
 
     <script>
         function toggleLoginHistory() {
@@ -20,18 +25,53 @@
 </div>
 <div class="main-container">
     <div class="left-container">
+        <img 
+        src="{{ url_for('get_profile_pic', user_id=current_user.account_id) if has_profile_pic else url_for('static', filename='assets/pfp.jpg') }}"
+        class="prof" 
+        alt="Profile Image" 
+        id="profileImage"
+        />
 
-        <img src="/static/assets/profile.png" class="prof" alt="Profile Image" />
 
-        <button class="profile-button">Edit Profile Picture</button>
+        
+        <input type="file" id="profileImageInput" accept="image/*" style="display: none;" />
+        
+        <button class="profile-button" onclick="showImageOptions()">
+            Edit Profile Picture
+        </button>
 
         <h5 class="name">{{ current_user.first_name }} {{ current_user.middle_name }} {{ current_user.last_name }}</h5>
         <p class="level">{{ current_user.user_level }}</p>
     </div>
 
+
+<!-- Options Popup -->
+<div id="imageOptionsPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 30px; border-radius: 10px; text-align: center; min-width: 300px;">
+        <h3>Edit Profile Picture</h3>
+        <p>What would you like to do?</p>
+        <button onclick="uploadNewPhoto()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer;">
+            Upload New Photo
+        </button>
+        <button onclick="deleteCurrentPhoto()" style="background: #f44336; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer;">
+            Delete Current Photo
+        </button>
+        <br>
+        <button onclick="closeOptionsPopup()" style="background: #777; color: white; border: none; padding: 8px 15px; margin-top: 10px; border-radius: 5px; cursor: pointer;">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<!-- Success Message -->
+<div id="successMessage" style="display: none; position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 15px; border-radius: 5px; z-index: 1000;">
+    Profile picture changed successfully!
+</div>
+
+
     <div class="profile-container">
     <form action="{{ url_for('settings_save_changes') }}" method="POST" class="profile-form">
-    <!-- USER DETAILS -->
+    <!-- USER DETAILS -->   
     <div class="form-group">
     <label for="first_name">First Name:</label>
     <div class="input-wrapper">
@@ -175,11 +215,13 @@
         fontStyleSelect.addEventListener("change", e => {
             applyFontStyle(e.target.value);
             localStorage.setItem("appFontKey", e.target.value);
+            toastSuccess("Font Style Updated",`Font style changed to: ${fontStyleSelect.options[fontStyleSelect.selectedIndex].text}`);
         });
 
         fontSizeSelect.addEventListener("change", e => {
             applyFontSize(e.target.value);
             localStorage.setItem("appFontSizeKey", e.target.value);
+            toastSuccess("Font Style Updated",`Font size changed to: ${fontSizeSelect.options[fontSizeSelect.selectedIndex].text}`);
         });
 
         // Helpers
@@ -251,6 +293,122 @@ function cancelChanges() {
         const history = document.getElementById('loginHistory');
         history.style.display = (history.style.display === 'none') ? 'block' : 'none';
     }
+
+// Upload Image Function
+document.addEventListener("DOMContentLoaded", function() {
+    const profileImageInput = document.getElementById("profileImageInput");
+    const profileImage = document.getElementById("profileImage");
+    const successMessage = document.getElementById("successMessage");
+
+    // Load saved profile image if exists
+    const savedProfileImage = localStorage.getItem("profileImage");
+    if (savedProfileImage) {
+        profileImage.src = savedProfileImage;
+        // Also update navigation bar image
+        updateNavigationBarImage(savedProfileImage);
+    }
+
+    // Handle profile picture upload
+    profileImageInput.addEventListener("change", async function (e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            toastAlert("File size exceeds 5MB limit.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("profile_pic", file);
+
+        const response = await fetch("/api/upload_profile_pic", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update image preview instantly
+            const reader = new FileReader();
+            reader.onload = e => profileImage.src = e.target.result;
+            reader.readAsDataURL(file);
+
+            toastSuccess("Profile picture updated successfully!");
+        } else {
+            toastAlert("Failed to update picture: " + result.error);
+        }
+    }
+});
+
+});
+
+function updateNavigationBarImage(imageUrl) {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        navProfileImage.src = imageUrl;
+    }
+}
+
+  function showImageOptions() {
+      const hasProfilePic = {{ has_profile_pic | tojson }};
+      
+      if (hasProfilePic) {
+          document.getElementById('imageOptionsPopup').style.display = 'flex';
+      } else {
+          document.getElementById('profileImageInput').click();
+      }
+  }
+
+function uploadNewPhoto() {
+    closeOptionsPopup();
+    document.getElementById('profileImageInput').click();
+}
+
+async function deleteCurrentPhoto() {
+    closeOptionsPopup();
+
+    try {
+        const response = await fetch("/api/delete_profile_pic", { method: "DELETE" });
+        const result = await response.json();
+
+        if (result.success) {
+            const defaultImage = "/static/assets/pfp.jpg";
+
+            // Reset to default image locally
+            document.getElementById("profileImage").src = defaultImage;
+            updateNavigationBarImage(defaultImage);
+            localStorage.removeItem("profileImage");
+
+            // Trigger UI update
+            window.dispatchEvent(new StorageEvent("storage", {
+                key: "profileImage",
+                newValue: null
+            }));
+
+            toastSuccess("Profile picture deleted successfully!");
+        } else {
+            toastAlert("Failed to delete photo: " + (result.error || "Unknown error"));
+        }
+    } catch (error) {
+        console.error("Error deleting photo:", error);
+        toastAlert("An error occurred while deleting the photo.");
+    }
+}
+
+
+function closeOptionsPopup() {
+    document.getElementById('imageOptionsPopup').style.display = 'none';
+}
+
+function showSuccessMessage() {
+    const successMessage = document.getElementById('successMessage');
+    successMessage.style.display = 'block';
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        successMessage.style.display = 'none';
+    }, 3000);
+}
 </script>
 
 {% endblock %}

@@ -10,26 +10,57 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 {% endblock %}
 
 <!--todo ADD COLOR CODING ON THE TABLE HEADER BASED ON MODULE IN CSS-->
 {% block content %}
 <div class="module_name">
     <h1>Audit Trail</h1>
+    
+    <div class="search_box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="search_input" placeholder="Search..." autocomplete="off">
+        <button id="search_clear"><i class="fa-solid fa-xmark"></i></button>
+    </div>
 </div>
+
+<div class="filter_search_container">
+    <div class="filters_box">
+        <label for="filter_user">Filter by:</label>
+        <select id="filter_user" class="filter_user">
+            <option value="">All Users</option>
+            <!-- Will be populated dynamically -->
+        </select>
+
+        <div class="date-filter-wrapper">
+            <input type="text" id="filter_date" class="filter_date" placeholder="Select Date">
+            <span class="calendar-icon">📅</span>
+        </div>
+        
+        <button onclick="resetFilters()" class="btn-reset">
+            <i class="fa-solid fa-arrow-rotate-left"></i> Reset Filters
+        </button>
+    </div>
+</div>
+        
     <form>
         <div class="audit-logs_table" spellcheck="false">
+            <div class="audit-logs_table full">
+                <h4>Logs</h4>
             <table class="editableTable">
                 <thead>
                     <tr>
                         <th> </th>
                         <th>ID</th>
-                        <th>DATE</th>
-                        <th>USERNAME</th>
-                        <th>USER LEVEL</th>
-                        <th>ACTION NAME</th>
-                        <th>DESCRIPTION</th>
-                        <th>ACCOUNT ID</th>
+                        <th>Date</th>
+                        <th>Username</th>
+                        <th>User Level</th>
+                        <th>Action</th>
+                        <th>Description</th>
+                        <th>Account ID</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,31 +80,226 @@
                 </tbody>
             </table>
         </div>
-
-        <div class="inventory_btns">
-            <button type="submit" name="print_report">Print Report</button>
         </div>
+        <div class="datatable-footer"></div>
     </form>
 {% endblock %}
 
 
 {% block extra_scripts %}
-    <script>
-        $(document).ready(function() {
-            // Initialize DataTable for tables with the "editableTable" class
-            $('.editableTable').each(function() {
-                var table = $(this).DataTable(); // Initialize each table with the "editableTable" class
+   <script>
+$(document).ready(function() {
+    // Initialize DataTable for tables with the "editableTable" class
+    $('.editableTable').each(function() {
+        var table = $(this).DataTable();
+        
+    // Move "Show entries" outside the table
+    var lengthControl = $(this)
+    .closest('.dataTables_wrapper')
+    .find('.dataTables_length');
 
-                // Add clear button next to the default search input field
-                $(this).closest('.dataTables_wrapper').find('.dataTables_filter').append('<button class="clearSearch" style="margin-left: 10px;">Clear</button>');
+    // Move the info and pagination OUTSIDE of the white card
+    var wrapper = $(this).closest('.dataTables_wrapper');
+    var footer = wrapper.find('.dataTables_info, .dataTables_paginate');
+    $('.datatable-footer').append(footer);
 
-                // Clear search input when the clear button is clicked
-                $(this).closest('.dataTables_wrapper').find('.clearSearch').click(function() {
-                    $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').val('');  // Clear the search input field
-                    table.search('').draw();  // Reset the DataTable search
-                });
-            });
+    
+    // Create a container above your table for it
+    var container = $('<div class="table-top-controls"></div>');
+    $(this).closest('.audit-logs_table').before(container);
+    container.append(lengthControl);
+
+        // Add clear button next to the default search input field
+        $(this).closest('.dataTables_wrapper').find('.dataTables_filter').append('<button class="clearSearch" style="margin-left: 10px;">Clear</button>');
+
+        // Clear button function
+        $(this).closest('.dataTables_wrapper').find('.clearSearch').click(function() {
+            $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').val('');
+            table.search('').draw();
         });
 
-    </script>
+        // ✅ CONNECT your custom search bar to DataTable
+        $('#search_input').on('keyup', function() {
+            table.search(this.value).draw();
+            // toggle clear button
+            if (this.value.length > 0) {
+                $('#search_clear').addClass('visible');
+            } else {
+                $('#search_clear').removeClass('visible');
+            }
+        });
+
+        // ✅ Clear button for your custom search bar
+        $('#search_clear').on('click', function() {
+            $('#search_input').val('');
+            table.search('').draw();
+            $(this).removeClass('visible');
+        });
+    });
+});
+
+// UPLOADED IMAGE
+document.addEventListener("DOMContentLoaded", function() {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            navProfileImage.src = savedProfileImage;
+        }
+    }
+    
+    // Listen for storage changes from settings page
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profileImage') {
+            const navProfileImage = document.getElementById("navProfileImage");
+            if (navProfileImage) {
+                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+            }
+        }
+    });
+});
+
+// ======================== FILTERS AND LOGS LOADING ===================== //
+console.log('🔧 Loading audit trails script...');
+
+// Wait for page to load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 Page loaded, initializing...');
+    initSimpleAuditTrails();
+});
+
+function initSimpleAuditTrails() {
+    console.log('🎯 Starting simple initialization...');
+    
+    // Initialize components
+    initDatePicker();
+    loadUsers();
+    setupFilterListeners();
+}
+
+// Simple date picker
+function initDatePicker() {
+    const dateInput = document.getElementById('filter_date');
+    if (!dateInput) {
+        console.error('❌ Date input not found!');
+        return;
+    }
+    
+    console.log('📅 Initializing date picker...');
+    
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr(dateInput, {
+            dateFormat: "Y-m-d"
+        });
+        console.log('✅ Flatpickr initialized');
+    } else {
+        dateInput.type = 'date';
+        console.log('✅ Native date input initialized');
+    }
+}
+
+// Load users
+async function loadUsers() {
+    try {
+        console.log('👥 Loading users...');
+        const response = await fetch('/api/get_users');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const users = await response.json();
+        console.log('✅ Users loaded:', users.length);
+        
+        const userSelect = document.getElementById('filter_user');
+        userSelect.innerHTML = '<option value="">All Users</option>';
+        
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.user_id;
+            option.textContent = `${user.first_name} ${user.last_name}`;
+            userSelect.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to load users:', error);
+    }
+}
+
+// Setup filter listeners
+function setupFilterListeners() {
+    const userSelect = document.getElementById('filter_user');
+    const dateInput = document.getElementById('filter_date');
+    
+    if (userSelect) {
+        userSelect.addEventListener('change', applyFilters);
+    }
+    
+    if (dateInput) {
+        dateInput.addEventListener('change', applyFilters);
+    }
+}
+
+// Apply filters to DataTable
+function applyFilters() {
+    const userFilter = document.getElementById('filter_user').value;
+    const dateFilter = document.getElementById('filter_date').value;
+    
+    console.log('Applying filters - User:', userFilter, 'Date:', dateFilter);
+    
+    const table = $('.editableTable').DataTable();
+    
+    // Custom filtering function
+    $.fn.dataTable.ext.search.push(
+        function(settings, data, dataIndex) {
+            // data[] contains column data
+            const username = data[3] || ''; // Username column
+            const date = data[2] || ''; // Date column
+            const accountId = data[7] || ''; // Account ID column
+            
+            let userMatch = true;
+            let dateMatch = true;
+            
+            // User filter - match by account ID or username
+            if (userFilter) {
+                userMatch = (accountId === userFilter) || (username.toLowerCase().includes(userFilter.toLowerCase()));
+            }
+            
+            // Date filter
+            if (dateFilter) {
+                dateMatch = date.includes(dateFilter);
+            }
+            
+            return userMatch && dateMatch;
+        }
+    );
+    
+    table.draw();
+    
+    // Remove the custom filter function after drawing
+    $.fn.dataTable.ext.search.pop();
+}
+
+// Reset filters
+function resetFilters() {
+    document.getElementById('filter_user').value = '';
+    document.getElementById('filter_date').value = '';
+    
+    // Clear DataTable search and redraw
+    const table = $('.editableTable').DataTable();
+    table.search('').draw();
+}
+
+// UPLOADED IMAGE
+document.addEventListener("DOMContentLoaded", function() {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            navProfileImage.src = savedProfileImage;
+        }
+    }
+});
+</script>
+
 {% endblock %}

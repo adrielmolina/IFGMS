@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=1.00, user-scalable=no">
-    <title>IFGMS - Login</title>
+    <title>FGMS - Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/login_style.css') }}">
@@ -15,7 +15,7 @@
 
 <!-- Intro Screen -->
 <div class="intro-screen" id="introScreen">
-    <img src="/static/assets/IFGMS-login_logo.png" alt="Logo" class="intro-logo" />
+    <img src="/static/assets/CAVITE.png" alt="Logo" class="intro-logo" />
 </div>
 
 <!-- Loading Overlay -->
@@ -54,45 +54,116 @@
     <button type="submit">Login</button>
 
     <!-- Divider -->
-    <div class="divider"><span></span><span>  or  </span><span></span></div>
+    <div class="divider">
+        <span></span>
+        <!-- <span>  or  </span>  -->
+        <span></span>
+    </div>
 
     <!-- Request Account -->
-            <div class="request-account">
-                <a href="/create_account">Request Account</a>
+            <div class="request-account" hidden>
+                <a href="/create_account" >Request Account</a>
                 
             </div>
             </form>
             </div> <!-- end of glass-card -->
 
-            <div id="maab_reg" class="maab_reg">
-                 <p>Want to be a member?</p>
-                 <a ref="/membership_register">
-                 <img src="static/assets/click.png" alt="Click icon" class="click-icon">
-                    Click here to register for MAAB Membership
-                </a>
-          </div>
+
+
+<div id="maab_reg" class="maab_reg">
+    <p>Want to be a member?</p>
+    <a href="{{ url_for('membership_register') }}">
+        <img src="{{ url_for('static', filename='assets/click.png') }}" alt="Click icon" class="click-icon">
+        Click here to register for MAAB Membership
+    </a>
+</div>
+
+
+
+
      </div>
     <!-- <p style="z-index: 9999; position: fixed; left: 45%; top: 29%; color:rgb(0, 0, 0); padding:5px; border-radius:6px;" >{{ env }} Environment</p> -->
 
 
 <script>
 
-    // Rotate Background Images
-    const backgrounds = [
-        "/static/assets/prc_bg1.png",
-        "/static/assets/prc_bg2.png",
-        "/static/assets/prc_bg3.png"
-    ];
+// === CONFIGURATION ===
+const backgrounds = [
+  "/static/assets/prc_bg1.png",
+  "/static/assets/prc_bg2.png",
+  "/static/assets/prc_bg3.png"
+];
+const changeInterval = 2500; 
+const fadeDuration = 700;  
 
-    let current = 0;
 
-    function changeBackground() {
-        document.body.style.background = `url('${backgrounds[current]}') no-repeat center center / cover`;
-        current = (current + 1) % backgrounds.length;
-    }
+// === CREATE STYLE FOR BACKGROUNDS ===
+const style = document.createElement("style");
+style.textContent = `
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+  .bg-slide {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    transition: opacity ${fadeDuration}ms ease-in-out;
+    z-index: -1;
+  }
+  .bg-slide.hidden {
+    opacity: 0;
+  }
+`;
+document.head.appendChild(style);
 
-    changeBackground();
-    setInterval(changeBackground, 5000);
+
+// === CREATE TWO BACKGROUND LAYERS ===
+const bg1 = document.createElement("div");
+const bg2 = document.createElement("div");
+bg1.className = "bg-slide";
+bg2.className = "bg-slide hidden";
+document.body.appendChild(bg1);
+document.body.appendChild(bg2);
+
+
+// === PRELOAD IMAGES ===
+backgrounds.forEach(src => {
+  const img = new Image();
+  img.src = src;
+});
+
+
+// === BACKGROUND SWITCH LOGIC ===
+let current = 0;
+let showingFirst = true;
+
+function changeBackground() {
+  const next = (current + 1) % backgrounds.length;
+  
+  if (showingFirst) {
+    bg2.style.backgroundImage = `url('${backgrounds[next]}')`;
+    bg2.classList.remove("hidden");
+    bg1.classList.add("hidden");
+  } else {
+    bg1.style.backgroundImage = `url('${backgrounds[next]}')`;
+    bg1.classList.remove("hidden");
+    bg2.classList.add("hidden");
+  }
+
+  current = next;
+  showingFirst = !showingFirst;
+}
+
+
+// === INITIALIZE ===
+bg1.style.backgroundImage = `url('${backgrounds[0]}')`;
+setInterval(changeBackground, changeInterval);
+
 
     // Intro and Flash Messages
     window.addEventListener("DOMContentLoaded", () => {
@@ -140,10 +211,25 @@
     });
 
     function handleLogin(event) {
-        event.preventDefault();
-        document.getElementById("loadingOverlay").style.display = "flex";
-        setTimeout(() => { event.target.submit(); }, 300);
+    event.preventDefault();
+
+    // Show loading overlay
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.style.display = "flex";
+
+    // Disable the submit button to prevent multiple clicks
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Logging in..."; // optional: change button text
     }
+
+    // Wait a short moment so the overlay appears before submission
+    setTimeout(() => {
+        event.target.submit();
+    }, 300);
+}
+
 
     function togglePassword() {
         const passwordInput = document.getElementById("password");

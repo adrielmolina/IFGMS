@@ -405,6 +405,20 @@
           "default": "",
           "check": "",
           "id": 14
+        },
+        {
+          "id": "qAy5uY8t_36u2EL8XBr2c",
+          "name": "profile_pic",
+          "type": "BLOB",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
         }
       ],
       "indices": [],
@@ -570,7 +584,8 @@
             "Training",
             "Company/Organization Training",
             "Individual",
-            "Walk-In"
+            "Walk-In",
+            "Online"
           ]
         },
         {
@@ -656,9 +671,9 @@
           "check": "",
           "id": 11,
           "values": [
-            "Chapter",
-            "Dasmarinas",
-            "Silang"
+            "chapter",
+            "dasma",
+            "silang"
           ]
         },
         {
@@ -682,7 +697,7 @@
         {
           "name": "tags",
           "type": "ENUM",
-          "comment": "",
+          "comment": "late-declare, overage, underage",
           "unique": false,
           "increment": false,
           "notNull": false,
@@ -690,11 +705,7 @@
           "default": "",
           "check": "",
           "id": 13,
-          "values": [
-            "late-declare",
-            "overage",
-            "underage"
-          ],
+          "values": [],
           "size": ""
         }
       ],
@@ -731,7 +742,8 @@
             "Platinum",
             "Enhanced Platinum",
             "Senior",
-            "Senior+"
+            "Senior+",
+            "Safe Card"
           ],
           "comment": "",
           "unique": false,
@@ -801,7 +813,8 @@
       "indices": [],
       "id": 3,
       "x": 0.5701312736630371,
-      "y": 1072.7875432803812
+      "y": 1072.7875432803812,
+      "hidden": false
     },
     {
       "name": "maab_claims",
@@ -2343,7 +2356,8 @@
             "Platinum",
             "Enhanced Platinum",
             "Senior",
-            "Senior+"
+            "Senior+",
+            "Safe Card"
           ]
         },
         {
@@ -2499,14 +2513,24 @@
           "unique": false,
           "notNull": false,
           "increment": false,
-          "comment": "",
+          "comment": "late-declare, overage, underage",
           "id": 12,
           "size": "",
-          "values": [
-            "late-declare",
-            "overage",
-            "underage"
-          ]
+          "values": []
+        },
+        {
+          "id": "lTe-jxjbm-EVo4a6LnxBb",
+          "name": "dispatch_ready",
+          "type": "BOOLEAN",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
         },
         {
           "id": "9S-YrUsst26xzbJVTpSn3",
@@ -2515,7 +2539,7 @@
           "default": "",
           "check": "",
           "primary": false,
-          "unique": true,
+          "unique": false,
           "notNull": false,
           "increment": false,
           "comment": "",
@@ -2607,6 +2631,23 @@
           "comment": "",
           "size": "",
           "values": []
+        },
+        {
+          "id": "9cDHnJ6k0SFrvZrafXgGz",
+          "name": "dispatch_status",
+          "type": "ENUM",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "values": [
+            "current",
+            "dispatched",
+            "disregard"
+          ]
         },
         {
           "id": "4uBaDpm6UeTbf9t3GC0-p",
@@ -2808,6 +2849,156 @@
       "comment": "",
       "indices": [],
       "color": "#c597e8"
+    },
+    {
+      "id": "7nVX-2V7DtgHZQ1BJ7TDM",
+      "name": "target_per_year",
+      "x": -16.88783397008757,
+      "y": 1367.4946529803956,
+      "locked": false,
+      "fields": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": true,
+          "unique": true,
+          "notNull": true,
+          "increment": true,
+          "comment": "",
+          "id": "rz1b1xNt556aGFdG9ILuf"
+        },
+        {
+          "id": "XknsCai7MElMZP28WdCJE",
+          "name": "year",
+          "type": "YEAR",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "y2hLANBow32yWbE05wVaG",
+          "name": "classic",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "xmMJ0gYJ4FqjpfSelV3w8",
+          "name": "bronze",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "-c53s3Ap-bHPT1Rj5o0YJ",
+          "name": "silver",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "Nf28xfnphR4Wzg5FPECFV",
+          "name": "gold",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "IkbhHNDN0DQ0RxKQAgoqN",
+          "name": "platinum",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "B-Lv6lclUqBNv_o-8p0QU",
+          "name": "safe_card",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "qaGZyqoR4jfkQhb0SwjAW",
+          "name": "senior",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
+          "id": "1TEvCPNcpKuy2AG7lDoXP",
+          "name": "senior_plus",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        }
+      ],
+      "comment": "",
+      "indices": [],
+      "color": "#7a6c51"
     }
   ],
   "relationships": [

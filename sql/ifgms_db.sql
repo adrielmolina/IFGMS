@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
 	`user_level` ENUM('admin', 'superadmin', 'staff') DEFAULT 'staff',
 	`acct_status` ENUM('pending', 'approved', 'declined', 'archived') DEFAULT 'pending',
 	`acct_review_date` DATE,
+	`profile_pic` BLOB,
 	PRIMARY KEY(`account_id`)
 );
 
@@ -44,20 +45,21 @@ CREATE TABLE IF NOT EXISTS `membership_records` (
 	`declaration_date` DATE COMMENT 'if declared. overwrite this field everytime declaration button is clicked',
 	`effectivity_date` DATE,
 	`location_particular` VARCHAR(255),
-	`location_category` ENUM('Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder', 'Public Elementary School', 'Private Elementary School', 'Public High School', 'Private High School', 'Public Senior High School', 'Private Senior High School', 'Public Integrated School', 'Private Integrated School', 'Public College', 'Private College', 'Government Company/Organization', 'Private Company/Organization', 'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events', 'Training', 'Company/Organization Training', 'Individual', 'Walk-In'),
+	`location_category` ENUM('Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder', 'Public Elementary School', 'Private Elementary School', 'Public High School', 'Private High School', 'Public Senior High School', 'Private Senior High School', 'Public Integrated School', 'Private Integrated School', 'Public College', 'Private College', 'Government Company/Organization', 'Private Company/Organization', 'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events', 'Training', 'Company/Organization Training', 'Individual', 'Walk-In', 'Online'),
 	`municipality` ENUM('Cavite City', 'Kawit', 'Noveleta', 'Rosario', 'Bacoor', 'Imus', 'Dasmariñas', 'Carmona', 'General Mariano Alvarez (GMA)', 'Silang', 'General Trias', 'Amadeo', 'Indang', 'Tanza', 'Trece Martires', 'Alfonso', 'Gen. Emilio Aguinaldo (Bailen)', 'Magallanes', 'Maragondon', 'Mendez', 'Naic', 'Tagaytay City', 'Ternate'),
 	`district` INTEGER,
 	`paid` BOOLEAN DEFAULT false COMMENT 'automatically mark as paid if all contents are paid',
-	`origin` ENUM('Chapter', 'Dasmarinas', 'Silang'),
+	`origin` ENUM('chapter', 'dasma', 'silang'),
 	`remarks` TEXT(65535),
-	`tags` ENUM('late-declare', 'overage', 'underage'),
+	`tags` VARCHAR(255) COMMENT 'late-declare, overage, underage',
+	`Status` ENUM('Active', 'Archived'),
 	PRIMARY KEY(`record_id`)
 );
 
 
 CREATE TABLE IF NOT EXISTS `inventory` (
 	`inv_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
+	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+', 'Safe Card'),
 	`maab_no` VARCHAR(255) UNIQUE,
 	`used` BOOLEAN,
 	`allocated_to` ENUM('Chapter', 'Dasmarinas', 'Silang'),
@@ -195,7 +197,7 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
 CREATE TABLE IF NOT EXISTS `entry_contents` (
 	`entry_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`record_id` INTEGER,
-	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
+	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+', 'Safe Card'),
 	`maab_no` VARCHAR(255) UNIQUE COMMENT 'maybe foreign key with inventory. what happens when id is platinum?',
 	`member_id` INTEGER,
 	`id_received` BOOLEAN,
@@ -205,9 +207,9 @@ CREATE TABLE IF NOT EXISTS `entry_contents` (
 	`OR_num` INTEGER,
 	`OR_date` DATE,
 	`remarks` TEXT(65535),
-	`tags` ENUM('late-declare', 'overage', 'underage'),
+	`tags` ENUM() COMMENT 'late-declare, overage, underage',
 	`dispatch_ready` BOOLEAN,
-	`dispatch_id` INTEGER UNIQUE,
+	`dispatch_id` INTEGER,
 	PRIMARY KEY(`entry_id`)
 ) COMMENT='table for contents of a membership_record entry';
 
@@ -238,6 +240,21 @@ CREATE TABLE IF NOT EXISTS `RETIRED_dispatch_contents` (
 	`location_particular` VARCHAR(255),
 	`late_declare` BOOLEAN,
 	PRIMARY KEY(`dispatch_content_id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `target_per_year` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`year` YEAR,
+	`classic` INTEGER,
+	`bronze` INTEGER,
+	`silver` INTEGER,
+	`gold` INTEGER,
+	`platinum` INTEGER,
+	`safe_card` INTEGER,
+	`senior` INTEGER,
+	`senior_plus` INTEGER,
+	PRIMARY KEY(`id`)
 );
 
 

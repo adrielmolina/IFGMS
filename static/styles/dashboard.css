@@ -1,30 +1,31 @@
 body {
-    font-family: "Poppins";
     margin: 20;
-    padding: 1rem;
-    background: #fff4f4;
+    background:#cccccc41;
     display: flex;
+    padding: 10px;
     flex-direction: column;
     min-height: 100vh; 
 }
-
 .module_name {
     order: 2;
     display: flex;
     justify-content: space-between; 
-    align-items: center;
+    align-items: flex-start; /* important: keeps titles top-aligned */
+    flex-wrap: wrap;
     padding: 15px 20px;
-    margin-left: 40px;
-    margin-right: 40px;
+    margin-left: 0; 
+    margin-right: 0; 
     position: relative;
     z-index: 1;
     margin-top: 0; 
     border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.249);
     background-color: #fff;
     margin-bottom: 10px;
-    color: #B92F2F
+    color: #B92F2F;
+    font-weight: 600 !important;
 }
+
 
 .filter-group {
     display: flex;
@@ -34,6 +35,7 @@ body {
     background: transparent;
     border-radius: 12px;
     box-shadow:none;
+    position: relative;
 }
 
 .filter-group .dropdown-container {
@@ -103,6 +105,7 @@ body {
 }
 
 
+
 .cards-container {
     display: flex;
     gap: 20px;
@@ -125,13 +128,12 @@ body {
         0 8px 20px rgba(78, 37, 37, 0.4),           
         0 8px 15px rgba(199, 93, 93, 0.05) inset, 
         0 -4px 6px rgba(255, 255, 255, 0.1) inset;  
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
     color: #fff;
     transition: transform 0.35s ease, box-shadow 0.35s ease, filter 0.3s ease, color 0.3s ease;
     overflow: hidden;
     position: relative;
     z-index: 1;
-    transform-style: preserve-3d; 
+    transform-style: preserve-3d;
 }
 
 .card::after {
@@ -166,24 +168,70 @@ body {
     filter: brightness(1.1) saturate(1.1);
 }
 
-.card.yellow { background: linear-gradient(135deg, #ff4c4c, #ff6666); }
-.card.violet { background: linear-gradient(135deg, #e95454, #fa8383); }
-.card.blue   { background: linear-gradient(135deg, #b22222, #e06666); }
-.card.green  { background: linear-gradient(135deg, #f85454, #f89595); }
+.card.yellow { background:#0049e6; }
+.card.violet { background:#0049e6; }
+.card.blue   { background:#0049e6; }
+.card.green  { background:#0049e6; }
 
 h2.numbercount {
-    font-size: 3em;
+    font-size: 2rem;
     font-weight: bold;
     margin: 0;
     text-align: center;
 }
 
 .card-icon {
-  color: #fff; 
-  margin-right: 8px;
-  font-size: 1.5em !important;
-  text-shadow: none;
+    color: #fff; 
+    margin-right: 8px;
+    font-size: 1.5em !important;
+    text-shadow: none;
 }
+
+.subtext {
+    font-size: 1rem;
+    margin: 5px 0;
+    color: #e0e0e0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.progress {
+    height: 100%;
+    background-color: #4caf50; /* You can change the color as needed */
+    border-radius: 5px;
+}
+
+.change {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.arrow {
+    font-size: 1.5rem;
+    margin-right: 5px;
+}
+
+.arrow.up {
+    color: #4caf50;
+}
+
+.arrow.down {
+    color: #f44336;
+}
+
+.percentage {
+    font-size: 1rem;
+    color: #e0e0e0;
+}
+
 
 .fa,
 .fas,
@@ -193,8 +241,8 @@ h2.numbercount {
 .fa-thin,
 .fa-duotone,
 .fa-brands {
-  font-family: "Font Awesome 6 Free" !important;
-  font-weight: 900; 
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900; 
 }
 
 
@@ -202,14 +250,25 @@ h2.numbercount {
     order: 4;
     margin-top: 10px;
     display: flex;
-    flex-direction: column;       
+    flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
     gap: 15px;
-    padding: 20px 40px;
+    padding: 15px 20px; 
+    width: 100%;
 }
 
-.chart-card, 
+.chart-card {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    width: 80% !important;    
+    padding-left: 20px !important;
+    align-items: stretch;
+    padding-right: -20px !important;
+
+}
+
 .side-card {
     background: #fff;
     border-radius: 15px;
@@ -318,23 +377,25 @@ h2.numbercount {
 .divider {
     display: none;
 }
+.chart-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 0 20px !important;
+    border-color: #0049e6;
+    width: 100%;
+}
 
 .chart-row {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 20px;
-    padding: 0 40px; 
+    padding: 0 40px;
+    width: 100%;
 }
 
-.chart-card.full {
-    flex: 2.5; 
-    background: #fff;
-    border-radius: 15px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    padding: 1rem;
-    margin-left: 10px; 
-}
 
 .chart-with-notif {
     display: flex;
@@ -386,42 +447,220 @@ h2.numbercount {
     margin-bottom: 20px;
 }
 
+/* Notification Badge */
+.notification-badge {
+    background: #ffffff;
+    color: #f07474;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Notification List */
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Notification Items */
+.notification-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 14px;
+    border-left: 4px solid #ddd;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.notification-item:hover {
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+/* Notification Types */
+.notification-item.birthday {
+    border-left-color: #e74c3c;
+    background: #ffeaea;
+}
+
+.notification-item.expiring {
+    border-left-color: #f39c12;
+    background: #fff3cd;
+}
+
+.notification-item.expired {
+    border-left-color: #95a5a6;
+    background: #f8f9fa;
+}
+
+/* Priority Levels */
+.notification-item.high {
+    border-left-width: 6px;
+}
+
+.notification-item.medium {
+    border-left-width: 4px;
+}
+
+/* Notification Content */
+.notification-message {
+    font-size: 14px;
+    line-height: 1.4;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Buttons */
+.btn-action {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.btn-action:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+.btn-action:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Special button colors */
+.notification-item.birthday .btn-action {
+    background: #e74c3c;
+}
+
+.notification-item.birthday .btn-action:hover {
+    background: #c0392b;
+}
+
+.notification-item.expiring .btn-action {
+    background: #f39c12;
+}
+
+.notification-item.expiring .btn-action:hover {
+    background: #e67e22;
+}
+
+/* Status Items */
+.notification-item.loading,
+.notification-item.empty,
+.notification-item.error {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    background: #f8f9fa;
+    border-left-color: #3498db;
+}
+
+/* Scrollbar */
+.notification-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.notification-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
 .side-card.full {
     order: 4;
     margin: 0 40px 40px 40px;
 }
 
-.chart-with-notif {
+* {
+    box-sizing: border-box;
+}
+
+.cards-container {
+    flex-wrap: wrap;
+}
+
+.card {
+    min-width: 200px;
+}
+
+#chart_div {
+    width: 100% !important;
+    overflow: hidden;
+}
+
+#chart_div svg {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+.side-card {
+    overflow-x: auto;
+}
+
+.side-card table {
+    min-width: 600px;
+}
+
+.card h3 {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 20px;
-    width: 100%;
+    align-items: left;
+    gap: 5px /* space between icon and text */
 }
 
-.chart-with-notif .chart-card.full {
-    flex: 2.5;
-    margin-left: 15px;
+.card h3 img.icons {
+    width: 64px;
+    height: 64px;
+    margin-top: -15px;
 }
 
-.notification-card {
-    flex: 1;
-    background: #fff;
-    border-radius: 15px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    padding: 1rem 1.2rem;
-    height: 400px;
-    overflow-y: auto;
+.arrow.warning {
+    color: #ffc107; /* Yellow/orange for warning */
+    font-size: 14px;
 }
 
-.notification-card h4 {
-    font-size: 16px;
-    font-weight: 600;
-    background: #7495f0;
-    color: white;
-    padding: 10px 14px;
-    border-radius: 12px 12px 0 0;
-    margin: -1rem -1.2rem 1rem -1.2rem;
+.card-subtext {
+    font-size: 14px;
+    color: #666;
+    margin-top: 8px;
+    text-align: center;
 }
 
-
+.card blue .card-subtext {
+    color: #fff; /* White text for blue card */
+    opacity: 1;
+}

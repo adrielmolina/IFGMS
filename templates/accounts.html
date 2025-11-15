@@ -6,11 +6,17 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <!-- Tabulator CSS -->
     <link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator.min.css" rel="stylesheet">
     <!-- Tabulator JS -->
     <script src="https://unpkg.com/tabulator-tables@6.2.1/dist/js/tabulator.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <link rel="stylesheet" href="/static/styles/toast.css">
+    <script src="/static/js/toast.js"></script>
 {% endblock %}
 
 
@@ -18,23 +24,77 @@
     <div class="module_name">
         <h1>Accounts</h1>
     </div>
-
-    <h2>Pending Account Requests</h2>
-    <input id="pending_search" placeholder="Search...">
-    <button id="pending_clear_search" onclick="clearSearch()">Clear Search</button>
-    <div id="pending_table"></div>
     
+  
+    <div class="pending-requests-wrapper">
+                    <div class="table-top">
+                <label>
+                    Show
+                    <select id="pending_entries">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    entries
+                </label>
+            </div>
+    <div class="audit-logs_table full" spellcheck="false">
+        <h4>Pending Account Requests</h4>
+        <div class="search_box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="pending_search" placeholder="Search..." autocomplete="off">
+            <button id="pending_clear_search"><i class="fa-solid fa-xmark"></i></button>
+        </div>
 
-    <div id="btn_row_pending" class="btn_row">
+        <!-- Table layout -->
+        <div class="table-container">
+            <div id="pending_table"></div>
+
+            <div class="table-bottom">
+                <div class="table-info" id="pending_info"></div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+        <div id="btn_row_pending" class="btn_row">
         <button id="approve" name="action" value="approve">APPROVE</button>
         <button id="decline" name="action" value="decline">DECLINE</button>
     </div>
     
+<div class="active-requests-wrapper">
+                <div class="table-top">
+                <label>
+                    Show
+                    <select id="active_entries">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    entries
+                </label>
+            </div>
+    <div class="audit-logs_table full" spellcheck="false">
+        <h4>Active Accounts</h4>
+        <div class="search_box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="active_search" placeholder="Search..." autocomplete="off">
+            <button id="active_clear_search"><i class="fa-solid fa-xmark"></i></button>
+        </div>
 
-    <h2>Active Accounts</h2>
-    <input id="active_search" placeholder="Search...">
-    <button id="active_clear_search" onclick="clearSearch()">Clear Search</button>
-    <div id="active_table"></div>
+        <div class="table-container">
+
+            <div id="active_table"></div>
+
+            <div class="table-bottom">
+                <div class="table-info" id="active_info"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <div id="btn_row_active" class="btn_row">
         <button id="create" name="action" value="create">NEW ACCOUNT</button>
@@ -49,8 +109,7 @@
                 <!-- TODO disable autocomplte in all fields -  autocomplete="off" -->
                 <!-- TODO set all input field as required -->
                 <!-- TODO fix the route address for ID -->
-                <form action="/api/account/<id>/create" method="POST" id="account_info">
-                    <fieldset>
+                <form id="account_info">
                         <legend>&nbsp;CREATE ACCOUNT&nbsp;</legend>
 
 
@@ -123,10 +182,9 @@
                                 </select>
                             </div>
                             <div class="div21">
-                                <button type="submit">CREATE ACCOUNT</button>   
+                                <button id="create_account_btn" type="button">CREATE ACCOUNT</button>   
                             </div>
-                        </div>                         
-                    </fieldset>                               
+                        </div>                                                     
                 </form>
             </div>
         </div>
@@ -136,295 +194,329 @@
 
 
 {% block extra_scripts %}
-    <script>
-        // page load functions
-        document.addEventListener('DOMContentLoaded', function () {
-            
-        });
+<script>
+document.addEventListener('DOMContentLoaded', function () {
 
-        // SEARCH BUTTONS
-        const searchInputP = document.getElementById("pending_search");
-        searchInputP.addEventListener("input", () => {
+    // ====================== SEARCH FUNCTIONALITY ======================
+    const searchInputP = document.getElementById("pending_search");
+    searchInputP.addEventListener("input", () => {
         const keyword = searchInputP.value.toLowerCase();
-
         pendingTable.setFilter((data) => {
             return Object.values(data)
-            .join(" ")
-            .toLowerCase()
-            .includes(keyword);
+                .join(" ")
+                .toLowerCase()
+                .includes(keyword);
         });
-        });
-        const searchInputA = document.getElementById("active_search");
-        searchInputA.addEventListener("input", () => {
-        const keyword = searchInputA.value.toLowerCase();
+    });
 
+    const searchInputA = document.getElementById("active_search");
+    searchInputA.addEventListener("input", () => {
+        const keyword = searchInputA.value.toLowerCase();
         activeTable.setFilter((data) => {
             return Object.values(data)
-            .join(" ")
-            .toLowerCase()
-            .includes(keyword);
+                .join(" ")
+                .toLowerCase()
+                .includes(keyword);
         });
-        });
+    });
 
-        // CLEAR SEARCH BUTTONS
-        function clearSearch() {
-            searchInputP.value = "";
-            pendingTable.clearFilter();
+    document.getElementById("pending_clear_search").addEventListener("click", function () {
+        const input = document.getElementById("pending_search");
+        input.value = "";
+        input.dispatchEvent(new Event("input")); 
+    });
 
-            searchInputA.value = "";
-            activeTable.clearFilter();
-        }
+    document.getElementById("active_clear_search").addEventListener("click", function () {
+        const input = document.getElementById("active_search");
+        input.value = "";
+        input.dispatchEvent(new Event("input")); 
+    });
 
-        // create column headers
-        const accountColumns = [
+    // ====================== TABLE COLUMN DEFINITIONS ======================
+    const accountColumns = [
         {formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 50},
         {title: "ID", field: "account_id"},
-        {title: "USERNAME", field: "username"},
-        {title: "EMAIL", field: "email"},
-        {title: "FIRST NAME", field: "first_name"},
-        {title: "MIDDLE NAME", field: "middle_name"},
-        {title: "LAST NAME", field: "last_name"},
-        {title: "CONTACT NO.", field: "contact_no"},
-        {title: "ACCOUNT CREATED", field: "acct_created"},
-        {title: "OFFICE", field: "office_location", editor:"list", editorParams: {
+        {title: "Username", field: "username"},
+        {title: "Email", field: "email"},
+        {title: "First Name", field: "first_name"},
+        {title: "Middle Name", field: "middle_name"},
+        {title: "Last Name", field: "last_name"},
+        {title: "Contact No.", field: "contact_no"},
+        {title: "Account Created", field: "acct_created"},
+        {title: "Office", field: "office_location", editor:"list", editorParams: {
             values: {
                 'Chapter': 'Chapter',
                 'Dasmarinas': 'Dasmarinas',
                 'Silang': 'Silang' 
             }
         },
-        formatter: (cell) => {
-            return `${cell.getValue()} <span style="color:#3b3b3b;">✎</span>`;
-        }
+        formatter: (cell) => `${cell.getValue()} <span style="color:#FF0033;">✎</span>`
         },
-        {title: "USER LEVEL", field: "user_level", editor:"list", editorParams: {
+        {title: "User Level", field: "user_level", editor:"list", editorParams: {
             values: {
                 'staff': 'staff',   
                 'admin': 'admin',   
                 'superadmin': 'superadmin',   
             }
         },
-        formatter: (cell) => {
-            return `${cell.getValue()} <span style="color:#3b3b3b;">✎</span>`;
-        }
+        formatter: (cell) => `${cell.getValue()} <span style="color:#FF0033;">✎</span>`
         },
-        {title: "STATUS", field: "acct_status"},
-        {title: "ACCOUNT REVIEW", field: "acct_review_date"},
-        ];
-        // Create both tables
-        const pendingTable = new Tabulator("#pending_table", {
-        layout: "fitColumns",
-        selectable: true,
-        reactiveData: true,
-        columns: accountColumns
-        });
-        const activeTable = new Tabulator("#active_table", {
-        layout: "fitColumns",
-        selectable: true,
-        reactiveData: true,
-        columns: accountColumns
-        });
+        {title: "Status", field: "acct_status"},
+        {title: "Account Review", field: "acct_review_date"},
+    ];
 
-        // get account
-        function fetchAccounts() {
-            fetch('/api/accounts')
+    // ====================== TABLE CREATION WITH PAGINATION ======================
+    const pendingTable = new Tabulator("#pending_table", {
+        layout: "fitColumns",
+        selectable: true,
+        reactiveData: true,
+        pagination: "local",
+        paginationSize: 10,
+        columns: accountColumns
+    });
+
+    const activeTable = new Tabulator("#active_table", {
+        layout: "fitColumns",
+        selectable: true,
+        reactiveData: true,
+        pagination: "local",
+        paginationSize: 10,
+        columns: accountColumns
+    });
+
+    
+
+    // ====================== TABLE EVENTS TO UPDATE INFO ======================
+
+// Trigger update after render finishes (page load, filter, resize, etc.)
+pendingTable.on("renderComplete", () => {
+    setTimeout(() => updateTableInfo(pendingTable, "pending_info"), 0);
+});
+activeTable.on("renderComplete", () => {
+    setTimeout(() => updateTableInfo(activeTable, "active_info"), 0);
+});
+
+
+    // ====================== FETCH ACCOUNTS ======================
+    function fetchAccounts() {
+        fetch('/api/accounts')
             .then(res => res.json())
             .then(data => {
-                pendingTable.setData(data.pending);
-                activeTable.setData(data.active);
+                pendingTable.setData(data.pending).then(() => updateTableInfo(pendingTable, "pending_info"));
+                activeTable.setData(data.active).then(() => updateTableInfo(activeTable, "active_info"));
             });
-        }
-        fetchAccounts();
+    }
+    fetchAccounts();
 
-        // create account overlay
-        document.getElementById('create').addEventListener('click', () => {
-            document.getElementById('overlay').style.display = 'flex';
-        });
+    // ====================== PAGINATION INFO ======================
+    function updateTableInfo(table, infoId) {
+    const info = document.getElementById(infoId);
+    const totalRows = table.getDataCount("all");
+    const page = table.getPage();
+    const size = table.getPageSize();
+    const start = totalRows === 0 ? 0 : (page - 1) * size + 1;
+    const end = Math.min(page * size, totalRows);
 
-        // approve accounts
-        document.getElementById('approve').addEventListener('click', () => {
-            // Get selected rows from the pending table
+    // get number of selected rows
+    const selectedCount = table.getSelectedData().length;
 
-            //console.log(pendingTable.getSelectedData());
+    if (totalRows === 0) {
+        info.textContent = "No entries to show";
+    } else {
+        info.textContent = `Showing ${start} to ${end} of ${totalRows} entries` + 
+            (selectedCount > 0 ? ` • ${selectedCount} selected` : "");
+    }
+}
 
-            const selectedData = pendingTable.getSelectedData();
-            const ids = selectedData.map(row => row.account_id);
 
-            if (ids.length === 0) {
-                alert("No accounts selected.");
-                return;
-            }
+    pendingTable.on("dataLoaded", () => updateTableInfo(pendingTable, "pending_info"));
+pendingTable.on("pageLoaded", () => updateTableInfo(pendingTable, "pending_info"));
+pendingTable.on("rowSelectionChanged", () => updateTableInfo(pendingTable, "pending_info"));
 
-            // Send to backend
-            fetch('/api/accounts/approve', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: ids })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Selected accounts approved!');
-                    fetchAccounts();
-                } else {
-                    alert('Error approving accounts.');
-                }
-            })
-            .catch(err => console.error(err));
-        });
+activeTable.on("dataLoaded", () => updateTableInfo(activeTable, "active_info"));
+activeTable.on("pageLoaded", () => updateTableInfo(activeTable, "active_info"));
+activeTable.on("rowSelectionChanged", () => updateTableInfo(activeTable, "active_info"));
 
-        // decline accounts
-        document.getElementById('decline').addEventListener('click', () => {
-            
-            //console.log(pendingTable.getSelectedData());
 
-            const selectedData = pendingTable.getSelectedData();
-            const ids = selectedData.map(row => row.account_id);
+    document.getElementById("pending_entries").addEventListener("change", (e) => {
+        pendingTable.setPageSize(parseInt(e.target.value));
+        updateTableInfo(pendingTable, "pending_info");
+    });
 
-            if (ids.length === 0) {
-                alert("No accounts selected.");
-                return;
-            }
+    document.getElementById("active_entries").addEventListener("change", (e) => {
+        activeTable.setPageSize(parseInt(e.target.value));
+        updateTableInfo(activeTable, "active_info");
+    });
 
-            fetch('/api/accounts/decline', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: ids })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Selected accounts declined!');
-                    fetchAccounts();
-                } else {
-                    alert('Error declining accounts.');
-                }
-            })
-            .catch(err => console.error(err));
-        });
-            
-        
-        // reset accounts password
-        document.getElementById('reset').addEventListener('click', () => {
-            
-            //console.log(activeTable.getSelectedData());
+    // ====================== ACCOUNT ACTIONS ======================
+    document.getElementById('create').addEventListener('click', () => {
+        document.getElementById('overlay').style.display = 'flex';
+    });
 
-            const selectedData = activeTable.getSelectedData();
-            const ids = selectedData.map(row => row.account_id);
+    document.getElementById('approve').addEventListener('click', () => {
+        const selectedData = pendingTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        if (!ids.length) return alert("No accounts selected.");
 
-            if (ids.length === 0) {
-                alert("No accounts selected.");
-                return;
-            }
+        fetch('/api/accounts/approve', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.success ? 'Selected accounts approved!' : 'Error approving accounts.');
+            fetchAccounts();
+        })
+        .catch(err => console.error(err));
+    });
 
-            fetch('/api/accounts/reset', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: ids })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                alert('Successfully reset password for selected accounts!');
-                    fetchAccounts();
-                } else {
-                    alert('Error resetting password for accounts.');
-                }
-            })
-            .catch(err => console.error(err));
-        });
+    document.getElementById('decline').addEventListener('click', () => {
+        const selectedData = pendingTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        if (!ids.length) return alert("No accounts selected.");
 
-        // update user level
-        activeTable.on("cellEdited", function(cell) {
-            if (cell.getField() === "user_level") {
-                const rowData = cell.getRow().getData();
+        fetch('/api/accounts/decline', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.success ? 'Selected accounts declined!' : 'Error declining accounts.');
+            fetchAccounts();
+        })
+        .catch(err => console.error(err));
+    });
 
-                fetch('/api/accounts/update_userlvl', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: rowData.account_id,
-                        user_level: cell.getValue()
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`Successfully updated ${rowData.account_id} to ${cell.getValue()}`);
-                        console.log(`Updated user ${rowData.account_id} to ${cell.getValue()}`);
-                        fetchAccounts();
-                    } else {
-                        alert(`Failed to update user_id ${rowData.account_id}`);
-                    }
-                });
-            }
-        });
+    document.getElementById('reset').addEventListener('click', () => {
+        const selectedData = activeTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        if (!ids.length) return alert("No accounts selected.");
 
-        // update office location
-        activeTable.on("cellEdited", function(cell) {
-            if (cell.getField() === "office_location") {
-                const rowData = cell.getRow().getData();
+        fetch('/api/accounts/reset', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.success ? 'Successfully reset password for selected accounts!' : 'Error resetting password for accounts.');
+            fetchAccounts();
+        })
+        .catch(err => console.error(err));
+    });
 
-                fetch('/api/accounts/update_ofc', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: rowData.account_id,
-                        office_location: cell.getValue()
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`Successfully updated ${rowData.account_id} to ${cell.getValue()}`);
-                        console.log(`Updated user ${rowData.account_id} to ${cell.getValue()}`);
-                        fetchAccounts();
-                    } else {
-                        alert(`Failed to update user_id ${rowData.account_id}`);
-                    }
-                });
+    document.getElementById('archive').addEventListener('click', () => {
+        const selectedData = activeTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        if (!ids.length) return alert("No accounts selected.");
+
+        fetch('/api/accounts/archive', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.success ? 'Successfully archived selected account/s!' : 'Error archiving account/s.');
+            fetchAccounts();
+        })
+        .catch(err => console.error(err));
+    });
+
+    // ====================== EDIT CELL EVENTS ======================
+    activeTable.on("cellEdited", function(cell) {
+        const rowData = cell.getRow().getData();
+        let url, payload;
+
+        if (cell.getField() === "user_level") {
+            url = '/api/accounts/update_userlvl';
+            payload = { id: rowData.account_id, user_level: cell.getValue() };
+        } else if (cell.getField() === "office_location") {
+            url = '/api/accounts/update_ofc';
+            payload = { id: rowData.account_id, office_location: cell.getValue() };
+        } else return;
+
+        fetch(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Successfully updated ${rowData.account_id} to ${cell.getValue()}`);
+                fetchAccounts();
+            } else {
+                alert(`Failed to update user_id ${rowData.account_id}`);
             }
         });
+    });
 
-        // archive accounts
-        document.getElementById('archive').addEventListener('click', () => {
-            
-            //console.log(activeTable.getSelectedData());
+    // ====================== OVERLAY ======================
+    document.getElementById('close-overlay').addEventListener('click', function () {
+        document.getElementById('overlay').style.display = 'none';
+    });
 
-            const selectedData = activeTable.getSelectedData();
-            const ids = selectedData.map(row => row.account_id);
-
-            if (ids.length === 0) {
-                alert("No accounts selected.");
-                return;
-            }
-
-            fetch('/api/accounts/archive', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: ids })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Successfully archived selected account/s!');
-                    fetchAccounts();
-                } else {
-                    alert('Error archiving account/s.');
-                }
-            })
-            .catch(err => console.error(err));
-        });
-
-        // for x button in overlay
-        document.getElementById('close-overlay').addEventListener('click', function () {
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
             document.getElementById('overlay').style.display = 'none';
-        });
-        // close overlay on ESC key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === "Escape") {
+        }
+    });
+
+    document.getElementById('create_account_btn').addEventListener('click', function () {
+        const payload = {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            conf_password: document.getElementById('conf_password').value,
+            email: document.getElementById('email').value,
+
+            fname: document.getElementById('fname').value,
+            mname: document.getElementById('mname').value,
+            lname: document.getElementById('lname').value,
+            suffix: document.getElementById('suffix').value,
+            
+            bdate: document.getElementById('bdate').value,
+            contact_no: document.getElementById('contact_no').value,
+            
+            branch: document.getElementById('branch').value
+        };
+
+        fetch('/create_acc_submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                toastSuccess('Account created successfully!');
                 document.getElementById('overlay').style.display = 'none';
+                fetchAccounts();
+            } else {
+                toastError('Account creation failed'); 
             }
-        });
-    </script>
+        }) // ✅ you forgot this
+        .catch(err => console.error(err));
+    });
+
+
+
+
+    // ====================== PROFILE IMAGE ======================
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) navProfileImage.src = savedProfileImage;
+    }
+    
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profileImage' && navProfileImage) {
+            navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+        }
+    });
+
+});
+</script>
 {% endblock %}

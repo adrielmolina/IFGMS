@@ -1,11 +1,444 @@
+.module_name {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    padding: 15px 20px;
+    margin-left: 0; 
+    margin-right: 0; 
+    position: relative;
+    z-index: 1;
+    margin-top: 0; 
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    background-color: #fff;
+    margin-bottom: 10px;
+    color: #B92F2F
+}
 
 body {
     background-color: #f3e8e8;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
 }
 
-label {
-    font-weight: bold;
+.filter_search_container {
+  display: flex;
+  justify-content: space-between;  /* keeps filters on left, search on right */
+  align-items: center;
+  background: #fff;
+  padding: 15px 20px;
+  margin: 20px 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  width: auto;
+}
+
+.filters_box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#claims-search {
+  padding: 6px 8px 6px 30px;
+  width: 250px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/svgs/solid/magnifying-glass.svg') no-repeat 8px center;
+  background-size: 14px 14px;
+}
+
+.filters_box label {
+  font-weight: 600;
+  color: #333;
+}
+
+.filters_box select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: border 0.2s;
+}
+
+.filters_box select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+.filter_search_container .search_box {
+  margin: 0;
+  margin-left: auto;
+}
+
+.filter_search_container .search_box input {
+  width: 280px;
+}
+
+.search_box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  margin-top: 10px;
+  margin-left: auto; 
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+#overlay .module_name {
+    width: 100%;
+}
+
+#overlay .module_name h3 {
+    background-color: #fff;
+    color: #B92F2F;
+    font-weight: 600;
+    letter-spacing: 0.25px;
+    padding: 4px 10px;         /* reduced padding */
+    border-radius: 8px;        /* slightly smaller rounding */
+    margin: 8px 0;
+    width: 100%;
+    text-align: left;
+    box-sizing: border-box;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);  /* softer shadow */
+}
+
+.controls_box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;      /* ⬇️ reduced from 10px */
+  padding-top: 2px;     /* ⬇️ reduced from 10px */
+  padding-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.controls_box_left,
+.controls_box_right {
+  display: flex;
+  gap: 8px;             /* ⬇️ slightly tighter for balance */
+}
+
+.controls_box button, .generate_claim_letter, 
+#requirements input[type="file"].upload_scanned_docs::file-selector-button{
+  padding: 8px 14px;    /* ⬇️ smaller button height */
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  /* display: flex; */
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  font-size: 15px;
+  color: #fff;
+  text-align: center;
+}
+
+.btn-expand, .generate_claim_letter,
+#upload_scanned_docs::file-selector-button{
+  background-color: #64748b;
+}
+
+.btn-expand:hover,.generate_claim_letter,
+#upload_scanned_docs::file-selector-button:hover{
+  background-color: #475569;
+}
+
+.upload_scanned_docs_label:hover,
+.scanned_docs:hover {
+  background-color: #475569;
+}
+
+.btn-add {
+  background-color: #864141;
+}
+
+.btn-save {
+  background-color: #22c55e;
+}
+.btn-save:hover {
+  background-color: #16a34a;
+}
+
+.btn-delete {
+  background-color: #ef4444;
+}
+.btn-delete:hover {
+  background-color: #dc2626;
+}
+
+.upload_scanned_docs_label, .scanned_docs {
+  background-color: #64748b;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s ease-in-out;
+  font-size: 15px;
+}
+
+#upload_scanned_docs {
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  padding: 6px;
+  background-color: #fff;
+  font-size: 15px;
+  color: #333;
+  width: auto;
+  box-sizing: border-box;
+}
+
+.scanned_docs {
+  background-color: #64748b;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 15px;
+  transition: background 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.collapse_box_header {
+    color: rgb(55, 49, 49);
+    font-weight: 600;
+    background-color: #c49191;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    padding: 2px 6px; /* smaller height and side space */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 4px 0;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+    box-sizing: border-box;
+    min-height: 40px; /* force smaller height */
+}
+
+.collapse_box_header:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.collapse_box_label {
+    background: transparent;
+    color: inherit;
+    font-weight: 600;
+    font-size: 0.65rem; /* visibly smaller */
+    line-height: 1; /* tighten text spacing */
+    user-select: none;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.collapse_box_checkbox {
+    display: none;
+}
+
+/* Base label style */
+.collapse_box_label {
+  cursor: pointer;
+  font-size: 20px;
+  user-select: none;
+  /* margin-left: 1%; */
+  margin: 1%
+}
+.collapse_box_label:hover {
+  text-decoration: underline;
+}
+/* Default arrow (right) */
+.collapse_box_label::before {
+  content: "▶";  /* right-pointing triangle */
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 1s;
+}
+
+/* Checked arrow (down) */
+.collapse_box_checkbox:checked + .collapse_box_label::before {
+  content: "▼";  /* down-pointing triangle */
+  color: rgb(36, 183, 36);
+}
+
+.collapse_group {
+    /* background-color: #5f0909bf; */
+    /* border: 1px solid black; */
+    margin-bottom: 1%;
+    display: flex;
+    gap: 10px;
+    padding: 20px;
+    width: 99%;
+}
+
+/* === CLAIM INFO & PRINCIPAL INSURED INFO GROUP BOXES === */
+#claim_info,
+#principal_insured_info,
+#claimant_info,
+#requirements,
+#claim_status_info {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 24px 20px; 
+  margin: 10px 0 16px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-auto-rows: minmax(60px, auto); /* ensures consistent row height */
+  gap: 20px; /* uniform spacing between inputs */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* === Wider Principal Insured Name Fields === */
+#principal_insured_info #prpl_insured_fname,
+#principal_insured_info #prpl_insured_mname,
+#principal_insured_info #prpl_insured_lname {
+  min-width: 280px;        /* wider to accommodate longer names */
+  max-width: 100%;         /* prevent overflowing container */
+  grid-column: span 2;     /* span 2 columns in the grid */
+  box-sizing: border-box;  
+  margin-bottom: 16px;     /* consistent spacing below each input */
+}
+
+/* Ensure the parent grid has enough space for wider inputs */
+#principal_insured_info {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 20px;          /* vertical and horizontal spacing */
+}
+
+
+/* === INPUT SETS === */
+#claim_info .input_set,
+#principal_insured_info .input_set {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+#claim_info .input_set input,
+#claim_info .input_set select,
+#principal_insured_info .input_set input,
+#principal_insured_info .input_set select {
+  width: 100%;
+  padding: 20px 12px 8px 12px; /* taller input for floating label */
+  font-size: 1rem;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  box-sizing: border-box;
+  appearance: none; /* removes default select arrow spacing */
+}
+
+/* === FLOATING LABELS === */
+#claim_info .input_set label,
+#principal_insured_info .input_set label {
+  position: absolute;
+  top: 14px;
+  left: 12px;
+  font-size: 0.9rem;
+  color: #777;
+  background: #fff;
+  padding: 0 4px;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+/* Label moves when input/select is focused or has value */
+#claim_info .input_set input:focus + label,
+#claim_info .input_set input:not(:placeholder-shown) + label,
+#claim_info .input_set select:focus + label,
+#claim_info .input_set select:valid + label,
+#principal_insured_info .input_set input:focus + label,
+#principal_insured_info .input_set input:not(:placeholder-shown) + label,
+#principal_insured_info .input_set select:focus + label,
+#principal_insured_info .input_set select:valid + label {
+  top: -8px;     
+  left: 10px;
+  font-size: 0.75rem;
+  color: #B92F2F;
+}
+
+/* === FOCUS EFFECT === */
+#claim_info .input_set input:focus,
+#claim_info .input_set select:focus,
+#principal_insured_info .input_set input:focus,
+#principal_insured_info .input_set select:focus,
+#claimant_info .input_set input:focus,
+#claimant_info .input_set select:focus.bottom_section {
+  outline: none;
+  border-color: #B92F2F;
+  box-shadow: 0 0 0 2px rgba(185, 47, 47, 0.15);
+}
+
+/* === BUTTONS (Verify, Today, etc.) === */
+#claim_info .input_set button,
+#principal_insured_info .input_set button {
+  margin-top: 6px; 
+  align-self: flex-start;
+  background-color: #f07474;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#claim_info .input_set button:hover,
+#principal_insured_info .input_set button:hover {
+  background-color: #d85f5f;
+}
+
+/* ✅ Refined Same as Insured styling (compact + centered) */
+.input_set label[for="same_as_insureed"] {
+  position: static !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  font-size: 0.9rem !important;
+  color: #333 !important;
+  line-height: 1.2 !important;
+  margin: 0 auto 6px auto !important;
+  width: 50% !important; /* narrower span */
+}
+
+.input_set input[type="checkbox"]#same_as_insureed {
+  display: block !important;
+  margin: 0 auto !important;
+  width: 26px !important;
+  height: 26px !important;
+  cursor: pointer !important;
+  transform: scale(1) !important;
+}
+
+/* ✅ Keep suffix aligned and consistent width */
+#claimant_info #claimant_suffix {
+  width: 50% !important;
+  margin: 0 auto !important;
+  display: block !important;
 }
 
 .ht_master .wtHolder {
@@ -31,10 +464,135 @@ label {
     background-color: #c7db14a5 !important;
     color: #000000;
 }
+.module_name {
+  display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    padding: 15px 20px;
+    margin-left: 0; 
+    margin-right: 0; 
+    position: relative;
+    z-index: 1;
+    margin-top: 0; 
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    background-color: #fff;
+    margin-bottom: 10px;
+    color: #B92F2F
+}
+
+/* FILTER BOX */
+.filter_search_container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 15px 20px;
+  margin: 0 0 25px 0; 
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.249);
+  margin-top: 20px;
+  margin-bottom: 20px;
+  width: auto;
+}
+
+.filters_box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;     /* prevent wrapping to a new line */
+  justify-content: flex-start;
+  white-space: nowrap;   /* keep label and selects on one line */
+} 
+
+.filters_box label {
+  font-weight: 600;
+  color: #333;
+}
+
+.filters_box select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: border 0.2s;
+}
+
+.filters_box select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+.filter_search_container .search_box {
+  margin: 0;
+  margin-left: auto;
+}
+
+.filter_search_container .search_box input {
+  width: 280px;
+}
+
+
+/* SEARCH BOX  */
+.search_box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  margin-top: 10px;
+  margin-left: auto; 
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.search_box i.fa-magnifying-glass {
+  position: absolute;
+  left: 12px;
+  color: #888;
+  font-size: 16px;
+}
+
+.search_box input {
+  width: 550px !important;
+  padding: 10px 35px 10px 35px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  font-size: 16px;
+}
+
+#search_clear {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+  opacity: 0; 
+  pointer-events: none;
+}
+
+#search_clear.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#search_clear:hover {
+  color: #c9302c;
+}
+
+.search_box input:focus {
+    outline: 2px solid #1a40ff;
+    transition: 0.2s;
+}
+
 
 /* TODO remove when done styling the form */
 #overlay {
-  /* display: flex !important; */
 }
 
 .overlay {
@@ -77,50 +635,118 @@ label {
     align-items: center;
 
     width: 100%;
-    height: 100%;           /* Set a fixed height, not max-height */
+    height: 100%;           
     overflow: auto;
     box-sizing: border-box;
 }
 
-table {
-    width: 100%;
+/* ========================================================= */
+/* CLAIMS TABLE DESIGN                                       */
+/* ========================================================= */
+
+#claims_table::before {
+  content: "CLAIMS TABLE";
+  display: block;
+  background: #f07474;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  padding: 10px 16px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  width: 97.8%;
 }
 
-/* TODO add alternating gray/white color to rows */
-table, th, tr, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-    margin-bottom: 1%;
+#claims_table .ht_clone_top thead th {
+  background-color: #fff !important;
+  color: #1f1313 !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  padding: 10px 14px !important;
 }
 
-th {
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    background-color: #2d1d52;
-    color: white;
-    border-color: white;
-    font-size: 14px;
-    /*TODO set the headers to center*/
+#claims_table .ht_clone_left thead th,
+#claims_table .ht_clone_left tbody th {
+  background-color: #fff !important;
+  color: #1f1313 !important;
+  font-weight: 600 !important;
+  text-align: left !important;
+  border-right: 1px solid #e0e0e0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  width: 40px !important;
 }
 
-td {
+#claims_table td {
+  border-top: 1px solid #e0e0e0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+#claims_table .wtHolder {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  overflow: hidden;
+}
+
+.handsontable {
+  font-family: "Poppins";
+  font-size: 14px;
+  color: #555;
+  background: #fff;
+  border-radius: 8px !important;
+  border-collapse: collapse;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.handsontable th {
+  color: #444 !important;
+  font-weight: 700;
+  padding: 10px 20px !important;
+  border-bottom: 1px solid #f0f0f0;
+  letter-spacing: 0.5px;
+  font-size: 14px;
+}
+
+.handsontable td {
+  padding: 9px 14px !important;
+  border-bottom: 1px solid #f7f7f7;
+  color: #555;
+}
+
+.handsontable tr:hover td {
+  background: #fff !important;
+}
+
+/* Status color classes */
+.status-approved {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    font-weight: bold;
     text-align: center;
-    padding: 5px;
 }
 
-td input {
-    width: 95%;
+.status-denied {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    font-weight: bold;
+    text-align: center;
 }
 
-td input[type="checkbox"] {
-    transform: scale(1.5);
+.status-pending {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    font-weight: bold;
+    text-align: center;
 }
+/* ========================================================= */
+/* END CLAIMS TABLE DESIGN                                   */
+/* ========================================================= */
 
-td select {
-    width: 95%;
-}
 
 #entries_table {
     min-width: 100%;
@@ -185,136 +811,383 @@ input:checked + .slider:before {
     margin-top: 20px;
 }
 
+/*-------------------------------------------------------------------------*/
+/* === PARENT FLEX SETTINGS === */
+#requirements {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 24px 20px;
+  margin: 10px 0 16px 0;
+  display: flex;        
+  justify-content: flex-start;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .requiements_section {
-    border: 1px solid black;
+    border: solid #d2cfcf 1px;
+    border-radius: 10px;
     display: flex;
     flex-direction: row;
     width: fit-content;
-    padding: 1%;
+    padding: 2%;
+    gap: 40px;
+    align-items: flex-start;
 }
 
-.requiements_section ul label {
-    font-weight: normal;
-    margin-left: 10px;
-    font-size: 18px;
+.right_section {
+  border: solid #d2cfcf 1px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 2%;
+  box-sizing: border-box;
+  min-width: 25% !important;
 }
 
-.requiements_section ul {
+/* === LIST === */
+.requirements_list {
     list-style-type: none;
-    padding-left: 0; /* optional: removes default indentation */
+    padding-left: 0;
     display: flex;
     flex-direction: column;
-    margin-left: 20px;
-    margin-right: 20px;
+    min-width: 400px;
+    min-height: 300px;
+    justify-content: flex-start;
+    position: relative;
+    padding-top: 50px;
 }
 
-.columns {
-    border: 1px solid black;
-    display: flex;
-    width: auto;
-
-    gap: 30px;
+.requirements_list .requirements_title {
+    font-weight: bold;
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 48px;
+    color: #B92F2F;
+    list-style: none;
+    margin: 0;
+    z-index: 1;
 }
 
-.release_section {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid black;
-    width: auto;
-    padding: 1%;
-    gap: 20px;
-}
-.release_remarks_section {
-    display: flex;
-    flex-direction: column;
-}
-
-.release_sectin_column {
-    display: flex;
-    width: auto;
-    flex-direction: column;
-    flex: 1; /* optional: equal width columns */
-}
-
-.controls_box {
-    /* border: #000000 1px solid; */
-    border-bottom: 1px solid black;
-    width: 99%;
-    height: fit-content;
-    padding: 5px;
-    margin: 5px;
-    display: flex;
-    flex-direction: row;
-    gap: 15px;;
-}
-.controls_box button {
-    background-color: #4e4747;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-.controls_box button:hover {
-    background-color: #3c3c3c;
-}
-
-.collapse_box_header {
-    background-color: #4e474732;
-    width: 99%;
-    height: 4vh;
-    border-radius: 10px;
-    margin: 5px;
-    flex-shrink: 0;
+.requirements_list li {
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
 }
-.collapse_box_header:hover {
-    border: #000000 1px solid;
+
+.requirements_list li:not(.requirements_title) {
+    padding-left: 50px;
+}
+
+.requirements_list label {
+    font-weight: normal;
+    margin-left: 12px;
+    font-size: 0.8em;
+}
+
+.requirements_list input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
     cursor: pointer;
 }
 
-.collapse_box_checkbox {
-    display: none;
+#requirements .input_set {
+    position: relative;         
+    transform: translateX(-40px); 
+    left: 37px;         
+    width: 100%;
 }
 
-/* Base label style */
-.collapse_box_label {
-  cursor: pointer;
-  font-size: 20px;
-  user-select: none;
-  /* margin-left: 1%; */
-  margin: 1%
-}
-.collapse_box_label:hover {
-  text-decoration: underline;
-}
-/* Default arrow (right) */
-.collapse_box_label::before {
-  content: "▶";  /* right-pointing triangle */
-  display: inline-block;
-  margin-right: 6px;
-  transition: transform 1s;
+#requirements .input_set input#claim_remarks {
+    width: 100%;
+    padding: 16px 12px 8px 12px;
+    font-size: 1rem;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    left: -40px;  
+    position: relative;
 }
 
-/* Checked arrow (down) */
-.collapse_box_checkbox:checked + .collapse_box_label::before {
-  content: "▼";  /* down-pointing triangle */
-  color: rgb(36, 183, 36);
+#requirements .input_set label[for="claim_remarks"] {
+    position: absolute;
+    top: 16px;
+    left: -28px;  
+    font-size: 0.9rem;
+    color: #777;
+    background: #fff;
+    padding: 0 4px;
+    pointer-events: none;
+    transition: all 0.2s ease;
 }
 
-.collapse_group {
-    /* background-color: #5f0909bf; */
-    /* border: 1px solid black; */
-    margin-bottom: 1%;
-    display: flex;
-    gap: 10px;
-    padding: 20px;
-    width: 99%;
+#requirements .input_set input#claim_remarks:focus + label,
+#requirements .input_set input#claim_remarks:not(:placeholder-shown) + label {
+    top: -8px;
+    left: -38px;  
+    font-size: 0.75rem;
+    color: #B92F2F;
 }
-.input_set {
+
+#requirements .input_set input#claim_remarks:focus {
+    outline: none;
+    border-color: #B92F2F;
+    box-shadow: 0 0 0 2px rgba(185, 47, 47, 0.15);
+}
+
+#requirements .right_section {
     display: flex;
     flex-direction: column;
-    width: 80%;
-    margin: 5px;
+    gap: 12px;              
+    min-width: 250px;      
 }
+/*-------------------------------------------------------------------------*/
+
+/* === CLAIM STATUS SECTION (Modern Two-Column Layout) === */
+/* Keep consistent with other card sections */
+  .release_section {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    padding: 24px 20px;
+    margin: 10px 0 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    box-sizing: border-box;
+    grid-column: 1 / -1;  
+  }
+
+  /* Restore two-column structure */
+  .columns {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  /* Column styling */
+  .release_sectin_column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Remarks below columns */
+  .release_remarks_section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Form controls */
+  .release_section input,
+  .release_section select {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  /* Buttons */
+  .release_section button {
+    background-color: #64748b;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+  }
+
+  .release_section button:hover {
+    background-color: #475569;
+  }
+
+  /* Links */
+  .release_section a {
+    color: #1d4ed8;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .release_section a:hover {
+    text-decoration: underline;
+  }
+
+  /* Responsive: stack columns on smaller screens */
+  @media (max-width: 900px) {
+    .columns {
+      grid-template-columns: 1fr;
+    }
+  }
+
+
+  /* Labels and inputs alignment */
+  .release_sectin_column label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 4px;
+  }
+
+  .release_sectin_column input,
+  .release_sectin_column select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    background-color: #fff;
+    transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+
+  .release_sectin_column input:focus,
+  .release_sectin_column select:focus {
+    outline: none;
+    border-color: #64748b;
+    box-shadow: 0 0 0 2px rgba(100,116,139,0.2);
+  }
+
+  /* Buttons */
+  .release_sectin_column button,
+  .generate_prm,
+  .generate_quit_claim {
+    background-color: #64748b;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+    width: fit-content;
+  }
+
+  .release_sectin_column button:hover,
+  .generate_prm:hover,
+  .generate_quit_claim:hover {
+    background-color: #475569;
+  }
+
+  /* File links (View PRM File, etc.) */
+  a.prm_file,
+  a.quit_claim_file {
+    background-color: #64748b;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease-in-out;
+    width: fit-content;
+  }
+
+  a.prm_file:hover,
+  a.quit_claim_file:hover {
+    background-color: #475569;
+  }
+
+  /* Release Remarks Section */
+  .release_remarks_section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .release_remarks_section input {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    background-color: #fff;
+  }
+
+/* Center and slightly compress the release section */
+.release_section {
+  max-width: 85%; /* Adjust this (e.g., 80%, 70%) for how "compressed" you want it */
+  margin: 0 auto; /* Centers it horizontally */
+}
+
+/* Make the Date Released label span a normal block again */
+.release_sectin_column span {
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Make the date input and button sit on the same line */
+#date_released {
+  width: calc(100% - 90px); /* leave space for button */
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#date_released + span button,
+span button[onclick*="date_released"] {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+  padding: 8px 14px;
+  background-color: #64748b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  height: 36px; /* matches input height */
+  line-height: 20px;
+  position: relative;
+  top: 3px; /* fine-tune alignment */
+}
+
+span button[onclick*="date_released"]:hover {
+  background-color: #475569;
+}
+
+
+/* Base positioning context */
+#claim_status_info {
+  position: relative;
+  padding-top: 40px;
+}
+
+/* Checkbox and label (already correct) */
+#claim_status_info #picked_up {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  margin: 0;
+}
+
+#claim_status_info label[for="picked_up"] {
+  position: absolute;
+  top: 10px;
+  left: 38px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Date picker and its label beside the Picked Up field */
+#claim_status_info label[for="date_picked_up"] {
+  position: absolute;
+  top: 10px;
+  left: 150px; /* adjust this spacing as needed */
+  font-weight: 500;
+  color: #374151;
+}
+
+#claim_status_info #date_picked_up {
+  position: absolute;
+  top: 8px;
+  left: 270px; /* align visually with the label */
+}
+

@@ -1,8 +1,7 @@
 body {
-    font-family: Arial, sans-serif;
     margin: 20;
     padding: 1rem;
-    background: linear-gradient(135deg, #fbefd5, #f5e0ea); /* BACKGROUND */
+    background: #cccccc41;
     display: flex;
     flex-direction: column;
     min-height: 100vh; 
@@ -17,19 +16,84 @@ h2 {
 }
 
 .module_name {
-    position: absolute;
-    margin-top: 1.5%;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);  /* Centers horizontally */
-    color: rgb(232, 57, 57);
-    text-align: center;  /* Ensures the text inside is centered */
-    width: 100%;  /* Makes sure the element stretches across the container */
-  }
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    padding: 15px 20px;
+    margin-left: 0; 
+    margin-right: 0; 
+    position: relative;
+    z-index: 1;
+    margin-top: 0; 
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    background-color: #fff;
+    margin-bottom: 10px;
+    color: #B92F2F
+}
+
+
+.search_box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  margin-top: 10px;
+  margin-left: auto; 
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.search_box i.fa-magnifying-glass {
+  position: absolute;
+  left: 12px;
+  color: #888;
+  font-size: 16px;
+}
+
+.search_box input {
+  width: 550px !important;
+  padding: 10px 35px 10px 35px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  font-size: 16px;
+}
+
+#search_clear {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+  opacity: 0; 
+  pointer-events: none;
+}
+
+#search_clear.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#search_clear:hover {
+  color: #c9302c;
+}
+
+.search_box input:focus {
+  outline: 2px solid #1a40ff;
+  transition: 0.2s;
+}
 
   /*--------------------------------- MAIN CONTAINER ------------------------*/
-.main-container{
+.main-container {
   display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px; /* space between left and right containers */
   margin-top: 3.2%;
 }
 
@@ -439,4 +503,9 @@ th {
         rgba(232, 61, 61, 0.95)
     );
     color: white;
+}
+
+.left-container,
+.profile-container {
+  margin: 40px 0; /* remove auto centering */
 }

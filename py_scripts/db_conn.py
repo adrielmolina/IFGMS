@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from sqlalchemy import create_engine, text, func
+from sqlalchemy import create_engine, text, func, extract
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, scoped_session
 import cryptography
@@ -113,7 +113,7 @@ def create_account(**kwargs):
             acct_created=kwargs.get('acct_created'),
             office_location=kwargs.get('branch'),
             user_level='staff',  # default user level
-            acct_status='pending',  # default status
+            acct_status='approved',  # default status
             acct_review_date=None  # default review date
         )
         db_session.add(new_account)
@@ -487,21 +487,152 @@ def get_pending_claims_count():
     return count_pending
 
 
+'''
+# MERGE CONFLICT AREA START
 
-def get_member_records():
+def get_member_records(status='active', office_loc=None):
+    """
+    Get member records with optional status filter
+    """
     db_session = SessionLocal()
     try:
-        records = db_session.query(models.Records).all()
+        print(f"DEBUG: Querying database for status: {status}")
+        
+        # Use the correct model name - check if it's Records or MemberRecords
+        # Try Records first (based on your add_new_record function)
+        query = db_session.query(models.Records)
+        
+        if status:
+            query = query.filter(models.Records.status == status)
+        
+        records = query.order_by(models.Records.record_id.desc()).all()
+        print(f"DEBUG: Found {len(records)} records")
         return records
+        
     except Exception as e:
-        return "Error fetching member records: {e}"
-    '''
+        print(f"DEBUG: Error in get_member_records: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+    finally:
+        db_session.close()
+        
+# TODO fix this after merge        
+def get_member_records(office_loc):
+    db_session = SessionLocal()
+    try:
+        if office_loc == 'Chapter':
+        # Chapter = all Chapter + declared Dasmariñas/Silang
+            records = (
+                db_session.query(models.Records)
+                .filter(
+                    (models.Records.origin == "Chapter") |
+                    ((models.Records.origin.in_(["Dasmariñas", "Silang"])) &
+                    (models.Records.tags == "transmitted"))
+                )
+                .order_by(models.Records.record_id.desc())
+                .all()
+            )
+
+        elif office_loc == 'Dasmarinas':
+            # Only Dasmariñas
+            records = (
+                db_session.query(models.Records)
+                .filter(models.Records.origin == "Dasmariñas")
+                .order_by(models.Records.record_id.desc())
+                .all()
+            )
+
+        elif office_loc == 'Silang':
+            # Only Silang
+            records = (
+                db_session.query(models.Records)
+                .filter(models.Records.origin == "Silang")
+                .order_by(models.Records.record_id.desc())
+                .all()
+            )
+
+        return records
+
+    except Exception as e:
+        return f"Error fetching member records: {e}"
+    
+
+MERGE CONFLICT AREA END
+'''    
+    
+    
+'''
         query = text("SELECT * FROM membership_records")
         result = conn.execute(query)
         records = result.fetchall()
         return records
     '''
+    
+    
+def get_member_records(status='active', office_loc=None):
+    """
+    Get member records filtered by office location and optional status.
+    """
+    db_session = SessionLocal()
+    try:
+        # Base query
+        query = db_session.query(models.Records)
 
+        # Apply status filter if provided
+        if status:
+            query = query.filter(models.Records.status == status)
+
+        # Apply office location logic
+        if office_loc == 'Chapter':
+            # Chapter = all Chapter + transmitted (declared) Dasma/Silang
+            query = query.filter(
+                (models.Records.origin == "Chapter") |
+                (
+                    (models.Records.origin.in_(["Dasmariñas", "Silang"])) &
+                    (models.Records.tags == "transmitted")
+                )
+            )
+
+        elif office_loc == 'Dasmarinas':
+            query = query.filter(models.Records.origin == "Dasmariñas")
+
+        elif office_loc == 'Silang':
+            query = query.filter(models.Records.origin == "Silang")
+
+        # If office_loc is None, return based only on status
+        records = query.order_by(models.Records.record_id.desc()).all()
+        return records
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error fetching member records: {e}"
+    
+    
+    
+    
+def archive_member_record(record_id):
+    """Archive a member record by setting its status to 'archived'"""
+    db_session = SessionLocal()
+    try:
+        record = db_session.query(models.Records).filter_by(record_id=record_id).first()
+        if record:
+            record.status = 'archived'
+            db_session.commit()
+            print(f"Record {record_id} archived successfully")
+            return True
+        else:
+            print(f"Record {record_id} not found")
+            return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error archiving record {record_id}: {e}")
+        return False
+    finally:
+        db_session.close()
+
+        
 def get_claim_records():
     db_session = SessionLocal()
     try:
@@ -812,6 +943,362 @@ def get_entries(record_id):
     except Exception as e:
         return ["Error fetching entries: {e}"]
 
+# WIP
+def add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, bloodtype, contact, email, municipality, address, maab_cat, origin):
+    db_session = SessionLocal()
+    try:
+        #create new member first
+        new_member = models.Members(
+            first_name=fname,
+            middle_name=mname,
+            last_name=lname,
+            suffix=suffix,
+            birth_date=birthdate,
+            age=age,
+            sex=sex,
+            contact_no=contact,
+            email=email,
+            address=address,
+            blood_type=bloodtype,
+        )
+        
+        db_session.add(new_member)
+        db_session.commit()
+        
+        member_id = new_member.member_id
+        
+        # create new record first
+        new_record = models.Records(
+            year=datetime.now().year,
+            id_received=None,
+            declared=None,
+            declaration_date=None,
+            effectivity_date=date.today(), # set effectivity date to today, update when paid
+            location_particular='Online Registration',
+            location_category='Online', 
+            municipality=municipality,
+            district=tools.get_district_from_municipality(municipality),
+            paid=None,
+            origin=origin,
+            remarks=None,
+            tags=None
+        )
+        
+        db_session.add(new_record)
+        db_session.commit()
+        
+        record_id = new_record.record_id
+        
+        new_entry_content = models.Entries(
+            record_id=record_id,
+            maab_category=maab_cat,
+            member_id=member_id
+        )
+        
+        db_session.add(new_entry_content)
+        db_session.commit()
+        
+        return True
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error adding entry content: {e}")
+        return False
+
+
+def save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birthdate, age, sex, bloodtype, contact, email, address, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready):
+    db_session = SessionLocal()
+    try:
+        new_member_info = models.Members(
+            first_name=first_name,
+            middle_name=middle_name,
+            last_name=last_name,
+            suffix=suffix,
+            birth_date=birthdate,
+            age=age,
+            sex=sex,
+            contact_no=contact,
+            email=email,
+            address=address,
+            blood_type=bloodtype
+        )
+        db_session.add(new_member_info)
+        db_session.commit()
+
+        member_id = new_member_info.member_id
+        
+        new_entry_content = models.Entries(
+            record_id=record_id,
+            maab_category=maab_category,
+            maab_no=maab_no,
+            member_id=member_id,
+            id_received=id_received,
+            declared=declared,
+            declaration_date=declaration_date,
+            paid=paid,
+            OR_num=OR_num,
+            OR_date=OR_date,
+            remarks=remarks,
+            tags=tags,
+            dispatch_ready=dispatch_ready
+        )
+        db_session.add(new_entry_content)
+        db_session.commit()
+        
+        return True
+    
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error adding entry content: {e}")
+        return False
+
+
+def save_entry_updates(data):
+    db_session = SessionLocal()
+    try:
+        entry_id = data.get("entry_id")
+        if not entry_id:
+            print("No entry_id provided.")
+            return None
+
+        # =======================
+        # UPDATE ENTRY
+        # =======================
+        entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
+        if not entry:
+            print("Entry not found.")
+            return None
+
+        entry.maab_category = data["maab_category"]
+        entry.maab_no = data["maab_no"]
+        entry.id_received = data["id_received"]
+        entry.declared = data["declared"]
+        entry.paid = data["paid"]
+        entry.OR_num = data["OR_num"]
+        entry.remarks = data["remarks"]
+        entry.tags = data["tags"]
+        entry.dispatch_ready = data["dispatch_ready"]
+        entry.dispatch_id = data["dispatch_id"]
+
+        entry.declaration_date = (
+            datetime.strptime(data["declaration_date"], "%m/%d/%Y").date()
+            if data["declaration_date"] else None
+        )
+
+        entry.OR_date = (
+            datetime.strptime(data["OR_date"], "%m/%d/%Y").date()
+            if data["OR_date"] else None
+        )
+
+        # =======================
+        # UPDATE MEMBER INFO
+        # =======================
+        member = db_session.query(models.Members).filter_by(member_id=entry.member_id).first()
+        if not member:
+            print("Member not found.")
+            return None
+
+        member.first_name = data["first_name"]
+        member.middle_name = data["middle_name"]
+        member.last_name = data["last_name"]
+        member.suffix = data["suffix"]
+        member.birth_date = (
+            datetime.strptime(data["birth_date"], "%m/%d/%Y").date()
+            if data["birth_date"] else None
+        )
+        member.age = data["age"]
+        member.sex = data["sex"]
+        member.contact_no = data["contact_no"]
+        member.email = data["email"]
+        member.address = data["address"]
+        member.blood_type = data["blood_type"]
+
+        # =======================
+        # SAVE ALL CHANGES
+        # =======================
+        db_session.commit()
+
+        return True
+
+    
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving entry updates: {e}")
+        return False
+
+
+def get_report_target_vs_actual(year):
+    db_session = SessionLocal()
+    try:
+        categories = [
+            "Classic", "Bronze", "Silver", "Gold",
+            "Platinum", "Safe Card", "Senior", "Senior+"
+        ]
+
+        # Query entries for monthly counts
+        rows = (
+            db_session.query(
+                models.Entries.maab_category.label("category"),
+                extract("month", models.Entries.OR_date).label("month"),
+                func.count(models.Entries.entry_id).label("count")
+            )
+            .filter(
+                extract("year", models.Entries.OR_date) == year,
+                models.Entries.maab_category.in_(categories)
+            )
+            .group_by(
+                models.Entries.maab_category,
+                extract("month", models.Entries.OR_date)
+            )
+            .all()
+        )
+
+        # Query target_per_year for the year
+        target_row = db_session.query(models.Report_TvA).filter(models.Report_TvA.year == year).first()
+
+        cat_to_col = {
+        "Senior+": "senior_plus"
+}
+        
+        # Build pivot output with target at front
+        output = {}
+        for cat in categories:
+            target_col = cat_to_col.get(cat, cat.lower().replace(" ", "_"))
+            target_value = getattr(target_row, target_col, 0)
+            output[cat] = {0: target_value, **{m: 0 for m in range(1, 13)}}
+
+        # Fill monthly counts from entries
+        for category, month, count in rows:
+            month = int(month)
+            if category in output:
+                output[category][month] = count
+
+        return output
+    except Exception as e:
+        print(f"Error fetching report data: {e}")
+        return []
+
+
+def get_current_active_dispatch():
+    db_session = SessionLocal()
+    try:
+
+        last_dispatch = (
+            db_session.query(models.Dispatch)
+            .filter(models.Dispatch.dispatch_status == 'current')
+            .order_by(models.Dispatch.dispatch_id.desc())  # or .order_by(models.Dispatch.created_at.desc())
+            .first()
+        )
+        print('db_conn - current active dispatch', last_dispatch.dispatch_id)
+        return last_dispatch
+    except Exception as e:
+        print(f"Error fetching current active dispatch: {e}")
+        return None
+
+def add_to_dispatch():
+    db_session = SessionLocal()
+    try:
+        # 1️⃣ Get current active dispatch
+        current_dispatch = get_current_active_dispatch()
+        if not current_dispatch:
+            print("No active dispatch found.")
+            return None
+
+        # 2️⃣ Get all eligible entries
+        entries_to_dispatch = (
+            db_session.query(models.Entries)
+            .filter(
+                (models.Entries.dispatch_ready.is_(True)) &
+                ((models.Entries.declared.is_(False)) | (models.Entries.declared.is_(None))) &
+                ((models.Entries.dispatch_id.is_(None)) | (models.Entries.dispatch_id == 0))
+            )
+            .all()
+        )
+
+        if not entries_to_dispatch:
+            print("No entries found for dispatch.")
+            return None
+
+        # 3️⃣ Assign each entry to the current active dispatch
+        for entry in entries_to_dispatch:
+            entry.dispatch_id = current_dispatch.dispatch_id
+
+        # 4️⃣ Commit all changes
+        db_session.commit()
+        print(f"Assigned {len(entries_to_dispatch)} entries to dispatch {current_dispatch.dispatch_id}")
+
+        return len(entries_to_dispatch)
+
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error assigning entries to active dispatch: {e}")
+        return None
+
+def get_current_dispatch_contents(dispatch_id):
+    db_session = SessionLocal()
+    try:
+        current_dispatch_contents = (
+            db_session.query(
+                models.Entries.entry_id,
+                models.Entries.record_id,
+                models.Entries.maab_category,
+                models.Entries.maab_no,
+                models.Entries.member_id,
+                models.Members.first_name,
+                models.Members.middle_name,
+                models.Members.last_name,
+                models.Members.suffix,
+                models.Members.birth_date,
+                models.Records.effectivity_date,
+                models.Records.location_particular
+            )
+            .join(models.Members, models.Entries.member_id == models.Members.member_id)
+            .join(models.Records, models.Entries.record_id == models.Records.record_id)
+            .filter(models.Entries.dispatch_id == dispatch_id)
+            .all()
+        )
+        print('db_conn - current dispatch contents', current_dispatch_contents)
+        return current_dispatch_contents
+    except Exception as e:
+        print(f"Error fetching current dispatch contents: {e}")
+        return None
+
+def get_all_dispatch_records():
+    db_session = SessionLocal()
+    try:
+        dispatch_records = (
+            db_session.query(models.Dispatch)
+            .order_by(models.Dispatch.dispatch_id.desc())
+            .all()
+        )
+        return dispatch_records
+    except Exception as e:
+        print(f"Error fetching dispatch records: {e}")
+        return []   
+
+def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=None, current_user_id=None):
+    """ for logging actions on audit_trails table """
+    
+    db_session = SessionLocal()
+    
+    try:
+        audit_log = models.Logs(
+            date=datetime.now(),
+            staff_name=current_user,
+            user_level=current_user_lvl,
+            action_name=action,
+            description=desc,
+            account_id=current_user_id
+        )
+        print(audit_log)
+        
+        db_session.add(audit_log)
+        db_session.commit()
+        print("Action logged successfully.")
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error logging action: {e}")    
+
+
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
     """
@@ -881,6 +1368,94 @@ def get_inventory_entries(allocated_to=None):
         ]
         return [dict(zip(col_names, row)) for row in results]
 
+def add_inventory_ids(category, prefix, start_num, count, username=None, user_level=None, account_id=None):
+    """Add multiple IDs to inventory with sequential numbers"""
+    db_session = SessionLocal()
+    
+    try:
+        added_count = 0
+        duplicate_count = 0
+        error_count = 0
+        added_ids = []
+        duplicate_ids = []
+        
+        # Pre-check for existing IDs in the range
+        end_num = start_num + count - 1
+        existing_ids = db_session.query(models.Inventory.maab_no).filter(
+            models.Inventory.maab_no.between(
+                f"{prefix}{start_num:07d}", 
+                f"{prefix}{end_num:07d}"
+            )
+        ).all()
+        
+        existing_set = {id[0] for id in existing_ids}
+        
+        if existing_set:
+            duplicate_count = len(existing_set)
+            duplicate_ids = sorted(list(existing_set))
+            print(f"Found {duplicate_count} existing IDs in the range")
+        
+        # Generate and add new IDs
+        for i in range(count):
+            current_num = start_num + i
+            maab_no = f"{prefix}{current_num:07d}"
+            
+            # Skip if already exists
+            if maab_no in existing_set:
+                continue
+            
+            try:
+                # Create new inventory entry
+                new_id = models.Inventory(
+                    maab_category=category,
+                    maab_no=maab_no,
+                    used=False,
+                    allocated_to=None,
+                    remarks=f"Added in batch - {datetime.now().strftime('%Y-%m-%d')}"
+                )
+                
+                db_session.add(new_id)
+                added_ids.append(maab_no)
+                added_count += 1
+                
+            except Exception as e:
+                print(f"Error adding ID {maab_no}: {e}")
+                error_count += 1
+        
+        db_session.commit()
+        
+        # Log the action if user info is provided
+        if username and user_level and account_id:
+            POST_action_log(
+                username,
+                user_level,
+                'Add Inventory Stock',
+                f'Added {added_count} IDs for {category} (Range: {prefix}{start_num:07d}-{prefix}{end_num:07d}). '
+                f'Duplicates: {duplicate_count}, Errors: {error_count}',
+                account_id
+            )
+        
+        return {
+            "success": True,
+            "added_count": added_count,
+            "duplicate_count": duplicate_count,
+            "error_count": error_count,
+            "added_ids": added_ids,
+            "duplicate_ids": duplicate_ids
+        }
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error adding inventory IDs: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "added_count": 0,
+            "duplicate_count": 0,
+            "error_count": count
+        }
+    finally:
+        db_session.close()
 
 def GET_audit_logs():
     db_session = SessionLocal()
@@ -890,7 +1465,36 @@ def GET_audit_logs():
     except Exception as e:
         print(f"Error fetching audit logs: {e}")
         return []
-    
+
+def save_profile_pic(account_id, image_data):
+    """Save profile picture (BLOB) to the database."""
+    db_session = SessionLocal()
+    try:
+        user = db_session.query(models.Accounts).filter_by(account_id=account_id).first()
+        if user:
+            user.profile_pic = image_data
+            db_session.commit()
+            print(f"✅ Profile picture updated for user {account_id}")
+            return True
+        print(f"❌ User {account_id} not found.")
+        return False
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving profile picture: {e}")
+        return False
+
+
+def get_profile_pic(account_id):
+    """Retrieve the profile picture BLOB from the database."""
+    db_session = SessionLocal()
+    try:
+        user = db_session.query(models.Accounts).filter_by(account_id=account_id).first()
+        return user.profile_pic if user and user.profile_pic else None
+    except Exception as e:
+        print(f"Error fetching profile picture: {e}")
+        return None
+
+
 def update_user_details(account_id, first_name, middle_name, last_name, birth_date, contact_no, email):
     # Find the user by their account_id
     session = SessionLocal()  # create a session instance
@@ -920,28 +1524,42 @@ def update_user_details(account_id, first_name, middle_name, last_name, birth_da
         return False
 
 
-def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=None, current_user_id=None):
-    """ for logging actions on audit_trails table """
-    
+def archive_member_record_with_log(record_id, account_id):
+    """Archive a member record and log the action in the same session"""
     db_session = SessionLocal()
-    
     try:
-        audit_log = models.Logs(
-            date=datetime.now(),
-            staff_name=current_user,
-            user_level=current_user_lvl,
-            action_name=action,
-            description=desc,
-            account_id=current_user_id
-        )
-        print(audit_log)
+        # Archive the record
+        record = db_session.query(models.Records).filter_by(record_id=record_id).first()
+        if not record:
+            print(f"Record {record_id} not found")
+            return False
         
-        db_session.add(audit_log)
+        record.status = 'archived'
+        
+        # Get user details for logging (using the same session)
+        user = db_session.query(models.Accounts).filter_by(account_id=account_id).first()
+        if user:
+            # Log the action
+            audit_log = models.Logs(
+                date=datetime.now(),
+                staff_name=user.username,
+                user_level=user.user_level,
+                action_name='Archive Record',
+                description=f'Archived record ID: {record_id}',
+                account_id=account_id
+            )
+            db_session.add(audit_log)
+        
         db_session.commit()
-        print("Action logged successfully.")
+        print(f"Record {record_id} archived successfully with logging")
+        return True
+        
     except Exception as e:
         db_session.rollback()
-        print(f"Error logging action: {e}")    
+        print(f"Error archiving record {record_id}: {e}")
+        return False
+    finally:
+        db_session.close()
     
     '''
     now = datetime.now()
