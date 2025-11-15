@@ -113,7 +113,7 @@ def create_account(**kwargs):
             acct_created=kwargs.get('acct_created'),
             office_location=kwargs.get('branch'),
             user_level='staff',  # default user level
-            acct_status='pending',  # default status
+            acct_status='approved',  # default status
             acct_review_date=None  # default review date
         )
         db_session.add(new_account)
@@ -514,6 +514,47 @@ def get_member_records(status='active'):
         return None
     finally:
         db_session.close()
+        
+# TODO fix this after merge        
+def get_member_records(office_loc):
+    db_session = SessionLocal()
+    try:
+        if office_loc == 'Chapter':
+        # Chapter = all Chapter + declared Dasmariñas/Silang
+            records = (
+                db_session.query(models.Records)
+                .filter(
+                    (models.Records.origin == "Chapter") |
+                    ((models.Records.origin.in_(["Dasmariñas", "Silang"])) &
+                    (models.Records.tags == "transmitted"))
+                )
+                .order_by(models.Records.record_id.desc())
+                .all()
+            )
+
+        elif office_loc == 'Dasmarinas':
+            # Only Dasmariñas
+            records = (
+                db_session.query(models.Records)
+                .filter(models.Records.origin == "Dasmariñas")
+                .order_by(models.Records.record_id.desc())
+                .all()
+            )
+
+        elif office_loc == 'Silang':
+            # Only Silang
+            records = (
+                db_session.query(models.Records)
+                .filter(models.Records.origin == "Silang")
+                .order_by(models.Records.record_id.desc())
+                .all()
+            )
+
+        return records
+
+    except Exception as e:
+        return f"Error fetching member records: {e}"
+    
     '''
         query = text("SELECT * FROM membership_records")
         result = conn.execute(query)
@@ -1182,6 +1223,30 @@ def get_all_dispatch_records():
     except Exception as e:
         print(f"Error fetching dispatch records: {e}")
         return []   
+
+def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=None, current_user_id=None):
+    """ for logging actions on audit_trails table """
+    
+    db_session = SessionLocal()
+    
+    try:
+        audit_log = models.Logs(
+            date=datetime.now(),
+            staff_name=current_user,
+            user_level=current_user_lvl,
+            action_name=action,
+            description=desc,
+            account_id=current_user_id
+        )
+        print(audit_log)
+        
+        db_session.add(audit_log)
+        db_session.commit()
+        print("Action logged successfully.")
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error logging action: {e}")    
+
 
 # ! TODO remove this function. THIS FUNCTION IS RETIRED
 def get_user_details_by_username(username):
