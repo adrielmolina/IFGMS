@@ -487,8 +487,10 @@ def get_pending_claims_count():
     return count_pending
 
 
+'''
+# MERGE CONFLICT AREA START
 
-def get_member_records(status='active'):
+def get_member_records(status='active', office_loc=None):
     """
     Get member records with optional status filter
     """
@@ -555,12 +557,61 @@ def get_member_records(office_loc):
     except Exception as e:
         return f"Error fetching member records: {e}"
     
-    '''
+
+MERGE CONFLICT AREA END
+'''    
+    
+    
+'''
         query = text("SELECT * FROM membership_records")
         result = conn.execute(query)
         records = result.fetchall()
         return records
     '''
+    
+    
+def get_member_records(status='active', office_loc=None):
+    """
+    Get member records filtered by office location and optional status.
+    """
+    db_session = SessionLocal()
+    try:
+        # Base query
+        query = db_session.query(models.Records)
+
+        # Apply status filter if provided
+        if status:
+            query = query.filter(models.Records.status == status)
+
+        # Apply office location logic
+        if office_loc == 'Chapter':
+            # Chapter = all Chapter + transmitted (declared) Dasma/Silang
+            query = query.filter(
+                (models.Records.origin == "Chapter") |
+                (
+                    (models.Records.origin.in_(["Dasmariñas", "Silang"])) &
+                    (models.Records.tags == "transmitted")
+                )
+            )
+
+        elif office_loc == 'Dasmarinas':
+            query = query.filter(models.Records.origin == "Dasmariñas")
+
+        elif office_loc == 'Silang':
+            query = query.filter(models.Records.origin == "Silang")
+
+        # If office_loc is None, return based only on status
+        records = query.order_by(models.Records.record_id.desc()).all()
+        return records
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error fetching member records: {e}"
+    
+    
+    
+    
 def archive_member_record(record_id):
     """Archive a member record by setting its status to 'archived'"""
     db_session = SessionLocal()
