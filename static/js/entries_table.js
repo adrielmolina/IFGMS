@@ -1,3 +1,6 @@
+
+let debounceTimer; // Timer identifier for debouncing
+
 function renderEntriesTable(data) {
     console.log("Entries data:", data);
     const container = document.getElementById('entries_table');

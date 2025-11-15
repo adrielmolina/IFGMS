@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `membership_records` (
 
 CREATE TABLE IF NOT EXISTS `inventory` (
 	`inv_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+'),
+	`maab_category` ENUM('Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Enhanced Platinum', 'Senior', 'Senior+', 'Safe Card'),
 	`maab_no` VARCHAR(255) UNIQUE,
 	`used` BOOLEAN,
 	`allocated_to` ENUM('Chapter', 'Dasmarinas', 'Silang'),
@@ -239,6 +239,21 @@ CREATE TABLE IF NOT EXISTS `RETIRED_dispatch_contents` (
 	`location_particular` VARCHAR(255),
 	`late_declare` BOOLEAN,
 	PRIMARY KEY(`dispatch_content_id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `target_per_year` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`year` YEAR,
+	`classic` INTEGER,
+	`bronze` INTEGER,
+	`silver` INTEGER,
+	`gold` INTEGER,
+	`platinum` INTEGER,
+	`safe_card` INTEGER,
+	`senior` INTEGER,
+	`senior_plus` INTEGER,
+	PRIMARY KEY(`id`)
 );
 
 

@@ -858,6 +858,42 @@ def save_entry_details():
     else:
         return jsonify({"success": False, "error": "No data provided"}), 400
 
+
+@server.route('/api/save_entry_update', methods=['POST'])
+@login_required
+def save_entry_update():
+    try:
+        
+        data = request.get_json()
+        print(data)
+        if data:
+            entry_id = data.get('entry_id')
+            print('entry_id:', entry_id)    
+            
+            result = db_conn.save_entry_updates(data)
+            
+            if result:
+                return jsonify({"success": True})
+            else:
+                return jsonify({"success": False, "error": result}), 500
+        else:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@server.route('/api/get_report/target_vs_actual/<int:year>', methods=['GET'])
+def target_vs_actual(year):
+    if not year:
+        return jsonify({"success": False, "error": "Year parameter is required"}), 400
+
+    report_data = db_conn.get_report_target_vs_actual(year)
+    if report_data is None:
+        return jsonify({"success": False, "error": "Failed to fetch report data"}), 500
+
+    return jsonify(report_data)
+
+
 @server.route('/api/inventory/add_stock', methods=['POST'])
 @login_required
 @roles_required('admin', 'superadmin')

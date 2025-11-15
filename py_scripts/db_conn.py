@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from sqlalchemy import create_engine, text, func
+from sqlalchemy import create_engine, text, func, extract
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, scoped_session
 import cryptography
@@ -958,6 +958,132 @@ def save_entry_details(record_id, maab_category, maab_no, first_name, middle_nam
         db_session.rollback()
         print(f"Error adding entry content: {e}")
         return False
+
+
+def save_entry_updates(data):
+    db_session = SessionLocal()
+    try:
+        entry_id = data.get("entry_id")
+        if not entry_id:
+            print("No entry_id provided.")
+            return None
+
+        # =======================
+        # UPDATE ENTRY
+        # =======================
+        entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
+        if not entry:
+            print("Entry not found.")
+            return None
+
+        entry.maab_category = data["maab_category"]
+        entry.maab_no = data["maab_no"]
+        entry.id_received = data["id_received"]
+        entry.declared = data["declared"]
+        entry.paid = data["paid"]
+        entry.OR_num = data["OR_num"]
+        entry.remarks = data["remarks"]
+        entry.tags = data["tags"]
+        entry.dispatch_ready = data["dispatch_ready"]
+        entry.dispatch_id = data["dispatch_id"]
+
+        entry.declaration_date = (
+            datetime.strptime(data["declaration_date"], "%m/%d/%Y").date()
+            if data["declaration_date"] else None
+        )
+
+        entry.OR_date = (
+            datetime.strptime(data["OR_date"], "%m/%d/%Y").date()
+            if data["OR_date"] else None
+        )
+
+        # =======================
+        # UPDATE MEMBER INFO
+        # =======================
+        member = db_session.query(models.Members).filter_by(member_id=entry.member_id).first()
+        if not member:
+            print("Member not found.")
+            return None
+
+        member.first_name = data["first_name"]
+        member.middle_name = data["middle_name"]
+        member.last_name = data["last_name"]
+        member.suffix = data["suffix"]
+        member.birth_date = (
+            datetime.strptime(data["birth_date"], "%m/%d/%Y").date()
+            if data["birth_date"] else None
+        )
+        member.age = data["age"]
+        member.sex = data["sex"]
+        member.contact_no = data["contact_no"]
+        member.email = data["email"]
+        member.address = data["address"]
+        member.blood_type = data["blood_type"]
+
+        # =======================
+        # SAVE ALL CHANGES
+        # =======================
+        db_session.commit()
+
+        return True
+
+    
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving entry updates: {e}")
+        return False
+
+
+def get_report_target_vs_actual(year):
+    db_session = SessionLocal()
+    try:
+        categories = [
+            "Classic", "Bronze", "Silver", "Gold",
+            "Platinum", "Safe Card", "Senior", "Senior+"
+        ]
+
+        # Query entries for monthly counts
+        rows = (
+            db_session.query(
+                models.Entries.maab_category.label("category"),
+                extract("month", models.Entries.OR_date).label("month"),
+                func.count(models.Entries.entry_id).label("count")
+            )
+            .filter(
+                extract("year", models.Entries.OR_date) == year,
+                models.Entries.maab_category.in_(categories)
+            )
+            .group_by(
+                models.Entries.maab_category,
+                extract("month", models.Entries.OR_date)
+            )
+            .all()
+        )
+
+        # Query target_per_year for the year
+        target_row = db_session.query(models.Report_TvA).filter(models.Report_TvA.year == year).first()
+
+        cat_to_col = {
+        "Senior+": "senior_plus"
+}
+        
+        # Build pivot output with target at front
+        output = {}
+        for cat in categories:
+            target_col = cat_to_col.get(cat, cat.lower().replace(" ", "_"))
+            target_value = getattr(target_row, target_col, 0)
+            output[cat] = {0: target_value, **{m: 0 for m in range(1, 13)}}
+
+        # Fill monthly counts from entries
+        for category, month, count in rows:
+            month = int(month)
+            if category in output:
+                output[category][month] = count
+
+        return output
+    except Exception as e:
+        print(f"Error fetching report data: {e}")
+        return []
 
 
 def get_current_active_dispatch():
