@@ -1613,7 +1613,7 @@ html {
 /* ================= FAQ SECTION ================= */
 .faq-section {
     padding: 50px 20px;
-    background: #f8f9fa;
+    background: transparent;
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
