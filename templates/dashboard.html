@@ -55,7 +55,8 @@
 <hr class="divider">
 
 <div class="cards-container">
-    <div class="card yellow">
+    
+    <div class="card yellow" hidden >
         <h3><img class="icons" src="{{ url_for('static', filename='assets/analytics.png') }}" alt="logo"> Sales</h3>
         <h2 class="numbercount" id="salesCurrentTotal">100,000</h2> 
         <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p> 
@@ -111,7 +112,7 @@
 
 <hr class="divider">
     
-    <div class="side-card full">
+    <div class="side-card full" hidden >
         <h4>UNIT SOLD</h4>
         <table id="unitTable" cellspacing="0" cellpadding="5">
             <tr>
@@ -339,14 +340,14 @@ document.addEventListener('DOMContentLoaded', function () {
         data.addColumn('number', 'Target');
 
         data.addRows([
-            ['Classic', 1800000, 2500000],
-            ['Premier Bronze', 4000000, 5000000],
-            ['Premier Silver', 3600000, 4000000],
-            ['Premier Gold', 5000000, 7500000],
-            ['Premier Platinum', 2000000, 9000000],
-            ['Enhanced Platinum', 6000000, 3000000],
-            ['Senior', 7000000, 4000000],
-            ['Senior Plus', 8000000, 5250000]
+            ['Classic', 3000, 2500000],
+            ['Premier Bronze', 450, 5000000],
+            ['Premier Silver', 900, 4000000],
+            ['Premier Gold', 1500, 7500000],
+            ['Premier Platinum', 3000, 9000000],
+            ['Enhanced Platinum', 3600, 3000000],
+            ['Senior', 450, 4000000],
+            ['Senior Plus', 900, 5250000]
         ]);
 
         var options = {
