@@ -10,7 +10,6 @@
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/handsontable/plugins/exportFile/exportFile.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
@@ -33,8 +32,7 @@
                 <!-- TODO scroll to top of the overlay everytime a record is opened -->
                  <!-- TODO separate the delete record button from save button -->
         <div class="module_name">
-            <h1>Members | </h1>
-            <h4> Manage Members Records and Entries</h4>
+            <h1>Members </h1>
 
         <div class="search_box">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -45,26 +43,29 @@
 
         <div class="filter_search_container">
             <div class="filters_box">
-                <label for="filter_year">Filter by:</label>
-                <select id="filter_year">
-                    <option value="">Year</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
-                </select>
+                <label for="filter_year">Filter by Year:</label>
+    <select id="filter_year" class="year-picker">
+        <option value="">Year</option>
+        <!-- Will be populated dynamically -->
+    </select>
 
-                <select id="filter_category">
-                    <option value="">Category</option>
-                    <option value="Public">Public</option>
-                    <option value="Private">Private</option>
+                <select id="filter_origin">
+                    <label for="origin">Origin</label>
+                    <option value="">All Origin</option>
+                    <option value="Chapter">Chapter</option>
+                    <option value="Dasmariñas">Dasmariñas</option>
+                    <option value="Silang">Silang</option>
                 </select>
             </div>
 
-            <div class="controls_box">
+            <div class="controls_box" id="activeControls">
                 <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
                 <button id="add_to_dispatch" class="btn-declare"><i class="fa-solid fa-list"></i> Add to Dispatch</button>
-                <button class="btn-export"><i class="fa-solid fa-file-export"></i> Export to Excel</button>
+                <button class="btn-archive"><i class="fa-regular fa-folder-open"></i> Archive</button>
+            </div>
+
+            <div class="controls_box" id="archiveControls" style="display: none;">
+                <button class="btn-back"><i class="fa-solid fa-arrow-left"></i> Back</button>
             </div>
         </div>
 
@@ -88,7 +89,7 @@
     <!-- Pagination and summary area -->
 <div class="pagination-container">
   <div class="summary">
-    <p id="summaryText">Showing 1 to 10 of 40 emtries</p>
+    <p id="summaryText">Showing 1 to 10 of 40 records</p>
   </div>
 
   <div id="paginationControls" class="pagination-controls"></div>
@@ -119,10 +120,10 @@
         <table class="record_details_table">
             <tr>
                 <!-- TODO WIP remove if not needed -->
-                <td>
-                    <label for="dispatch_ready">Add to Dispatch</label>
-                    <input type="text" id="add_to_dispatch" name="add_to_dispatch" value="add_to_dispatch" value="0" autocomplete="off" readonly placeholder=" ">
-                </td>
+                <!-- <td> -->
+                    <!-- <label for="dispatch_ready">Add to Dispatch</label> -->
+                    <!-- <input type="text" id="add_to_dispatch" name="add_to_dispatch" value="add_to_dispatch" value="0" autocomplete="off" readonly placeholder=" "> -->
+                <!-- </td> -->
 
                 <td>
                     <div class="input-container">
@@ -270,9 +271,10 @@
                         <select id="origin" name="origin" required>
                             <option value="" disabled selected>Select origin...</option>
                             <option value="Silang">Silang</option>
-                            <option value="Dasma">Dasma</option>
+                            <option value="Dasmariñas">Dasmariñas</option>
                             <option value="Chapter">Chapter</option>
                         </select>
+                        <small style="font-size: 0.8em; color: #666;">Auto-set based on your location</small>
                     </div>
 
                 </td>
@@ -307,6 +309,9 @@
             </button>
             <button id="delete_record" class="delete_record">
                 <img src="/static/assets/delete.png" alt="delete" class="btn-icon"> Delete
+            </button>
+            <button id="export" class="btn-export">
+                <img src="/static/assets/sheets.png" alt="export" class="btn-icon"> Export to Excel
             </button>
         </div>
             <!-- TODO add delete record function -->
@@ -474,9 +479,9 @@
                     </div>
                 </td>
 
-                <td>
+                <td hidden>
                     <div class="input-container checkbox-container">
-                        <label for="entry_declared">Declared</label>
+                        <label for="entry_declared" hidden>Declared</label>
                         <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
                     </div>
                 </td>
@@ -489,7 +494,7 @@
                     </div>
                 </td>
 
-                <td>
+                <td hidden>
                     <div class="input-container checkbox-container">
                         <input type="input" id="dispatch_id" name="dispatch_id" autocomplete="off" readonly>
                         <label for="dispatch_id">Dispatch ID</label>
@@ -524,7 +529,7 @@
                 <td>
                     <div class="input-container">
                         <label for="entry_or_date">OR Date</label>
-                        <input type="date" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
+                        <input type="text" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
                     </div>
                 </td>
             </tr>
@@ -555,8 +560,34 @@
         </div>
     </form>
 </div>
-                <div id="entries_table" class="ht-theme-main"></div>
+                <div class="table-container">
+                    <div id="entries_table" class="ht-theme-main"></div>
                 </div>
+
+                <!-- Unsaved Changes Confirmation Modal -->
+<div id="unsavedChangesModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Unsaved Changes</h3>
+        <p>You have unsaved changes. Are you sure you want to close without saving?</p>
+        <div class="modal-buttons">
+            <button id="confirmClose" class="btn btn-danger">Close Without Saving</button>
+            <button id="cancelClose" class="btn btn-secondary">Continue Editing</button>
+            <button id="saveAndClose" class="btn btn-primary">Save and Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmationModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Archive Record</h3>
+        <p>Are you sure you want to archive this record? This action cannot be undone.</p>
+        <div class="modal-buttons">
+            <button id="confirmDelete" class="btn btn-danger">Archive Record</button>
+            <button id="cancelDelete" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
@@ -573,61 +604,721 @@ let allData = [];
 let filteredData = [];
 let currentPage = 1;
 let entriesPerPage = 10;
-    function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
-    Handsontable.renderers.TextRenderer.apply(this, arguments); // Use default text renderer
-    td.innerHTML = '<a href="javascript:void(0);" class="open-link">Open</a>';
 
-    td.querySelector('.open-link').addEventListener('click', function () {
-        const rowData = instance.getSourceDataAtRow(row);
+// Separate state for archive view
+let isArchiveView = false;
+let archiveAllData = [];
+let archiveFilteredData = [];
+let archiveCurrentPage = 1;
+let archiveEntriesPerPage = 10;
 
-        // sets the date format for the HTML date input field
-        function convertToYYYYMMDD(dateStr) {
-            const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
-        
-            if (parts.length === 3) {
-                let [month, day, year] = parts;
-        
-                // Pad month and day with leading zeros if necessary
-                month = month.padStart(2, '0');
-                day = day.padStart(2, '0');
-        
-                return `${year}-${month}-${day}`;
-            }
-        
-            return ''; // Return empty if format is unrecognized
-        }
+// Track unsaved changes
+let hasUnsavedChanges = false;
+let originalRecordData = {};
+
+// Archive state management functions
+function showArchiveView() {
+    isArchiveView = true;
     
-        // Check and format the dates if they exist
-        if (rowData.declaration_date) {
-            rowData.declaration_date = convertToYYYYMMDD(rowData.declaration_date);
-        }
-        if (rowData.effectivity_date) {
-            rowData.effectivity_date = convertToYYYYMMDD(rowData.effectivity_date);
-        }
+    // Update UI
+    const activeControls = document.querySelector('.controls_box:not(#archiveControls)');
+    const archiveControls = document.getElementById('archiveControls');
     
+    if (activeControls) {
+        activeControls.style.display = 'none';
+    }
+    
+    if (archiveControls) {
+        archiveControls.style.display = 'flex';
+    }
+    
+    // Update module titles
+    const moduleTitle = document.querySelector('.module_name h1');
+    const moduleSubtitle = document.querySelector('.module_name h4');
+    
+    if (moduleTitle) {
+        moduleTitle.textContent = 'Archived Members | ';
+    }
+    
+    if (moduleSubtitle) {
+        moduleSubtitle.textContent = 'View Archived Records';
+    }
+    
+    // Reset archive pagination
+    archiveCurrentPage = 1;
+    archiveEntriesPerPage = 10;
+    document.getElementById('entriesPerPage').value = '10';
+    
+    // Fetch archived records
+    fetchArchivedRecords();
+}
 
-        document.getElementById(`record_id`).value = rowData.record_id;
-        document.getElementById(`year`).value = rowData.year;
-        document.getElementById(`id_rcv`).value = rowData.id_received;
-        document.getElementById(`paid`).value = rowData.paid;
-        document.getElementById(`declared`).value = rowData.declared;
-        document.getElementById(`dec_date`).value = rowData.declaration_date;
-        document.getElementById(`eff_date`).value = rowData.effectivity_date;
-        document.getElementById(`loc_par`).value = rowData.location_particular;
-        document.getElementById(`loc_cat`).value = rowData.location_category;
-        document.getElementById(`municipality`).value = rowData.municipality;
-        document.getElementById(`district`).value = rowData.district;
-        document.getElementById(`origin`).value = rowData.origin;
-        document.getElementById(`remarks`).value = rowData.remarks;
-        document.getElementById(`tags`).value = rowData.tags;
+function showActiveView() {
+    isArchiveView = false;
+    
+    // Update UI
+    const activeControls = document.querySelector('.controls_box:not(#archiveControls)');
+    const archiveControls = document.getElementById('archiveControls');
+    
+    if (activeControls) {
+        activeControls.style.display = 'flex';
+    }
+    
+    if (archiveControls) {
+        archiveControls.style.display = 'none';
+    }
+    
+    // Update module titles
+    const moduleTitle = document.querySelector('.module_name h1');
+    const moduleSubtitle = document.querySelector('.module_name h4');
+    
+    if (moduleTitle) {
+        moduleTitle.textContent = 'Members | ';
+    }
+    
+    if (moduleSubtitle) {
+        moduleSubtitle.textContent = 'Manage Members Records and Entries';
+    }
+    
+    // Reset active pagination
+    currentPage = 1;
+    entriesPerPage = 10;
+    document.getElementById('entriesPerPage').value = '10';
+    
+    // Fetch active records
+    fetchActiveRecords();
+}
 
-        document.getElementById('overlay').style.display = 'flex';
-
-        console.log(rowData.record_id);
-        fetch(`/api/members/${rowData.record_id}/entries`)
+function fetchArchivedRecords() {
+    fetch("/api/members/records?status=archived")
         .then(response => response.json())
         .then(data => {
+            // Format dates
+            data.forEach(row => {
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.effectivity_date) {
+                    const date = new Date(row.effectivity_date);
+                    row.effectivity_date = date.toLocaleDateString('en-US');
+                }
+            });
+
+            // Update archive data arrays
+            archiveAllData = [...data];
+            archiveFilteredData = [...data];
             
+            // Re-render the table with archive pagination
+            renderArchiveTable();
+            populateYearPicker();
+            
+            console.log('Archived records loaded:', data.length);
+        })
+        .catch(error => {
+            console.error('Error fetching archived records:', error);
+            toastError("Error", "Failed to load archived records");
+        });
+}
+
+function fetchActiveRecords() {
+    fetch("/api/members/records?status=active")
+        .then(response => response.json())
+        .then(data => {
+            // Format dates
+            data.forEach(row => {
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.effectivity_date) {
+                    const date = new Date(row.effectivity_date);
+                    row.effectivity_date = date.toLocaleDateString('en-US');
+                }
+            });
+
+            // Update active data arrays
+            allData = [...data];
+            filteredData = [...data];
+            
+            // Re-render the table with active pagination
+            renderTable();
+            populateYearPicker();
+            
+            console.log('Active records loaded:', data.length);
+        })
+        .catch(error => {
+            console.error('Error fetching active records:', error);
+            toastError("Error", "Failed to load active records");
+        });
+}
+
+function refreshTableData() {
+    if (isArchiveView) {
+        return fetchArchivedRecords();
+    } else {
+        return fetchActiveRecords();
+    }
+}
+
+// Archive table rendering functions
+function renderArchiveTable() {
+    if (!hotInstance) return;
+    
+    const start = (archiveCurrentPage - 1) * archiveEntriesPerPage;
+    const end = start + archiveEntriesPerPage;
+    const pageData = archiveFilteredData.slice(start, end);
+    
+    updateArchiveTableHeight();
+    hotInstance.loadData(pageData);
+    updateArchiveSummary();
+    updateArchivePagination();
+    setTimeout(ensureHorizontalScroll, 50);
+}
+
+function updateArchiveSummary() {
+    const total = archiveFilteredData.length;
+    const start = total === 0 ? 0 : (archiveCurrentPage - 1) * archiveEntriesPerPage + 1;
+    const end = Math.min(archiveCurrentPage * archiveEntriesPerPage, total);
+    const summaryText = document.getElementById('summaryText');
+    
+    if (summaryText) {
+        summaryText.textContent = total > 0
+            ? `Showing ${start} to ${end} of ${total} archived records`
+            : "No archived records found";
+    }
+}
+
+function updateArchivePagination() {
+    const paginationControls = document.getElementById('paginationControls');
+    if (!paginationControls) return;
+    
+    paginationControls.innerHTML = "";
+    const totalPages = Math.ceil(archiveFilteredData.length / archiveEntriesPerPage);
+    if (totalPages <= 1) return;
+
+    function addButton(label, page, disabled = false, active = false) {
+        const btn = document.createElement("button");
+        btn.textContent = label;
+        if (disabled) btn.disabled = true;
+        if (active) btn.classList.add("active");
+        btn.onclick = () => {
+            archiveCurrentPage = page;
+            renderArchiveTable();
+        };
+        paginationControls.appendChild(btn);
+    }
+
+    addButton("Previous", archiveCurrentPage - 1, archiveCurrentPage === 1);
+    for (let i = 1; i <= totalPages; i++) {
+        addButton(i, i, false, i === archiveCurrentPage);
+    }
+    addButton("Next", archiveCurrentPage + 1, archiveCurrentPage === totalPages);
+}
+
+function calculateArchiveTableHeight() {
+    const entriesPerPageValue = archiveEntriesPerPage;
+    const totalRecords = archiveFilteredData.length;
+    
+    const startIndex = (archiveCurrentPage - 1) * entriesPerPageValue;
+    const recordsOnThisPage = Math.min(entriesPerPageValue, totalRecords - startIndex);
+    
+    switch(entriesPerPageValue) {
+        case 10:
+            return 100 + (recordsOnThisPage * 45);
+        case 25:
+            return 100 + (recordsOnThisPage * 47);
+        case 50:
+            return 100 + (recordsOnThisPage * 48);
+        case 100:
+            return 100 + (recordsOnThisPage * 49);
+        default:
+            return 100 + (recordsOnThisPage * 45);
+    }
+}
+
+function updateArchiveTableHeight() {
+    if (hotInstance) {
+        const newHeight = calculateArchiveTableHeight();
+        hotInstance.updateSettings({
+            height: newHeight
+        });
+        hotInstance.render();
+    }
+}
+
+// Active table rendering functions
+function renderTable() {
+    if (!hotInstance) return;
+    
+    const start = (currentPage - 1) * entriesPerPage;
+    const end = start + entriesPerPage;
+    const pageData = filteredData.slice(start, end);
+    
+    updateTableHeight();
+    hotInstance.loadData(pageData);
+    updateSummary();
+    updatePagination();
+    setTimeout(ensureHorizontalScroll, 50);
+}
+
+function updateSummary() {
+    const total = filteredData.length;
+    const start = total === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
+    const end = Math.min(currentPage * entriesPerPage, total);
+    const summaryText = document.getElementById('summaryText');
+    
+    if (summaryText) {
+        summaryText.textContent = total > 0
+            ? `Showing ${start} to ${end} of ${total} entries`
+            : "No entries found";
+    }
+}
+
+function updatePagination() {
+    const paginationControls = document.getElementById('paginationControls');
+    if (!paginationControls) return;
+    
+    paginationControls.innerHTML = "";
+    const totalPages = Math.ceil(filteredData.length / entriesPerPage);
+    if (totalPages <= 1) return;
+
+    function addButton(label, page, disabled = false, active = false) {
+        const btn = document.createElement("button");
+        btn.textContent = label;
+        if (disabled) btn.disabled = true;
+        if (active) btn.classList.add("active");
+        btn.onclick = () => {
+            currentPage = page;
+            renderTable();
+        };
+        paginationControls.appendChild(btn);
+    }
+
+    addButton("Previous", currentPage - 1, currentPage === 1);
+    for (let i = 1; i <= totalPages; i++) {
+        addButton(i, i, false, i === currentPage);
+    }
+    addButton("Next", currentPage + 1, currentPage === totalPages);
+}
+
+function calculateTableHeight() {
+    const entriesPerPageValue = entriesPerPage;
+    const totalRecords = filteredData.length;
+    
+    const startIndex = (currentPage - 1) * entriesPerPageValue;
+    const recordsOnThisPage = Math.min(entriesPerPageValue, totalRecords - startIndex);
+    
+    switch(entriesPerPageValue) {
+        case 10:
+            return 100 + (recordsOnThisPage * 45);
+        case 25:
+            return 100 + (recordsOnThisPage * 47);
+        case 50:
+            return 100 + (recordsOnThisPage * 48);
+        case 100:
+            return 100 + (recordsOnThisPage * 49);
+        default:
+            return 100 + (recordsOnThisPage * 45);
+    }
+}
+
+function updateTableHeight() {
+    if (hotInstance) {
+        const newHeight = calculateTableHeight();
+        hotInstance.updateSettings({
+            height: newHeight
+        });
+        hotInstance.render();
+    }
+}
+
+// Filter functionality for both views
+function applyFilters() {
+    if (isArchiveView) {
+        // Apply filters to archive data
+        const yearFilter = document.getElementById('filter_year').value;
+        const originFilter = document.getElementById('filter_origin').value;
+        
+        archiveFilteredData = archiveAllData.filter(row => {
+            const yearMatch = !yearFilter || row.year == yearFilter;
+            const originMatch = !originFilter || row.origin === originFilter;
+            
+            return yearMatch && originMatch;
+        });
+        
+        archiveCurrentPage = 1;
+        renderArchiveTable();
+    } else {
+        // Apply filters to active data
+        const yearFilter = document.getElementById('filter_year').value;
+        const originFilter = document.getElementById('filter_origin').value;
+        
+        filteredData = allData.filter(row => {
+            const yearMatch = !yearFilter || row.year == yearFilter;
+            const originMatch = !originFilter || row.origin === originFilter;
+            
+            return yearMatch && originMatch;
+        });
+        
+        currentPage = 1;
+        renderTable();
+    }
+}
+
+// Search functionality for both views
+function performSearch(query) {
+    const searchQuery = query.toLowerCase().trim();
+    
+    if (isArchiveView) {
+        if (searchQuery === '') {
+            archiveFilteredData = [...archiveAllData];
+        } else {
+            archiveFilteredData = archiveAllData.filter(row =>
+                Object.values(row).some(val =>
+                    String(val || "").toLowerCase().includes(searchQuery)
+                )
+            );
+        }
+        
+        archiveCurrentPage = 1;
+        renderArchiveTable();
+    } else {
+        if (searchQuery === '') {
+            filteredData = [...allData];
+        } else {
+            filteredData = allData.filter(row =>
+                Object.values(row).some(val =>
+                    String(val || "").toLowerCase().includes(searchQuery)
+                )
+            );
+        }
+        
+        currentPage = 1;
+        renderTable();
+    }
+    
+    if (hotInstance) {
+        const searchPlugin = hotInstance.getPlugin('search');
+        searchQuery ? searchPlugin.query(searchQuery) : searchPlugin.query('');
+        hotInstance.render();
+    }
+}
+
+// Entries per page change handler
+document.getElementById('entriesPerPage').addEventListener("change", function() {
+    const newEntriesPerPage = parseInt(this.value);
+    
+    if (isArchiveView) {
+        archiveEntriesPerPage = newEntriesPerPage;
+        archiveCurrentPage = 1;
+        updateArchiveTableHeight();
+        renderArchiveTable();
+    } else {
+        entriesPerPage = newEntriesPerPage;
+        currentPage = 1;
+        updateTableHeight();
+        renderTable();
+    }
+});
+
+// Update populateYearPicker to include both active and archive data
+function populateYearPicker() {
+    const yearSelect = document.getElementById('filter_year');
+    if (!yearSelect) return;
+    
+    // Get unique years from both active and archive data
+    const activeYears = [...new Set(allData.map(row => row.year))].filter(year => year);
+    const archiveYears = [...new Set(archiveAllData.map(row => row.year))].filter(year => year);
+    const allYears = [...new Set([...activeYears, ...archiveYears])].sort((a, b) => b - a);
+    
+    // Clear existing options except the first one
+    while (yearSelect.options.length > 1) {
+        yearSelect.remove(1);
+    }
+    
+    // Add years from combined data
+    allYears.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    });
+}
+
+// Initialize change tracking
+function initializeChangeTracking() {
+    // Store original data when overlay opens
+    storeOriginalData();
+    
+    // Add event listeners to all form inputs
+    const formInputs = document.querySelectorAll('#overlay input, #overlay select, #overlay textarea');
+    formInputs.forEach(input => {
+        // Remove existing listeners to avoid duplicates
+        input.removeEventListener('input', handleFormChange);
+        input.removeEventListener('change', handleFormChange);
+        
+        // Add new listeners
+        input.addEventListener('input', handleFormChange);
+        input.addEventListener('change', handleFormChange);
+    });
+    
+    // Reset the flag when overlay opens
+    hasUnsavedChanges = false;
+    console.log('Change tracking initialized');
+}
+
+function storeOriginalData() {
+    // Store original record data
+    originalRecordData = {
+        year: document.getElementById('year').value,
+        id_rcv: document.getElementById('id_rcv').checked,
+        paid: document.getElementById('paid').checked,
+        declared: document.getElementById('declared').checked,
+        dec_date: document.getElementById('dec_date').value,
+        eff_date: document.getElementById('eff_date').value,
+        loc_par: document.getElementById('loc_par').value,
+        loc_cat: document.getElementById('loc_cat').value,
+        municipality: document.getElementById('municipality').value,
+        district: document.getElementById('district').value,
+        origin: document.getElementById('origin').value,
+        remarks: document.getElementById('remarks').value,
+        tags: document.getElementById('tags').value
+    };
+    console.log('Original data stored:', originalRecordData);
+}
+
+function handleFormChange() {
+    if (!hasUnsavedChanges) {
+        hasUnsavedChanges = true;
+        console.log('Unsaved changes detected - form changed');
+    }
+}
+
+function checkForChanges() {
+    if (!hasUnsavedChanges) {
+        console.log('No unsaved changes flag set');
+        return false;
+    }
+    
+    // Check record details for changes
+    const currentRecordData = {
+        year: document.getElementById('year').value,
+        id_rcv: document.getElementById('id_rcv').checked,
+        paid: document.getElementById('paid').checked,
+        declared: document.getElementById('declared').checked,
+        dec_date: document.getElementById('dec_date').value,
+        eff_date: document.getElementById('eff_date').value,
+        loc_par: document.getElementById('loc_par').value,
+        loc_cat: document.getElementById('loc_cat').value,
+        municipality: document.getElementById('municipality').value,
+        district: document.getElementById('district').value,
+        origin: document.getElementById('origin').value,
+        remarks: document.getElementById('remarks').value,
+        tags: document.getElementById('tags').value
+    };
+    
+    // Check if record data changed
+    const recordChanged = JSON.stringify(originalRecordData) !== JSON.stringify(currentRecordData);
+    
+    console.log('Record changed:', recordChanged);
+    console.log('Original:', originalRecordData);
+    console.log('Current:', currentRecordData);
+    
+    return recordChanged;
+}
+
+// Override the close overlay function
+function setupCloseOverlayWithConfirmation() {
+    const closeOverlay = document.getElementById('close-overlay');
+    const overlay = document.getElementById('overlay');
+    
+    // Close button click
+    closeOverlay.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Close button clicked');
+        attemptCloseOverlay();
+    });
+    
+    // ESC key press
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape" && overlay.style.display === 'flex') {
+            event.preventDefault();
+            console.log('ESC key pressed with overlay open');
+            attemptCloseOverlay();
+        }
+    });
+    
+    // Modal button handlers
+    document.getElementById('confirmClose').addEventListener('click', function() {
+        console.log('Close without saving confirmed');
+        closeOverlayWithoutSaving();
+    });
+    
+    document.getElementById('cancelClose').addEventListener('click', function() {
+        console.log('Continue editing selected');
+        hideUnsavedChangesModal();
+    });
+    
+    document.getElementById('saveAndClose').addEventListener('click', function() {
+        console.log('Save and close selected');
+        saveAndCloseOverlay();
+    });
+}
+
+function attemptCloseOverlay() {
+    console.log('Attempting to close overlay, checking for changes...');
+    if (checkForChanges()) {
+        console.log('Changes detected, showing modal');
+        showUnsavedChangesModal();
+    } else {
+        console.log('No changes detected, closing directly');
+        closeOverlayWithoutSaving();
+    }
+}
+
+function showUnsavedChangesModal() {
+    console.log('Showing unsaved changes modal');
+    document.getElementById('unsavedChangesModal').style.display = 'flex';
+}
+
+function hideUnsavedChangesModal() {
+    console.log('Hiding unsaved changes modal');
+    document.getElementById('unsavedChangesModal').style.display = 'none';
+}
+
+function closeOverlayWithoutSaving() {
+    console.log('Closing overlay without saving');
+    hideUnsavedChangesModal();
+    document.getElementById('overlay').style.display = 'none';
+    hasUnsavedChanges = false;
+}
+
+function saveAndCloseOverlay() {
+    console.log('Saving and closing overlay');
+    hideUnsavedChangesModal();
+    
+    // Trigger save for record
+    saveRecordDetails()
+        .then(() => {
+            document.getElementById('overlay').style.display = 'none';
+            hasUnsavedChanges = false;
+            console.log('Saved and closed successfully');
+            toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
+        })
+        .catch(error => {
+            console.error('Error saving before close:', error);
+            toastAlert("Save Error", "There was an error saving your changes. Please try again.");
+        });
+}
+
+// Modified saveRecordDetails function to reset hasUnsavedChanges on success
+function saveRecordDetails() {
+    return new Promise((resolve, reject) => {
+        const payload = {
+            record_id: document.getElementById('record_id').value,
+            year: document.getElementById('year').value,
+            id_received: document.getElementById('id_rcv').checked ? 1 : 0,
+            paid: document.getElementById('paid').checked ? 1 : 0,
+            declared: document.getElementById('declared').checked ? 1 : 0,
+            declaration_date: document.getElementById('dec_date').value || null,
+            effectivity_date: document.getElementById('eff_date').value || null,
+            location_particular: document.getElementById('loc_par').value || null,
+            location_category: document.getElementById('loc_cat').value || null,
+            municipality: document.getElementById('municipality').value || null,
+            district: document.getElementById('district').value || null,
+            origin: document.getElementById('origin').value || null,
+            remarks: document.getElementById('remarks').value || null,
+            tags: document.getElementById('tags').value || null
+        };
+
+        console.log('Saving record details:', payload);
+
+        fetch('/api/save_record_details', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (!result.success) {
+                console.error('Save failed:', result);
+                reject(new Error("Failed to save record"));
+                return;
+            }
+            
+            hasUnsavedChanges = false;
+            storeOriginalData();
+            console.log('Record saved successfully');
+            
+            // Refresh the table data based on current view
+            return refreshTableData();
+        })
+        .then(() => {
+            resolve();
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            reject(error);
+        });
+    });
+}
+
+// Update the openRecordInOverlay function to initialize change tracking
+function openRecordInOverlay(recordData) {
+    function convertToYYYYMMDD(dateStr) {
+        const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
+        if (parts.length === 3) {
+            let [month, day, year] = parts;
+            month = month.padStart(2, '0');
+            day = day.padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        return '';
+    }
+
+    if (recordData.declaration_date) {
+        recordData.declaration_date = convertToYYYYMMDD(recordData.declaration_date);
+    }
+    if (recordData.effectivity_date) {
+        recordData.effectivity_date = convertToYYYYMMDD(recordData.effectivity_date);
+    }
+
+    document.getElementById('record_id').value = recordData.record_id;
+    document.getElementById('year').value = recordData.year;
+    document.getElementById('id_rcv').checked = recordData.id_received;
+    document.getElementById('paid').checked = recordData.paid;
+    document.getElementById('declared').checked = recordData.declared;
+    document.getElementById('dec_date').value = recordData.declaration_date;
+    document.getElementById('eff_date').value = recordData.effectivity_date;
+    document.getElementById('loc_par').value = recordData.location_particular;
+    document.getElementById('loc_cat').value = recordData.location_category;
+    document.getElementById('municipality').value = recordData.municipality;
+    document.getElementById('district').value = recordData.district;
+    document.getElementById('origin').value = recordData.origin;
+    document.getElementById('remarks').value = recordData.remarks;
+    document.getElementById('tags').value = recordData.tags;
+
+    // Show the overlay
+    document.getElementById('overlay').style.display = 'flex';
+
+    // Scroll to top of overlay
+    document.getElementById('overlay-content').scrollTop = 0;
+
+    // Initialize change tracking AFTER a short delay to ensure form is populated
+    setTimeout(() => {
+        initializeChangeTracking();
+        // Re-initialize district and origin for this record
+        setDistrictFromMunicipality();
+        setOriginBasedOnUser();
+        setLocationParticularToUppercase();
+        setupDispatchReadyRestriction(); // Add this line
+    }, 100);
+
+    // Fetch entries for this record
+    fetch(`/api/members/${recordData.record_id}/entries`)
+        .then(response => response.json())
+        .then(data => {
             data.forEach(row => {
                 if (row.birth_date) {
                     const date = new Date(row.birth_date);
@@ -642,503 +1333,764 @@ let entriesPerPage = 10;
                     row.OR_date = date.toLocaleDateString('en-US');
                 }
             });
-
             window.renderEntriesTable(data);
         });
+}
 
+// Delete Record functionality
+function setupDeleteRecord() {
+    const deleteBtn = document.getElementById('delete_record');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    const cancelDeleteBtn = document.getElementById('cancelDelete');
+    const deleteModal = document.getElementById('deleteConfirmationModal');
 
+    if (!deleteBtn || !confirmDeleteBtn || !cancelDeleteBtn || !deleteModal) {
+        console.error('Delete record elements not found');
+        return;
+    }
+
+    // Delete button click
+    deleteBtn.addEventListener('click', function() {
+        const recordId = document.getElementById('record_id').value;
+        if (!recordId || recordId === '0') {
+            toastAlert("Error", "No record selected to archive.");
+            return;
+        }
+        showDeleteConfirmationModal();
+    });
+
+    // Confirm delete
+    confirmDeleteBtn.addEventListener('click', function() {
+        archiveRecord();
+    });
+
+    // Cancel delete
+    cancelDeleteBtn.addEventListener('click', function() {
+        hideDeleteConfirmationModal();
+    });
+}
+
+function showDeleteConfirmationModal() {
+    console.log('Showing delete confirmation modal');
+    document.getElementById('deleteConfirmationModal').style.display = 'flex';
+}
+
+function hideDeleteConfirmationModal() {
+    console.log('Hiding delete confirmation modal');
+    document.getElementById('deleteConfirmationModal').style.display = 'none';
+}
+
+function archiveRecord() {
+    const recordId = document.getElementById('record_id').value;
+    
+    if (!recordId || recordId === '0') {
+        toastAlert("Error", "No record selected to archive.");
+        hideDeleteConfirmationModal();
+        return;
+    }
+
+    console.log('Archiving record:', recordId);
+
+    fetch('/api/archive_record', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ record_id: recordId })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => {
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(result => {
+        if (result.success) {
+            console.log('Record archived successfully');
+            hideDeleteConfirmationModal();
+            document.getElementById('overlay').style.display = 'none';
+            
+            // Show success toast
+            toastSuccess("Record Archived", "The record has been successfully archived.");
+            
+            // Refresh the table data based on current view
+            return refreshTableData();
+        } else {
+            throw new Error(result.error || 'Failed to archive record');
+        }
+    })
+    .then(() => {
+        console.log('Table refreshed after archiving');
+    })
+    .catch(error => {
+        console.error('Error archiving record:', error);
+        hideDeleteConfirmationModal();
+        toastError("Archive Failed", "Failed to archive record: " + error.message);
+    });
+}
+
+// Dispatch Ready checkbox restriction
+function setupDispatchReadyRestriction() {
+    const paidCheckbox = document.getElementById('entry_paid');
+    const dispatchReadyCheckbox = document.getElementById('dispatch_ready');
+    
+    if (!paidCheckbox || !dispatchReadyCheckbox) {
+        console.error('Required checkboxes not found');
+        return;
+    }
+    
+    // Initial state check
+    updateDispatchReadyState();
+    
+    // Add event listener to Paid checkbox
+    paidCheckbox.addEventListener('change', function() {
+        updateDispatchReadyState();
+        
+        // If Paid is unchecked, also uncheck Dispatch Ready
+        if (!this.checked && dispatchReadyCheckbox.checked) {
+            dispatchReadyCheckbox.checked = false;
+            
+            // Trigger change event for any listeners
+            dispatchReadyCheckbox.dispatchEvent(new Event('change'));
+        }
+    });
+    
+    // Add event listener to Dispatch Ready checkbox to prevent checking when Paid is false
+    dispatchReadyCheckbox.addEventListener('click', function(e) {
+        if (!paidCheckbox.checked) {
+            e.preventDefault();
+            toastAlert("Payment Required", "Please mark as Paid first before setting as Dispatch Ready.");
+        }
+    });
+    
+    // Also handle change event for additional safety
+    dispatchReadyCheckbox.addEventListener('change', function(e) {
+        if (!paidCheckbox.checked && this.checked) {
+            this.checked = false;
+            toastAlert("Payment Required", "Cannot set as Dispatch Ready without payment.");
+        }
+    });
+}
+
+function updateDispatchReadyState() {
+    const paidCheckbox = document.getElementById('entry_paid');
+    const dispatchReadyCheckbox = document.getElementById('dispatch_ready');
+    
+    if (paidCheckbox && dispatchReadyCheckbox) {
+        if (!paidCheckbox.checked) {
+            // If not paid, disable and uncheck dispatch ready
+            dispatchReadyCheckbox.disabled = true;
+            dispatchReadyCheckbox.checked = false;
+            
+            // Add visual styling for disabled state
+            dispatchReadyCheckbox.parentElement.style.opacity = '0.6';
+            dispatchReadyCheckbox.parentElement.style.cursor = 'not-allowed';
+        } else {
+            // If paid, enable dispatch ready
+            dispatchReadyCheckbox.disabled = false;
+            
+            // Remove visual styling
+            dispatchReadyCheckbox.parentElement.style.opacity = '1';
+            dispatchReadyCheckbox.parentElement.style.cursor = 'pointer';
+        }
+    }
+}
+
+// Export current record entries to Excel (server-side save)
+function exportCurrentRecordToExcel() {
+    const recordId = document.getElementById('record_id').value;
+    const locationParticular = document.getElementById('loc_par').value;
+    
+    if (!recordId || recordId === '0') {
+        toastAlert("No Record Selected", "Please open a record first before exporting.");
+        return;
+    }
+    
+    if (!locationParticular) {
+        toastAlert("Missing Information", "Location Particular is required for export.");
+        return;
+    }
+    
+    // Show loading state
+    const exportBtn = document.querySelector('.btn-export');
+    const originalText = exportBtn.innerHTML;
+    exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting...';
+    exportBtn.disabled = true;
+    
+    fetch(`/api/export_record_entries/${recordId}`)
+        .then(response => response.json())
+        .then(result => {
+            // Restore button state
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+            
+            if (result.success) {
+                toastSuccess("Export Successful", 
+                    `File saved to server: ${result.filename}\nExported ${result.export_count} entries.\n\nIncluded fields:\n• Category, MAAB No, Name details\n• Birthdate, Age, Sex, Contact, Email\n• OR No, OR Date, Declared status\n• Dispatch info, Remarks\n• Record details: Declaration Date, Effectivity Date, Location Category, Municipality, District, Origin`);
+                console.log('File saved at:', result.file_path);
+            } else {
+                toastError("Export Failed", result.error || "Failed to export entries.");
+            }
+        })
+        .catch(error => {
+            console.error('Export error:', error);
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+            toastError("Export Failed", "Failed to export entries. Please try again.");
+        });
+}
+
+function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
+    Handsontable.renderers.TextRenderer.apply(this, arguments);
+    td.innerHTML = '<a href="javascript:void(0);" class="open-link">Open</a>';
+
+    td.querySelector('.open-link').addEventListener('click', function () {
+        const rowData = instance.getSourceDataAtRow(row);
+        openRecordInOverlay(rowData);
     });
 
     return td;
+}
+
+// Horizontal scroll function
+function ensureHorizontalScroll() {
+    const tableContainer = document.querySelector('.table-container');
+    const handsontable = document.getElementById('members_table');
+    
+    if (tableContainer && handsontable) {
+        const requiredWidth = 15 * 175;
+        handsontable.style.minWidth = requiredWidth + 'px';
+        tableContainer.style.overflowX = 'auto';
+        tableContainer.style.overflowY = 'hidden';
     }
-      // for x button in overlay
-        document.getElementById('close-overlay').addEventListener('click', function () {
-        document.getElementById('overlay').style.display = 'none';
+}
+
+// Initialize table with active records
+function initializeTable(data) {
+    const container = document.getElementById('members_table');
+
+    // Initialize Handsontable with adaptive height
+    hotInstance = new Handsontable(container, {
+        data: data.slice(0, entriesPerPage),
+        colHeaders: [
+            'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
+            'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
+        ],
+        columns: [
+            { renderer: openLinkRenderer },
+            { data: 'record_id', readOnly: true },
+            { data: 'year' },
+            { data: 'id_received', type: 'checkbox' },
+            { data: 'declared', type: 'checkbox' },
+            { 
+                data: 'declaration_date',
+                type: 'date',
+                dateFormat: 'MM-DD-YYYY',
+                correctFormat: true,
+                allowInvalid: false
+            },
+            { 
+                data: 'effectivity_date',
+                type: 'date',
+                dateFormat: 'MM-DD-YYYY',
+                correctFormat: true,
+                allowInvalid: false
+            },
+            { data: 'location_particular' },
+            { data: 'location_category' },
+            { data: 'municipality' },
+            { data: 'district' },
+            { data: 'paid', type: 'checkbox' },
+            { data: 'origin' },
+            { data: 'remarks' },
+            { data: 'tags' }
+        ],
+        rowHeaders: true,
+        autoWrapRow: false,
+        autoWrapCol: false,
+        readOnly: true,
+        search: true,
+        filters: true,
+        dropdownMenu: true,
+        licenseKey: 'non-commercial-and-evaluation',
+        width: '99%',
+        height: calculateTableHeight(),
     });
-    // close overlay on ESC key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === "Escape") {
-            document.getElementById('overlay').style.display = 'none';
+
+    // Store data and initialize
+    allData = [...data];
+    filteredData = [...data];
+
+    // Populate year picker after data is loaded
+    populateYearPicker();
+
+    // Initialize search plugin
+    function initializeSearchPlugin() {
+        if (hotInstance) {
+            const searchPlugin = hotInstance.getPlugin('search');
+            searchPlugin.setCallback(function(instance, row, col, data, testResult) {
+                instance.getCellMeta(row, col).className = '';
+                if (testResult) {
+                    instance.getCellMeta(row, col).className = 'htSearchResult';
+                }
+            });
+        }
+    }
+    initializeSearchPlugin();
+
+    // Set up scroll and height
+    setTimeout(ensureHorizontalScroll, 300);
+    window.addEventListener('resize', function() {
+        ensureHorizontalScroll();
+        updateTableHeight();
+    });
+
+    if (hotInstance) {
+        hotInstance.addHook('afterRender', ensureHorizontalScroll);
+        hotInstance.addHook('afterLoadData', ensureHorizontalScroll);
+    }
+
+    // UI elements
+    const searchInput = document.getElementById('search_input');
+    const searchClear = document.getElementById('search_clear');
+
+    // Search functionality
+    searchInput.addEventListener('input', (e) => {
+        performSearch(e.target.value);
+        
+        if (e.target.value.trim() !== "") {
+            searchClear.classList.add('visible');
+        } else {
+            searchClear.classList.remove('visible');
         }
     });
 
-    // for records table
-    fetch("/api/members/records")
+    searchClear.addEventListener('click', () => {
+        searchInput.value = "";
+        searchClear.classList.remove('visible');
+        performSearch("");
+        searchInput.focus();
+    });
+
+    // Add Record button
+    document.querySelector('.btn-add').addEventListener('click', function () {
+        fetch('/api/add_record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
         .then(response => response.json())
-        .then(data => {
-            // date formats for the handsontable rows
-            data.forEach(row => {
-                if (row.declaration_date) {
-                    // Format the date to MM-DD-YYYY
-                    const date = new Date(row.declaration_date);
-                    row.declaration_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                }
-                if (row.effectivity_date) {
-                    // Format the date to MM-DD-YYYY
-                    const date = new Date(row.effectivity_date);
-                    row.effectivity_date = date.toLocaleDateString('en-US'); // Format it to MM-DD-YYYY
-                }
-            });   
-
-            const container = document.getElementById('members_table');
-
-            hotInstance = new Handsontable(container, {
-                data,
-                colHeaders: [
-                    //'Add to Dispatch',
-                    'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
-                    'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
-                ],
-                columns: [
-                //{ data: 'declare_check', type: 'checkbox', readOnly: false},
-                { renderer: openLinkRenderer },
-                { data: 'record_id', readOnly: true},
-                { data: 'year' },
-                { data: 'id_received', type: 'checkbox' },
-                { data: 'declared', type: 'checkbox' },
-                { data: 'declaration_date',
-                    type: 'date',
-                    dateFormat: 'MM-DD-YYYY',
-                    correctFormat: true,
-                    allowInvalid: false
-                },
-                { data: 'effectivity_date',
-                    type: 'date',
-                    dateFormat: 'MM-DD-YYYY',
-                    correctFormat: true,
-                    allowInvalid: false
-                },
-                { data: 'location_particular' },
-                { data: 'location_category' },
-                { data: 'municipality' },
-                { data: 'district' },
-                { data: 'paid', type: 'checkbox' },
-                { data: 'origin' },
-                { data: 'remarks' },
-                { data: 'tags' }
-                ],
-                rowHeaders: true,
-                stretchH: 'all',
-                autoWrapRow: false,
-                autoWrapCol: false,
-                readOnly: true,
-                search: true,
-                filters: true,
-                dropdownMenu: true,
-                licenseKey: 'non-commercial-and-evaluation'
-            });
-
-            // ✅ ADDED: Pagination + Show Entries + Summary
-            allData = [...data];        // ✅ assign to global variable
-filteredData = [...data];   // ✅ assign to global variable
-
-
-            const summaryText = document.getElementById('summaryText');
-            const paginationControls = document.getElementById('paginationControls');
-            const entriesSelect = document.getElementById('entriesPerPage');
-            const searchInput = document.getElementById('search_input');
-            const searchClear = document.getElementById('search_clear');
-
-            function renderTable() {
-                const start = (currentPage - 1) * entriesPerPage;
-                const end = start + entriesPerPage;
-                const pageData = filteredData.slice(start, end);
-                hotInstance.loadData(pageData);
-                updateSummary();
-                updatePagination();
+        .then(result => {
+            if (!result.success) {
+                toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
+                return;
             }
+            
+            // Get the newly created record ID
+            const newRecordId = result.record_id;
+            
+            return fetch("/api/members/records?status=active").then(res => res.json())
+                .then(data => {
+                    data.forEach(row => {
+                        if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
+                        if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
+                    });
 
-            function updateSummary() {
-                const total = filteredData.length;
-                const start = total === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
-                const end = Math.min(currentPage * entriesPerPage, total);
-                summaryText.textContent = total > 0
-                    ? `Showing ${start} to ${end} of ${total} entries`
-                    : "No entries found";
-            }
+                    allData = [...data];
+                    filteredData = [...data];
+                    currentPage = 1;
+                    renderTable();
 
-            function updatePagination() {
-                paginationControls.innerHTML = "";
-                const totalPages = Math.ceil(filteredData.length / entriesPerPage);
-                if (totalPages <= 1) return;
-
-                function addButton(label, page, disabled = false, active = false) {
-                    const btn = document.createElement("button");
-                    btn.textContent = label;
-                    if (disabled) btn.disabled = true;
-                    if (active) btn.classList.add("active");
-                    btn.onclick = () => {
-                        currentPage = page;
-                        renderTable();
-                    };
-                    paginationControls.appendChild(btn);
-                }
-
-                addButton("Previous", currentPage - 1, currentPage === 1);
-                for (let i = 1; i <= totalPages; i++) {
-                    addButton(i, i, false, i === currentPage);
-                }
-                addButton("Next", currentPage + 1, currentPage === totalPages);
-            }
-
-            entriesSelect.addEventListener("change", () => {
-                entriesPerPage = parseInt(entriesSelect.value);
-                currentPage = 1;
-                renderTable();
-            });
-
-            searchInput.addEventListener("input", () => {
-                const query = searchInput.value.toLowerCase().trim();
-                filteredData = allData.filter(row =>
-                    Object.values(row).some(val =>
-                        String(val || "").toLowerCase().includes(query)
-                    )
-                );
-                currentPage = 1;
-                renderTable();
-            });
-
-            searchClear.addEventListener("click", () => {
-                searchInput.value = "";
-                filteredData = [...allData];
-                currentPage = 1;
-                renderTable();
-            });
-
-            // ✅ Add Record logic (correct scope)
-document.querySelector('.btn-add').addEventListener('click', function () {
-
-    fetch('/api/add_record', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-    })
-    .then(response => response.json())
-    .then(result => {
-        toastSuccess("Record Added Successfully!", "The record has been successfully saved to the database.");
-
-        return fetch("/api/members/records").then(res => res.json());
-    })
-    .then(data => {
-
-        data.forEach(row => {
-            if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
-            if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
+                    // Find and open the newly added record
+                    const newRecord = allData.find(record => record.record_id === newRecordId);
+                    if (newRecord) {
+                        openRecordInOverlay(newRecord);
+                    }
+                });
+        })
+        .catch(err => {
+            console.error("Add Record Error:", err);
+            toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
         });
+    });
 
-        allData = [...data];
-        filteredData = [...data];
-        currentPage = 1;
+    // Save record details
+    document.getElementById('save_record_details').addEventListener('click', function () {
+        saveRecordDetails()
+            .then(() => {
+                toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
+                document.getElementById('overlay').style.display = 'none';
+            })
+            .catch(error => {
+                console.error("Save Error:", error);
+                toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
+            });
+    });
 
-        renderTable(); // ✅ Works now
-    })
-    .catch(err => {
-        console.error("Add Record Error:", err);
-        toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
+    // Initial render
+    renderTable();
+}
+
+// Add event listeners for filter changes
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for elements to be available
+    setTimeout(() => {
+        const yearFilter = document.getElementById('filter_year');
+        const originFilter = document.getElementById('filter_origin');
+
+        if (yearFilter) yearFilter.addEventListener('change', applyFilters);
+        if (originFilter) originFilter.addEventListener('change', applyFilters);
+    }, 500);
+});
+
+// Toggle functionality
+document.querySelectorAll('input[name="record_input_mode"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const recordForm = document.querySelector('.record_details_table');
+        if (this.value === 'table') {
+            recordForm.style.display = 'none';
+        } else {
+            recordForm.style.display = 'table';
+        }
     });
 });
 
-            renderTable();
-            // ✅ END OF ADDED PAGINATION CODE
-            // ✅ SAVE FUNCTION (correct conversion for DB)
-document.getElementById('save_record_details').addEventListener('click', function () {
+document.querySelectorAll('input[name="entry_input_mode"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const entryForm = document.getElementById('entry_details');
+        if (this.value === 'table') {
+            entryForm.style.display = 'none';
+        } else {
+            entryForm.style.display = 'block';
+        }
+    });
+});
 
+// Add entry function
+document.getElementById('add_entry_details').addEventListener('click', function () {
     const payload = {
         record_id: document.getElementById('record_id').value,
-        year: document.getElementById('year').value,
-        id_received: document.getElementById('id_rcv').checked ? 1 : 0,
-        paid: document.getElementById('paid').checked ? 1 : 0,
-        declared: document.getElementById('declared').checked ? 1 : 0,
-        declaration_date: document.getElementById('dec_date').value || null,
-        effectivity_date: document.getElementById('eff_date').value || null,
-        location_particular: document.getElementById('loc_par').value || null,
-        location_category: document.getElementById('loc_cat').value || null,
-        municipality: document.getElementById('municipality').value || null,
-        district: document.getElementById('district').value || null,
-        origin: document.getElementById('origin').value || null,
-        remarks: document.getElementById('remarks').value || null,
-        tags: document.getElementById('tags').value || null
+        maab_category: document.getElementById('maab_cat').value,
+        maab_no: document.getElementById('maab_no').value,
+        first_name: document.getElementById('fname').value,
+        middle_name: document.getElementById('mname').value,
+        last_name: document.getElementById('lname').value,
+        suffix: document.getElementById('suffix').value,
+        birth_date: document.getElementById('bdate').value,
+        age: document.getElementById('age').value,
+        sex: document.getElementById('sex').value,
+        contact_no: document.getElementById('contact').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        blood_type: document.getElementById('blood_type').value,
+        id_received: document.getElementById('id_received').checked,
+        declared: document.getElementById('entry_declared').checked,
+        declaration_date: document.getElementById('declare_date').value,
+        paid: document.getElementById('entry_paid').checked,
+        OR_num: document.getElementById('entry_or_no').value,
+        OR_date: document.getElementById('entry_or_date').value,
+        remarks: document.getElementById('entry_remarks').value,
+        tags: document.getElementById('entry_tags').value,
+        dispatch_ready: document.getElementById('dispatch_ready').checked,
+        dispatch_id: document.getElementById('dispatch_id').value
     };
 
-    fetch('/api/save_record_details', {
-        method: 'PATCH',
+    fetch('/api/save_entry_details', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
     .then(response => response.json())
-    .then(result => {
-        if (!result.success) {
-            toastError("Failed to Save Record", "Something went wrong while saving the record. Please try again.");
+    .then(data => {
+        if (data.success === true) {
+            toastSuccess("Entry Added", "Entry added successfully!");
+            // Refresh entries table
+            fetch(`/api/members/${document.getElementById('record_id').value}/entries`)
+                .then(response => response.json())
+                .then(entriesData => {
+                    entriesData.forEach(row => {
+                        if (row.birth_date) {
+                            const date = new Date(row.birth_date);
+                            row.birth_date = date.toLocaleDateString('en-US');
+                        }
+                        if (row.declaration_date) {
+                            const date = new Date(row.declaration_date);
+                            row.declaration_date = date.toLocaleDateString('en-US');
+                        }
+                        if (row.OR_date) {
+                            const date = new Date(row.OR_date);
+                            row.OR_date = date.toLocaleDateString('en-US');
+                        }
+                    });
+                    window.renderEntriesTable(entriesData);
+                });
+        } else {
+            toastError("Entry Failed", "Entry adding failed: " + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toastError("Error", "An error occurred during entry adding.");
+    });
+});
+
+// Export to Excel - UPDATED FUNCTION
+document.querySelector('.btn-export').addEventListener('click', function () {
+    // Check if we're in the overlay (record is open)
+    const overlay = document.getElementById('overlay');
+    const recordId = document.getElementById('record_id').value;
+    
+    if (overlay.style.display === 'flex' && recordId && recordId !== '0') {
+        // Export the current record entries
+        exportCurrentRecordToExcel();
+    } else {
+        // Export the main table (existing functionality)
+        if (!hotInstance) {
+            console.error("hotInstance is not defined.");
             return;
         }
 
-        toastSuccess("Record Saved Successfully!", "The record was successfully added to the database.");
+        const exportPlugin = hotInstance.getPlugin('exportFile');
+        exportPlugin.downloadFile('xlsx', {
+            filename: isArchiveView ? 'archived_members_records' : 'members_records',
+            sheetName: isArchiveView ? 'Archived Records' : 'Records',
+            fileExtension: 'xlsx',
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+    }
+});
 
-        // ✅ Refresh table the correct way (pagination-safe)
-        return fetch("/api/members/records")
-            .then(res => res.json())
-            .then(data => {
-                data.forEach(row => {
-                    if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
-                    if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
-                });
+// Profile image handling
+document.addEventListener("DOMContentLoaded", function() {
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            navProfileImage.src = savedProfileImage;
+        }
+    }
+});
 
+window.addEventListener('storage', function(e) {
+    if (e.key === 'profileImage') {
+        const navProfileImage = document.getElementById("navProfileImage");
+        if (navProfileImage) {
+            navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+        }
+    }
+});
+
+// District mapping based on municipality
+const municipalityToDistrict = {
+    // First District
+    'Cavite City': '1',
+    'Kawit': '1', 
+    'Noveleta': '1',
+    'Rosario': '1',
+    
+    // Second District
+    'Bacoor': '2',
+    
+    // Third District
+    'Imus': '3',
+    
+    // Fourth District
+    'Dasmariñas': '4',
+    
+    // Fifth District
+    'Carmona': '5',
+    'General Mariano Alvarez (GMA)': '5',
+    'Silang': '5',
+    
+    // Sixth District
+    'General Trias': '6',
+    
+    // Seventh District
+    'Amadeo': '7',
+    'Indang': '7',
+    'Tanza': '7',
+    'Trece Martires': '7',
+    
+    // Eighth District
+    'Tagaytay City': '8',
+    'Alfonso': '8',
+    'Gen. Emilio Aguinaldo (Bailen)': '8',
+    'Magallanes': '8',
+    'Maragondon': '8',
+    'Mendez': '8',
+    'Naic': '8',
+    'Ternate': '8'
+};
+
+// Function to auto-set district based on municipality selection
+function setDistrictFromMunicipality() {
+    const municipalitySelect = document.getElementById('municipality');
+    const districtInput = document.getElementById('district');
+    
+    if (municipalitySelect && districtInput) {
+        // Remove existing event listeners to prevent duplicates
+        const newMunicipalitySelect = municipalitySelect.cloneNode(true);
+        municipalitySelect.parentNode.replaceChild(newMunicipalitySelect, municipalitySelect);
+        
+        // Add event listener to the new select element
+        newMunicipalitySelect.addEventListener('change', function() {
+            const selectedMunicipality = this.value;
+            const district = municipalityToDistrict[selectedMunicipality] || '';
+            districtInput.value = district;
+            
+            console.log('Municipality selected:', selectedMunicipality, 'District set to:', district);
+            
+            // Trigger form change for unsaved changes tracking
+            const event = new Event('change', { bubbles: true });
+            districtInput.dispatchEvent(event);
+        });
+        
+        // Also set district immediately if municipality already has a value
+        if (newMunicipalitySelect.value) {
+            const district = municipalityToDistrict[newMunicipalitySelect.value] || '';
+            districtInput.value = district;
+        }
+    }
+}
+
+// Function to auto-set origin based on logged-in user
+function setOriginBasedOnUser() {
+    const originSelect = document.getElementById('origin');
+    
+    // Get user's office location from Flask template
+    const userLocation = '{{ current_user.office_location if current_user else "Chapter" }}';
+    
+    if (userLocation && originSelect) {
+        // Set the value
+        originSelect.value = userLocation;
+        
+        // Make it visually distinct
+        originSelect.style.backgroundColor = '#f5f5f5';
+        originSelect.title = 'Origin is automatically set based on your location: ' + userLocation;
+        
+        console.log('Origin auto-set to:', userLocation);
+    }
+}
+
+// Function to auto-set location particular to uppercase while typing
+function setLocationParticularToUppercase() {
+    const locParInput = document.getElementById('loc_par');
+    
+    if (locParInput) {
+        locParInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+}
+
+// Initialize all auto-fill functions
+function initializeAutoFillFunctions() {
+    setDistrictFromMunicipality();
+    setOriginBasedOnUser();
+    setLocationParticularToUppercase();
+}
+
+// Update fetchActiveRecords to use initializeTable
+function fetchActiveRecords() {
+    fetch("/api/members/records?status=active")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Format dates
+            data.forEach(row => {
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.effectivity_date) {
+                    const date = new Date(row.effectivity_date);
+                    row.effectivity_date = date.toLocaleDateString('en-US');
+                }
+            });
+
+            // Initialize or update the table
+            if (!hotInstance) {
+                initializeTable(data);
+            } else {
                 allData = [...data];
                 filteredData = [...data];
                 renderTable();
-                document.getElementById('overlay').style.display = 'none';
-            });
-    })
-    .catch(error => {
-        console.error("Save Error:", error);
-        toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
-    });
-});
-
-
-
-            const searchPlugin = hotInstance.getPlugin('search');
-            document.getElementById('search_input').addEventListener('input', function() {
-            const query = this.value;
-
-            searchPlugin.query(query);
-            hotInstance.render(); // refresh the table to show highlights
-            });
-
-        });
-    
-    //search input clear button function
-    document.getElementById('search_clear').addEventListener('click', function() {
-        document.getElementById('search_input').value = '';
-        const searchPlugin = hotInstance.getPlugin('search');
-        searchPlugin.query('');
-        hotInstance.render(); // refresh the table to clear highlights
-    });
-    /*
-    // Record Details Box Switch
-    const record_details_check = document.getElementById('record_details_check');
-    const record_details = document.getElementById('record_details');
-
-    record_details_check.addEventListener('change', function() {
-        if (this.checked) {
-            record_details.style.display = 'block';  // Show div
-        } else {
-            record_details.style.display = 'none';   // Hide div
-        }
-    });
-    // Entry Details Box Switch
-    const entry_details_check = document.getElementById('entry_details_check');
-    const entry_details = document.getElementById('entry_details');
-
-    entry_details_check.addEventListener('change', function() {
-        if (this.checked) {
-            entry_details.style.display = 'block';  // Show div
-        } else {
-            entry_details.style.display = 'none';   // Hide div
-        }
-    });
-    */
-
-    // reload table data
-    function refreshMembersTable() {
-        fetch("/api/members/records")
-            .then(response => response.json())
-            .then(data => {
-                data.forEach(row => {
-                    if (row.declaration_date) {
-                        const date = new Date(row.declaration_date);
-                        row.declaration_date = date.toLocaleDateString('en-US');
-                    }
-                    if (row.effectivity_date) {
-                        const date = new Date(row.effectivity_date);
-                        row.effectivity_date = date.toLocaleDateString('en-US');
-                    }
-                });
-                if (hotInstance) {
-                    hotInstance.loadData(data);
-                }
-            });
-    }
-
-    
-
-<!-- Clear filters button logic -->
-document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('search_input');
-    const clearButton = document.getElementById('search_clear');
-
-    searchInput.addEventListener('input', () => {
-        if (searchInput.value.trim() !== "") {
-            clearButton.classList.add('visible');
-        } else {
-            clearButton.classList.remove('visible');
-        }
-    });
-
-    clearButton.addEventListener('click', () => {
-        searchInput.value = "";
-        clearButton.classList.remove('visible');
-        searchInput.focus();
-    });
-});
-
-    // Toggle Record Details Form with Radio Buttons
-    document.querySelectorAll('input[name="record_input_mode"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const recordForm = document.querySelector('.record_details_table');
-            if (this.value === 'table') {
-                recordForm.style.display = 'none';
-            } else {
-                recordForm.style.display = 'table';
+                populateYearPicker();
             }
-        });
-    });
-
-    // Toggle Entry Details Form with Radio Buttons
-    document.querySelectorAll('input[name="entry_input_mode"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const entryForm = document.getElementById('entry_details');
-            if (this.value === 'table') {
-                entryForm.style.display = 'none';
-            } else {
-                entryForm.style.display = 'block';
-            }
-        });
-    });
-
-    // UPLOADED IMAGE
-    document.addEventListener("DOMContentLoaded", function() {
-        const navProfileImage = document.getElementById("navProfileImage");
-        if (navProfileImage) {
-            const savedProfileImage = localStorage.getItem("profileImage");
-            if (savedProfileImage) {
-                navProfileImage.src = savedProfileImage;
-            }
-        }
-    
-    // Listen for storage changes from settings page
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'profileImage') {
-            const navProfileImage = document.getElementById("navProfileImage");
-            if (navProfileImage) {
-                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
-            }
-        }
-        });
-    });
-
-    //TODO add inputs: age, dispatch ready, dispatch id, province street brgy etc.
-    // add entry function
-    document.getElementById('add_entry_details').addEventListener('click', function () {
-        // Gather data from the entry form fields
-        const payload = {
-            record_id: document.getElementById('record_id').value,
-            maab_category: document.getElementById('maab_cat').value,
-            maab_no: document.getElementById('maab_no').value,
-
-            first_name: document.getElementById('fname').value,
-            middle_name: document.getElementById('mname').value,
-            last_name: document.getElementById('lname').value,
-            suffix: document.getElementById('suffix').value,
-            birth_date: document.getElementById('bdate').value,
-            age: document.getElementById('age').value,
-            sex: document.getElementById('sex').value,
-            contact_no: document.getElementById('contact').value,
-            email: document.getElementById('email').value,
-            address: document.getElementById('address').value,
-            blood_type: document.getElementById('blood_type').value,
-
-            id_received: document.getElementById('id_received').checked,
-            declared: document.getElementById('entry_declared').checked,
-            declaration_date: document.getElementById('declare_date').value,
-            paid: document.getElementById('entry_paid').checked,
-            OR_num: document.getElementById('entry_or_no').value,
-            OR_date: document.getElementById('entry_or_date').value,
-            remarks: document.getElementById('entry_remarks').value,
-            tags: document.getElementById('entry_tags').value,
-            dispatch_ready: document.getElementById('dispatch_ready').checked,
-            dispatch_id: document.getElementById('dispatch_id').value
-        };
-
-        fetch('/api/save_entry_details', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            
+            console.log('Active records loaded:', data.length);
         })
+        .catch(error => {
+            console.error('Error fetching active records:', error);
+            toastError("Error", "Failed to load active records: " + error.message);
+        });
+}
+
+// Update fetchArchivedRecords to use initializeTable
+function fetchArchivedRecords() {
+    fetch("/api/members/records?status=archived")
         .then(response => response.json())
         .then(data => {
-            if (data.success === true) {
-                alert('Entry added successfully!');
-            } else {
-                alert('Entry adding failed: ' + data.error);
-            }
-        }) .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred during entry adding.');
+            // Format dates
+            data.forEach(row => {
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.effectivity_date) {
+                    const date = new Date(row.effectivity_date);
+                    row.effectivity_date = date.toLocaleDateString('en-US');
+                }
+            });
+
+            // Update the table with archived data
+            archiveAllData = [...data];
+            archiveFilteredData = [...data];
+            renderArchiveTable();
+            populateYearPicker();
+            
+            console.log('Archived records loaded:', data.length);
         })
-    });
+        .catch(error => {
+            console.error('Error fetching archived records:', error);
+            toastError("Error", "Failed to load archived records");
+        });
+}
 
-    document.getElementById('bdate').addEventListener('change', function () {
-        const birthdateInput = this.value;
-        const ageInput = document.getElementById('age');
-
-        if (!birthdateInput) {
-            ageInput.value = '';
-            return;
-        }
-
-        const birthDate = new Date(birthdateInput);
-        const today = new Date();
-
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-
-        // adjust if birthday hasn’t happened yet this year
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-
-        ageInput.value = age;
-    });
-
-
- // ✅ Export to Excel Button
-document.querySelector('.btn-export').addEventListener('click', function () {
-    if (!hotInstance) {
-        console.error("hotInstance is not defined.");
-        return;
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, setting up close confirmation');
+    setupCloseOverlayWithConfirmation();
+    setupDeleteRecord();
+    
+    // Initialize auto-fill functions
+    initializeAutoFillFunctions();
+    
+    // Add archive button event listener
+    const archiveBtn = document.querySelector('.btn-archive');
+    if (archiveBtn) {
+        archiveBtn.addEventListener('click', function() {
+            showArchiveView();
+        });
     }
-
-    const exportPlugin = hotInstance.getPlugin('exportFile');
-    exportPlugin.downloadFile('xlsx', {
-        filename: 'members_records',
-        sheetName: 'Records',
-        fileExtension: 'xlsx',
-        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    
+    // Add back button event listener
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-back')) {
+            showActiveView();
+        }
     });
+    
+    // Load initial data (active records)
+    fetchActiveRecords();
 });
-
-    document.getElementById('add_to_dispatch').addEventListener('click', function () {
-        fetch('/api/add_to_dispatch', {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({}) // optional, keeps it valid JSON
-    })
-    .then(response => response.json())
-    .then(data => {
-    if (data.success) {
-        toastSuccess(`${data.added_to_dispatch_count} Entries Added to Dispatch Successfully!`, "The selected records have been added to dispatch.");
-    } else {
-        toastError("Failed to Add to Dispatch", data.error || "An error occurred while adding records to dispatch.");
-    }
-    })
-    .catch(error => {
-    console.error('Error:', error);
-    toastError("Network Error", "Could not connect to server.");
-    });
-    });
-
-
-
 </script>
 
 

@@ -6,12 +6,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.6.0/css/all.min.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 {% endblock %}
 
 {% block content %}
 <div class="module_name">
-    <h1>Dashboard |</h1>
-    <h4> Overview of System Metrics and Performance</h4>
+    <h1>Dashboard</h1>
     
     <div class="filter-group">
         <div class="dropdown-container">
@@ -60,19 +62,22 @@
         <p class="subtext">Target: <span id="targetTotalSubtext">1,000,000</span></p> 
     </div>
 
-    <div class="card violet">
-    <h3><img class="icons" src="{{ url_for('static', filename='assets/member-card.png') }}" alt="logo"> Total Member Count</h3>
-    <h2 class="numbercount">8,000</h2>
-</div>
-    
-    <div class="card blue">
-        <h3><img class="icons" src="{{ url_for('static', filename='assets/time.png') }}" alt="logo"> Expiring Soon</h3>
-        <h2 class="numbercount">100</h2>
-        <div class="change">
-            <span class="arrow down">▼</span>
-            <span class="percentage">15.45% Decreased from last month</span>
-        </div>
+    <div class="card violet" id="membersCard" style="cursor: pointer;">
+        <h3><img class="icons" src="{{ url_for('static', filename='assets/member-card.png') }}" alt="logo"> Total Member Count</h3>
+        <h2 class="numbercount" id="memberCount">
+        <i class="fas fa-spinner fa-spin"></i>
+    </h2>
     </div>
+    
+    <div class="card blue" id="expiringSoonCard">
+    <h3><img class="icons" src="{{ url_for('static', filename='assets/time.png') }}" alt="logo"> Expiring Soon</h3>
+    <h2 class="numbercount" id="expiringSoonCount">
+        <i class="fas fa-spinner fa-spin"></i>
+    </h2>
+    <div class="card-subtext" id="expiringDescription">
+        IDs expiring within 30 days
+    </div>
+</div>
 
     <div class="card green" onclick="window.location.href='/claims?status=pending'">
         <h3><img class="icons" src="{{ url_for('static', filename='assets/hourglass.png') }}" alt="logo"> Pending Claims</h3>
@@ -87,12 +92,19 @@
 <div class="chart-container vertical">
     <div class="chart-with-notif">
         <div class="chart-card full">
-            <div id="chart_div" ></div>
+            <div id="chart_div"></div>
         </div>
 
         <div class="notification-card">
-            <h4>Notifications</h4>
-            <p>No new notifications yet.</p>
+            <div class="notification-header">
+                <h4>Notifications</h4>
+                <span class="notification-badge" id="notificationCount">0</span>
+            </div>
+            <div class="notification-list" id="notificationList">
+                <div class="notification-item loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading notifications...
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -131,17 +143,192 @@
 
 {% block extra_scripts %}
 <script>
-    // page load functions
-    document.addEventListener('DOMContentLoaded', function () {
-        fetch("/api/get_pending_claims_count")
-        .then(res => res.json())
-        .then(data => {
-            console.log("pending claims:", data.pending_claims_count);
-            document.getElementById("pending_claims_count").textContent = data.pending_claims_count;
+   // NOTIFICATIONS SYSTEM
+function loadNotifications() {
+    console.log("🔄 Loading notifications...");
+    
+    fetch('/api/notifications')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("📨 Notifications response:", data);
+        const notificationList = document.getElementById('notificationList');
+        const notificationCount = document.getElementById('notificationCount');
+        
+        if (data.success) {
+            // Update notification count
+            notificationCount.textContent = data.total_count;
+            
+            // Clear loading state
+            notificationList.innerHTML = '';
+            
+            if (data.notifications.length === 0) {
+                notificationList.innerHTML = '<div class="notification-item empty">No new notifications</div>';
+            } else {
+                // Add each notification
+                data.notifications.forEach(notification => {
+                    const notificationItem = document.createElement('div');
+                    notificationItem.className = `notification-item ${notification.type} ${notification.priority}`;
+                    
+                    // Safe string escaping
+                    const safeMessage = notification.message.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                    const safeName = (notification.member_name || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+                    const safeEmail = notification.member_email || '';
+                    const safeAdditionalData = JSON.stringify(notification.additional_data || {});
+                    
+                    notificationItem.innerHTML = `
+                        <div class="notification-message">${notification.message}</div>
+                        <div class="notification-actions">
+                            <button class="btn-action" onclick="sendNotificationEmail(this, 
+                                '${notification.type}', 
+                                '${safeName}', 
+                                '${safeEmail}',
+                                ${safeAdditionalData}
+                            )">
+                                <i class="fas fa-envelope"></i> Send Email
+                            </button>
+                        </div>
+                    `;
+                    notificationList.appendChild(notificationItem);
+                });
+            }
+        } else {
+            notificationList.innerHTML = '<div class="notification-item error">Error: ' + (data.error || 'Unknown error') + '</div>';
+            console.error('Notifications API error:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Notifications fetch error:', error);
+        const notificationList = document.getElementById('notificationList');
+        notificationList.innerHTML = '<div class="notification-item error">Failed to load notifications: ' + error.message + '</div>';
+    });
+}
+
+// Helper function to escape special characters
+function escapeString(str) {
+    return str ? str.replace(/'/g, "\\'").replace(/"/g, '\\"') : '';
+}
+
+// Email sending function using your existing toast system
+function sendNotificationEmail(button, type, memberName, memberEmail, additionalData) {
+    if (!memberEmail) {
+        toastError("Email Failed", "No email address found for this member");
+        return;
+    }
+    
+    // Show loading state
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    button.disabled = true;
+    
+    // Send email via API
+    fetch('/api/send_notification_email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            type: type,
+            member_name: memberName,
+            member_email: memberEmail,
+            additional_data: additionalData
         })
-        .catch(err => console.error(err));
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Success state
+            button.innerHTML = '<i class="fas fa-check"></i> Sent';
+            button.style.background = '#28a745';
+            button.disabled = true;
+            
+            // Use your existing toast success
+            toastSuccess("Email Sent", "Email was sent successfully!");
+        } else {
+            // Error state
+            button.innerHTML = originalText;
+            button.disabled = false;
+            toastError("Email Failed", data.error || "Failed to send email");
+        }
+    })
+    .catch(error => {
+        console.error('Email sending error:', error);
+        button.innerHTML = originalText;
+        button.disabled = false;
+        toastError("Email Error", "Network error while sending email");
+    });
+}
+
+function startNotificationAutoRefresh() {
+    setInterval(loadNotifications, 120000); 
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    
+    // Pending Claims
+    fetch("/api/get_pending_claims_count")
+    .then(res => res.json())
+    .then(data => {
+        console.log("pending claims:", data.pending_claims_count);
+        document.getElementById("pending_claims_count").textContent = data.pending_claims_count;
+    })
+    .catch(err => console.error(err));
+
+    //Total Members Count
+    fetch('/api/members/count')
+    .then(response => response.json())
+    .then(data => {
+        console.log("Total members count:", data);
+        const countElement = document.getElementById('memberCount');
+        if (data.success) {
+            countElement.textContent = data.total_members.toLocaleString();
+        } else {
+            countElement.textContent = 'Error';
+        }
+    })
+    .catch(error => {
+        document.getElementById('memberCount').textContent = 'Error';
     });
 
+    //Expiring Soon Count
+    fetch('/api/members/expiring_soon')
+    .then(response => response.json())
+    .then(data => {
+        console.log("Expiring soon data:", data);
+        const countElement = document.getElementById('expiringSoonCount');
+        const descriptionElement = document.getElementById('expiringDescription');
+        
+        if (data.success) {
+            countElement.textContent = data.expiring_soon_count;
+            descriptionElement.textContent = 'IDs expiring within 30 days';
+        } else {
+            countElement.textContent = 'Error';
+            descriptionElement.textContent = 'Error loading data';
+        }
+    })
+    .catch(error => {
+        document.getElementById('expiringSoonCount').textContent = 'Error';
+        document.getElementById('expiringDescription').textContent = 'Failed to load';
+    });
+
+    // Load Notifications
+    loadNotifications();
+    startNotificationAutoRefresh();
+
+    // Make cards clickable
+    const membersCard = document.getElementById('membersCard');
+    if (membersCard) {
+        membersCard.addEventListener('click', function() {
+            window.location.href = '/members';
+        });
+    }
+});
+
+    // Google Charts - Stacked Bar Chart
     google.charts.load('current', {packages: ['corechart', 'bar']});
     google.charts.setOnLoadCallback(drawStacked);
 
@@ -168,6 +355,16 @@
     chartArea: { width: '70%' }, 
     width: 1000, 
     height: 400,
+    tooltip: {
+    textStyle: {
+    fontSize: 16,
+    bold: true,
+    color: '#333',
+    },
+    showColorCode: true,
+    isHtml: true
+},
+
     backgroundColor: '#fff',
     animation: {
         startup: true,    

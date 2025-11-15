@@ -89,6 +89,7 @@ class Records(Base):
     origin = Column(String(255))
     remarks = Column(Text)
     tags = Column(String(255))
+    status = Column(String(255), default='Active')
     
     @property
     def declaration_date_YMD(self):
@@ -171,7 +172,7 @@ class Inventory(Base):
     inv_id = Column(Integer, primary_key=True)
     maab_category = Column(Enum(
         'Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 
-        'Enhanced Platinum', 'Senior', 'Senior+'))
+        'Enhanced Platinum', 'Safe Card', 'Senior', 'Senior+'))
     maab_no = Column(String(255))
     used = Column(SmallInteger)
     remarks = Column(Text)
@@ -397,3 +398,22 @@ class Claims_Archive(Base):
     req_burial_receipts = Column(Boolean)
     sent_advanced_notice = Column(Boolean)
     claim_type = Column(Enum('ACCIDENT', 'DEATH'))
+
+
+class Report_TvA(Base):
+    __tablename__ = 'target_per_year'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, unique=True, nullable=False)
+    year = Column(Integer)
+    classic = Column(Integer)
+    bronze = Column(Integer)
+    silver = Column(Integer)
+    gold = Column(Integer)
+    platinum = Column(Integer)
+    safe_card = Column(Integer)
+    senior = Column(Integer)
+    senior_plus = Column(Integer)
+    
+    
+    
+    

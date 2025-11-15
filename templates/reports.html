@@ -4,21 +4,55 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/reports.css') }}">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/reports.css') }}">
-    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 
-    <link href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/tabulator-tables@5.6.2/dist/js/tabulator.min.js"></script>
+    <!-- <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet"> -->
+    <!-- <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script> -->
+    <!-- <link href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css" rel="stylesheet"> -->
+
+    <!-- Tabulator CSS v5.5.2 -->
+    <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+
+    <!-- Tabulator JS v5.5.2 -->
+    <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
 
 {% endblock %}
 
 {% block content %}
+    <div class="module_name">
+            <h1>Reports</h1>
+    </div>
+
+    <div>
+    <!-- Filter container -->
+    <div class="filter_search_container">
+        <div class="filters_box">
+            <label for="filter_year">Filter by:</label>
+            <select id="filter_year">
+                
+                <option value="">Year</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+            </select>
+
+                <select id="filter_category">
+                    <option value="">Category</option>
+                    <option value="Public">Public</option>
+                    <option value="Private">Private</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TODO hidden for now. fix later -->
     <!-- Budget vs Expenses -->
-    <div class="collapse_box">
+    <div class="collapse_box" hidden>
         <div class="collapse_box_header">
             <input id="bud_v_exp_check" class="collapse_box_checkbox" type="checkbox" checked data-target_div="bud_v_exp">
             <label for="bud_v_exp_check" class="collapse_box_label">BUDGET VS EXPENSES</label>
@@ -40,15 +74,27 @@
     </div>
 
     <!-- Per District -->
-    <div class="collapse_box">
-        <div class="collapse_box_header">
-            <input id="per_dist_check" class="collapse_box_checkbox" type="checkbox" checked data-target_div="per_dist">
-            <label for="per_dist_check" class="collapse_box_label">PER DISTRICT</label>
+    <!-- TODO hidden for now. fix later -->
+    <div class="collapse_box" hidden>
+        <div class="collapse_box_header" style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
+                <input id="per_dist_check" class="collapse_box_checkbox" type="checkbox" checked data-target_div="per_dist">
+                <label for="per_dist_check" class="collapse_box_label" 
+                    style="cursor:pointer; user-select:none; font-weight:600;">
+                    PER DISTRICT
+                </label>
+            </div>
+
+            <div>
+                <input id="district-search" type="text" placeholder="Search...">
+            </div>
         </div>
+
         <div id="per_dist" class="collapse_group">
             <div id="per_district_table" class="ht-theme-main"></div>
         </div>
     </div>
+    
 {% endblock %}
 
 
@@ -113,6 +159,7 @@
     data: tableData,
     layout: "fitColumns", 
     responsiveLayout: "collapse",
+        
     columns: [
         {title:"Account Code", field:"account_code", width:"10.625rem", headerHozAlign:"center"},
         {title:"Account Name", field:"account_name", width:"10.625rem", headerHozAlign:"center"},
@@ -135,16 +182,16 @@
         
         // Totals
         {title:"Total Expense", field:"total_expense", width:"9rem",hozAlign:"right", headerHozAlign:"center",
-        formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"Balance", field:"balance", width:"9rem", hozAlign:"right", headerHozAlign:"center",
-        formatter:"money", formatterParams:{symbol:"₱", precision:0},
-        cellFormatter:function(cell){
-            let val = cell.getValue();
-            cell.getElement().style.color = val < 0 ? "red" : "green";
-            return "₱" + val.toLocaleString();
-        }
-        },
-    ],
+             formatter:"money", formatterParams:{symbol:"₱", precision:0}, headerFormatterParams:{style:{background:"#ffffff", color:"#1f1313"}}},
+            {title:"Balance", field:"balance", width:"9rem", hozAlign:"right", headerHozAlign:"center",
+             formatter:"money", formatterParams:{symbol:"₱", precision:0},
+             cellFormatter:function(cell){
+                 let val = cell.getValue();
+                 cell.getElement().style.color = val < 0 ? "red" : "green";
+                 return "₱" + val.toLocaleString();
+             },
+            },
+        ],
     });
 
     // TABLE FOR TARGET VS ACTUAL
@@ -173,17 +220,69 @@
     "Silver",
     "Gold",
     "Platinum",
-    "Enhanced Platinum",
+    "Safe Card",
     "Senior",
     "Senior+"
     ];
 
-    const targetTable = new Tabulator("#target_v_actual_table", {
-    columns: targetColumns,
-    autoColumns: false,
-    data: categories.map(c => ({ category: c })),
-    layout: "fitColumns"
+    const target_vs_actual_table = new Tabulator("#target_v_actual_table", {
+        columns: targetColumns,
+        autoColumns: false,
+        data: categories.map(category => {
+            const row = { category, target_PCS: 0, target_AMT: 0 };
+            ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach(month => {
+                row[month + "_PCS"] = 0;
+                row[month + "_AMT"] = 0;
+            });
+            return row;
+        }),
+        layout: "fitColumns"
     });
+
+
+        
+    const categoryCost = {
+    "Classic": 60,
+    "Bronze": 150,
+    "Silver": 300,
+    "Gold": 500,
+    "Platinum": 1000,
+    "Safe Card": 1200,
+    "Senior": 150,
+    "Senior+": 300
+    };
+
+    // FETCH TARGET VS ACTUAL DATA FROM API
+    // TODO fix the year selection filter to change the year dynamically and not hardcoded 2025
+    fetch("/api/get_report/target_vs_actual/2025")
+    .then(res => res.json())
+    .then(apiResult => {
+
+        const tableData = categories.map(category => {
+        const cost = categoryCost[category] || 0;
+        const apiMonths = apiResult[category] || {};
+
+        // Pull target_PCS from key 0
+        const targetPCS = apiMonths[0] || 0;
+
+        const row = {
+            category,
+            target_PCS: targetPCS,
+            target_AMT: targetPCS * cost
+        };
+
+        // Fill monthly PCS and AMT
+        ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach((month, i) => {
+            const pcs = apiMonths[i + 1] || 0; // months in API are 1-12
+            row[month + "_PCS"] = pcs;
+            row[month + "_AMT"] = pcs * cost;
+        });
+
+        return row;
+    });
+
+    target_vs_actual_table.setData(tableData);
+});
 
 
      // TABLE FOR PER DISTRICT
@@ -371,5 +470,37 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+
+    /*
+    // GENERATE TARGET VS ACTUAL PLACEHOLDER DATA WITH ZEROS
+    const generateTargetVsActualPlaceholder = () => {
+        const membershipCategories = ["Classic", "Bronze", "Silver", "Gold", "Platinum", "Safe Card", "Senior", "Senior+"];
+        const placeholderData = [];
+        
+        membershipCategories.forEach(category => {
+            const placeholderRow = { category: category, target_PCS: 0, target_AMT: 0 };
+            
+            // Add zero values for all months
+            ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach(month => {
+                placeholderRow[month + "_PCS"] = 0;
+                placeholderRow[month + "_AMT"] = 0;
+            });
+            
+            placeholderData.push(placeholderRow);
+        });
+        
+        return placeholderData;
+    };
+
+    const targetVsActualTable = new Tabulator("#target_v_actual_table", {
+        columns: targetColumns,
+        autoColumns: false,
+        data: generateTargetVsActualPlaceholder(),
+        layout: "fitColumns"
+    });
+    */
+    
+
     </script>
 {% endblock %}
+

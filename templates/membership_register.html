@@ -5,8 +5,400 @@
     <meta charset="UTF-8" />
     <title>MAAB Registration</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
+    <style>
+        /* ===== OVERLAY STYLES ===== */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
 
+        .overlay-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.3s ease-out;
+        }
 
+        .confirmation-overlay {
+            max-width: 700px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .overlay-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            z-index: 10;
+        }
+
+        .overlay-close:hover {
+            color: #000;
+        }
+
+        .overlay-header {
+            background: linear-gradient(135deg, #d32f2f, #b71c1c);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .overlay-logo {
+            height: 60px;
+            margin-bottom: 15px;
+        }
+
+        .overlay-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .overlay-header h2 span {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .overlay-body {
+            padding: 25px;
+        }
+
+        .overlay-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .agree-btn, .cancel-btn, .close-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .agree-btn {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        .agree-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        .cancel-btn, .close-btn {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .cancel-btn:hover, .close-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .download-btn, .screenshot-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            background-color: #1976d2;
+            color: white;
+        }
+
+        .download-btn:hover, .screenshot-btn:hover {
+            background-color: #1565c0;
+        }
+
+        /* Success confirmation styles */
+        .success-icon {
+            font-size: 48px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .congrats-message {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 25px;
+        }
+
+        .registration-details {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .important-notice {
+            background: #fff8e1;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .important-notice ol {
+            margin: 10px 0 0 20px;
+        }
+
+        .important-notice li {
+            margin-bottom: 8px;
+        }
+
+        /* Terms and conditions specific styles */
+        .overlay-body ol {
+            margin-left: 20px;
+        }
+
+        .overlay-body li {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .disclaimer {
+            font-style: italic;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+    <style>
+        /* ===== OVERLAY STYLES ===== */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .overlay-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .confirmation-overlay {
+            max-width: 700px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .overlay-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            z-index: 10;
+        }
+
+        .overlay-close:hover {
+            color: #000;
+        }
+
+        .overlay-header {
+            background: linear-gradient(135deg, #d32f2f, #b71c1c);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .overlay-logo {
+            height: 60px;
+            margin-bottom: 15px;
+        }
+
+        .overlay-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .overlay-header h2 span {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .overlay-body {
+            padding: 25px;
+        }
+
+        .overlay-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .agree-btn, .cancel-btn, .close-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .agree-btn {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        .agree-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        .cancel-btn, .close-btn {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .cancel-btn:hover, .close-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .download-btn, .screenshot-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            background-color: #1976d2;
+            color: white;
+        }
+
+        .download-btn:hover, .screenshot-btn:hover {
+            background-color: #1565c0;
+        }
+
+        /* Success confirmation styles */
+        .success-icon {
+            font-size: 48px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .congrats-message {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 25px;
+        }
+
+        .registration-details {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .important-notice {
+            background: #fff8e1;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .important-notice ol {
+            margin: 10px 0 0 20px;
+        }
+
+        .important-notice li {
+            margin-bottom: 8px;
+        }
+
+        /* Terms and conditions specific styles */
+        .overlay-body ol {
+            margin-left: 20px;
+        }
+
+        .overlay-body li {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .disclaimer {
+            font-style: italic;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+    </style>
 </head>
 
 <body>
@@ -288,7 +680,7 @@
 
                 <!-- ================= CHECKBOX & LINK ================= -->
                 <label class="terms-check">
-                    <input type="checkbox" required>
+                    <input type="checkbox" required id="termsCheckbox">
                     I agree to the 
                     <a href="#" id="openTerms">Terms and Conditions</a>
                 </label>
@@ -300,15 +692,15 @@
             </form>
         </section>
 
-        <!-- ================= MODAL ================= -->
-        <div id="termsModal" class="modal" aria-hidden="true">
-            <div class="modal-content">
-                <button class="modal-close" id="closeTerms">&times;</button>
-                <div class="modal-header">
-                    <img src="{{ url_for('static', filename='assets/prc_logo.png') }}" alt="Red Cross" class="modal-logo">
+        <!-- ================= TERMS & CONDITIONS OVERLAY ================= -->
+        <div id="termsOverlay" class="overlay" aria-hidden="true">
+            <div class="overlay-content">
+                <button class="overlay-close" id="closeTerms">&times;</button>
+                <div class="overlay-header">
+                    <img src="{{ url_for('static', filename='assets/prc_logo.png') }}" alt="Red Cross" class="overlay-logo">
                     <h2>MAAB Membership <br><span>Terms and Conditions</span></h2>
                 </div>
-                <div class="modal-body">
+                <div class="overlay-body">
                     <p>By registering for the <strong>Membership and Accident Assistance Benefit (MAAB)</strong> program of the <strong>Philippine Red Cross (PRC)</strong>, you agree to the following terms and conditions:</p>
 
                     <ol>
@@ -321,159 +713,159 @@
                     </ol>
 
                     <p class="disclaimer">For more details, visit your nearest Philippine Red Cross Chapter.</p>
+                    
+                    <div class="overlay-actions">
+                        <button class="agree-btn" id="agreeTerms">I Agree</button>
+                        <button class="cancel-btn" id="cancelTerms">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= CONFIRMATION OVERLAY ================= -->
+        <div id="confirmationOverlay" class="overlay" aria-hidden="true" style="display: none;">
+            <div class="overlay-content confirmation-overlay">
+                <div class="overlay-header">
+                    <img src="{{ url_for('static', filename='assets/prc_logo.png') }}" alt="Red Cross" class="overlay-logo">
+                    <h2>Registration Successful! 🎉</h2>
+                </div>
+                <div class="overlay-body">
+                    <div class="success-icon">✅</div>
+                    <p class="congrats-message">Congratulations <span id="confirmName"></span>! You are now registered for MAAB.</p>
+                    
+                    <div class="registration-details">
+                        <h3>Registration Details:</h3>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <strong>MAAB Category:</strong>
+                                <span id="confirmCategory"></span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Reference No:</strong>
+                                <span id="referenceNumber"></span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Branch to Visit:</strong>
+                                <span id="confirmBranch"></span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Registration Date:</strong>
+                                <span id="confirmDate"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="important-notice">
+                        <h4>📋 Important: What to Do Next</h4>
+                        <ol>
+                            <li><strong>Screenshot or Download</strong> this confirmation</li>
+                            <li>Visit your chosen Red Cross branch: <strong id="branchAddress"></strong></li>
+                            <li>Present this confirmation and pay the membership fee</li>
+                            <li>Claim your MAAB ID on the spot!</li>
+                        </ol>
+                    </div>
+
+                    <div class="overlay-actions">
+                        <button class="download-btn" id="downloadConfirmation">📥 Download Confirmation</button>
+                        <button class="screenshot-btn" id="takeScreenshot">📸 Take Screenshot</button>
+                        <button class="close-btn" id="closeConfirmation">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
 
+<!-- ================= FAQ SECTION ================= -->
+<section id="faq" class="faq-section scroll-animate fade-up">
+    <h2>Frequently Asked Questions (FAQs)</h2>
 
-        <!-- ================= CONFIRMATION MODAL ================= -->
-<div id="confirmationModal" class="modal" aria-hidden="true" style="display: none;">
-    <div class="modal-content confirmation-modal">
-        <div class="modal-header">
-            <img src="{{ url_for('static', filename='assets/prc_logo.png') }}" alt="Red Cross" class="modal-logo">
-            <h2>Registration Successful! 🎉</h2>
-        </div>
-        <div class="modal-body">
-            <div class="success-icon">✅</div>
-            <p class="congrats-message">Congratulations <span id="confirmName"></span>! You are now registered for MAAB.</p>
-            
-            <div class="registration-details">
-                <h3>Registration Details:</h3>
-                <div class="details-grid">
-                    <div class="detail-item">
-                        <strong>MAAB Category:</strong>
-                        <span id="confirmCategory"></span>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Reference No:</strong>
-                        <span id="referenceNumber"></span>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Branch to Visit:</strong>
-                        <span id="confirmBranch"></span>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Registration Date:</strong>
-                        <span id="confirmDate"></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="important-notice">
-                <h4>📋 Important: What to Do Next</h4>
-                <ol>
-                    <li><strong>Screenshot or Download</strong> this confirmation</li>
-                    <li>Visit your chosen Red Cross branch: <strong id="branchAddress"></strong></li>
-                    <li>Present this confirmation and pay the membership fee</li>
-                    <li>Claim your MAAB ID on the spot!</li>
-                </ol>
-            </div>
-
-            <div class="action-buttons">
-                <button class="download-btn" id="downloadConfirmation">📥 Download Confirmation</button>
-                <button class="screenshot-btn" id="takeScreenshot">📸 Take Screenshot</button>
-                <button class="close-btn" id="closeConfirmation">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-        <!--- ================= FAQ ========================== -->
-        <section id="faq" class="faq-section scroll-animate fade-up">
-            <h2>Frequently Asked Questions (FAQs)</h2>
-
-            <div class="faq-container">
-              <div class="faq-item">
-                <button class="faq-question">What is the Membership Accident Assistance Benefits (MAAB) Program?</button>
-              <div class="faq-answer">
+    <div class="faq-container">
+        <div class="faq-item">
+            <button class="faq-question">What is the Membership Accident Assistance Benefits (MAAB) Program?</button>
+            <div class="faq-answer">
                 <p>The MAAB Program is an initiative of the Philippine Red Cross that provides accident insurance and emergency medical benefits to its members. It allows individuals to support Red Cross humanitarian activities while receiving protection in case of accidents, death, or medical emergencies.</p>
             </div>
-          </div>
-
-
-          <div class="faq-item">
-              <button class="faq-question">How can I become a member?</button>
-          <div class="faq-answer">
-              <p>You can register by completing a membership form at your local Red Cross branch or using the membership registration online! After payment, your information will be encoded into the Membership Information System, and your MAAB ID will be issued by the Cavite Chapter.</p>
-          </div>
-        </div>
-
-          <div class="faq-item">
-              <button class="faq-question">Where and when can I get the MAAB ID?</button>
-          <div class="faq-answer">
-              <p>You can visit the nearest local branch in your area, Cavite-Chapter(MAIN) in Cavite City, Silang branch, & Dasma branch. Show a screenshot of your confirmation upon register and pay, your MAAB ID will release on the spot!</p>
-          </div>
         </div>
 
         <div class="faq-item">
-              <button class="faq-question">What are the benefits included in the MAAB membership?</button>
-        <div class="faq-answer">
-              <p>Depending on your chosen membership type, benefits may include coverage for accident death, disablement, medical reimbursement, unprovoked assault, and daily hospital allowance.</p>
+            <button class="faq-question">How can I become a member?</button>
+            <div class="faq-answer">
+                <p>You can register by completing a membership form at your local Red Cross branch or using the membership registration online! After payment, your information will be encoded into the Membership Information System, and your MAAB ID will be issued by the Cavite Chapter.</p>
+            </div>
         </div>
-      </div>
 
         <div class="faq-item">
-              <button class="faq-question">How does the MAAB ID work?</button>
-        <div class="faq-answer">
-    <p>Your MAAB ID serves as proof of membership and eligibility for Red Cross accident assistance benefits. The MAAB ID can be used when you're involved in an accident and need to claim insurance benefits or assistance.</p>
-    
-    <p><strong>How to claim benefits:</strong></p>
-    <ul>
-        <li>Contact your nearest Red Cross branch</li>
-        <li>Walk-in to any Red Cross office</li>
-    </ul>
-    
-    <p><strong>Required documents for claiming:</strong></p>
-    <div class="requirements-grid">
-        <div class="requirement-column">
-            <ul>
-                <li>✅ Claim Form</li>
-                <li>✅ PRC ID</li>
-                <li>✅ Medical Certificate</li>
-                <li>✅ Hospital Bill/OR</li>
-                <li>✅ Statement of Account</li>
-                <li>✅ Doctor's Prescription</li>
-                <li>✅ Purchased Medicines</li>
-                <li>✅ Medical Records</li>
-                <li>✅ Animal Bite Treatment</li>
-            </ul>
+            <button class="faq-question">Where and when can I get the MAAB ID?</button>
+            <div class="faq-answer">
+                <p>You can visit the nearest local branch in your area, Cavite-Chapter(MAIN) in Cavite City, Silang branch, & Dasma branch. Show a screenshot of your confirmation upon register and pay, your MAAB ID will release on the spot!</p>
+            </div>
         </div>
-        <div class="requirement-column">
-            <ul>
-                <li>✅ Incident Report</li>
-                <li>✅ Police Report</li>
-                <li>✅ Barangay Report</li>
-                <li>✅ Driver's License</li>
-                <li>✅ Birth Certificate</li>
-                <li>✅ Marriage Certificate</li>
-                <li>✅ Death Certificate</li>
-                <li>✅ Burial Receipts</li>
-            </ul>
-        </div>
-    </div>
-    
-    <p>Present your MAAB ID and complete requirements at any Red Cross facility to process your accident assistance benefits.</p>
-</div>
 
         <div class="faq-item">
-              <button class="faq-question">How can I claim my accident assistance benefit?</button>
-        <div class="faq-answer">
-              <p>Members can submit their claims at their nearest Red Cross branch with the necessary documents. Claims are processed and verified through the Fund Generations’ MIS, ensuring faster and more accurate benefit distribution.</p>
+            <button class="faq-question">What are the benefits included in the MAAB membership?</button>
+            <div class="faq-answer">
+                <p>Depending on your chosen membership type, benefits may include coverage for accident death, disablement, medical reimbursement, unprovoked assault, and daily hospital allowance.</p>
+            </div>
         </div>
-      </div>
 
         <div class="faq-item">
-              <button class="faq-question">Can I renew or replace my MAAB ID?</button>
-        <div class="faq-answer">
-              <p>Yes. The system automatically notifies staff when a member’s ID is nearing expiration. Members can request renewal or replacement by visiting their local branch or the Cavite Chapter office.</p>
+            <button class="faq-question">How does the MAAB ID work?</button>
+            <div class="faq-answer">
+                <p>Your MAAB ID serves as proof of membership and eligibility for Red Cross accident assistance benefits. The MAAB ID can be used when you're involved in an accident and need to claim insurance benefits or assistance.</p>
+                
+                <p><strong>How to claim benefits:</strong></p>
+                <ul>
+                    <li>Contact your nearest Red Cross branch</li>
+                    <li>Walk-in to any Red Cross office</li>
+                </ul>
+                
+                <p><strong>Required documents for claiming:</strong></p>
+                <div class="requirements-grid">
+                    <div class="requirement-column">
+                        <ul>
+                            <li>✅ Claim Form</li>
+                            <li>✅ PRC ID</li>
+                            <li>✅ Medical Certificate</li>
+                            <li>✅ Hospital Bill/OR</li>
+                            <li>✅ Statement of Account</li>
+                            <li>✅ Doctor's Prescription</li>
+                            <li>✅ Purchased Medicines</li>
+                            <li>✅ Medical Records</li>
+                            <li>✅ Animal Bite Treatment</li>
+                        </ul>
+                    </div>
+                    <div class="requirement-column">
+                        <ul>
+                            <li>✅ Incident Report</li>
+                            <li>✅ Police Report</li>
+                            <li>✅ Barangay Report</li>
+                            <li>✅ Driver's License</li>
+                            <li>✅ Birth Certificate</li>
+                            <li>✅ Marriage Certificate</li>
+                            <li>✅ Death Certificate</li>
+                            <li>✅ Burial Receipts</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <p>Present your MAAB ID and complete requirements at any Red Cross facility to process your accident assistance benefits.</p>
+            </div>
         </div>
-      </div>
+
+        <div class="faq-item">
+            <button class="faq-question">How can I claim my accident assistance benefit?</button>
+            <div class="faq-answer">
+                <p>Members can submit their claims at their nearest Red Cross branch with the necessary documents.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question">Can I renew or replace my MAAB ID?</button>
+            <div class="faq-answer">
+                <p>Yes. The system automatically notifies staff when a member's ID is nearing expiration. Members can request renewal or replacement by visiting their local branch or the Cavite Chapter office.</p>
+            </div>
+        </div>
     </div>
 </section>
-
-
-
-
-
 
         <!---- ================= FOOTER ================= -->
         <footer class="footer-ash">
@@ -499,6 +891,7 @@
 
     <!-- ================= javascript ======================================================= -->
     <script>
+        // ===== HERO IMAGE FUNCTIONALITY =====
         const heroImages = [
             "{{ url_for('static', filename='assets/bg4.png') }}",
             "{{ url_for('static', filename='assets/bg5.png') }}",
@@ -507,32 +900,6 @@
         const changeInterval = 4000; 
         const fadeDuration = 1000;  
 
-        // === CREATE STYLE FOR HERO IMAGES ===
-        const style = document.createElement("style");
-        style.textContent = `
-            .hero-bg {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-size: cover;
-                background-position: center;
-                transition: opacity ${fadeDuration}ms ease-in-out;
-                background-color: black; /* Added black background for fade effect */
-            }
-            .hero-bg.hidden {
-                opacity: 0;
-            }
-        `;
-
-        // === PRELOAD IMAGES ===
-        heroImages.forEach(src => {
-            const img = new Image();
-            img.src = src;
-        });
-
-        // === HERO IMAGE SWITCH LOGIC ===
         let currentHero = 0;
 
         function changeHeroImage() {
@@ -553,7 +920,7 @@
         // Rotate hero images
         setInterval(changeHeroImage, changeInterval);
 
-        /* ---------------- DATA (descriptions) ---------------- */
+        // ===== GALLERY DATA =====
         const descriptions = {
             classic: {
                 title: "CLASSIC ID",
@@ -634,7 +1001,7 @@
             }
         };
 
-        /* -==== GALLERY FUNCTIONALITY ====- */
+        // ===== GALLERY FUNCTIONALITY =====
         const galleryData = [
             {
                 id: "classic",
@@ -683,7 +1050,6 @@
         let currentImageIndex = 0;
 
         function updateGalleryDisplay() {
-            console.log('Updating gallery to index:', currentImageIndex);
             const currentData = galleryData[currentImageIndex];
             
             // Update image
@@ -696,10 +1062,6 @@
             // Update caption
             const caption = document.getElementById('caption');
             if (caption) caption.textContent = currentData.title;
-            
-            // Update title
-            const idTitle = document.getElementById('idTitle');
-            if (idTitle) idTitle.textContent = currentData.title;
             
             // Update description
             const descriptionDiv = document.getElementById('idDescription');
@@ -714,18 +1076,16 @@
         }
 
         function nextImage() {
-            console.log('Next button clicked');
             currentImageIndex = (currentImageIndex + 1) % galleryData.length;
             updateGalleryDisplay();
         }
 
         function prevImage() {
-            console.log('Prev button clicked');
             currentImageIndex = (currentImageIndex - 1 + galleryData.length) % galleryData.length;
             updateGalleryDisplay();
         }
 
-        /* ---------------- STEP INDICATOR LOGIC ---------------- */
+        // ===== STEP INDICATOR LOGIC =====
         function updateStepsProgress() {
             const steps = document.querySelectorAll('.step');
             const requiredFields = [
@@ -760,47 +1120,249 @@
             }
         }
 
-        // Initialize everything when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded - setting up gallery');
+        // ===== OVERLAY FUNCTIONALITY =====
+        const termsOverlay = document.getElementById('termsOverlay');
+        const openTermsLink = document.getElementById('openTerms');
+        const closeTermsBtn = document.getElementById('closeTerms');
+        const agreeTermsBtn = document.getElementById('agreeTerms');
+        const cancelTermsBtn = document.getElementById('cancelTerms');
+        const termsCheckbox = document.getElementById('termsCheckbox');
+
+        const confirmationOverlay = document.getElementById('confirmationOverlay');
+        const closeConfirmationBtn = document.getElementById('closeConfirmation');
+
+        // Open Terms Overlay
+        if (openTermsLink) {
+            openTermsLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                termsOverlay.style.display = 'flex';
+                termsOverlay.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            });
+        }
+
+        // Close Terms Overlay
+        function closeTermsOverlay() {
+            termsOverlay.style.display = 'none';
+            termsOverlay.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        if (closeTermsBtn) {
+            closeTermsBtn.addEventListener('click', closeTermsOverlay);
+        }
+
+        if (cancelTermsBtn) {
+            cancelTermsBtn.addEventListener('click', closeTermsOverlay);
+        }
+
+        // Agree to Terms
+        if (agreeTermsBtn) {
+            agreeTermsBtn.addEventListener('click', function() {
+                termsCheckbox.checked = true;
+                closeTermsOverlay();
+            });
+        }
+
+        // Show Confirmation Overlay
+        function showConfirmationOverlay(memberInfo, referenceId) {
+            const branchInfo = {
+                'chapter': 'Cavite Chapter - Main Office, Cavite City',
+                'dasma': 'Dasma Branch - Dasmariñas City, Cavite', 
+                'silang': 'Silang Branch - Silang, Cavite'
+            };
+
+            // Populate confirmation details
+            document.getElementById('confirmName').textContent = `${memberInfo.fname} ${memberInfo.lname}`;
+            document.getElementById('confirmCategory').textContent = memberInfo.maab_cat;
+            document.getElementById('confirmBranch').textContent = document.getElementById('origin').options[document.getElementById('origin').selectedIndex].text;
+            document.getElementById('branchAddress').textContent = branchInfo[memberInfo.origin] || branchInfo.chapter;
+            document.getElementById('referenceNumber').textContent = referenceId || `MAAB-${Date.now()}`;
+            document.getElementById('confirmDate').textContent = new Date().toLocaleDateString('en-PH', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Show overlay
+            confirmationOverlay.style.display = 'flex';
+            confirmationOverlay.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close Confirmation Overlay
+        function closeConfirmationOverlay() {
+            confirmationOverlay.style.display = 'none';
+            confirmationOverlay.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        if (closeConfirmationBtn) {
+            closeConfirmationBtn.addEventListener('click', closeConfirmationOverlay);
+        }
+
+        // Close overlays when clicking outside content
+        window.addEventListener('click', function(event) {
+            if (event.target === termsOverlay) {
+                closeTermsOverlay();
+            }
+            if (event.target === confirmationOverlay) {
+                closeConfirmationOverlay();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                if (termsOverlay.style.display === 'flex') {
+                    closeTermsOverlay();
+                }
+                if (confirmationOverlay.style.display === 'flex') {
+                    closeConfirmationOverlay();
+                }
+            }
+        });
+
+        // ===== FORM SUBMISSION =====
+        document.getElementById('back_btn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+        document.getElementById('submit_btn').addEventListener('click', () => {
+            const street = document.getElementById('street').value.toUpperCase();
+            const brgy_no = document.getElementById('brgy_no').value;
+            const municipality = document.getElementById('municipality').value;
+            const province = document.getElementById('province').value;
+
+            const member_info = {
+                from: 'online_register',
+                fname: document.getElementById('fname').value,
+                mname: document.getElementById('mname').value,
+                lname: document.getElementById('lname').value,
+                suffix: document.getElementById('suffix').value,
+                birthdate: document.getElementById('birthdate').value,
+                age: document.getElementById('age').value,
+                sex: document.getElementById('sex').value,
+                bloodtype: document.getElementById('bloodtype').value,
+                contact: document.getElementById('contact').value,
+                email: document.getElementById('email').value,
+                municipality: municipality,
+                address: `${street}, Brgy. ${brgy_no}, ${municipality}, ${province}`,
+                maab_cat: document.getElementById('maab_cat').value,
+                origin: document.getElementById('origin').value  
+            }
+
+            // Validate required fields
+            const requiredFields = ['fname', 'lname', 'birthdate', 'age', 'sex', 'bloodtype', 'contact', 'email', 'municipality', 'maab_cat', 'origin'];
+            let isValid = true;
             
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field);
+                if (!element.value.trim()) {
+                    isValid = false;
+                    element.style.borderColor = 'red';
+                } else {
+                    element.style.borderColor = '';
+                }
+            });
+
+            if (!isValid) {
+                alert('Please fill in all required fields marked with *');
+                return;
+            }
+
+            // Check terms and conditions
+            if (!termsCheckbox.checked) {
+                alert('Please agree to the Terms and Conditions');
+                return;
+            }
+
+            fetch('/api/member_register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(member_info)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === true) {
+                    // Show confirmation overlay
+                    showConfirmationOverlay(member_info, data.reference_id);
+                } else {
+                    alert('Registration failed: ' + data.error);
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during registration.');
+            });
+        });
+
+        // ===== AGE CALCULATION =====
+        document.getElementById('birthdate').addEventListener('change', function () {
+            const birthdateInput = this.value;
+            const ageInput = document.getElementById('age');
+
+            if (!birthdateInput) {
+                ageInput.value = '';
+                return;
+            }
+
+            const birthDate = new Date(birthdateInput);
+            const today = new Date();
+
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+
+            // adjust if birthday hasn't happened yet this year
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            ageInput.value = age;
+            updateStepsProgress();
+        });
+
+        // ===== FAQ FUNCTIONALITY =====
+        document.addEventListener('DOMContentLoaded', function() {
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', function() {
+                    const answer = this.nextElementSibling;
+                    const isActive = answer.classList.contains('active');
+                    
+                    // Close all answers
+                    document.querySelectorAll('.faq-answer').forEach(ans => {
+                        ans.classList.remove('active');
+                    });
+                    
+                    // Remove active class from all questions
+                    document.querySelectorAll('.faq-question').forEach(q => {
+                        q.classList.remove('active');
+                    });
+                    
+                    // If clicked question wasn't active, open it
+                    if (!isActive) {
+                        answer.classList.add('active');
+                        this.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
             // Set up gallery button event listeners
             const leftBtn = document.getElementById('leftBtn');
             const rightBtn = document.getElementById('rightBtn');
-            const selectBtn = document.querySelector('.select-category-btn');
             
             if (leftBtn) {
-                console.log('Left button found');
                 leftBtn.addEventListener('click', prevImage);
-            } else {
-                console.log('Left button NOT found');
             }
             
             if (rightBtn) {
-                console.log('Right button found');
                 rightBtn.addEventListener('click', nextImage);
-            } else {
-                console.log('Right button NOT found');
-            }
-            
-            if (selectBtn) {
-                selectBtn.addEventListener('click', function() {
-                    const currentData = galleryData[currentImageIndex];
-                    const dropdownMap = {
-                        'CLASSIC ID': 'Classic',
-                        'PREMIER BRONZE ID': 'Bronze', 
-                        'PREMIER SILVER ID': 'Silver',
-                        'PREMIER GOLD ID': 'Gold',
-                        'PREMIER PLATINUM ID': 'Platinum',
-                        'SENIOR ID': 'Senior',
-                        'SENIOR PLUS ID': 'Senior+'
-                    };
-                    
-                    const dropdownValue = dropdownMap[currentData.title] || 'Classic';
-                    document.getElementById('maab_cat').value = dropdownValue;
-                    updateStepsProgress();
-                    alert(`Selected: ${currentData.title}`);
-                });
             }
 
             // Initialize gallery
@@ -825,6 +1387,8 @@
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('visible');
+                    } else {
+                        entry.target.classList.remove('visible');
                     }
                 });
             }, observerOptions);
@@ -834,278 +1398,15 @@
                 observer.observe(section);
             });
 
-            // Optional: Add parallax effect to hero background
-            window.addEventListener('scroll', () => {
-                const heroBg = document.querySelector('.hero-bg');
-                const scrolled = window.pageYOffset;
-                const rate = scrolled * -0.5;
-                heroBg.style.transform = `translateY(${rate}px)`;
+            // Download and screenshot functionality
+            document.getElementById('downloadConfirmation').addEventListener('click', function() {
+                alert('Download functionality would be implemented here');
+            });
+
+            document.getElementById('takeScreenshot').addEventListener('click', function() {
+                alert('Screenshot functionality would be implemented here');
             });
         });
-
-        // Form submission and other existing functionality
-        document.getElementById('back_btn').addEventListener('click', () => {
-            window.location.href = '/';
-        });
-
-        // Form submission with confirmation
-        document.getElementById('submit_btn').addEventListener('click', () => {
-            street = document.getElementById('street').value.toUpperCase();
-            const brgy_no = document.getElementById('brgy_no').value;
-            const municipality = document.getElementById('municipality').value;
-            const province = document.getElementById('province').value;
-
-        const member_info = {
-            from: 'online_register',
-            fname: document.getElementById('fname').value,
-            mname: document.getElementById('mname').value,
-            lname: document.getElementById('lname').value,
-            suffix: document.getElementById('suffix').value,
-            birthdate: document.getElementById('birthdate').value,
-            age: document.getElementById('age').value,
-            sex: document.getElementById('sex').value,
-            bloodtype: document.getElementById('bloodtype').value,
-            contact: document.getElementById('contact').value,
-            email: document.getElementById('email').value,
-            municipality: municipality,
-            address: `${street}, Brgy. ${brgy_no}, ${municipality}, ${province}`,
-            maab_cat: document.getElementById('maab_cat').value,
-            origin: document.getElementById('origin').value  
-    }
-
-    // Validate required fields
-    const requiredFields = ['fname', 'lname', 'birthdate', 'age', 'sex', 'bloodtype', 'contact', 'email', 'municipality', 'maab_cat', 'origin'];
-    let isValid = true;
-    
-    requiredFields.forEach(field => {
-        const element = document.getElementById(field);
-        if (!element.value.trim()) {
-            isValid = false;
-            element.style.borderColor = 'red';
-        } else {
-            element.style.borderColor = '';
-        }
-    });
-
-    if (!isValid) {
-        alert('Please fill in all required fields marked with *');
-        return;
-    }
-
-    // Check terms and conditions
-    const termsCheckbox = document.querySelector('input[type="checkbox"]');
-    if (!termsCheckbox.checked) {
-        alert('Please agree to the Terms and Conditions');
-        return;
-    }
-
-    fetch('/api/member_register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(member_info)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success === true) {
-            // Show confirmation modal
-            showConfirmationModal(member_info, data.reference_id);
-        } else {
-            alert('Registration failed: ' + data.error);
-        }
-    }).catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred during registration.');
-    });
-});
-
-// Update the showConfirmationModal function
-function showConfirmationModal(memberInfo, referenceId) {
-    const modal = document.getElementById('confirmationModal');
-    const branchInfo = {
-        'chapter': 'Cavite Chapter - Main Office, Cavite City',
-        'dasma': 'Dasma Branch - Dasmariñas City, Cavite', 
-        'silang': 'Silang Branch - Silang, Cavite'
-    };
-
-    // Populate confirmation details
-    document.getElementById('confirmName').textContent = `${memberInfo.fname} ${memberInfo.lname}`;
-    document.getElementById('confirmCategory').textContent = memberInfo.maab_cat;
-    document.getElementById('confirmBranch').textContent = document.getElementById('origin').options[document.getElementById('origin').selectedIndex].text;
-    document.getElementById('branchAddress').textContent = branchInfo[memberInfo.origin] || branchInfo.chapter;
-    document.getElementById('referenceNumber').textContent = referenceId || `MAAB-${Date.now()}`;
-    document.getElementById('confirmDate').textContent = new Date().toLocaleDateString('en-PH', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-
-    // Show modal
-    modal.style.display = 'flex';
-    modal.setAttribute('aria-hidden', 'false');
-    
-    // Prevent body scroll when modal is open
-    document.body.style.overflow = 'hidden';
-    
-    // Focus management for accessibility
-    modal.focus();
-}
-
-// Update close functions
-function closeConfirmationModal() {
-    const modal = document.getElementById('confirmationModal');
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = ''; // Restore body scroll
-}
-
-document.getElementById('closeConfirmation').addEventListener('click', closeConfirmationModal);
-
-// Close modal when clicking outside or pressing Escape
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('confirmationModal');
-    if (event.target === modal) {
-        closeConfirmationModal();
-    }
-});
-
-// Close on Escape key
-document.addEventListener('keydown', function(event) {
-    const modal = document.getElementById('confirmationModal');
-    if (event.key === 'Escape' && modal.style.display === 'flex') {
-        closeConfirmationModal();
-    }
-});
-
-// Handle window resize and zoom
-window.addEventListener('resize', function() {
-    const modal = document.getElementById('confirmationModal');
-    if (modal.style.display === 'flex') {
-        // Force re-render to adjust to new viewport size
-        modal.style.display = 'none';
-        setTimeout(() => {
-            modal.style.display = 'flex';
-        }, 10);
-    }
-});
-
-        document.getElementById('birthdate').addEventListener('change', function () {
-            const birthdateInput = this.value;
-            const ageInput = document.getElementById('age');
-
-            if (!birthdateInput) {
-                ageInput.value = '';
-                return;
-            }
-
-            const birthDate = new Date(birthdateInput);
-            const today = new Date();
-
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-
-            // adjust if birthday hasn't happened yet this year
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
-
-            ageInput.value = age;
-            updateStepsProgress(); // Update steps when age is calculated
-        });
-
-        // Modal event listeners
-        const termsModal = document.getElementById('termsModal');
-        const openTermsLink = document.getElementById('openTerms');
-        const closeTermsBtn = document.getElementById('closeTerms');
-
-        if (openTermsLink) {
-            openTermsLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                termsModal.style.display = 'block';
-                termsModal.setAttribute('aria-hidden', 'false');
-            });
-        }
-
-        if (closeTermsBtn) {
-            closeTermsBtn.addEventListener('click', function() {
-                termsModal.style.display = 'none';
-                termsModal.setAttribute('aria-hidden', 'true');
-            });
-        }
-
-        // Close modal when clicking outside of it
-        window.addEventListener('click', function(event) {
-            if (event.target === termsModal) {
-                termsModal.style.display = 'none';
-                termsModal.setAttribute('aria-hidden', 'true');
-            }
-        });
-
-       // Fade in sections on scroll - WITH RE-ANIMATION WHEN SCROLLING BACK UP
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-        } else {
-        // Remove the class when section goes out of view
-        entry.target.classList.remove('visible');
-        }
-      });
-    }, observerOptions);
-
-        // Observe all sections with section-fade class
-        document.querySelectorAll('.section-fade').forEach(section => {
-        observer.observe(section);
-      });
-
-
-      // FAQ toggle functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const faqQuestions = document.querySelectorAll('.faq-question');
-    
-    faqQuestions.forEach(question => {
-        question.addEventListener('click', function() {
-            const answer = this.nextElementSibling;
-            const isActive = answer.classList.contains('active');
-            
-            // Close all answers
-            document.querySelectorAll('.faq-answer').forEach(ans => {
-                ans.classList.remove('active');
-            });
-            
-            // Remove active class from all questions
-            document.querySelectorAll('.faq-question').forEach(q => {
-                q.classList.remove('active');
-            });
-            
-            // If clicked question wasn't active, open it
-            if (!isActive) {
-                answer.classList.add('active');
-                this.classList.add('active');
-            }
-        });
-    });
-    
-    // Scroll animation
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate');
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    document.querySelectorAll('.scroll-animate').forEach(el => {
-        observer.observe(el);
-    });
-});
-
     </script>
 </body>
 </html>

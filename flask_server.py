@@ -11,6 +11,7 @@ from io import BytesIO
 from flask import send_file
 
 
+
 server = Flask(__name__)
 server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
@@ -181,7 +182,8 @@ def dashboard():
 @server.route('/members')
 @login_required
 def members_page():
-    return render_template('members.html')
+    user_location = current_user.office_location if current_user else 'Chapter'
+    return render_template('members.html', user_location=user_location)
 
 
 @server.route('/declaration')
@@ -257,43 +259,199 @@ def settings():
 #? -------------------- END -------------------- ?#
 
 #? -------------------- API ROUTES -------------------- ?#
+@server.route('/api/export_record_entries/<int:record_id>')
+@login_required
+def export_record_entries(record_id):
+    try:
+        # Fetch record details
+        db_session = db_conn.SessionLocal()
+        
+        record = db_session.query(db_conn.models.Records).filter_by(record_id=record_id).first()
+        
+        if not record:
+            return jsonify({'error': 'Record not found'}), 404
+        
+        # Fetch entries for this record
+        entries = (
+            db_session.query(
+                db_conn.models.Entries,
+                db_conn.models.Members
+            )
+            .join(db_conn.models.Members, db_conn.models.Entries.member_id == db_conn.models.Members.member_id)
+            .filter(db_conn.models.Entries.record_id == record_id)
+            .all()
+        )
+        
+        if not entries:
+            return jsonify({'error': 'No entries found for this record'}), 404
+        
+        # Prepare data for Excel with required fields only
+        data = []
+        for entry, member in entries:
+            data.append({
+                # Entry details
+                'Category': entry.maab_category or '',
+                'MAAB No': entry.maab_no or '',
+                'First Name': member.first_name or '',
+                'Middle Name': member.middle_name or '',
+                'Last Name': member.last_name or '',
+                'Suffix': member.suffix or 'NA',
+                'Birthdate': member.birth_date.strftime('%Y-%m-%d') if member.birth_date else '',
+                'Age': member.age or '',
+                'Sex': member.sex or '',
+                'Contact No': f"+63{member.contact_no}" if member.contact_no else '',
+                'Email': member.email or '',
+                'OR No': entry.OR_num or '',
+                'OR Date': entry.OR_date.strftime('%Y-%m-%d') if entry.OR_date else '',
+                'Declared': 'Yes' if entry.declared else 'No',
+                'Dispatch Ready': 'Yes' if entry.dispatch_ready else 'No',
+                'Dispatch ID': entry.dispatch_id or '',
+                'Remarks': entry.remarks or '',
+                # Record details (these will be the same for all entries in this record)
+                'Declaration Date': record.declaration_date.strftime('%Y-%m-%d') if record.declaration_date else '',
+                'Effectivity Date': record.effectivity_date.strftime('%Y-%m-%d') if record.effectivity_date else '',
+                'Location Category': record.location_category or '',
+                'Municipality': record.municipality or '',
+                'District': record.district or '',
+                'Origin': record.origin or ''
+            })
+        
+        # Create DataFrame
+        df = pd.DataFrame(data)
+        
+        # Create the record_exports folder if it doesn't exist
+        export_folder = os.path.join(os.path.dirname(__file__), 'record_exports')
+        os.makedirs(export_folder, exist_ok=True)
+        
+        # Generate filename
+        loc_particular = record.location_particular or 'Unknown_Location'
+        dec_date = record.declaration_date.strftime('%Y-%m-%d') if record.declaration_date else 'no_date'
+        
+        # Clean filename (remove special characters)
+        clean_location = "".join(c for c in loc_particular if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        clean_location = clean_location.replace(' ', '_')
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{clean_location}_{dec_date}_{timestamp}.xlsx"
+        file_path = os.path.join(export_folder, filename)
+        
+        # Create Excel file and save to server folder
+        with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+            # Write the main title first
+            workbook = writer.book
+            worksheet = workbook.create_sheet('Entries')
+            
+            # Add main title
+            worksheet.merge_cells('A1:W1')
+            worksheet['A1'] = f"{loc_particular} - {dec_date}"
+            worksheet['A1'].font = openpyxl.styles.Font(size=16, bold=True)
+            worksheet['A1'].alignment = openpyxl.styles.Alignment(horizontal='center')
+            
+            # Add record details as separate rows
+            record_details = [
+                f"Declaration Date: {record.declaration_date.strftime('%Y-%m-%d') if record.declaration_date else 'N/A'}",
+                f"Effectivity Date: {record.effectivity_date.strftime('%Y-%m-%d') if record.effectivity_date else 'N/A'}",
+                f"Location Category: {record.location_category or 'N/A'}",
+                f"Municipality: {record.municipality or 'N/A'}",
+                f"District: {record.district or 'N/A'}",
+                f"Origin: {record.origin or 'N/A'}"
+            ]
+            
+            # Write record details starting from row 2
+            for i, detail in enumerate(record_details, start=2):
+                worksheet[f'A{i}'] = detail
+            
+            # Write the DataFrame starting from row 8 (after title and record details)
+            start_row = 8
+            # Write headers
+            for col_num, column_name in enumerate(df.columns, 1):
+                cell = worksheet.cell(row=start_row, column=col_num)
+                cell.value = column_name
+                cell.font = openpyxl.styles.Font(bold=True)
+                cell.fill = openpyxl.styles.PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
+                cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+            
+            # Write data rows
+            for row_num, row_data in enumerate(df.values, start_row + 1):
+                for col_num, cell_value in enumerate(row_data, 1):
+                    worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            
+            # Adjust column widths for all required columns
+            column_widths = {
+                'A': 15,  # Category
+                'B': 15,  # MAAB No
+                'C': 15,  # First Name
+                'D': 15,  # Middle Name
+                'E': 15,  # Last Name
+                'F': 8,   # Suffix
+                'G': 12,  # Birthdate
+                'H': 6,   # Age
+                'I': 8,   # Sex
+                'J': 15,  # Contact No
+                'K': 20,  # Email
+                'L': 10,  # OR No
+                'M': 10,  # OR Date
+                'N': 10,  # Declared
+                'O': 15,  # Dispatch Ready
+                'P': 12,  # Dispatch ID
+                'Q': 20,  # Remarks
+                'R': 12,  # Declaration Date (record)
+                'S': 12,  # Effectivity Date (record)
+                'T': 20,  # Location Category (record)
+                'U': 15,  # Municipality (record)
+                'V': 10,  # District (record)
+                'W': 12   # Origin (record)
+            }
+            
+            for col_letter, width in column_widths.items():
+                worksheet.column_dimensions[col_letter].width = width
+        
+        # Return success response with file info
+        return jsonify({
+            'success': True,
+            'message': f'File exported successfully to record_exports folder',
+            'filename': filename,
+            'file_path': file_path,
+            'export_count': len(entries)
+        })
+        
+    except Exception as e:
+        print(f"Export error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+    finally:
+        db_session.close()
 
 # TODO move to accounts api routes section
 @server.route('/create_acc_submit', methods=['POST'])
 def create_acc_submit():
-    user = request.form.get('username')
-    password = request.form.get('password')
-    email = request.form.get('email')
+    data = request.get_json()
+    print(data)
+    
+    user = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
 
-    fname = request.form.get('fname').upper()
-    mname = request.form.get('mname').upper()
-    lname = request.form.get('lname').upper()
-    suffix = request.form.get('suffix')
+    fname = data.get('fname').upper()
+    mname = data.get('mname').upper()
+    lname = data.get('lname').upper()
+    suffix = data.get('suffix')
 
-    bdate = request.form.get('bdate')
-    contact = request.form.get('contact_no')
+    bdate = data.get('bdate')
+    contact = data.get('contact_no')
 
     acct_created = date.today().strftime("%Y-%m-%d")
-    branch = request.form.get('branch')
+    branch = data.get('branch')
 
     if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
         create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
                             suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
     
     if not create_new_acc == True:
-        flash({
-            "title": "Account creation failed!",
-            "text": f"{create_new_acc}. Please try again.",
-            "redirect_url": url_for('create_acc')
-        }, "error")
-        return render_template('create_account.html')
+        return jsonify({"success": False, "error": 'Account Creation Failed'}), 500
     else:
-        flash({
-        "title": "Account created successfully!",
-        "text": "Click continue to go back to login screen.",
-        "redirect_url": url_for('landing_page')
-        }, "success")
-        return render_template('create_account.html')
+        return jsonify({"success": True})
 
 
     # TODO add condition to check if the username already exists
@@ -405,24 +563,31 @@ def reset_password():
     return render_template("reset_password.html")
 
 
+# KEEP ONLY THIS VERSION OF THE ROUTE - REMOVE THE DUPLICATE LATER IN THE FILE
 @server.route('/api/declaration', methods=['POST'])
 def declaration_api():
-    method = request.method
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
 
-    if method == 'POST':
         dispatch_type = 'transmission' if current_user.office_location != 'Chapter' else 'declaration' 
         dispatch_origin = current_user.office_location
         dispatch_year = datetime.now().year
         dispatch_cutoff = data.get('dispatch_cutoff')
-        #date_dispatched = data.get('date_dispatched')
-        #dispatch_total = data.get('dispatch_total')
         late_declare = data.get('late_declare')
         dispatch_remarks = data.get('dispatch_remarks')
         
         result = db_conn.create_dispatch(dispatch_type, dispatch_origin, dispatch_year, dispatch_cutoff, late_declare, dispatch_remarks)
-        return jsonify({"success": True}) if result == True else jsonify({"success": False, "error": result}), 500 
         
+        if result == True:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": result}), 500
+            
+    except Exception as e:
+        print(f"Declaration API error: {e}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
 @server.route('/settings_save_changes', methods=['POST'])
@@ -528,14 +693,134 @@ def get_dispatch_records():
     return jsonify([record.to_dict() for record in dispatch_records])
 
 
+# ====== API FOR DASHBOARD STATS ======
+
+@server.route('/api/members/count', methods=['GET'])
+def get_members_count():
+    try:
+        # Count all entries across all records
+        total_count = 0
+        all_records = db_conn.get_member_records()
+        
+        for record in all_records:
+            entries = db_conn.get_entries(record.record_id)  # or record.id
+            total_count += len(entries)
+            
+        return jsonify({
+            'success': True,
+            'total_members': total_count
+        })
+    except Exception as e:
+        print(f"Error in get_members_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@server.route('/api/members/expiring_soon', methods=['GET'])
+def get_expiring_soon_count():
+    try:
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        thirty_days_from_now = today + timedelta(days=30)
+        last_month = today - timedelta(days=30)
+        
+        # Get all records and their entries
+        all_records = db_conn.get_member_records()
+        
+        current_expiring = 0
+        previous_expiring = 0
+        
+        for record in all_records:
+            # Get entries for this record
+            entries = db_conn.get_entries(record.record_id)
+            
+            for entry in entries:
+                # Check OR_date for expiration
+                if hasattr(entry, 'OR_date') and entry.OR_date:
+                    # Convert to date object if it's string
+                    if isinstance(entry.OR_date, str):
+                        or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
+                    else:
+                        or_date = entry.OR_date
+                    
+                    # Calculate expiration date (OR_date + 1 year)
+                    expiration_date = or_date + timedelta(days=365)
+                    
+                    # Current period: expiring in next 30 days
+                    if today <= expiration_date <= thirty_days_from_now:
+                        current_expiring += 1
+                    
+                    # Previous period: expired in last 30 days
+                    if last_month <= expiration_date <= today:
+                        previous_expiring += 1
+        
+        # Calculate percentage change
+        if previous_expiring > 0:
+            percentage_change = ((current_expiring - previous_expiring) / previous_expiring) * 100
+        else:
+            percentage_change = 0
+        
+        return jsonify({
+            'success': True,
+            'expiring_soon_count': current_expiring,
+            'previous_period_count': previous_expiring,
+            'percentage_change': round(percentage_change, 2),
+            'timeframe_days': 30
+        })
+    except Exception as e:
+        print(f"Error in get_expiring_soon_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 # API FOR MEMBERS PAGE
 
 # TODO fix api route names ex. /api/members/get_records
 
 @server.route('/api/members/records', methods=['GET'])
 def get_members():
-    member_records = db_conn.get_member_records()
+    try:
+        office_loc = current_user.office_location
+        status = request.args.get('status', 'active')
+        print(f"DEBUG: Fetching member records with status: {status}")
+        
+        member_records = db_conn.get_member_records(status=status, office_loc=office_loc)
+        print(f"DEBUG: Records fetched: {len(member_records) if member_records else 'None'}")
+        
+        if member_records is None:
+            print("DEBUG: No records returned from database")
+            return jsonify({"error": "Failed to fetch member records"}), 500
+            
+        records_list = []
+        for record in member_records:
+            try:
+                record_dict = record.to_dict()
+                records_list.append(record_dict)
+            except Exception as e:
+                print(f"DEBUG: Error converting record to dict: {e}")
+                continue
+                
+        print(f"DEBUG: Returning {len(records_list)} records")
+        return jsonify(records_list)
+        
+    except Exception as e:
+        print(f"DEBUG: Error in get_members: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Internal server error"}), 500
+    
+    # TODO fix this after merge  
+    
+    '''
+    office_loc = current_user.office_location
+    
+    member_records = db_conn.get_member_records(office_loc)
     return jsonify([record.to_dict() for record in member_records])
+    '''
+    
     '''
     records = db_conn.get_member_records()
     members_list = []
@@ -555,6 +840,30 @@ def get_members():
 
     return jsonify(members_list)
     '''
+
+@server.route('/api/archive_record', methods=['PATCH'])
+@login_required
+def archive_record():
+    try:
+        data = request.get_json()
+        record_id = data.get('record_id')
+        
+        if not record_id:
+            return jsonify({"success": False, "error": "No record ID provided"}), 400
+        
+        # Use the new function that handles both archiving and logging in one session
+        success = db_conn.archive_member_record_with_log(record_id, current_user.account_id)
+        
+        if success:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Failed to archive record"}), 500
+            
+    except Exception as e:
+        print(f"Error archiving record: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": "Internal server error"}), 500
     
 @server.route('/api/add_record', methods=['POST'])
 def add_new_record():
@@ -638,6 +947,113 @@ def save_entry_details():
         return jsonify({"success": False, "error": "No data provided"}), 400
 
 
+@server.route('/api/save_entry_update', methods=['POST'])
+@login_required
+def save_entry_update():
+    try:
+        
+        data = request.get_json()
+        print(data)
+        if data:
+            entry_id = data.get('entry_id')
+            print('entry_id:', entry_id)    
+            
+            result = db_conn.save_entry_updates(data)
+            
+            if result:
+                return jsonify({"success": True})
+            else:
+                return jsonify({"success": False, "error": result}), 500
+        else:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@server.route('/api/get_report/target_vs_actual/<int:year>', methods=['GET'])
+def target_vs_actual(year):
+    if not year:
+        return jsonify({"success": False, "error": "Year parameter is required"}), 400
+
+    report_data = db_conn.get_report_target_vs_actual(year)
+    if report_data is None:
+        return jsonify({"success": False, "error": "Failed to fetch report data"}), 500
+
+    return jsonify(report_data)
+
+
+@server.route('/api/inventory/add_stock', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def add_inventory_stock():
+    try:
+        data = request.get_json()
+        
+        # Extract form data
+        category = data.get('category')
+        prefix = data.get('prefix')
+        start_num = data.get('start_num')
+        count = data.get('count')
+        
+        # Validate required fields
+        if not all([category, prefix, start_num, count]):
+            return jsonify({
+                "success": False, 
+                "error": "All fields are required"
+            }), 400
+        
+        # Convert to integers
+        try:
+            start_num = int(start_num)
+            count = int(count)
+        except ValueError:
+            return jsonify({
+                "success": False, 
+                "error": "Invalid number format"
+            }), 400
+        
+        # Validate count
+        if count <= 0:
+            return jsonify({
+                "success": False, 
+                "error": "Count must be greater than 0"
+            }), 400
+        
+        # Validate count isn't too large (performance protection)
+        if count > 10000:
+            return jsonify({
+                "success": False,
+                "error": "Cannot add more than 10,000 IDs at once"
+            }), 400
+        
+        # Call the database function
+        result = db_conn.add_inventory_ids(category, prefix, start_num, count)
+        
+        if result["success"]:
+            response_data = {
+                "success": True,
+                "message": f"Successfully added {result['added_count']} ID(s) for {category} category",
+                "details": result
+            }
+            
+            # Add warning if there were duplicates
+            if result['duplicate_count'] > 0:
+                response_data["warning"] = f"Skipped {result['duplicate_count']} duplicate ID(s)"
+                
+            return jsonify(response_data)
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get("error", "Failed to add IDs to inventory")
+            }), 500
+            
+    except Exception as e:
+        print(f"Error adding inventory stock: {e}")
+        return jsonify({
+            "success": False,
+            "error": "Internal server error"
+        }), 500
+
 @server.route('/api/add_to_dispatch', methods=['PATCH'])
 @login_required
 @roles_required('admin', 'superadmin')
@@ -653,8 +1069,102 @@ def add_to_dispatch():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+                        
 
+# FIXED EXPORT DISPATCH ROUTE - ONLY ONE VERSION
+@server.route('/api/export_dispatch', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def export_dispatch():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No JSON data provided"}), 400
+            
+        selected_rows = data.get('selected_rows', [])
+        
+        if not selected_rows:
+            return jsonify({"success": False, "error": "No rows selected"}), 400
 
+        # Create DataFrame from selected rows
+        df_data = []
+        for i, row in enumerate(selected_rows, 1):
+            df_data.append({
+                'No.': i,
+                'Name': row.get('name', ''),
+                'Category': row.get('category', ''),
+                'Effectivity': row.get('effectivity', ''),
+                'Birthday': row.get('birthday', ''),
+                'Location': row.get('location', '')
+            })
+
+        df = pd.DataFrame(df_data)
+
+        # Define the export folder path
+        export_folder = os.path.join(os.path.dirname(__file__), 'exports', 'dispatch_reports')
+        
+        # Create folder if it doesn't exist
+        os.makedirs(export_folder, exist_ok=True)
+
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"Dispatch_Report_{timestamp}.xlsx"
+        file_path = os.path.join(export_folder, filename)
+
+        # Create Excel writer with styling
+        with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
+            # Write the data
+            df.to_excel(writer, sheet_name='Dispatch Report', index=False, startrow=2)
+            
+            # Get workbook and worksheet
+            workbook = writer.book
+            worksheet = writer.sheets['Dispatch Report']
+            
+            # Add title
+            title_format = workbook.add_format({
+                'bold': True,
+                'size': 16,
+                'align': 'center',
+                'valign': 'vcenter'
+            })
+            
+            worksheet.merge_range('A1:F1', 'DISPATCH REPORT', title_format)
+            
+            # Header format
+            header_format = workbook.add_format({
+                'bold': True,
+                'align': 'center',
+                'valign': 'vcenter',
+                'bg_color': '#D3D3D3',
+                'border': 1
+            })
+            
+            # Apply header format
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(2, col_num, value, header_format)
+            
+            # Set column widths
+            worksheet.set_column('A:A', 5)   # No.
+            worksheet.set_column('B:B', 30)  # Name
+            worksheet.set_column('C:C', 15)  # Category
+            worksheet.set_column('D:D', 12)  # Effectivity
+            worksheet.set_column('E:E', 12)  # Birthday
+            worksheet.set_column('F:F', 25)  # Location
+            
+            # Center the number column
+            number_format = workbook.add_format({'align': 'center'})
+            worksheet.set_column('A:A', 5, number_format)
+
+        return jsonify({
+            "success": True, 
+            "message": "File saved successfully",
+            "filename": filename,
+            "file_path": file_path
+        })
+
+    except Exception as e:
+        print(f"Export error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # TODO check if a record exist for Online Registration on the same day. if yes put the entry on that record
 @server.route('/api/member_register', methods=['POST'])
@@ -958,7 +1468,288 @@ def generate_report():
         print(f"Error generating report: {e}")
         flash("Error generating the report. Please try again later.", "error")
         return render_template('error_page.html')  # Render an error page
+    
 
+# ==================== API ROUTES FOR AUDIT TRAILS ====================
+# SIMPLE WORKING API ROUTES
+@server.route('/api/get_users', methods=['GET'])
+@login_required
+@roles_required('admin', 'superadmin')
+def api_get_users():
+    try:
+        print("🔍 Getting users...")
+        db_session = db_conn.SessionLocal()
+        users = db_session.query(db_conn.models.Accounts).filter(
+            db_conn.models.Accounts.acct_status.in_(['approved', 'staff'])
+        ).all()
+        
+        users_list = []
+        for user in users:
+            users_list.append({
+                'user_id': user.account_id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name
+            })
+        
+        print(f"✅ Found {len(users_list)} users")
+        return jsonify(users_list)
+        
+    except Exception as e:
+        print(f"❌ Error getting users: {e}")
+        return jsonify([])
+    finally:
+        db_session.close()
+
+@server.route('/api/get_filtered_logs', methods=['GET'])
+@login_required
+@roles_required('admin', 'superadmin')
+def api_get_filtered_logs():
+    try:
+        user_id = request.args.get('user_id', '')
+        filter_date = request.args.get('date', '')
+        
+        print(f"🔍 Filtering - User: {user_id}, Date: {filter_date}")
+        
+        # Get all logs
+        all_logs = db_conn.GET_audit_logs()
+        print(f"📋 Total logs: {len(all_logs)}")
+        
+        filtered_logs = []
+        
+        for log in all_logs:
+            # Get user ID - try different attribute names
+            log_user_id = getattr(log, 'account_id', None)
+            if log_user_id is None:
+                log_user_id = getattr(log, 'user_id', None)
+            
+            log_timestamp = getattr(log, 'timestamp', None)
+            
+            # Check user filter
+            user_match = not user_id or (log_user_id and str(log_user_id) == user_id)
+            
+            # Check date filter
+            date_match = True
+            if filter_date:
+                if log_timestamp:
+                    if hasattr(log_timestamp, 'strftime'):
+                        log_date = log_timestamp.strftime('%Y-%m-%d')
+                    else:
+                        log_date = str(log_timestamp)[:10]
+                    date_match = (log_date == filter_date)
+                else:
+                    date_match = False
+            
+            if user_match and date_match:
+                # Format timestamp
+                if log_timestamp and hasattr(log_timestamp, 'strftime'):
+                    timestamp_str = log_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                else:
+                    timestamp_str = str(log_timestamp)
+                
+                filtered_logs.append({
+                    'log_id': getattr(log, 'log_id', ''),
+                    'username': getattr(log, 'username', ''),
+                    'user_level': getattr(log, 'user_level', ''),
+                    'action': getattr(log, 'action', ''),
+                    'details': getattr(log, 'details', ''),
+                    'timestamp': timestamp_str,
+                    'ip_address': getattr(log, 'ip_address', '')
+                })
+        
+        print(f"✅ Filtered logs: {len(filtered_logs)}")
+        return jsonify({
+            "success": True, 
+            "logs": filtered_logs,
+            "filters": {"user_id": user_id, "date": filter_date}
+        })
+        
+    except Exception as e:
+        print(f"❌ Error in get_filtered_logs: {e}")
+        return jsonify({
+            "success": False, 
+            "error": str(e),
+            "logs": []
+        }), 500
+    
+    # DEBUG ROUTE - Check if APIs are working
+@server.route('/api/debug_test')
+def debug_test():
+    return jsonify({"message": "API is working!", "status": "success"})
+
+# DEBUG ROUTE - Check audit logs structure
+@server.route('/api/debug_logs_info')
+@login_required
+@roles_required('admin', 'superadmin')
+def debug_logs_info():
+    try:
+        logs = db_conn.GET_audit_logs()
+        if not logs:
+            return jsonify({"message": "No logs found", "count": 0})
+        
+        # Check first log structure
+        first_log = logs[0]
+        log_attrs = {}
+        for attr in dir(first_log):
+            if not attr.startswith('_'):
+                try:
+                    value = getattr(first_log, attr)
+                    log_attrs[attr] = {
+                        "type": str(type(value)),
+                        "value": str(value)[:100] if value else "None"
+                    }
+                except:
+                    pass
+        
+        return jsonify({
+            "total_logs": len(logs),
+            "first_log_attributes": log_attrs,
+            "sample_data": {
+                "log_id": getattr(first_log, 'log_id', 'N/A'),
+                "username": getattr(first_log, 'username', 'N/A'),
+                "account_id": getattr(first_log, 'account_id', 'N/A'),
+                "timestamp": str(getattr(first_log, 'timestamp', 'N/A'))
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
+#? -------------------- NOTIFICATIONS -------------------- ?#
+
+@server.route('/api/notifications', methods=['GET'])
+def get_notifications():
+    try:
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        notifications = []
+        
+        print("🔍 Starting notifications check...")
+        
+        # Get all member records
+        all_records = db_conn.get_member_records()
+        print(f"📊 Found {len(all_records)} records")
+        
+        # 1. Check for birthdays today
+        birthday_count = 0
+        for record in all_records:
+            try:
+                # Get record ID safely
+                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
+                if not record_id:
+                    continue
+                    
+                # Get entries for this record
+                entries = db_conn.get_entries(record_id)
+                
+                for entry in entries:
+                    # Check if entry has birth_date
+                    birth_date = getattr(entry, 'birth_date', None)
+                    if birth_date:
+                        # Convert to date object if string
+                        if isinstance(birth_date, str):
+                            try:
+                                birth_date = datetime.strptime(birth_date, '%Y-%m-%d').date()
+                            except:
+                                continue
+                        elif isinstance(birth_date, datetime):
+                            birth_date = birth_date.date()
+                        
+                        # Check if birthday is today
+                        if birth_date.month == today.month and birth_date.day == today.day:
+                            first_name = getattr(entry, 'first_name', '')
+                            last_name = getattr(entry, 'last_name', '')
+                            email = getattr(entry, 'email', '')
+                            
+                            notifications.append({
+                                'type': 'birthday',
+                                'message': f"🎂 {first_name} {last_name} has birthday today!",
+                                'member_name': f"{first_name} {last_name}",
+                                'member_email': email,
+                                'priority': 'high'
+                            })
+                            birthday_count += 1
+            except Exception as e:
+                print(f"❌ Error processing record: {e}")
+                continue
+        
+        print(f"🎂 Found {birthday_count} birthdays today")
+        
+        # 2. Check for expiring memberships (30 days)
+        expiring_count = 0
+        thirty_days_from_now = today + timedelta(days=30)
+        
+        for record in all_records:
+            try:
+                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
+                if not record_id:
+                    continue
+                    
+                entries = db_conn.get_entries(record_id)
+                
+                for entry in entries:
+                    or_date = getattr(entry, 'OR_date', None)
+                    if or_date:
+                        # Convert to date object if string
+                        if isinstance(or_date, str):
+                            try:
+                                or_date = datetime.strptime(or_date, '%Y-%m-%d').date()
+                            except:
+                                continue
+                        elif isinstance(or_date, datetime):
+                            or_date = or_date.date()
+                        
+                        # Calculate expiration (OR_date + 1 year)
+                        expiration_date = or_date + timedelta(days=365)
+                        days_until_expiry = (expiration_date - today).days
+                        
+                        # Check if expiring within 30 days
+                        if 0 <= days_until_expiry <= 30:
+                            first_name = getattr(entry, 'first_name', '')
+                            last_name = getattr(entry, 'last_name', '')
+                            email = getattr(entry, 'email', '')
+                            
+                            notifications.append({
+                                'type': 'expiring',
+                                'message': f"⏰ {first_name} {last_name} membership expires in {days_until_expiry} days",
+                                'member_name': f"{first_name} {last_name}",
+                                'member_email': email,
+                                'additional_data': {'days_left': days_until_expiry},
+                                'priority': 'medium'
+                            })
+                            expiring_count += 1
+            except Exception as e:
+                print(f"❌ Error processing record for expiring: {e}")
+                continue
+        
+        print(f"⏰ Found {expiring_count} expiring memberships")
+        print(f"📨 Total notifications: {len(notifications)}")
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications,
+            'total_count': len(notifications),
+            'summary': {
+                'birthdays': birthday_count,
+                'expiring': expiring_count
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Major error in get_notifications: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'notifications': [],
+            'total_count': 0
+        }), 500
+
+# TEST ROUTE - OPTIONAL
+@server.route('/api/notifications/test', methods=['GET'])
+def test_notifications_route():
+    return jsonify({"message": "Notifications route is working", "success": True})
 
 #? -------------------- MISC ROUTES -------------------- ?#
 
@@ -1011,6 +1802,3 @@ if __name__ == '__main__':
         flask_server.watch('static/*.*')
         flask_server.watch('templates/*.html')
         flask_server.serve(port=5000, host="127.0.0.1")
-        
-
-        

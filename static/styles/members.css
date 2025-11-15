@@ -9,46 +9,47 @@ label {
     font-weight: bold;
 }
 
-/* --- Title: centered, fixed at top --- */
 .module_name {
     position: fixed;
-    top: 12px;              /* distance from top - adjust if needed */
+    top: 12px;              
     left: 0;
     right: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;          /* keep it above other elements */
-    pointer-events: none;   /* allows clicks to pass through the bar (h1 clickable if needed below) */
-    white-space: nowrap;    /* keep the spaced letters on one line */
+    z-index: 1000;        
+    pointer-events: none;   
+    white-space: nowrap;
+    margin-left: 20px !important;
 }
 
-/* Keep the h1 styling inside the fixed bar; allow clicks on text if needed */
 .module_name h1 {
     margin: 0;
     color: rgb(232, 57, 57);
     text-align: center;
     font-weight: 700;
-    pointer-events: auto;   /* make the H1 itself interactive/selectable if needed */
+    pointer-events: auto;   
 }
 
-/* push the page content down so the header doesn't overlap controls */
 .controls_box {
-    margin-top: 70px; /* adjust this to match the height of your header */
+    margin-top: 70px; 
 }
 
-/* responsive tweak for small screens */
+
 @media (max-width: 600px) {
     .module_name h1 {
         font-size: 18px;
-        white-space: normal; /* allow wrapping on small screens */
+        white-space: normal; 
     }
     .controls_box {
-        margin-top: 88px; /* slightly larger if h1 wraps into two lines */
+        margin-top: 88px; 
     }
 }
 
-
+#members_table .wtHider table {
+  table-layout: fixed;
+  width: 98% !important;
+}
 
 .ht_master .wtHolder {
     padding-bottom: 1%;
@@ -83,13 +84,17 @@ label {
   margin-top: 20px;
   margin-bottom: 20px;
   width: auto;
+  margin-left: 20px !important;
 }
 
 .filters_box {
   display: flex;
   align-items: center;
   gap: 10px;
-}
+  flex-wrap: nowrap;     /* prevent wrapping to a new line */
+  justify-content: flex-start;
+  white-space: nowrap;   /* keep label and selects on one line */
+} 
 
 .filters_box label {
   font-weight: 600;
@@ -201,35 +206,51 @@ label {
     margin-top: 18px;
     color: #2b2b2b;
 }
-/* ---------- BUTTONS ---------- */
-.controls_box {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  padding-top: 10px;
-  margin-top: auto;
-  width: 80%;
-}
-.controls_box button {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-}
-.controls_box button:hover {
-  background-color: #3c3c3c;
+/* ---------- BUTTONS SA LABAS NG OVERLAY ---------- */
+.controls_box button:not(.save_record_details):not(.delete_record):not(.add_entry_details),
+.btn-declare,
+.btn-export {
+  background: #3b82f6 !important; /* Blue for other buttons */
+  color: white !important;
+  padding: 8px 12px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 14px !important;
+  margin-top: 0;
+  margin-bottom: 10px;
 }
 
-.btn-add {
-  background-color: #22c55e !important;
-  color:#fff; 
+.controls_box button:not(.save_record_details):not(.delete_record):not(.add_entry_details):hover,
+.btn-declare:hover,
+.btn-export:hover {
+  background: #2563eb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+  color: white !important;
 }
+
+/* ADD BUTTON - GREEN */
+.btn-add {
+  background: #22c55e !important; 
+  color: white !important;
+  padding: 8px 12px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 14px !important;
+}
+
 .btn-add:hover {
   background-color: #16a34a !important; 
   color:hsl(0, 0%, 21%); 
@@ -242,34 +263,59 @@ label {
   background-color: #2563eb !important;
   color:hsl(0, 0%, 21%); 
 }
-.btn-export {
-  background-color: #f97316 !important;
+.btn-archive {
+  background-color: #ffd001 !important;
   color:#fff; 
 }
-.btn-export:hover {
-  background-color: #ea580c !important;
+.btn-archive:hover {
+  background-color: #ffbb00 !important;
+  color:hsl(0, 0%, 21%); 
+}
+.btn-back {
+  background-color: #f85050 !important;
+  color:#fff; 
+}
+.btn-back:hover {
+  background-color: #ff3636 !important;
   color:hsl(0, 0%, 21%); 
 }
 
-/* ----------- BUTTONS SA OVERLAY ------------- */
-.save_record_details {
+/* ----------- BUTTONS SA OVERLAY (ORIGINAL STYLES) ------------- */
+.save_record_details,
+.delete_record,
+.add_entry_details {
   background-color: #8cf9b4 !important;
-  color: #0fa408;
+  color: #0fa408 !important;
+  padding: 8px 12px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 14px !important;
 }
 
-.save_record_details:hover {
+.save_record_details:hover,
+.add_entry_details:hover {
   background-color: #00ff5e !important;
-  color: hsl(0, 0%, 21%);
-}
-
-.delete_record {
-  background-color: #ffb3b3 !important;
-  color: #ff4040;
+  color: hsl(0, 0%, 21%) !important;
 }
 
 .delete_record:hover {
   background-color: #ff3636 !important;
   color: hsl(0, 0%, 21%);
+}
+
+.btn-export {
+  background-color: #ffb47e !important;
+  color:#ea580c; 
+}
+.btn-export:hover {
+  background-color: #ea580c !important;
+  color:hsl(0, 0%, 21%); 
 }
 
 .add_entry_details {
@@ -306,27 +352,6 @@ button,
   gap: 10px;
   margin-top: 15px;
   margin-left: 300px !important;
-}
-
-.contact-wrapper {
-    display: flex;
-    align-items: center;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 5px 8px;
-    background-color: #fff;
-}
-
-.prefix {
-    margin-right: 5px;
-    font-weight: bold;
-    color: #555;
-}
-
-#contact {
-    border: none;
-    outline: none;
-    flex: 1;
 }
 
 
@@ -534,7 +559,6 @@ button,
     backdrop-filter: blur(6px);
     background: rgba(0, 0, 0, 0.4);
     z-index: 9999;
-    display: flex;
     justify-content: center;  
     align-items: center;      
     overflow: auto;           
@@ -668,13 +692,12 @@ tr:hover {
   padding: 10px 16px;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  width: 144.5%;
+  width: 98%;
 }
 
 #members_table .ht_clone_top thead th {
   background-color: #fff !important;
   color: #1f1313 !important;
-  font-weight: 600 !important;
   text-align: center !important;
   border-left: none !important;
   border-right: none !important;
@@ -704,6 +727,32 @@ tr:hover {
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
   overflow: hidden;
+}
+
+/* More specific selector */
+div.table-container::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+div.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+div.table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+div.table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+div.table-container {
+    scrollbar-width: auto;
+    scrollbar-color: #888 #f1f1f1;
 }
 
 /* ========================================================= */
@@ -864,6 +913,7 @@ tr:hover {
   margin-top: 8px;
   flex-wrap: wrap;
   font-size: 14px;
+  margin-left: 20px !important;
 }
 
 .pagination-controls {
@@ -895,4 +945,131 @@ tr:hover {
   align-items: center;
   gap: 5px;
   margin-bottom: 10px;
+}
+
+/* Unsaved Changes Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.modal-buttons .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Delete modal specific styles */
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.3em;
+    border-bottom: 2px solid #e74c3c;
+    padding-bottom: 10px;
+}
+
+.modal-content p {
+    margin: 15px 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+/* Button hover effects (add to your existing button styles) */
+.btn-danger:hover {
+    background-color: #c0392b;
+    transform: translateY(-1px);
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+    transform: translateY(-1px);
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+.btn-danger { background: #dc3545; color: white; }
+.btn-primary { background: #007bff; color: white; }
+.btn-secondary { background: #6c757d; color: white; }
+
+/* Ensure entries table container in overlay matches main table styling */
+#overlay .table-container {
+    width: 100%;
+    overflow-x: auto;
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+/* Ensure the entries table itself has proper styling */
+#entries_table {
+    width: 100% !important;
+}
+
+#entries_table .ht_clone_top {
+    width: 100% !important;
+}
+
+#entries_table .ht_clone_top th {
+    background: #f8f9fa !important;
+    color: #1f1313 !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 10px 14px !important;
+}
+
+#entries_table .ht_clone_left thead th,
+#entries_table .ht_clone_left tbody th {
+    background: #f8f9fa !important;
+    color: #1f1313 !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    border-right: 1px solid #e0e0e0 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    width: 40px !important;
+}
+
+#entries_table td {
+    border-top: 1px solid #e0e0e0 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+#entries_table .wtHolder {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    overflow: hidden;
 }
