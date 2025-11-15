@@ -699,10 +699,11 @@ def get_dispatch_records():
 @server.route('/api/members/records', methods=['GET'])
 def get_members():
     try:
+        office_loc = current_user.office_location
         status = request.args.get('status', 'active')
         print(f"DEBUG: Fetching member records with status: {status}")
         
-        member_records = db_conn.get_member_records(status=status)
+        member_records = db_conn.get_member_records(status=status, office_loc=office_loc)
         print(f"DEBUG: Records fetched: {len(member_records) if member_records else 'None'}")
         
         if member_records is None:
@@ -726,11 +727,16 @@ def get_members():
         import traceback
         traceback.print_exc()
         return jsonify({"error": "Internal server error"}), 500
+    
     # TODO fix this after merge  
+    
+    '''
     office_loc = current_user.office_location
     
     member_records = db_conn.get_member_records(office_loc)
     return jsonify([record.to_dict() for record in member_records])
+    '''
+    
     '''
     records = db_conn.get_member_records()
     members_list = []
