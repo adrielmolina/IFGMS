@@ -56,7 +56,7 @@
 
 <div class="cards-container">
     
-    <div class="card yellow" hidden >
+    <div class="card yellow">
         <h3><img class="icons" src="{{ url_for('static', filename='assets/analytics.png') }}" alt="logo"> Sales</h3>
         <h2 class="numbercount" id="salesCurrentTotal">100,000</h2> 
         <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p> 
@@ -112,7 +112,7 @@
 
 <hr class="divider">
     
-    <div class="side-card full" hidden >
+    <div class="side-card full">
         <h4>UNIT SOLD</h4>
         <table id="unitTable" cellspacing="0" cellpadding="5">
             <tr>
@@ -340,32 +340,31 @@ document.addEventListener('DOMContentLoaded', function () {
         data.addColumn('number', 'Target');
 
         data.addRows([
-            ['Classic', 3000, 2500000],
-            ['Premier Bronze', 450, 5000000],
-            ['Premier Silver', 900, 4000000],
-            ['Premier Gold', 1500, 7500000],
-            ['Premier Platinum', 3000, 9000000],
-            ['Enhanced Platinum', 3600, 3000000],
-            ['Senior', 450, 4000000],
-            ['Senior Plus', 900, 5250000]
+            ['Classic', 3000, 30000],
+            ['Premier Bronze', 4500, 75000],
+            ['Premier Silver', 900, 15000],
+            ['Premier Gold', 1500, 25000],
+            ['Premier Platinum', 3000, 50000],
+            ['Enhanced Platinum', 30000, 60000],
+            ['Senior', 6000, 15000],
+            ['Senior Plus', 7000, 17500]
         ]);
 
-        var options = {
+var options = {
     title: 'Sales Performance by Membership Type',
     isStacked: false,
     chartArea: { width: '70%' }, 
     width: 1000, 
     height: 400,
     tooltip: {
-    textStyle: {
-    fontSize: 16,
-    bold: true,
-    color: '#333',
+        textStyle: {
+            fontSize: 16,
+            bold: true,
+            color: '#333',
+        },
+        showColorCode: true,
+        isHtml: true
     },
-    showColorCode: true,
-    isHtml: true
-},
-
     backgroundColor: '#fff',
     animation: {
         startup: true,    
@@ -375,11 +374,16 @@ document.addEventListener('DOMContentLoaded', function () {
     bar: {
         groupWidth: '60%',
     },
-    colors: ['#e74c3c', '#0049e6'],  // red & blue tones
+    colors: ['#e74c3c', '#0049e6'],
     vAxis: {
         viewWindow: {
             min: 0,
-            max: 10000000
+            max: 100000
+        },
+        format: '#,###',
+        textStyle: {
+            fontSize: 14,
+            color: '#444444'
         }
     },
     series: {
@@ -391,7 +395,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 };
-
 
         var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
         chart.draw(data, options);
