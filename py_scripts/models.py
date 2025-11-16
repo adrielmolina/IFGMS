@@ -117,7 +117,9 @@ class Records(Base):
             'paid': self.paid,
             'origin': self.origin,
             'remarks': self.remarks,
-            'tags': self.tags
+            'tags': self.tags,
+            'dispatch_ready': self.dispatch_ready,
+            'dispatch_id': self.dispatch_id
         }
     
 
