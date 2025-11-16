@@ -182,7 +182,8 @@ def dashboard():
 @server.route('/members')
 @login_required
 def members_page():
-    user_location = current_user.office_location if current_user else 'Chapter'
+    user_location = current_user.office_location if current_user and current_user.office_location else 'Chapter'
+    print(f"DEBUG: User location being passed to template: {user_location}")
     return render_template('members.html', user_location=user_location)
 
 
@@ -888,22 +889,30 @@ def save_entry_details():
 @login_required
 def save_entry_update():
     try:
-        
         data = request.get_json()
-        print(data)
-        if data:
-            entry_id = data.get('entry_id')
-            print('entry_id:', entry_id)    
-            
-            result = db_conn.save_entry_updates(data)
-            
-            if result:
-                return jsonify({"success": True})
-            else:
-                return jsonify({"success": False, "error": result}), 500
-        else:
+        print("=== ENTRY UPDATE API CALL ===")
+        print(f"Request data: {data}")
+        print(f"Data types: { {k: type(v) for k, v in data.items()} }")
+        
+        if not data:
             return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        entry_id = data.get('entry_id')
+        print(f'Processing update for entry_id: {entry_id}')
+        
+        result = db_conn.save_entry_updates(data)
+        
+        if result:
+            print("✅ Entry update successful")
+            return jsonify({"success": True})
+        else:
+            print("❌ Entry update failed in db_conn")
+            return jsonify({"success": False, "error": "Database update failed"}), 500
+            
     except Exception as e:
+        print(f"💥 Exception in save_entry_update route: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 
