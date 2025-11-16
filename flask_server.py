@@ -424,51 +424,6 @@ def export_record_entries(record_id):
     finally:
         db_session.close()
 
-# TODO move to accounts api routes section
-@server.route('/create_acc_submit', methods=['POST'])
-def create_acc_submit():
-    user = request.form.get('username')
-    password = request.form.get('password')
-    email = request.form.get('email')
-
-    fname = request.form.get('fname').upper()
-    mname = request.form.get('mname').upper()
-    lname = request.form.get('lname').upper()
-    suffix = request.form.get('suffix')
-
-    bdate = request.form.get('bdate')
-    contact = request.form.get('contact_no')
-
-    acct_created = date.today().strftime("%Y-%m-%d")
-    branch = request.form.get('branch')
-
-    if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
-        create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
-                            suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
-    
-    if not create_new_acc == True:
-        flash({
-            "title": "Account creation failed!",
-            "text": f"{create_new_acc}. Please try again.",
-            "redirect_url": url_for('create_acc')
-        }, "error")
-        return render_template('create_account.html')
-    else:
-        flash({
-        "title": "Account created successfully!",
-        "text": "Click continue to go back to login screen.",
-        "redirect_url": url_for('landing_page')
-        }, "success")
-        return render_template('create_account.html')
-
-
-    # TODO add condition to check if the username already exists
-    # TODO fix condition to check if account creation succeeded
-    # TODO fix duplicate email/username error flash message not showing up
-
-
-
-
 # ========================== FORGOT PASSWORD ==========================
 @server.route("/forgot_password_otp", methods=["GET", "POST"])
 def forgot_password_otp():
