@@ -1207,6 +1207,10 @@ def save_entry_updates(data):
     db_session = SessionLocal()
     try:
         entry_id = data.get("entry_id")
+        print(f"=== SAVE ENTRY UPDATES CALLED ===")
+        print(f"Entry ID: {entry_id}")
+        print(f"Full data received: {data}")
+        
         if not entry_id:
             print("No entry_id provided.")
             return None
@@ -1219,26 +1223,76 @@ def save_entry_updates(data):
             print("Entry not found.")
             return None
 
-        entry.maab_category = data["maab_category"]
-        entry.maab_no = data["maab_no"]
-        entry.id_received = data["id_received"]
-        entry.declared = data["declared"]
-        entry.paid = data["paid"]
-        entry.OR_num = data["OR_num"]
-        entry.remarks = data["remarks"]
-        entry.tags = data["tags"]
-        entry.dispatch_ready = data["dispatch_ready"]
-        entry.dispatch_id = data["dispatch_id"]
+        # Safely update all entry fields with proper defaults
+        update_fields = [
+            'maab_category', 'maab_no', 'id_received', 'declared', 
+            'paid', 'OR_num', 'remarks', 'tags', 'dispatch_ready'
+        ]
+        
+        for field in update_fields:
+            if field in data:
+                value = data[field]
+                # Handle boolean fields
+                if field in ['id_received', 'declared', 'paid', 'dispatch_ready']:
+                    value = bool(value) if value is not None else False
+                # Handle string fields (convert None to empty string)
+                elif field in ['maab_category', 'maab_no', 'OR_num', 'remarks', 'tags']:
+                    value = str(value) if value is not None else ""
+                
+                setattr(entry, field, value)
+                print(f"Set {field} to: {value} (type: {type(value)})")
 
-        entry.declaration_date = (
-            datetime.strptime(data["declaration_date"], "%m/%d/%Y").date()
-            if data["declaration_date"] else None
-        )
+        # Handle dispatch_id separately - it must be NULL or integer, not empty string
+        dispatch_id = data.get("dispatch_id")
+        if dispatch_id:
+            try:
+                # Try to convert to integer if it's a string with numbers
+                if isinstance(dispatch_id, str) and dispatch_id.strip():
+                    entry.dispatch_id = int(dispatch_id)
+                elif isinstance(dispatch_id, int):
+                    entry.dispatch_id = dispatch_id
+                else:
+                    entry.dispatch_id = None
+                print(f"Set dispatch_id to: {entry.dispatch_id}")
+            except (ValueError, TypeError):
+                entry.dispatch_id = None
+                print("Set dispatch_id to None (conversion failed)")
+        else:
+            entry.dispatch_id = None
+            print("Set dispatch_id to None (no value provided)")
 
-        entry.OR_date = (
-            datetime.strptime(data["OR_date"], "%m/%d/%Y").date()
-            if data["OR_date"] else None
-        )
+        # Handle date conversion with multiple format support
+        declaration_date = data.get("declaration_date")
+        if declaration_date:
+            try:
+                # Try multiple date formats
+                if '/' in declaration_date:
+                    entry.declaration_date = datetime.strptime(declaration_date, "%m/%d/%Y").date()
+                else:
+                    entry.declaration_date = datetime.strptime(declaration_date, "%Y-%m-%d").date()
+                print(f"Set declaration_date to: {entry.declaration_date}")
+            except ValueError as e:
+                print(f"Error parsing declaration_date {declaration_date}: {e}")
+                entry.declaration_date = None
+        else:
+            entry.declaration_date = None
+            print("declaration_date set to None")
+
+        OR_date = data.get("OR_date")
+        if OR_date:
+            try:
+                # Try multiple date formats
+                if '/' in OR_date:
+                    entry.OR_date = datetime.strptime(OR_date, "%m/%d/%Y").date()
+                else:
+                    entry.OR_date = datetime.strptime(OR_date, "%Y-%m-%d").date()
+                print(f"Set OR_date to: {entry.OR_date}")
+            except ValueError as e:
+                print(f"Error parsing OR_date {OR_date}: {e}")
+                entry.OR_date = None
+        else:
+            entry.OR_date = None
+            print("OR_date set to None")
 
         # =======================
         # UPDATE MEMBER INFO
@@ -1248,32 +1302,51 @@ def save_entry_updates(data):
             print("Member not found.")
             return None
 
-        member.first_name = data["first_name"]
-        member.middle_name = data["middle_name"]
-        member.last_name = data["last_name"]
-        member.suffix = data["suffix"]
-        member.birth_date = (
-            datetime.strptime(data["birth_date"], "%m/%d/%Y").date()
-            if data["birth_date"] else None
-        )
-        member.age = data["age"]
-        member.sex = data["sex"]
-        member.contact_no = data["contact_no"]
-        member.email = data["email"]
-        member.address = data["address"]
-        member.blood_type = data["blood_type"]
+        # Update member fields
+        member_fields = [
+            'first_name', 'middle_name', 'last_name', 'suffix', 'age', 
+            'sex', 'contact_no', 'email', 'address', 'blood_type'
+        ]
+        
+        for field in member_fields:
+            if field in data:
+                value = data[field]
+                # Convert None to empty string for string fields
+                if value is None:
+                    value = ""
+                setattr(member, field, value)
+                print(f"Set member {field} to: {value}")
+
+        # Handle birth date conversion
+        birth_date = data.get("birth_date")
+        if birth_date:
+            try:
+                # Try multiple date formats
+                if '/' in birth_date:
+                    member.birth_date = datetime.strptime(birth_date, "%m/%d/%Y").date()
+                else:
+                    member.birth_date = datetime.strptime(birth_date, "%Y-%m-%d").date()
+                print(f"Set birth_date to: {member.birth_date}")
+            except ValueError as e:
+                print(f"Error parsing birth_date {birth_date}: {e}")
+                member.birth_date = None
+        else:
+            member.birth_date = None
+            print("birth_date set to None")
 
         # =======================
         # SAVE ALL CHANGES
         # =======================
+        print("Committing changes to database...")
         db_session.commit()
-
+        print(f"✅ Successfully updated entry {entry_id} and member {member.member_id}")
         return True
 
-    
     except Exception as e:
         db_session.rollback()
-        print(f"Error saving entry updates: {e}")
+        print(f"❌ Error saving entry updates: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 

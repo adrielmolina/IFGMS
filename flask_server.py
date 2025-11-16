@@ -1,7 +1,8 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, send_file, send_from_directory, abort
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from livereload import Server
-from py_scripts import db_conn, tools
+from py_scripts import db_conn, tools, models
+from py_scripts.db_conn import SessionLocal
 from datetime import date, datetime
 import os
 import pandas as pd
@@ -9,7 +10,6 @@ import openpyxl
 from functools import wraps
 from io import BytesIO
 from flask import send_file
-
 
 
 server = Flask(__name__)
@@ -182,7 +182,8 @@ def dashboard():
 @server.route('/members')
 @login_required
 def members_page():
-    user_location = current_user.office_location if current_user else 'Chapter'
+    user_location = current_user.office_location if current_user and current_user.office_location else 'Chapter'
+    print(f"DEBUG: User location being passed to template: {user_location}")
     return render_template('members.html', user_location=user_location)
 
 
@@ -423,6 +424,51 @@ def export_record_entries(record_id):
     finally:
         db_session.close()
 
+# TODO move to accounts api routes section
+@server.route('/create_acc_submit', methods=['POST'])
+def create_acc_submit():
+    user = request.form.get('username')
+    password = request.form.get('password')
+    email = request.form.get('email')
+
+    fname = request.form.get('fname').upper()
+    mname = request.form.get('mname').upper()
+    lname = request.form.get('lname').upper()
+    suffix = request.form.get('suffix')
+
+    bdate = request.form.get('bdate')
+    contact = request.form.get('contact_no')
+
+    acct_created = date.today().strftime("%Y-%m-%d")
+    branch = request.form.get('branch')
+
+    if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
+        create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
+                            suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
+    
+    if not create_new_acc == True:
+        flash({
+            "title": "Account creation failed!",
+            "text": f"{create_new_acc}. Please try again.",
+            "redirect_url": url_for('create_acc')
+        }, "error")
+        return render_template('create_account.html')
+    else:
+        flash({
+        "title": "Account created successfully!",
+        "text": "Click continue to go back to login screen.",
+        "redirect_url": url_for('landing_page')
+        }, "success")
+        return render_template('create_account.html')
+
+
+    # TODO add condition to check if the username already exists
+    # TODO fix condition to check if account creation succeeded
+    # TODO fix duplicate email/username error flash message not showing up
+
+
+
+
 # ========================== FORGOT PASSWORD ==========================
 @server.route("/forgot_password_otp", methods=["GET", "POST"])
 def forgot_password_otp():
@@ -623,6 +669,30 @@ def upload_profile_pic():
         print("Exception in upload_profile_pic:", e)
         return jsonify({"success": False, "error": str(e)}), 500
 
+@server.route('/api/members/filter_options', methods=['GET'])
+@login_required
+def get_member_filter_options():
+    db_session = SessionLocal()
+    try:
+        # Get distinct years from records
+        years = db_session.query(models.Records.year).distinct().filter(models.Records.year.isnot(None)).order_by(models.Records.year.desc()).all()
+        years_list = [year[0] for year in years]
+        
+        # Get distinct origins from records
+        origins = db_session.query(models.Records.origin).distinct().filter(models.Records.origin.isnot(None)).order_by(models.Records.origin).all()
+        origins_list = [origin[0] for origin in origins]
+        
+        return jsonify({
+            'years': years_list,
+            'origins': origins_list
+        })
+        
+    except Exception as e:
+        print(f"Error fetching filter options: {e}")
+        return jsonify({'years': [], 'origins': []}), 500
+    finally:
+        db_session.close()
+
 # === Fetch profile picture ===
 @server.route('/api/get_profile_pic/<int:user_id>')
 @login_required
@@ -655,89 +725,6 @@ def get_dispatch_records():
     return jsonify([record.to_dict() for record in dispatch_records])
 
 
-# ====== API FOR DASHBOARD STATS ======
-
-@server.route('/api/members/count', methods=['GET'])
-def get_members_count():
-    try:
-        # Count all entries across all records
-        total_count = 0
-        all_records = db_conn.get_member_records()
-        
-        for record in all_records:
-            entries = db_conn.get_entries(record.record_id)  # or record.id
-            total_count += len(entries)
-            
-        return jsonify({
-            'success': True,
-            'total_members': total_count
-        })
-    except Exception as e:
-        print(f"Error in get_members_count: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@server.route('/api/members/expiring_soon', methods=['GET'])
-def get_expiring_soon_count():
-    try:
-        from datetime import datetime, timedelta
-        today = datetime.now().date()
-        thirty_days_from_now = today + timedelta(days=30)
-        last_month = today - timedelta(days=30)
-        
-        # Get all records and their entries
-        all_records = db_conn.get_member_records()
-        
-        current_expiring = 0
-        previous_expiring = 0
-        
-        for record in all_records:
-            # Get entries for this record
-            entries = db_conn.get_entries(record.record_id)
-            
-            for entry in entries:
-                # Check OR_date for expiration
-                if hasattr(entry, 'OR_date') and entry.OR_date:
-                    # Convert to date object if it's string
-                    if isinstance(entry.OR_date, str):
-                        or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
-                    else:
-                        or_date = entry.OR_date
-                    
-                    # Calculate expiration date (OR_date + 1 year)
-                    expiration_date = or_date + timedelta(days=365)
-                    
-                    # Current period: expiring in next 30 days
-                    if today <= expiration_date <= thirty_days_from_now:
-                        current_expiring += 1
-                    
-                    # Previous period: expired in last 30 days
-                    if last_month <= expiration_date <= today:
-                        previous_expiring += 1
-        
-        # Calculate percentage change
-        if previous_expiring > 0:
-            percentage_change = ((current_expiring - previous_expiring) / previous_expiring) * 100
-        else:
-            percentage_change = 0
-        
-        return jsonify({
-            'success': True,
-            'expiring_soon_count': current_expiring,
-            'previous_period_count': previous_expiring,
-            'percentage_change': round(percentage_change, 2),
-            'timeframe_days': 30
-        })
-    except Exception as e:
-        print(f"Error in get_expiring_soon_count: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
 # API FOR MEMBERS PAGE
 
 # TODO fix api route names ex. /api/members/get_records
@@ -745,11 +732,10 @@ def get_expiring_soon_count():
 @server.route('/api/members/records', methods=['GET'])
 def get_members():
     try:
-        office_loc = current_user.office_location
         status = request.args.get('status', 'active')
         print(f"DEBUG: Fetching member records with status: {status}")
         
-        member_records = db_conn.get_member_records(status=status, office_loc=office_loc)
+        member_records = db_conn.get_member_records(status=status)
         print(f"DEBUG: Records fetched: {len(member_records) if member_records else 'None'}")
         
         if member_records is None:
@@ -773,16 +759,6 @@ def get_members():
         import traceback
         traceback.print_exc()
         return jsonify({"error": "Internal server error"}), 500
-    
-    # TODO fix this after merge  
-    
-    '''
-    office_loc = current_user.office_location
-    
-    member_records = db_conn.get_member_records(office_loc)
-    return jsonify([record.to_dict() for record in member_records])
-    '''
-    
     '''
     records = db_conn.get_member_records()
     members_list = []
@@ -913,22 +889,30 @@ def save_entry_details():
 @login_required
 def save_entry_update():
     try:
-        
         data = request.get_json()
-        print(data)
-        if data:
-            entry_id = data.get('entry_id')
-            print('entry_id:', entry_id)    
-            
-            result = db_conn.save_entry_updates(data)
-            
-            if result:
-                return jsonify({"success": True})
-            else:
-                return jsonify({"success": False, "error": result}), 500
-        else:
+        print("=== ENTRY UPDATE API CALL ===")
+        print(f"Request data: {data}")
+        print(f"Data types: { {k: type(v) for k, v in data.items()} }")
+        
+        if not data:
             return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        entry_id = data.get('entry_id')
+        print(f'Processing update for entry_id: {entry_id}')
+        
+        result = db_conn.save_entry_updates(data)
+        
+        if result:
+            print("✅ Entry update successful")
+            return jsonify({"success": True})
+        else:
+            print("❌ Entry update failed in db_conn")
+            return jsonify({"success": False, "error": "Database update failed"}), 500
+            
     except Exception as e:
+        print(f"💥 Exception in save_entry_update route: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 

@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
 
-
 {% block title %}Members Management{% endblock %}
-
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/members.css') }}">
@@ -17,22 +15,12 @@
 
     <link rel="stylesheet" href="/static/styles/toast.css">
     <script src="/static/js/toast.js"></script>
+
 {% endblock %}
 
-
 {% block content %}
-    <!-- TODO add sort button  -->
-     <!-- TODO DONE make the scrollbars always visible -->
-      <!-- TODO add auto district number based on municipality selected -->
-       <!-- TODO DONE add select options for accepted tags -->
-        <!-- TODO DONE add origin select options -->
-         <!-- TODO add js function to set location particular to all caps while typing -->
-            <!-- TODO DONE center the title -->
-             <!-- TODO add flat list of members -->
-                <!-- TODO scroll to top of the overlay everytime a record is opened -->
-                 <!-- TODO separate the delete record button from save button -->
-        <div class="module_name">
-            <h1>Members </h1>
+    <div class="module_name">
+        <h1>Members </h1>
 
         <div class="search_box">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -41,558 +29,522 @@
         </div>
     </div>
 
-        <div class="filter_search_container">
-            <div class="filters_box">
-                <label for="filter_year">Filter by Year:</label>
-    <select id="filter_year" class="year-picker">
-        <option value="">Year</option>
-        <!-- Will be populated dynamically -->
-    </select>
+    <div class="filter_search_container">
+        <div class="filters_box">
+            <label for="filter_year">Filter by Year:</label>
+            <select id="filter_year" class="year-picker">
+                <option value="">All Years</option>
+                <!-- Will be populated dynamically -->
+            </select>
 
-                <select id="filter_origin">
-                    <label for="origin">Origin</label>
-                    <option value="">All Origin</option>
-                    <option value="Chapter">Chapter</option>
-                    <option value="Dasmariñas">Dasmariñas</option>
-                    <option value="Silang">Silang</option>
-                </select>
-            </div>
-
-            <div class="controls_box" id="activeControls">
-                <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
-                <button id="add_to_dispatch" class="btn-declare"><i class="fa-solid fa-list"></i> Add to Dispatch</button>
-                <button class="btn-archive"><i class="fa-regular fa-folder-open"></i> Archive</button>
-            </div>
-
-            <div class="controls_box" id="archiveControls" style="display: none;">
-                <button class="btn-back"><i class="fa-solid fa-arrow-left"></i> Back</button>
-            </div>
+            <label for="filter_origin">Filter by Origin:</label>
+            <select id="filter_origin">
+                <option value="">All Origins</option>
+                <!-- Will be populated dynamically -->
+            </select>
         </div>
 
-    <!-- TODO declaration/transmission: automate this with js- check the location of the person signed in  -->
-<div class="entries-select">
-    Show
-    <select id="entriesPerPage">
-      <option value="10" selected>10</option>
-      <option value="25">25</option>
-      <option value="50">50</option>
-      <option value="100">100</option>
-    </select>
-    entries
-  </div>
+        <div class="controls_box" id="activeControls">
+            <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
+            <button id="add_to_dispatch" class="btn-declare"><i class="fa-solid fa-list"></i> Add to Dispatch</button>
+            <button class="btn-archive"><i class="fa-regular fa-folder-open"></i> Archive</button>
+        </div>
+
+        <div class="controls_box" id="archiveControls" style="display: none;">
+            <button class="btn-back"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        </div>
+    </div>
+
+    <div class="entries-select">
+        Show
+        <select id="entriesPerPage">
+          <option value="10" selected>10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+        entries
+    </div>
 
     <div class="table-container">
         <div class="table-title"></div>
         <div id="members_table" class="ht-theme-main"></div>
     </div>
 
-    <!-- Pagination and summary area -->
-<div class="pagination-container">
-  <div class="summary">
-    <p id="summaryText">Showing 1 to 10 of 40 records</p>
-  </div>
+    <div class="pagination-container">
+        <div class="summary">
+            <p id="summaryText">Showing 1 to 10 of 40 records</p>
+        </div>
 
-  <div id="paginationControls" class="pagination-controls"></div>
-</div>
+        <div id="paginationControls" class="pagination-controls"></div>
+    </div>
 
-    <!-- TODO fix unclosed divs - breaks when closed -->
     <div id="overlay" class="overlay">
-        <div id="overlay-content" class="overlay-content"><div>
-            <span id="close-overlay" class="close-overlay">&times;</span>
-            <div id="overlay-body" class="overlay-body"><div>
-                <!-- Dynamic content goes here -->
-    <div>
+        <div id="overlay-content" class="overlay-content">
+            <div>
+                <span id="close-overlay" class="close-overlay">&times;</span>
+                <div id="overlay-body" class="overlay-body">
+                    <div>
+                        <!-- RECORD DETAILS TOGGLE -->
+                        <div class="record-radio-controls">
+                            <input type="radio" id="showForm" name="record_input_mode" value="form" checked>
+                            <label for="showForm">
+                                <i class="fa-solid fa-pen-to-square"></i> Show Record Form
+                            </label>
 
-        <!-- RECORD DETAILS TOGGLE -->
-        <div class="record-radio-controls">
-                <input type="radio" id="showForm" name="record_input_mode" value="form" checked>
-            <label for="showForm">
-                <i class="fa-solid fa-pen-to-square"></i> Show Record Form
-            </label>
-
-                <input type="radio" id="hideForm" name="record_input_mode" value="table">
-            <label for="hideForm">
-                <i class="fa-solid fa-chevron-down"></i> Hide Record Form
-            </label>
-        </div>
-
-        <div id="record_details" class="record_details">           
-        <table class="record_details_table">
-            <tr>
-                <!-- TODO WIP remove if not needed -->
-                <!-- <td> -->
-                    <!-- <label for="dispatch_ready">Add to Dispatch</label> -->
-                    <!-- <input type="text" id="add_to_dispatch" name="add_to_dispatch" value="add_to_dispatch" value="0" autocomplete="off" readonly placeholder=" "> -->
-                <!-- </td> -->
-
-                <td>
-                    <div class="input-container">
-                        <label for="record_id">Record ID</label>
-                        <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly placeholder=" ">
-                    </div>
-                </td>
-
-                <td>
-                    <!-- TODO change to year only or remove the field completely -->
-                    <div class="input-container">
-                        <label for="year">Year</label>
-                        <input type="text" id="year" name="year" required autocomplete="off" readonly placeholder=" ">
-                    </div>
-                </td>
-
-                <td>
-                    <div class="input-container checkbox-container">
-                        <label for="id_rcv">ID Received</label>
-                        <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
-                    </div>
-                </td>
-
-                <td>
-                    <div class="input-container checkbox-container">
-                        <label for="paid">Paid</label>
-                        <input type="checkbox" id="paid" name="paid" autocomplete="off">
-                    </div>
-                </td>
-
-                <td>
-                    <div class="input-container checkbox-container">
-                        <label for="declared">Declared</label>
-                        <input type="checkbox" id="declared" name="declared" autocomplete="off">
-                    </div>
-                </td>
-
-                <td>
-                    <div class="input-container">
-                        <label for="dec_date">Declaration Date</label>
-                        <input type="date" id="dec_date" name="dec_date" required autocomplete="off">
-                    </div>
-                </td>
-
-                <td>
-                    <div class="input-container">
-                        <label for="eff_date">Effectivity Date</label>
-                        <input type="date" id="eff_date" name="eff_date" required autocomplete="off">
-                    </div>
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <!-- TODO add js function to set location particular to all caps while typing -->
-                    <div class="input-container">
-                        <label for="loc_par">Location Particular</label>
-                        <input type="text" id="loc_par" name="loc_par" required autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
-                
-                <td colspan="2">
-                    <!-- TODO add select options for accepted tags -->
-                    <div class="input-container">
-                        <label for="loc_cat">Location Category</label>
-                        <select name="loc_cat" id="loc_cat" required>
-                            <option value=""></option>
-                            <option value="Public Nursery">Public Nursery</option>
-                            <option value="Private Nursery">Private Nursery</option>
-                            <option value="Public Kinder">Public Kinder</option>
-                            <option value="Private Kinder">Private Kinder</option>
-                            <option value="Public Elementary School">Public Elementary School</option>
-                            <option value="Private Elementary School">Private Elementary School</option>
-                            <option value="Public High School">Public High School</option>
-                            <option value="Private High School">Private High School</option>
-                            <option value="Public Senior High School">Public Senior High School</option>
-                            <option value="Private Senior High School">Private Senior High School</option>
-                            <option value="Public Integrated School">Public Integrated School</option>
-                            <option value="Private Integrated School">Private Integrated School</option>
-                            <option value="Public College">Public College</option>
-                            <option value="Private College">Private College</option>
-                            <option value="Government Company/Organization">Government Company/Organization</option>
-                            <option value="Private Company/Organization">Private Company/Organization</option>
-                            <option value="Church">Church</option>
-                            <option value="Red Cross 143">Red Cross 143</option>
-                            <option value="RCY">RCY</option>
-                            <option value="Brgy">Brgy</option>
-                            <option value="LGU">LGU</option>
-                            <option value="MBD">MBD</option>
-                            <option value="Events">Events</option>
-                            <option value="Training">Training</option>
-                            <option value="Company/Organization Training">Company/Organization Training</option>
-                            <option value="Individual">Individual</option>
-                            <option value="Walk-In">Walk-In</option>
-                        </select>
-                    </div>
-                </td>
-
-                <td colspan="2">
-                    <div class="input-container">
-                        <label for="municipality">Municipality</label>
-                        <select name="municipality" id="municipality" required>
-                            <option value=""></option>
-                            <option value="Cavite City">Cavite City</option>
-                            <option value="Kawit">Kawit</option>
-                            <option value="Noveleta">Noveleta</option>
-                            <option value="Rosario">Rosario</option>
-                            <option value="Bacoor">Bacoor</option>
-                            <option value="Imus">Imus</option>
-                            <option value="Dasmariñas">Dasmariñas</option>
-                            <option value="Carmona">Carmona</option>
-                            <option value="General Mariano Alvarez (GMA)">General Mariano Alvarez (GMA)</option>
-                            <option value="Silang">Silang</option>
-                            <option value="General Trias">General Trias</option>
-                            <option value="Amadeo">Amadeo</option>
-                            <option value="Indang">Indang</option>
-                            <option value="Tanza">Tanza</option>
-                            <option value="Trece Martires">Trece Martires</option>
-                            <option value="Alfonso">Alfonso</option>
-                            <option value="Gen. Emilio Aguinaldo (Bailen)">Gen. Emilio Aguinaldo (Bailen)</option>
-                            <option value="Magallanes">Magallanes</option>
-                            <option value="Maragondon">Maragondon</option>
-                            <option value="Mendez">Mendez</option>
-                            <option value="Naic">Naic</option>
-                            <option value="Tagaytay City">Tagaytay City</option>
-                            <option value="Ternate">Ternate</option>
-                        </select>
-                    </div>
-                </td>
-
-                <td>
-                <!-- TODO add auto district number based on municipality selected -->
-                        <div class="input-container">
-                            <label for="district">District</label>
-                            <input type="text" id="district" name="district" required autocomplete="off" readonly placeholder=" ">
+                            <input type="radio" id="hideForm" name="record_input_mode" value="table">
+                            <label for="hideForm">
+                                <i class="fa-solid fa-chevron-down"></i> Hide Record Form
+                            </label>
                         </div>
-                </td>
-                
-                <td>
-                <!-- TODO add origin select options -->
-                <!-- TODO autofill based on account logged in -->
-                <!-- TODO change this to select so it is still modifiable -->
-                    <div class="input-container">
-                        <label for="origin">Origin</label>
-                        <select id="origin" name="origin" required>
-                            <option value="" disabled selected>Select origin...</option>
-                            <option value="Silang">Silang</option>
-                            <option value="Dasmariñas">Dasmariñas</option>
-                            <option value="Chapter">Chapter</option>
-                        </select>
-                        <small style="font-size: 0.8em; color: #666;">Auto-set based on your location</small>
-                    </div>
 
-                </td>
-            </tr>
+                        <div id="record_details" class="record_details">           
+                            <table class="record_details_table">
+                                <tr>
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="record_id">Record ID</label>
+                                            <input type="text" id="record_id" name="record_id" value="0" autocomplete="off" readonly placeholder=" ">
+                                        </div>
+                                    </td>
 
-            <tr>
-                <td colspan="6">
-                    <div class="input-container">
-                        <label for="remarks">Remarks</label>
-                        <input type="text" id="remarks" name="remarks" autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="year">Year</label>
+                                            <input type="text" id="year" name="year" autocomplete="off" readonly placeholder=" ">
+                                        </div>
+                                    </td>
 
-                <td>
-                    <div class="input-container">
-                        <label for="tags">Tags</label>
-                        <select id="tags" name="tags">
-                            <option value="" selected>No Tag</option>
-                            <option value="Underage">Underage</option>
-                            <option value="Overage">Overage</option>
-                            <option value="Late-declare">Late-declare</option>
-                        </select>
-                    </div>
+                                    <td>
+                                        <div class="input-container checkbox-container">
+                                            <label for="id_rcv">ID Received</label>
+                                            <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
+                                        </div>
+                                    </td>
 
-                </td>
-            </tr>
-        </table>
+                                    <td>
+                                        <div class="input-container checkbox-container">
+                                            <label for="paid">Paid</label>
+                                            <input type="checkbox" id="paid" name="paid" autocomplete="off">
+                                        </div>
+                                    </td>
 
-        <div class="controls_box">
-            <button id="save_record_details" class="save_record_details">
-                <img src="/static/assets/save.png" alt="save" class="btn-icon"> Save
-            </button>
-            <button id="delete_record" class="delete_record">
-                <img src="/static/assets/delete.png" alt="delete" class="btn-icon"> Delete
-            </button>
-            <button id="export" class="btn-export">
-                <img src="/static/assets/sheets.png" alt="export" class="btn-icon"> Export to Excel
-            </button>
-        </div>
-            <!-- TODO add delete record function -->
-        </div>
-    </form>
-</div>
-                
-                <!-- TODO fix the visual bug where the entry details table is compressed at the center when first opening the overlay -->
-            <!-- ENTRY DETAILS TOGGLE -->
-            <div class="entry-radio-controls">
-                <input type="radio" id="showEntry" name="entry_input_mode" value="form" checked>
-                    <label for="showEntry">
-                        <i class="fa-solid fa-user-plus"></i> Show Entry Form
-                    </label>
+                                    <td>
+                                        <div class="input-container checkbox-container">
+                                            <label for="declared">Declared</label>
+                                            <input type="checkbox" id="declared" name="declared" autocomplete="off">
+                                        </div>
+                                    </td>
 
-                <input type="radio" id="showTable" name="entry_input_mode" value="table">
-                    <label for="showTable">
-                        <i class="fa-solid fa-table"></i> Show Table Only
-                    </label>
-            </div>
-                
-                <div class="second_row">
-                <div id="entry_details" class="entry_details">
-                <!-- <form id="record_entries"> -->
-        <table>
-            <tr>
-                <td>
-                    <div class="input-container">
-                        <label for="maab_cat">Category</label>
-                        <select name="maab_cat" id="maab_cat" required>
-                            <option value="Classic">Classic</option>
-                            <option value="Bronze">Bronze</option>
-                            <option value="Silver">Silver</option>
-                            <option value="Gold">Gold</option>
-                            <option value="Platinum">Platinum</option>
-                            <option value="Safe Card">Safe Card</option>
-                            <option value="Senior">Senior</option>
-                            <option value="Senior+">Senior+</option>            
-                        </select>
-                    </div>
-                </td>
+                                    <td>
+                                        <div class="input-container checkbox-container">
+                                            <label for="record_dispatch_ready">Dispatch Ready</label>
+                                            <input type="checkbox" id="record_dispatch_ready" name="record_dispatch_ready" autocomplete="off" readonly>
+                                        </div>
+                                    </td>
 
-                <td>
-                    <div class="input-container">
-                        <label for="maab_no">MAAB No.</label>
-                        <input type="text" id="maab_no" name="maab_no" required autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
-    
-                <td>
-                    <div class="input-container">
-                        <label for="fname">First Name</label>
-                        <input type="text" id="fname" name="fname" required autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
-                
-                <td>
-                    <div class="input-container">
-                        <label for="mname">Middle Name</label>
-                        <input type="text" id="mname" name="mname" required autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="dec_date">Declaration Date</label>
+                                            <input type="date" id="dec_date" name="dec_date" autocomplete="off">
+                                        </div>
+                                    </td>
 
-                <td>
-                    <div class="input-container">
-                        <label for="lname">Last Name</label>
-                        <input type="text" id="lname" name="lname" required autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="eff_date">Effectivity Date<span class="required-star">*</span></label>
+                                            <input type="date" id="eff_date" name="eff_date" required autocomplete="off">
+                                        </div>
+                                    </td>
+                                </tr>
 
-                <td>
-                    <div class="input-container">
-                        <label for="suffix">Suffix</label>
-                        <select name="suffix" id="suffix" required>
-                            <option value="NA">NA</option>
-                            <option value="Jr">Jr</option>
-                            <option value="Sr">Sr</option>
-                            <option value="II">II</option>
-                            <option value="III">III</option>
-                            <option value="IV">IV</option>
-                            <option value="V">V</option>
-                            <option value="VI">VI</option>
-                            <option value="VII">VII</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
+                                <tr>
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="loc_par">Location Particular<span class="required-star">*</span></label>
+                                            <input type="text" id="loc_par" name="loc_par" required autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+                                    
+                                    <td colspan="2">
+                                        <div class="input-container">
+                                            <label for="loc_cat">Location Category<span class="required-star">*</span></label>
+                                            <select name="loc_cat" id="loc_cat" required>
+                                                <option value=""></option>
+                                                <option value="Public Nursery">Public Nursery</option>
+                                                <option value="Private Nursery">Private Nursery</option>
+                                                <option value="Public Kinder">Public Kinder</option>
+                                                <option value="Private Kinder">Private Kinder</option>
+                                                <option value="Public Elementary School">Public Elementary School</option>
+                                                <option value="Private Elementary School">Private Elementary School</option>
+                                                <option value="Public High School">Public High School</option>
+                                                <option value="Private High School">Private High School</option>
+                                                <option value="Public Senior High School">Public Senior High School</option>
+                                                <option value="Private Senior High School">Private Senior High School</option>
+                                                <option value="Public Integrated School">Public Integrated School</option>
+                                                <option value="Private Integrated School">Private Integrated School</option>
+                                                <option value="Public College">Public College</option>
+                                                <option value="Private College">Private College</option>
+                                                <option value="Government Company/Organization">Government Company/Organization</option>
+                                                <option value="Private Company/Organization">Private Company/Organization</option>
+                                                <option value="Church">Church</option>
+                                                <option value="Red Cross 143">Red Cross 143</option>
+                                                <option value="RCY">RCY</option>
+                                                <option value="Brgy">Brgy</option>
+                                                <option value="LGU">LGU</option>
+                                                <option value="MBD">MBD</option>
+                                                <option value="Events">Events</option>
+                                                <option value="Training">Training</option>
+                                                <option value="Company/Organization Training">Company/Organization Training</option>
+                                                <option value="Individual">Individual</option>
+                                                <option value="Walk-In">Walk-In</option>
+                                            </select>
+                                        </div>
+                                    </td>
 
-            <tr>
-                <td>
-                    <div class="input-container">
-                        <label for="bdate">Birthdate</label>
-                            <input type="date" id="bdate" name="bdate" required autocomplete="off">
-                    </div>
-                </td>
+                                    <td colspan="2">
+                                        <div class="input-container">
+                                            <label for="municipality">Municipality<span class="required-star">*</span></label>
+                                            <select name="municipality" id="municipality" required>
+                                                <option value=""></option>
+                                                <option value="Cavite City">Cavite City</option>
+                                                <option value="Kawit">Kawit</option>
+                                                <option value="Noveleta">Noveleta</option>
+                                                <option value="Rosario">Rosario</option>
+                                                <option value="Bacoor">Bacoor</option>
+                                                <option value="Imus">Imus</option>
+                                                <option value="Dasmariñas">Dasmariñas</option>
+                                                <option value="Carmona">Carmona</option>
+                                                <option value="General Mariano Alvarez (GMA)">General Mariano Alvarez (GMA)</option>
+                                                <option value="Silang">Silang</option>
+                                                <option value="General Trias">General Trias</option>
+                                                <option value="Amadeo">Amadeo</option>
+                                                <option value="Indang">Indang</option>
+                                                <option value="Tanza">Tanza</option>
+                                                <option value="Trece Martires">Trece Martires</option>
+                                                <option value="Alfonso">Alfonso</option>
+                                                <option value="Gen. Emilio Aguinaldo (Bailen)">Gen. Emilio Aguinaldo (Bailen)</option>
+                                                <option value="Magallanes">Magallanes</option>
+                                                <option value="Maragondon">Maragondon</option>
+                                                <option value="Mendez">Mendez</option>
+                                                <option value="Naic">Naic</option>
+                                                <option value="Tagaytay City">Tagaytay City</option>
+                                                <option value="Ternate">Ternate</option>
+                                            </select>
+                                        </div>
+                                    </td>
 
-                <!-- TODO add auto compute age -->
-                <td>
-                    <div class="input-container">
-                        <label for="age">Age</label>
-                        <input type="text" id="age" name="age" required autocomplete="off" placeholder=" " readonly>
-                    </div>
-                </td>
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="district">District</label>
+                                            <input type="text" id="district" name="district" autocomplete="off" readonly placeholder=" ">
+                                        </div>
+                                    </td>
+                                    
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="origin">Origin</label>
+                                            <select id="origin" name="origin" >
+                                                <option value="" disabled selected>Select origin...</option>
+                                                <!-- Will be populated dynamically -->
+                                            </select>
+                                            <small style="font-size: 0.8em; color: #666;">Auto-set based on your location</small>
+                                        </div>
+                                    </td>
+                                </tr>
 
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="input-container">
+                                            <label for="remarks">Remarks</label>
+                                            <input type="text" id="remarks" name="remarks" autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
 
-                <td>
-                    <div class="input-container">
-                    <label for="sex">Sex</label>
-                        <select name="sex" id="sex" required>
-                            <option value=""></option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="">Prefer not to say</option>
-                        </select>
-                    </div>
-                </td>
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="tags">Tags</label>
+                                            <select id="tags" name="tags">
+                                                <option value="" selected>No Tag</option>
+                                                <option value="Underage">Underage</option>
+                                                <option value="Overage">Overage</option>
+                                                <option value="Late-declare">Late-declare</option>
+                                            </select>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
 
-                <td>
-                    <div class="input-container">
-                    <label for="contact">Contact No</label>
-                        <div class="contact-wrapper">
-                            <span class="prefix">+63</span>
-                            <input type="text" id="contact" name="contact" maxlength="10" required autocomplete="off">
+                            <div class="controls_box">
+                                <button id="save_record_details" class="save_record_details">
+                                    <img src="/static/assets/save.png" alt="save" class="btn-icon"> Save
+                                </button>
+                                <button id="delete_record" class="delete_record">
+                                    <img src="/static/assets/delete.png" alt="delete" class="btn-icon"> Archive
+                                </button>
+                                <button id="export" class="btn-export">
+                                    <img src="/static/assets/sheets.png" alt="export" class="btn-icon"> Export to Excel
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </td>
-
-                <td>
-                    <div class="input-container">
-                        <label for="email">Email</label>
-                        <input type="text" id="email" name="email" required autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
-
-                <td>
-                    <div class="input-container">
-                        <label for="address">Address</label>
-                        <input type="text" id="address" name="address" required autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
-
-                <td>
-                    <div class="input-container">
-                        <label for="blood_type">Blood Type</label>
-                        <select name="blood_type" id="blood_type" required>
-                            <option value=""></option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                        </select>
-                    </div>
-                </td>                              
-            </tr>
-
-            <tr>
-                <td>
-                    <div class="input-container checkbox-container">
-                        <label for="id_received">ID Received</label>
-                        <input type="checkbox" id="id_received" name="id_received" autocomplete="off">
-                    </div>
-                </td>
-
-                <td hidden>
-                    <div class="input-container checkbox-container">
-                        <label for="entry_declared" hidden>Declared</label>
-                        <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
-                    </div>
-                </td>
-
-
-                <td>
-                    <div class="input-container checkbox-container">
-                        <input type="checkbox" id="dispatch_ready" name="dispatch_ready" autocomplete="off">
-                        <label for="dispatch_ready">Dispatch Ready</label>
-                    </div>
-                </td>
-
-                <td hidden>
-                    <div class="input-container checkbox-container">
-                        <input type="input" id="dispatch_id" name="dispatch_id" autocomplete="off" readonly>
-                        <label for="dispatch_id">Dispatch ID</label>
-                    </div>
-                </td>
-
-
-
-                <td>
-                    <div class="input-container">
-                        <label for="declare_date">Declaration Date</label>
-                        <input type="date" id="declare_date" name="declare_date" autocomplete="off">
-                    </div>
-                </td>
-
-
-
-                <td>
-                    <div class="input-container checkbox-container">
-                        <label for="entry_paid">Paid</label>
-                        <input type="checkbox" id="entry_paid" name="entry_paid" autocomplete="off">
-                    </div>
-                </td>
-
-                <td>
-                    <div class="input-container">
-                        <label for="entry_or_no">OR No</label>
-                        <input type="text" id="entry_or_no" name="entry_or_no" autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
                 
-                <td>
-                    <div class="input-container">
-                        <label for="entry_or_date">OR Date</label>
-                        <input type="text" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
-                    </div>
-                </td>
-            </tr>
+                    <!-- ENTRY DETAILS TOGGLE -->
+                    <div class="entry-radio-controls">
+                        <input type="radio" id="showEntry" name="entry_input_mode" value="form" checked>
+                        <label for="showEntry">
+                            <i class="fa-solid fa-user-plus"></i> Show Entry Form
+                        </label>
 
-            <tr>
-                <td colspan="5">
-                    <div class="input-container">
-                        <label for="entry_remarks">Remarks</label>
-                        <input type="text" id="entry_remarks" name="entry_remarks" autocomplete="off" placeholder=" ">
+                        <input type="radio" id="showTable" name="entry_input_mode" value="table">
+                        <label for="showTable">
+                            <i class="fa-solid fa-table"></i> Show Table Only
+                        </label>
                     </div>
-                </td>
+                    
+                    <div class="second_row">
+                        <div id="entry_details" class="entry_details">
+                            <table>
+                                <tr>
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="maab_cat">Category</label>
+                                            <select name="maab_cat" id="maab_cat">
+                                                <option value="Classic">Classic</option>
+                                                <option value="Bronze">Bronze</option>
+                                                <option value="Silver">Silver</option>
+                                                <option value="Gold">Gold</option>
+                                                <option value="Platinum">Platinum</option>
+                                                <option value="Safe Card">Safe Card</option>
+                                                <option value="Senior">Senior</option>
+                                                <option value="Senior+">Senior+</option>            
+                                            </select>
+                                        </div>
+                                    </td>
 
-                <td>
-                    <div class="input-container">
-                        <label for="entry_tags">Tags</label>
-                        <input type="text" id="entry_tags" name="entry_tags" autocomplete="off" placeholder=" ">
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="maab_no">MAAB No.</label>
+                                            <input type="text" id="maab_no" name="maab_no" autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+                        
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="fname">First Name<span class="required-star">*</span></label>
+                                            <input type="text" id="fname" name="fname" required autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+                                    
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="mname">Middle Name</label>
+                                            <input type="text" id="mname" name="mname" autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="lname">Last Name<span class="required-star">*</span></label>
+                                            <input type="text" id="lname" name="lname" required autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="suffix">Suffix</label>
+                                            <select name="suffix" id="suffix">
+                                                <option value="NA">NA</option>
+                                                <option value="Jr">Jr</option>
+                                                <option value="Sr">Sr</option>
+                                                <option value="II">II</option>
+                                                <option value="III">III</option>
+                                                <option value="IV">IV</option>
+                                                <option value="V">V</option>
+                                                <option value="VI">VI</option>
+                                                <option value="VII">VII</option>
+                                            </select>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="bdate">Birthdate<span class="required-star">*</span></label>
+                                            <input type="date" id="bdate" name="bdate" required autocomplete="off">
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="age">Age</label>
+                                            <input type="text" id="age" name="age" autocomplete="off" placeholder=" " readonly>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                        <label for="sex">Sex</label>
+                                            <select name="sex" id="sex">
+                                                <option value=""></option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                                <option value="">Prefer not to say</option>
+                                            </select>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                        <label for="contact">Contact No</label>
+                                            <div class="contact-wrapper">
+                                                <span class="prefix">+63</span>
+                                                <input type="text" id="contact" name="contact" maxlength="10" autocomplete="off">
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="email">Email</label>
+                                            <input type="text" id="email" name="email" autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="address">Address</label>
+                                            <input type="text" id="address" name="address" autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="blood_type">Blood Type</label>
+                                            <select name="blood_type" id="blood_type">
+                                                <option value=""></option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                            </select>
+                                        </div>
+                                    </td>                              
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        <div class="input-container checkbox-container">
+                                            <label for="id_received">ID Received</label>
+                                            <input type="checkbox" id="id_received" name="id_received" autocomplete="off">
+                                        </div>
+                                    </td>
+
+                                    <td hidden>
+                                        <div class="input-container checkbox-container">
+                                            <label for="entry_declared" hidden>Declared</label>
+                                            <input type="checkbox" id="entry_declared" name="entry_declared" autocomplete="off">
+                                        </div>
+                                    </td>
+
+                                    <!-- REMOVED: Dispatch Ready checkbox and Dispatch ID field -->
+
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="declare_date">Declaration Date</label>
+                                            <input type="date" id="declare_date" name="declare_date" autocomplete="off">
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container checkbox-container">
+                                            <label for="entry_paid">Paid</label>
+                                            <input type="checkbox" id="entry_paid" name="entry_paid" autocomplete="off">
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="entry_or_no">OR No</label>
+                                            <input type="text" id="entry_or_no" name="entry_or_no" autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+                                    
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="entry_or_date">OR Date</label>
+                                            <input type="text" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="input-container">
+                                            <label for="entry_remarks">Remarks</label>
+                                            <input type="text" id="entry_remarks" name="entry_remarks" autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                            <label for="entry_tags">Tags</label>
+                                            <input type="text" id="entry_tags" name="entry_tags" autocomplete="off" placeholder=" ">
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <input type="hidden" id="entry_id" name="entry_id" value="">
+                                <div class="controls_box">
+                                    <button id="add_entry_details" class="add_entry_details">
+                                        <img src="/static/assets/add.png" alt="add" class="btn-icon"> Add Entry
+                                    </button>
+                                    <button id="back_to_add" class="btn-secondary" style="display: none;">
+                                        <i class="fa-solid fa-arrow-left"></i> Back to Add Entry
+                                    </button>
+                                </div>      
+                        </div>
                     </div>
-                </td>
+                    
+                    <div class="table-container">
+                        <div id="entries_table" class="ht-theme-main"></div>
+                    </div>
 
-            
-            </tr>
-        </table>
-            <div class="controls_box">
-                <button id="add_entry_details" class="add_entry_details">
-                    <img src="/static/assets/add.png" alt="add" class="btn-icon"> Add Entry
-                </button>
-                </div>    
-        </div>
-    </form>
-</div>
-                <div class="table-container">
-                    <div id="entries_table" class="ht-theme-main"></div>
+                    <!-- Unsaved Changes Confirmation Modal -->
+                    <div id="unsavedChangesModal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <h3>Unsaved Changes</h3>
+                            <p>You have unsaved changes. Are you sure you want to close without saving?</p>
+                            <div class="modal-buttons">
+                                <button id="confirmClose" class="btn btn-danger">Close Without Saving</button>
+                                <button id="cancelClose" class="btn btn-secondary">Continue Editing</button>
+                                <button id="saveAndClose" class="btn btn-primary">Save and Close</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delete Confirmation Modal -->
+                    <div id="deleteConfirmationModal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <h3>Archive Record</h3>
+                            <p>Are you sure you want to archive this record? This action cannot be undone.</p>
+                            <div class="modal-buttons">
+                                <button id="confirmDelete" class="btn btn-danger">Archive Record</button>
+                                <button id="cancelDelete" class="btn btn-secondary">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- Unsaved Changes Confirmation Modal -->
-<div id="unsavedChangesModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>Unsaved Changes</h3>
-        <p>You have unsaved changes. Are you sure you want to close without saving?</p>
-        <div class="modal-buttons">
-            <button id="confirmClose" class="btn btn-danger">Close Without Saving</button>
-            <button id="cancelClose" class="btn btn-secondary">Continue Editing</button>
-            <button id="saveAndClose" class="btn btn-primary">Save and Close</button>
+            </div>
         </div>
     </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div id="deleteConfirmationModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>Archive Record</h3>
-        <p>Are you sure you want to archive this record? This action cannot be undone.</p>
-        <div class="modal-buttons">
-            <button id="confirmDelete" class="btn btn-danger">Archive Record</button>
-            <button id="cancelDelete" class="btn btn-secondary">Cancel</button>
-        </div>
-    </div>
-</div>
-
 {% endblock %}
-
-<!--TODO fix the order of columns in sql file-->
-<!--TODO fix the flickering when scrolling-->
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/input-restrictions.js')}}"></script>
@@ -616,6 +568,304 @@ let archiveEntriesPerPage = 10;
 let hasUnsavedChanges = false;
 let originalRecordData = {};
 
+// Entry editing state management
+let isEditingEntry = false;
+let currentEditingEntryId = null;
+
+// ===== REQUIRED FIELD VALIDATION FUNCTIONS =====
+function validateRequiredFields() {
+    const requiredFields = {
+        'eff_date': 'Effectivity Date',
+        'loc_par': 'Location Particular', 
+        'loc_cat': 'Location Category',
+        'municipality': 'Municipality'
+    };
+    
+    let isValid = true;
+    
+    // Check record required fields
+    for (const [fieldId, fieldName] of Object.entries(requiredFields)) {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(fieldId + '_error');
+        
+        if (field) {
+            const value = field.type === 'select-one' ? field.value : field.value.trim();
+            if (!value) {
+                isValid = false;
+                
+                // Add visual indication
+                field.classList.add('required-field');
+                if (errorElement) {
+                    errorElement.textContent = `Please enter ${fieldName.toLowerCase()}`;
+                    errorElement.classList.add('show');
+                }
+                
+                // Remove error on input
+                field.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        this.classList.remove('required-field');
+                        if (errorElement) {
+                            errorElement.classList.remove('show');
+                        }
+                    }
+                });
+            } else {
+                field.classList.remove('required-field');
+                if (errorElement) {
+                    errorElement.classList.remove('show');
+                }
+            }
+        }
+    }
+    
+    return isValid;
+}
+
+function validateEntryRequiredFields() {
+    const requiredEntryFields = {
+        'fname': 'First Name',
+        'lname': 'Last Name', 
+        'bdate': 'Birthdate'
+    };
+    
+    let isValid = true;
+    
+    // Check entry required fields
+    for (const [fieldId, fieldName] of Object.entries(requiredEntryFields)) {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(fieldId + '_error');
+        
+        if (field) {
+            const value = field.value.trim();
+            if (!value) {
+                isValid = false;
+                
+                // Add visual indication
+                field.classList.add('required-field');
+                if (errorElement) {
+                    errorElement.textContent = `Please enter ${fieldName.toLowerCase()}`;
+                    errorElement.classList.add('show');
+                }
+                
+                // Remove error on input
+                field.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        this.classList.remove('required-field');
+                        if (errorElement) {
+                            errorElement.classList.remove('show');
+                        }
+                    }
+                });
+            } else {
+                field.classList.remove('required-field');
+                if (errorElement) {
+                    errorElement.classList.remove('show');
+                }
+            }
+        }
+    }
+    
+    if (!isValid) {
+        // Scroll to the entry form to make it visible
+        setTimeout(() => {
+            const entryForm = document.getElementById('entry_details');
+            if (entryForm) {
+                entryForm.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }
+        }, 300);
+    }
+    
+    return isValid;
+}
+
+function highlightRequiredFields() {
+    const requiredRecordFields = [
+        { id: 'eff_date', name: 'Effectivity Date' },
+        { id: 'loc_par', name: 'Location Particular' },
+        { id: 'loc_cat', name: 'Location Category' },
+        { id: 'municipality', name: 'Municipality' }
+    ];
+    
+    const requiredEntryFields = [
+        { id: 'fname', name: 'First Name' },
+        { id: 'lname', name: 'Last Name' },
+        { id: 'bdate', name: 'Birthdate' }
+    ];
+    
+    // Add required indicators to record fields
+    requiredRecordFields.forEach(field => {
+        const fieldElement = document.getElementById(field.id);
+        if (fieldElement) {
+            const container = fieldElement.closest('.input-container');
+            const label = container?.querySelector('label');
+            
+            // Add star to label
+            if (label && !label.innerHTML.includes('required-star')) {
+                label.innerHTML = label.innerHTML + ' <span class="required-star">*</span>';
+            }
+            
+            // Add error message element
+            if (!document.getElementById(field.id + '_error')) {
+                const errorElement = document.createElement('div');
+                errorElement.id = field.id + '_error';
+                errorElement.className = 'error-message';
+                container.appendChild(errorElement);
+            }
+        }
+    });
+    
+    // Add required indicators to entry fields
+    requiredEntryFields.forEach(field => {
+        const fieldElement = document.getElementById(field.id);
+        if (fieldElement) {
+            const container = fieldElement.closest('.input-container');
+            const label = container?.querySelector('label');
+            
+            // Add star to label
+            if (label && !label.innerHTML.includes('required-star')) {
+                label.innerHTML = label.innerHTML + ' <span class="required-star">*</span>';
+            }
+            
+            // Add error message element
+            if (!document.getElementById(field.id + '_error')) {
+                const errorElement = document.createElement('div');
+                errorElement.id = field.id + '_error';
+                errorElement.className = 'error-message';
+                container.appendChild(errorElement);
+            }
+        }
+    });
+}
+
+// ===== CLEAR ALL VALIDATION ERRORS =====
+function clearAllValidationErrors() {
+    // Clear record field errors
+    const recordFields = ['eff_date', 'loc_par', 'loc_cat', 'municipality'];
+    recordFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(fieldId + '_error');
+        
+        if (field) field.classList.remove('required-field');
+        if (errorElement) errorElement.classList.remove('show');
+    });
+    
+    // Clear entry field errors
+    const entryFields = ['fname', 'lname', 'bdate'];
+    entryFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(fieldId + '_error');
+        
+        if (field) field.classList.remove('required-field');
+        if (errorElement) errorElement.classList.remove('show');
+    });
+}
+
+// ===== MISSING FUNCTION - ADD THIS =====
+function fetchActiveRecords() {
+    return fetch("/api/members/records?status=active")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Format dates
+            data.forEach(row => {
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.effectivity_date) {
+                    const date = new Date(row.effectivity_date);
+                    row.effectivity_date = date.toLocaleDateString('en-US');
+                }
+            });
+
+            // Initialize or update the table
+            if (!hotInstance) {
+                initializeTable(data);
+            } else {
+                allData = [...data];
+                filteredData = [...data];
+                renderTable();
+            }
+            
+            console.log('Active records loaded:', data.length);
+            return data;
+        })
+        .catch(error => {
+            console.error('Error fetching active records:', error);
+            toastError("Error", "Failed to load active records: " + error.message);
+            throw error;
+        });
+}
+
+// FIXED: Setup entry table click handler
+function setupEntryTableClickHandlers() {
+    console.log('Setting up entry table click handlers...');
+    
+    // Wait for the table to be rendered
+    const checkTable = setInterval(() => {
+        const entriesTable = window.entriesHotInstance;
+        if (entriesTable) {
+            clearInterval(checkTable);
+            console.log('Entries table instance found:', entriesTable);
+            
+            // Add click handler to the table container as backup
+            const tableContainer = document.getElementById('entries_table');
+            if (tableContainer) {
+                tableContainer.addEventListener('click', function(event) {
+                    console.log('Entry table container clicked');
+                    
+                    // Use Handsontable's method to get the clicked row
+                    const coords = entriesTable.getCoords(event.target);
+                    if (coords && coords.row >= 0) {
+                        const rowData = entriesTable.getSourceDataAtRow(coords.row);
+                        console.log('Row data from click:', rowData);
+                        
+                        if (rowData && rowData.entry_id) {
+                            console.log('Populating form with clicked row data');
+                            populateEntryForm(rowData);
+                        }
+                    }
+                });
+            }
+            
+            // Also use Handsontable's built-in cell click handler
+            entriesTable.updateSettings({
+                afterOnCellMouseDown: function(event, coords, TD) {
+                    console.log('Handsontable cell clicked at:', coords);
+                    
+                    if (coords.row >= 0) {
+                        const rowData = this.getSourceDataAtRow(coords.row);
+                        console.log('Row data from Handsontable:', rowData);
+                        
+                        if (rowData && rowData.entry_id) {
+                            console.log('✅ SUCCESS: Populating form with entry ID:', rowData.entry_id);
+                            populateEntryForm(rowData);
+                            
+                            // Visual feedback - highlight the row
+                            this.selectCell(coords.row, coords.col);
+                        } else {
+                            console.warn('No entry_id found in row data');
+                        }
+                    }
+                }
+            });
+            
+            console.log('Entry table click handlers setup complete');
+        }
+    }, 100);
+}
+
 // Archive state management functions
 function showArchiveView() {
     isArchiveView = true;
@@ -634,14 +884,8 @@ function showArchiveView() {
     
     // Update module titles
     const moduleTitle = document.querySelector('.module_name h1');
-    const moduleSubtitle = document.querySelector('.module_name h4');
-    
     if (moduleTitle) {
-        moduleTitle.textContent = 'Archived Members | ';
-    }
-    
-    if (moduleSubtitle) {
-        moduleSubtitle.textContent = 'View Archived Records';
+        moduleTitle.textContent = 'Archived Members';
     }
     
     // Reset archive pagination
@@ -670,14 +914,8 @@ function showActiveView() {
     
     // Update module titles
     const moduleTitle = document.querySelector('.module_name h1');
-    const moduleSubtitle = document.querySelector('.module_name h4');
-    
     if (moduleTitle) {
-        moduleTitle.textContent = 'Members | ';
-    }
-    
-    if (moduleSubtitle) {
-        moduleSubtitle.textContent = 'Manage Members Records and Entries';
+        moduleTitle.textContent = 'Members';
     }
     
     // Reset active pagination
@@ -721,43 +959,11 @@ function fetchArchivedRecords() {
         });
 }
 
-function fetchActiveRecords() {
-    fetch("/api/members/records?status=active")
-        .then(response => response.json())
-        .then(data => {
-            // Format dates
-            data.forEach(row => {
-                if (row.declaration_date) {
-                    const date = new Date(row.declaration_date);
-                    row.declaration_date = date.toLocaleDateString('en-US');
-                }
-                if (row.effectivity_date) {
-                    const date = new Date(row.effectivity_date);
-                    row.effectivity_date = date.toLocaleDateString('en-US');
-                }
-            });
-
-            // Update active data arrays
-            allData = [...data];
-            filteredData = [...data];
-            
-            // Re-render the table with active pagination
-            renderTable();
-            populateYearPicker();
-            
-            console.log('Active records loaded:', data.length);
-        })
-        .catch(error => {
-            console.error('Error fetching active records:', error);
-            toastError("Error", "Failed to load active records");
-        });
-}
-
 function refreshTableData() {
     if (isArchiveView) {
-        return fetchArchivedRecords();
+        return fetchArchivedRecords().then(() => populateFilterDropdowns());
     } else {
-        return fetchActiveRecords();
+        return fetchActiveRecords().then(() => populateFilterDropdowns());
     }
 }
 
@@ -1022,28 +1228,480 @@ document.getElementById('entriesPerPage').addEventListener("change", function() 
     }
 });
 
-// Update populateYearPicker to include both active and archive data
+// Function to populate all filter dropdowns
+function populateFilterDropdowns() {
+    fetch('/api/members/filter_options')
+        .then(response => response.json())
+        .then(data => {
+            const yearSelect = document.getElementById('filter_year');
+            const originSelect = document.getElementById('filter_origin');
+            const formOriginSelect = document.getElementById('origin');
+            
+            // Clear and populate year filter
+            if (yearSelect) {
+                while (yearSelect.options.length > 1) {
+                    yearSelect.remove(1);
+                }
+                data.years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearSelect.appendChild(option);
+                });
+            }
+            
+            // Clear and populate origin filter
+            if (originSelect) {
+                while (originSelect.options.length > 1) {
+                    originSelect.remove(1);
+                }
+                data.origins.forEach(origin => {
+                    const option = document.createElement('option');
+                    option.value = origin;
+                    option.textContent = origin;
+                    originSelect.appendChild(option);
+                });
+            }
+            
+            // Clear and populate form origin select
+            if (formOriginSelect) {
+                while (formOriginSelect.options.length > 1) {
+                    formOriginSelect.remove(1);
+                }
+                data.origins.forEach(origin => {
+                    const option = document.createElement('option');
+                    option.value = origin;
+                    option.textContent = origin;
+                    formOriginSelect.appendChild(option);
+                });
+            }
+            
+            console.log('Filter dropdowns populated:', {
+                years: data.years,
+                origins: data.origins
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching filter options:', error);
+        });
+}
+
+// Replace the old populateYearPicker function
 function populateYearPicker() {
-    const yearSelect = document.getElementById('filter_year');
-    if (!yearSelect) return;
+    populateFilterDropdowns();
+}
+
+// Function to check if all entries are paid and update Dispatch Ready
+function updateDispatchReadyFromEntries() {
+    const entriesTable = window.entriesHotInstance;
+    const dispatchReadyCheckbox = document.getElementById('record_dispatch_ready');
     
-    // Get unique years from both active and archive data
-    const activeYears = [...new Set(allData.map(row => row.year))].filter(year => year);
-    const archiveYears = [...new Set(archiveAllData.map(row => row.year))].filter(year => year);
-    const allYears = [...new Set([...activeYears, ...archiveYears])].sort((a, b) => b - a);
-    
-    // Clear existing options except the first one
-    while (yearSelect.options.length > 1) {
-        yearSelect.remove(1);
+    if (!entriesTable || !dispatchReadyCheckbox) {
+        console.log('Entries table or dispatch ready checkbox not found');
+        return;
     }
     
-    // Add years from combined data
-    allYears.forEach(year => {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearSelect.appendChild(option);
+    const entriesData = entriesTable.getSourceData();
+    
+    if (!entriesData || entriesData.length === 0) {
+        // No entries - uncheck and gray out
+        dispatchReadyCheckbox.checked = false;
+        dispatchReadyCheckbox.classList.add('dispatch-ready-auto');
+        dispatchReadyCheckbox.disabled = true;
+        console.log('No entries found, dispatch ready unchecked');
+        return;
+    }
+    
+    // Check if ALL entries are paid
+    const allEntriesPaid = entriesData.every(entry => {
+        // Handle both boolean and numeric values for paid status
+        const isPaid = entry.paid === true || entry.paid === 1 || entry.paid === '1';
+        console.log(`Entry ${entry.entry_id}: paid = ${entry.paid}, isPaid = ${isPaid}`);
+        return isPaid;
     });
+    
+    console.log(`All entries paid: ${allEntriesPaid}, Total entries: ${entriesData.length}`);
+    
+    // Update the checkbox based on paid status
+    if (allEntriesPaid) {
+        // All entries are paid - check and gray out
+        dispatchReadyCheckbox.checked = true;
+        dispatchReadyCheckbox.classList.add('dispatch-ready-auto');
+        dispatchReadyCheckbox.disabled = true;
+        
+        // Show success message
+        const smallText = dispatchReadyCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#28a745';
+            smallText.textContent = '✓ All entries are paid - Ready for dispatch';
+        }
+    } else {
+        // Not all entries are paid - uncheck and gray out
+        dispatchReadyCheckbox.checked = false;
+        dispatchReadyCheckbox.classList.add('dispatch-ready-auto');
+        dispatchReadyCheckbox.disabled = true;
+        
+        // Show info message
+        const smallText = dispatchReadyCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#666';
+            smallText.textContent = 'Auto-set when all entries are paid';
+        }
+    }
+    
+    // Trigger form change for unsaved changes tracking
+    dispatchReadyCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+// Monitor entries table for changes and update Dispatch Ready
+function setupEntriesTableMonitoring() {
+    const entriesTable = window.entriesHotInstance;
+    if (!entriesTable) {
+        console.error('Entries table not available for monitoring');
+        return;
+    }
+    
+    // Monitor for data changes
+    entriesTable.addHook('afterChange', function(changes, source) {
+        if (source === 'edit' || source === 'loadData') {
+            console.log('Entries table changed, updating Dispatch Ready...');
+            setTimeout(() => {
+                updateDispatchReadyFromEntries();
+            }, 100);
+        }
+    });
+    
+    console.log('Entries table monitoring setup complete');
+}
+
+// FIXED: Function to populate ALL entry form fields from table row data
+function populateEntryForm(entryData) {
+    console.log('=== POPULATING ENTRY FORM ===');
+    console.log('Full entry data:', entryData);
+    
+    if (!entryData) {
+        console.error('No entry data provided to populate form');
+        return;
+    }
+    
+    try {
+        // Set entry ID
+        document.getElementById('entry_id').value = entryData.entry_id || '';
+        currentEditingEntryId = entryData.entry_id;
+        console.log('Set entry_id to:', entryData.entry_id);
+        
+        // === POPULATE ALL FORM FIELDS ===
+        
+        // 1. Select fields
+        document.getElementById('maab_cat').value = entryData.maab_category || 'Classic';
+        document.getElementById('suffix').value = entryData.suffix || 'NA';
+        document.getElementById('sex').value = entryData.sex || '';
+        document.getElementById('blood_type').value = entryData.blood_type || '';
+        
+        // 2. Text inputs
+        document.getElementById('maab_no').value = entryData.maab_no || '';
+        document.getElementById('fname').value = entryData.first_name || '';
+        document.getElementById('mname').value = entryData.middle_name || '';
+        document.getElementById('lname').value = entryData.last_name || '';
+        document.getElementById('age').value = entryData.age || '';
+        document.getElementById('contact').value = entryData.contact_no || '';
+        document.getElementById('email').value = entryData.email || '';
+        document.getElementById('address').value = entryData.address || '';
+        document.getElementById('entry_or_no').value = entryData.OR_num || '';
+        document.getElementById('entry_remarks').value = entryData.remarks || '';
+        document.getElementById('entry_tags').value = entryData.tags || '';
+        
+        // 3. Date fields (convert format with error handling)
+        const birthDateInput = document.getElementById('bdate');
+        const declareDateInput = document.getElementById('declare_date');
+        const orDateInput = document.getElementById('entry_or_date');
+        
+        if (entryData.birth_date) {
+            const convertedDate = convertToYYYYMMDD(entryData.birth_date);
+            birthDateInput.value = convertedDate;
+            console.log('Birth date converted:', entryData.birth_date, '->', convertedDate);
+        } else {
+            birthDateInput.value = '';
+        }
+        
+        if (entryData.declaration_date) {
+            const convertedDate = convertToYYYYMMDD(entryData.declaration_date);
+            declareDateInput.value = convertedDate;
+            console.log('Declaration date converted:', entryData.declaration_date, '->', convertedDate);
+        } else {
+            declareDateInput.value = '';
+        }
+        
+        if (entryData.OR_date) {
+            const convertedDate = convertToYYYYMMDD(entryData.OR_date);
+            orDateInput.value = convertedDate;
+            console.log('OR date converted:', entryData.OR_date, '->', convertedDate);
+        } else {
+            orDateInput.value = '';
+        }
+        
+        // 4. Checkboxes (convert 1/0 to true/false)
+        document.getElementById('id_received').checked = Boolean(entryData.id_received);
+        document.getElementById('entry_declared').checked = Boolean(entryData.declared);
+        document.getElementById('entry_paid').checked = Boolean(entryData.paid);
+        
+        console.log('All form fields populated successfully!');
+        
+        // Switch to edit mode and show back button
+        switchToEditMode();
+        
+        // Scroll to the entry form
+        setTimeout(() => {
+            const entryForm = document.getElementById('entry_details');
+            if (entryForm) {
+                entryForm.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }
+        }, 100);
+        
+    } catch (error) {
+        console.error('Error populating entry form:', error);
+        toastError("Error", "Failed to load entry data into form");
+    }
+}
+
+// FIXED: Enhanced date conversion function
+function convertToYYYYMMDD(dateStr) {
+    if (!dateStr) return '';
+    
+    console.log('Converting date:', dateStr, 'Type:', typeof dateStr);
+    
+    // If already in YYYY-MM-DD format, return as-is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+    }
+    
+    // Handle MM/DD/YYYY format
+    if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            let [month, day, year] = parts;
+            month = month.padStart(2, '0');
+            day = day.padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+    }
+    
+    // Handle MM-DD-YYYY format (from Handsontable)
+    if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            let [month, day, year] = parts;
+            
+            // Check if it's already in YYYY-MM-DD format but with dashes
+            if (year.length === 4 && month.length === 2 && day.length === 2) {
+                return dateStr; // Already correct format
+            }
+            
+            // Handle MM-DD-YYYY format
+            month = month.padStart(2, '0');
+            day = day.padStart(2, '0');
+            
+            // If year is 2 digits, assume it's 20XX
+            if (year.length === 2) {
+                year = '20' + year;
+            }
+            
+            return `${year}-${month}-${day}`;
+        }
+    }
+    
+    // Try to parse as Date object as fallback
+    try {
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0];
+        }
+    } catch (e) {
+        console.warn('Could not parse date:', dateStr);
+    }
+    
+    return ''; // Return empty if format is unrecognized
+}
+
+function switchToEditMode() {
+    isEditingEntry = true;
+    
+    // Change button text
+    const addButton = document.getElementById('add_entry_details');
+    if (addButton) {
+        addButton.innerHTML = '<img src="/static/assets/save.png" alt="save" class="btn-icon"> Save Changes';
+    }
+    
+    // Show back button
+    const backButton = document.getElementById('back_to_add');
+    if (backButton) {
+        backButton.style.display = 'inline-block';
+    }
+    
+    console.log('Switched to edit mode for entry:', currentEditingEntryId);
+}
+
+function switchToAddMode() {
+    isEditingEntry = false;
+    currentEditingEntryId = null;
+    
+    // Clear the form
+    clearEntryForm();
+    
+    // Change button text back
+    const addButton = document.getElementById('add_entry_details');
+    if (addButton) {
+        addButton.innerHTML = '<img src="/static/assets/add.png" alt="add" class="btn-icon"> Add Entry';
+    }
+    
+    // Hide back button
+    const backButton = document.getElementById('back_to_add');
+    if (backButton) {
+        backButton.style.display = 'none';
+    }
+    
+    console.log('Switched back to add mode');
+}
+
+function clearEntryForm() {
+    const entryId = document.getElementById('entry_id');
+    if (entryId) entryId.value = '';
+    
+    // Clear all form fields
+    const fields = ['maab_no', 'fname', 'mname', 'lname', 'age', 'contact', 'email', 'address', 'entry_or_no', 'entry_remarks', 'entry_tags'];
+    fields.forEach(field => {
+        const element = document.getElementById(field);
+        if (element) element.value = '';
+    });
+    
+    // Reset selects to default values
+    document.getElementById('maab_cat').value = 'Classic';
+    document.getElementById('suffix').value = 'NA';
+    document.getElementById('sex').value = '';
+    document.getElementById('blood_type').value = '';
+    
+    // Reset checkboxes
+    const checkboxes = ['id_received', 'entry_declared', 'entry_paid'];
+    checkboxes.forEach(checkbox => {
+        const element = document.getElementById(checkbox);
+        if (element) element.checked = false;
+    });
+    
+    // Clear dates
+    const dates = ['bdate', 'declare_date', 'entry_or_date'];
+    dates.forEach(date => {
+        const element = document.getElementById(date);
+        if (element) element.value = '';
+    });
+    
+    // Clear any validation errors
+    clearAllValidationErrors();
+    
+    console.log('Entry form cleared');
+}
+
+// Fixed function to handle entry table clicks
+function handleEntryTableClick(event) {
+    console.log('Entry table clicked:', event.target);
+    
+    const target = event.target;
+    
+    // Check if click is on a table cell
+    if (target.tagName === 'TD' || target.closest('td')) {
+        const cell = target.tagName === 'TD' ? target : target.closest('td');
+        const row = cell.parentElement;
+        
+        console.log('Clicked row:', row);
+        
+        // Get the row index using Handsontable's method
+        const entriesTable = window.entriesHotInstance;
+        if (entriesTable) {
+            try {
+                // Method 1: Try to get coordinates from the cell
+                const coords = entriesTable.getCoords(cell);
+                console.log('Cell coordinates:', coords);
+                
+                if (coords && coords.row >= 0) {
+                    const rowData = entriesTable.getSourceDataAtRow(coords.row);
+                    console.log('Row data from coordinates:', rowData);
+                    
+                    if (rowData && rowData.entry_id) {
+                        console.log('Entry row clicked with data:', rowData);
+                        populateEntryForm(rowData);
+                        return;
+                    }
+                }
+                
+                // Method 2: If coordinates don't work, try finding row index manually
+                console.log('Trying manual row detection...');
+                
+                // Get all data rows (skip header row)
+                const table = entriesTable.rootElement;
+                const allRows = table.querySelectorAll('tr');
+                let rowIndex = -1;
+                
+                for (let i = 0; i < allRows.length; i++) {
+                    if (allRows[i] === row) {
+                        // Subtract 1 because Handsontable data starts from row 0 (header is not in data)
+                        rowIndex = i - 1;
+                        break;
+                    }
+                }
+                
+                console.log('Manual row index found:', rowIndex);
+                
+                if (rowIndex >= 0) {
+                    const rowData = entriesTable.getSourceDataAtRow(rowIndex);
+                    console.log('Row data from manual index:', rowData);
+                    
+                    if (rowData && rowData.entry_id) {
+                        console.log('Entry row clicked with data:', rowData);
+                        populateEntryForm(rowData);
+                        return;
+                    }
+                }
+                
+                // Method 3: Last resort - log all data to see what's available
+                console.log('All table data:', entriesTable.getSourceData());
+                
+            } catch (error) {
+                console.error('Error getting row data:', error);
+                
+                // Method 4: Try using the event target directly
+                console.log('Trying event-based approach...');
+                const allData = entriesTable.getSourceData();
+                console.log('All available data:', allData);
+                
+                if (allData && allData.length > 0) {
+                    // Just use the first row for testing
+                    console.log('First row data for testing:', allData[0]);
+                    populateEntryForm(allData[0]);
+                }
+            }
+        } else {
+            console.error('Entries table instance not found');
+        }
+    }
+}
+
+// Update the entries table renderer to make rows clickable
+function updateEntriesTableRenderer() {
+    if (window.entriesHotInstance) {
+        // Make all cells clickable by adding a CSS class
+        window.entriesHotInstance.updateSettings({
+            cells: function(row, col) {
+                const cellProperties = {};
+                cellProperties.className = 'clickable-entry-row';
+                return cellProperties;
+            }
+        });
+        
+        window.entriesHotInstance.render();
+        console.log('Entries table renderer updated with clickable rows');
+    }
 }
 
 // Initialize change tracking
@@ -1075,6 +1733,7 @@ function storeOriginalData() {
         id_rcv: document.getElementById('id_rcv').checked,
         paid: document.getElementById('paid').checked,
         declared: document.getElementById('declared').checked,
+        record_dispatch_ready: document.getElementById('record_dispatch_ready').checked,
         dec_date: document.getElementById('dec_date').value,
         eff_date: document.getElementById('eff_date').value,
         loc_par: document.getElementById('loc_par').value,
@@ -1107,6 +1766,7 @@ function checkForChanges() {
         id_rcv: document.getElementById('id_rcv').checked,
         paid: document.getElementById('paid').checked,
         declared: document.getElementById('declared').checked,
+        record_dispatch_ready: document.getElementById('record_dispatch_ready').checked,
         dec_date: document.getElementById('dec_date').value,
         eff_date: document.getElementById('eff_date').value,
         loc_par: document.getElementById('loc_par').value,
@@ -1133,6 +1793,11 @@ function setupCloseOverlayWithConfirmation() {
     const closeOverlay = document.getElementById('close-overlay');
     const overlay = document.getElementById('overlay');
     
+    if (!closeOverlay || !overlay) {
+        console.error('Close overlay elements not found');
+        return;
+    }
+    
     // Close button click
     closeOverlay.addEventListener('click', function(e) {
         e.preventDefault();
@@ -1150,20 +1815,30 @@ function setupCloseOverlayWithConfirmation() {
     });
     
     // Modal button handlers
-    document.getElementById('confirmClose').addEventListener('click', function() {
-        console.log('Close without saving confirmed');
-        closeOverlayWithoutSaving();
-    });
+    const confirmClose = document.getElementById('confirmClose');
+    const cancelClose = document.getElementById('cancelClose');
+    const saveAndClose = document.getElementById('saveAndClose');
     
-    document.getElementById('cancelClose').addEventListener('click', function() {
-        console.log('Continue editing selected');
-        hideUnsavedChangesModal();
-    });
+    if (confirmClose) {
+        confirmClose.addEventListener('click', function() {
+            console.log('Close without saving confirmed');
+            closeOverlayWithoutSaving();
+        });
+    }
     
-    document.getElementById('saveAndClose').addEventListener('click', function() {
-        console.log('Save and close selected');
-        saveAndCloseOverlay();
-    });
+    if (cancelClose) {
+        cancelClose.addEventListener('click', function() {
+            console.log('Continue editing selected');
+            hideUnsavedChangesModal();
+        });
+    }
+    
+    if (saveAndClose) {
+        saveAndClose.addEventListener('click', function() {
+            console.log('Save and close selected');
+            saveAndCloseOverlay();
+        });
+    }
 }
 
 function attemptCloseOverlay() {
@@ -1179,18 +1854,27 @@ function attemptCloseOverlay() {
 
 function showUnsavedChangesModal() {
     console.log('Showing unsaved changes modal');
-    document.getElementById('unsavedChangesModal').style.display = 'flex';
+    const modal = document.getElementById('unsavedChangesModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
 
 function hideUnsavedChangesModal() {
     console.log('Hiding unsaved changes modal');
-    document.getElementById('unsavedChangesModal').style.display = 'none';
+    const modal = document.getElementById('unsavedChangesModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 function closeOverlayWithoutSaving() {
     console.log('Closing overlay without saving');
     hideUnsavedChangesModal();
-    document.getElementById('overlay').style.display = 'none';
+    const overlay = document.getElementById('overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
     hasUnsavedChanges = false;
 }
 
@@ -1201,7 +1885,10 @@ function saveAndCloseOverlay() {
     // Trigger save for record
     saveRecordDetails()
         .then(() => {
-            document.getElementById('overlay').style.display = 'none';
+            const overlay = document.getElementById('overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
             hasUnsavedChanges = false;
             console.log('Saved and closed successfully');
             toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
@@ -1212,15 +1899,25 @@ function saveAndCloseOverlay() {
         });
 }
 
-// Modified saveRecordDetails function to reset hasUnsavedChanges on success
+// Modified saveRecordDetails function - removes automatic overlay closing
 function saveRecordDetails() {
     return new Promise((resolve, reject) => {
+        // Clear previous errors
+        clearAllValidationErrors();
+        
+        // Validate required fields first
+        if (!validateRequiredFields()) {
+            reject(new Error("Required fields missing"));
+            return;
+        }
+        
         const payload = {
             record_id: document.getElementById('record_id').value,
             year: document.getElementById('year').value,
             id_received: document.getElementById('id_rcv').checked ? 1 : 0,
             paid: document.getElementById('paid').checked ? 1 : 0,
             declared: document.getElementById('declared').checked ? 1 : 0,
+            dispatch_ready: document.getElementById('record_dispatch_ready').checked ? 1 : 0,
             declaration_date: document.getElementById('dec_date').value || null,
             effectivity_date: document.getElementById('eff_date').value || null,
             location_particular: document.getElementById('loc_par').value || null,
@@ -1264,7 +1961,248 @@ function saveRecordDetails() {
     });
 }
 
-// Update the openRecordInOverlay function to initialize change tracking
+// Updated add/save entry function
+document.getElementById('add_entry_details').addEventListener('click', function () {
+    const entryId = document.getElementById('entry_id').value;
+    const recordId = document.getElementById('record_id').value;
+    
+    if (isEditingEntry && entryId) {
+        // Update existing entry
+        updateEntry(entryId, recordId);
+    } else {
+        // Add new entry
+        addNewEntry(recordId);
+    }
+});
+
+// Function to add new entry
+function addNewEntry(recordId) {
+    // Clear previous errors
+    clearAllValidationErrors();
+    
+    // Validate required entry fields first
+    if (!validateEntryRequiredFields()) {
+        return;
+    }
+    
+    const payload = {
+        record_id: recordId,
+        maab_category: document.getElementById('maab_cat').value,
+        maab_no: document.getElementById('maab_no').value,
+        first_name: document.getElementById('fname').value,
+        middle_name: document.getElementById('mname').value,
+        last_name: document.getElementById('lname').value,
+        suffix: document.getElementById('suffix').value,
+        birth_date: document.getElementById('bdate').value,
+        age: document.getElementById('age').value,
+        sex: document.getElementById('sex').value,
+        contact_no: document.getElementById('contact').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        blood_type: document.getElementById('blood_type').value,
+        id_received: document.getElementById('id_received').checked,
+        declared: document.getElementById('entry_declared').checked,
+        declaration_date: document.getElementById('declare_date').value,
+        paid: document.getElementById('entry_paid').checked,
+        OR_num: document.getElementById('entry_or_no').value,
+        OR_date: document.getElementById('entry_or_date').value,
+        remarks: document.getElementById('entry_remarks').value,
+        tags: document.getElementById('entry_tags').value
+    };
+
+    console.log('Adding new entry:', payload);
+
+    fetch('/api/save_entry_details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success === true) {
+            toastSuccess("Entry Added", "Entry added successfully!");
+            // Refresh entries table
+            refreshEntriesTable();
+            // Clear form and stay in add mode
+            clearEntryForm();
+            
+            // Update Dispatch Ready status after a short delay
+            setTimeout(() => {
+                updateDispatchReadyFromEntries();
+            }, 500);
+        } else {
+            toastError("Entry Failed", "Entry adding failed: " + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toastError("Error", "An error occurred during entry adding.");
+    });
+}
+
+// Auto-calculate age when birthdate changes
+document.getElementById('bdate').addEventListener('change', function() {
+    calculateAgeFromBirthdate();
+});
+
+function calculateAgeFromBirthdate() {
+    const birthdateInput = document.getElementById('bdate');
+    const ageInput = document.getElementById('age');
+    
+    if (birthdateInput.value) {
+        const birthDate = new Date(birthdateInput.value);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        
+        ageInput.value = age;
+    } else {
+        ageInput.value = '';
+    }
+}
+
+function updateEntry(entryId, recordId) {
+    // Clear previous errors
+    clearAllValidationErrors();
+    
+    // Validate required entry fields first
+    if (!validateEntryRequiredFields()) {
+        return;
+    }
+    
+    const payload = {
+        entry_id: entryId,
+        record_id: recordId,
+        maab_category: document.getElementById('maab_cat').value,
+        maab_no: document.getElementById('maab_no').value,
+        first_name: document.getElementById('fname').value,
+        middle_name: document.getElementById('mname').value,
+        last_name: document.getElementById('lname').value,
+        suffix: document.getElementById('suffix').value,
+        birth_date: document.getElementById('bdate').value,
+        age: document.getElementById('age').value,
+        sex: document.getElementById('sex').value,
+        contact_no: document.getElementById('contact').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        blood_type: document.getElementById('blood_type').value,
+        id_received: document.getElementById('id_received').checked,
+        declared: document.getElementById('entry_declared').checked,
+        declaration_date: document.getElementById('declare_date').value,
+        paid: document.getElementById('entry_paid').checked,
+        OR_num: document.getElementById('entry_or_no').value,
+        OR_date: document.getElementById('entry_or_date').value,
+        remarks: document.getElementById('entry_remarks').value,
+        tags: document.getElementById('entry_tags').value,
+        dispatch_ready: document.getElementById('record_dispatch_ready').checked,
+        dispatch_id: null // Send null instead of empty string
+    };
+
+    console.log('Updating entry with payload:', payload);
+
+    fetch('/api/save_entry_update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || `HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success === true) {
+            toastSuccess("Entry Updated", "Entry updated successfully!");
+            // Refresh entries table
+            refreshEntriesTable();
+            // Switch back to add mode and clear form
+            switchToAddMode();
+            
+            // Update Dispatch Ready status after a short delay
+            setTimeout(() => {
+                updateDispatchReadyFromEntries();
+            }, 500);
+        } else {
+            toastError("Update Failed", "Entry update failed: " + (data.error || "Unknown error"));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toastError("Error", "An error occurred during entry update: " + error.message);
+    });
+}
+
+// FIXED: Function to refresh entries table
+function refreshEntriesTable() {
+    const recordId = document.getElementById('record_id').value;
+    console.log('Fetching entries for record:', recordId);
+    
+    fetch(`/api/members/${recordId}/entries`)
+        .then(response => response.json())
+        .then(entriesData => {
+            console.log('Received entries data:', entriesData);
+            
+            // Format dates for display
+            entriesData.forEach(row => {
+                if (row.birth_date) {
+                    const date = new Date(row.birth_date);
+                    row.birth_date = date.toLocaleDateString('en-US');
+                }
+                if (row.declaration_date) {
+                    const date = new Date(row.declaration_date);
+                    row.declaration_date = date.toLocaleDateString('en-US');
+                }
+                if (row.OR_date) {
+                    const date = new Date(row.OR_date);
+                    row.OR_date = date.toLocaleDateString('en-US');
+                }
+            });
+            
+            // Render the table
+            window.renderEntriesTable(entriesData);
+            
+            // Update Dispatch Ready status based on entries
+            setTimeout(() => {
+                updateDispatchReadyFromEntries();
+            }, 100);
+            
+            // Setup click handlers after table is rendered
+            setTimeout(() => {
+                console.log('Setting up entry table click handlers...');
+                setupEntryTableClickHandlers();
+                
+                // Debug: Check if table instance is available
+                const entriesTable = window.entriesHotInstance;
+                if (entriesTable) {
+                    const data = entriesTable.getSourceData();
+                    console.log('Table data available:', data);
+                    if (data && data.length > 0) {
+                        console.log('First row sample data:', data[0]);
+                    }
+                } else {
+                    console.error('❌ entriesHotInstance is still null after render!');
+                }
+            }, 500);
+        })
+        .catch(error => {
+            console.error('Error fetching entries:', error);
+        });
+}
+
+// Back button event listener
+document.getElementById('back_to_add').addEventListener('click', function() {
+    switchToAddMode();
+});
+
+// Update the openRecordInOverlay function to setup entry table clicks
 function openRecordInOverlay(recordData) {
     function convertToYYYYMMDD(dateStr) {
         const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
@@ -1289,6 +2227,7 @@ function openRecordInOverlay(recordData) {
     document.getElementById('id_rcv').checked = recordData.id_received;
     document.getElementById('paid').checked = recordData.paid;
     document.getElementById('declared').checked = recordData.declared;
+    document.getElementById('record_dispatch_ready').checked = recordData.dispatch_ready;
     document.getElementById('dec_date').value = recordData.declaration_date;
     document.getElementById('eff_date').value = recordData.effectivity_date;
     document.getElementById('loc_par').value = recordData.location_particular;
@@ -1303,7 +2242,10 @@ function openRecordInOverlay(recordData) {
     document.getElementById('overlay').style.display = 'flex';
 
     // Scroll to top of overlay
-    document.getElementById('overlay-content').scrollTop = 0;
+    const overlayContent = document.getElementById('overlay-content');
+    if (overlayContent) {
+        overlayContent.scrollTop = 0;
+    }
 
     // Initialize change tracking AFTER a short delay to ensure form is populated
     setTimeout(() => {
@@ -1312,7 +2254,12 @@ function openRecordInOverlay(recordData) {
         setDistrictFromMunicipality();
         setOriginBasedOnUser();
         setLocationParticularToUppercase();
-        setupDispatchReadyRestriction(); // Add this line
+        
+        // Highlight required fields and setup error containers
+        highlightRequiredFields();
+        
+        // Make sure we're in add mode initially (hide back button)
+        switchToAddMode();
     }, 100);
 
     // Fetch entries for this record
@@ -1334,6 +2281,18 @@ function openRecordInOverlay(recordData) {
                 }
             });
             window.renderEntriesTable(data);
+            
+            // Update Dispatch Ready status
+            setTimeout(() => {
+                updateDispatchReadyFromEntries();
+            }, 200);
+            
+            // Setup click handlers for entries table after it's rendered
+            setTimeout(() => {
+                setupEntryTableClickHandlers();
+                updateEntriesTableRenderer();
+                setupEntriesTableMonitoring();
+            }, 1000);
         });
 }
 
@@ -1429,73 +2388,6 @@ function archiveRecord() {
     });
 }
 
-// Dispatch Ready checkbox restriction
-function setupDispatchReadyRestriction() {
-    const paidCheckbox = document.getElementById('entry_paid');
-    const dispatchReadyCheckbox = document.getElementById('dispatch_ready');
-    
-    if (!paidCheckbox || !dispatchReadyCheckbox) {
-        console.error('Required checkboxes not found');
-        return;
-    }
-    
-    // Initial state check
-    updateDispatchReadyState();
-    
-    // Add event listener to Paid checkbox
-    paidCheckbox.addEventListener('change', function() {
-        updateDispatchReadyState();
-        
-        // If Paid is unchecked, also uncheck Dispatch Ready
-        if (!this.checked && dispatchReadyCheckbox.checked) {
-            dispatchReadyCheckbox.checked = false;
-            
-            // Trigger change event for any listeners
-            dispatchReadyCheckbox.dispatchEvent(new Event('change'));
-        }
-    });
-    
-    // Add event listener to Dispatch Ready checkbox to prevent checking when Paid is false
-    dispatchReadyCheckbox.addEventListener('click', function(e) {
-        if (!paidCheckbox.checked) {
-            e.preventDefault();
-            toastAlert("Payment Required", "Please mark as Paid first before setting as Dispatch Ready.");
-        }
-    });
-    
-    // Also handle change event for additional safety
-    dispatchReadyCheckbox.addEventListener('change', function(e) {
-        if (!paidCheckbox.checked && this.checked) {
-            this.checked = false;
-            toastAlert("Payment Required", "Cannot set as Dispatch Ready without payment.");
-        }
-    });
-}
-
-function updateDispatchReadyState() {
-    const paidCheckbox = document.getElementById('entry_paid');
-    const dispatchReadyCheckbox = document.getElementById('dispatch_ready');
-    
-    if (paidCheckbox && dispatchReadyCheckbox) {
-        if (!paidCheckbox.checked) {
-            // If not paid, disable and uncheck dispatch ready
-            dispatchReadyCheckbox.disabled = true;
-            dispatchReadyCheckbox.checked = false;
-            
-            // Add visual styling for disabled state
-            dispatchReadyCheckbox.parentElement.style.opacity = '0.6';
-            dispatchReadyCheckbox.parentElement.style.cursor = 'not-allowed';
-        } else {
-            // If paid, enable dispatch ready
-            dispatchReadyCheckbox.disabled = false;
-            
-            // Remove visual styling
-            dispatchReadyCheckbox.parentElement.style.opacity = '1';
-            dispatchReadyCheckbox.parentElement.style.cursor = 'pointer';
-        }
-    }
-}
-
 // Export current record entries to Excel (server-side save)
 function exportCurrentRecordToExcel() {
     const recordId = document.getElementById('record_id').value;
@@ -1526,7 +2418,7 @@ function exportCurrentRecordToExcel() {
             
             if (result.success) {
                 toastSuccess("Export Successful", 
-                    `File saved to server: ${result.filename}\nExported ${result.export_count} entries.\n\nIncluded fields:\n• Category, MAAB No, Name details\n• Birthdate, Age, Sex, Contact, Email\n• OR No, OR Date, Declared status\n• Dispatch info, Remarks\n• Record details: Declaration Date, Effectivity Date, Location Category, Municipality, District, Origin`);
+                    `File saved to server: ${result.filename}\nExported ${result.export_count} entries.\n\nIncluded fields:\n• Category, MAAB No, Name details\n• Birthdate, Age, Sex, Contact, Email\n• OR No, OR Date, Declared status\n• Remarks\n• Record details: Declaration Date, Effectivity Date, Location Category, Municipality, District, Origin`);
                 console.log('File saved at:', result.file_path);
             } else {
                 toastError("Export Failed", result.error || "Failed to export entries.");
@@ -1558,7 +2450,7 @@ function ensureHorizontalScroll() {
     const handsontable = document.getElementById('members_table');
     
     if (tableContainer && handsontable) {
-        const requiredWidth = 15 * 175;
+        const requiredWidth = 17 * 173; // Changed from 16 to 17 columns
         handsontable.style.minWidth = requiredWidth + 'px';
         tableContainer.style.overflowX = 'auto';
         tableContainer.style.overflowY = 'hidden';
@@ -1573,38 +2465,40 @@ function initializeTable(data) {
     hotInstance = new Handsontable(container, {
         data: data.slice(0, entriesPerPage),
         colHeaders: [
-            'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Declaration Date', 'Effectivity Date',
-            'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
-        ],
-        columns: [
-            { renderer: openLinkRenderer },
-            { data: 'record_id', readOnly: true },
-            { data: 'year' },
-            { data: 'id_received', type: 'checkbox' },
-            { data: 'declared', type: 'checkbox' },
-            { 
-                data: 'declaration_date',
-                type: 'date',
-                dateFormat: 'MM-DD-YYYY',
-                correctFormat: true,
-                allowInvalid: false
-            },
-            { 
-                data: 'effectivity_date',
-                type: 'date',
-                dateFormat: 'MM-DD-YYYY',
-                correctFormat: true,
-                allowInvalid: false
-            },
-            { data: 'location_particular' },
-            { data: 'location_category' },
-            { data: 'municipality' },
-            { data: 'district' },
-            { data: 'paid', type: 'checkbox' },
-            { data: 'origin' },
-            { data: 'remarks' },
-            { data: 'tags' }
-        ],
+    'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Dispatch Ready', 'Dispatch ID', 'Declaration Date', 'Effectivity Date',
+    'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
+],
+columns: [
+    { renderer: openLinkRenderer },
+    { data: 'record_id', readOnly: true },
+    { data: 'year' },
+    { data: 'id_received', type: 'checkbox' },
+    { data: 'declared', type: 'checkbox' },
+    { data: 'dispatch_ready', type: 'checkbox' },
+    { data: 'dispatch_id', readOnly: true }, // Add this new column
+    { 
+        data: 'declaration_date',
+        type: 'date',
+        dateFormat: 'MM-DD-YYYY',
+        correctFormat: true,
+        allowInvalid: false
+    },
+    { 
+        data: 'effectivity_date',
+        type: 'date',
+        dateFormat: 'MM-DD-YYYY',
+        correctFormat: true,
+        allowInvalid: false
+    },
+    { data: 'location_particular' },
+    { data: 'location_category' },
+    { data: 'municipality' },
+    { data: 'district' },
+    { data: 'paid', type: 'checkbox' },
+    { data: 'origin' },
+    { data: 'remarks' },
+    { data: 'tags' }
+],
         rowHeaders: true,
         autoWrapRow: false,
         autoWrapCol: false,
@@ -1655,76 +2549,85 @@ function initializeTable(data) {
     const searchClear = document.getElementById('search_clear');
 
     // Search functionality
-    searchInput.addEventListener('input', (e) => {
-        performSearch(e.target.value);
-        
-        if (e.target.value.trim() !== "") {
-            searchClear.classList.add('visible');
-        } else {
-            searchClear.classList.remove('visible');
-        }
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            performSearch(e.target.value);
+            
+            if (e.target.value.trim() !== "") {
+                searchClear.classList.add('visible');
+            } else {
+                searchClear.classList.remove('visible');
+            }
+        });
+    }
 
-    searchClear.addEventListener('click', () => {
-        searchInput.value = "";
-        searchClear.classList.remove('visible');
-        performSearch("");
-        searchInput.focus();
-    });
+    if (searchClear) {
+        searchClear.addEventListener('click', () => {
+            searchInput.value = "";
+            searchClear.classList.remove('visible');
+            performSearch("");
+            searchInput.focus();
+        });
+    }
 
     // Add Record button
-    document.querySelector('.btn-add').addEventListener('click', function () {
-        fetch('/api/add_record', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (!result.success) {
-                toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
-                return;
-            }
-            
-            // Get the newly created record ID
-            const newRecordId = result.record_id;
-            
-            return fetch("/api/members/records?status=active").then(res => res.json())
-                .then(data => {
-                    data.forEach(row => {
-                        if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
-                        if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
+    const addRecordBtn = document.querySelector('.btn-add');
+    if (addRecordBtn) {
+        addRecordBtn.addEventListener('click', function () {
+            fetch('/api/add_record', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (!result.success) {
+                    toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
+                    return;
+                }
+                
+                // Get the newly created record ID
+                const newRecordId = result.record_id;
+                
+                return fetch("/api/members/records?status=active").then(res => res.json())
+                    .then(data => {
+                        data.forEach(row => {
+                            if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
+                            if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
+                        });
+
+                        allData = [...data];
+                        filteredData = [...data];
+                        currentPage = 1;
+                        renderTable();
+
+                        // Find and open the newly added record
+                        const newRecord = allData.find(record => record.record_id === newRecordId);
+                        if (newRecord) {
+                            openRecordInOverlay(newRecord);
+                        }
                     });
-
-                    allData = [...data];
-                    filteredData = [...data];
-                    currentPage = 1;
-                    renderTable();
-
-                    // Find and open the newly added record
-                    const newRecord = allData.find(record => record.record_id === newRecordId);
-                    if (newRecord) {
-                        openRecordInOverlay(newRecord);
-                    }
-                });
-        })
-        .catch(err => {
-            console.error("Add Record Error:", err);
-            toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
+            })
+            .catch(err => {
+                console.error("Add Record Error:", err);
+                toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
+            });
         });
-    });
+    }
 
     // Save record details
-    document.getElementById('save_record_details').addEventListener('click', function () {
-        saveRecordDetails()
-            .then(() => {
-                toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
-                document.getElementById('overlay').style.display = 'none';
-            })
-            .catch(error => {
-                console.error("Save Error:", error);
-                toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
-            });
-    });
+    const saveRecordBtn = document.getElementById('save_record_details');
+    if (saveRecordBtn) {
+        saveRecordBtn.addEventListener('click', function () {
+            saveRecordDetails()
+                .then(() => {
+                    toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
+                })
+                .catch(error => {
+                    console.error("Save Error:", error);
+                    toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
+                });
+        });
+    }
 
     // Initial render
     renderTable();
@@ -1739,7 +2642,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (yearFilter) yearFilter.addEventListener('change', applyFilters);
         if (originFilter) originFilter.addEventListener('change', applyFilters);
-    }, 500);
+    }, 1000);
 });
 
 // Toggle functionality
@@ -1765,81 +2668,13 @@ document.querySelectorAll('input[name="entry_input_mode"]').forEach(radio => {
     });
 });
 
-// Add entry function
-document.getElementById('add_entry_details').addEventListener('click', function () {
-    const payload = {
-        record_id: document.getElementById('record_id').value,
-        maab_category: document.getElementById('maab_cat').value,
-        maab_no: document.getElementById('maab_no').value,
-        first_name: document.getElementById('fname').value,
-        middle_name: document.getElementById('mname').value,
-        last_name: document.getElementById('lname').value,
-        suffix: document.getElementById('suffix').value,
-        birth_date: document.getElementById('bdate').value,
-        age: document.getElementById('age').value,
-        sex: document.getElementById('sex').value,
-        contact_no: document.getElementById('contact').value,
-        email: document.getElementById('email').value,
-        address: document.getElementById('address').value,
-        blood_type: document.getElementById('blood_type').value,
-        id_received: document.getElementById('id_received').checked,
-        declared: document.getElementById('entry_declared').checked,
-        declaration_date: document.getElementById('declare_date').value,
-        paid: document.getElementById('entry_paid').checked,
-        OR_num: document.getElementById('entry_or_no').value,
-        OR_date: document.getElementById('entry_or_date').value,
-        remarks: document.getElementById('entry_remarks').value,
-        tags: document.getElementById('entry_tags').value,
-        dispatch_ready: document.getElementById('dispatch_ready').checked,
-        dispatch_id: document.getElementById('dispatch_id').value
-    };
-
-    fetch('/api/save_entry_details', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success === true) {
-            toastSuccess("Entry Added", "Entry added successfully!");
-            // Refresh entries table
-            fetch(`/api/members/${document.getElementById('record_id').value}/entries`)
-                .then(response => response.json())
-                .then(entriesData => {
-                    entriesData.forEach(row => {
-                        if (row.birth_date) {
-                            const date = new Date(row.birth_date);
-                            row.birth_date = date.toLocaleDateString('en-US');
-                        }
-                        if (row.declaration_date) {
-                            const date = new Date(row.declaration_date);
-                            row.declaration_date = date.toLocaleDateString('en-US');
-                        }
-                        if (row.OR_date) {
-                            const date = new Date(row.OR_date);
-                            row.OR_date = date.toLocaleDateString('en-US');
-                        }
-                    });
-                    window.renderEntriesTable(entriesData);
-                });
-        } else {
-            toastError("Entry Failed", "Entry adding failed: " + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        toastError("Error", "An error occurred during entry adding.");
-    });
-});
-
 // Export to Excel - UPDATED FUNCTION
 document.querySelector('.btn-export').addEventListener('click', function () {
     // Check if we're in the overlay (record is open)
     const overlay = document.getElementById('overlay');
     const recordId = document.getElementById('record_id').value;
     
-    if (overlay.style.display === 'flex' && recordId && recordId !== '0') {
+    if (overlay && overlay.style.display === 'flex' && recordId && recordId !== '0') {
         // Export the current record entries
         exportCurrentRecordToExcel();
     } else {
@@ -1960,14 +2795,16 @@ function setOriginBasedOnUser() {
     const userLocation = '{{ current_user.office_location if current_user else "Chapter" }}';
     
     if (userLocation && originSelect) {
-        // Set the value
-        originSelect.value = userLocation;
-        
-        // Make it visually distinct
-        originSelect.style.backgroundColor = '#f5f5f5';
-        originSelect.title = 'Origin is automatically set based on your location: ' + userLocation;
-        
-        console.log('Origin auto-set to:', userLocation);
+        // Wait a moment for options to be populated, then set the value
+        setTimeout(() => {
+            originSelect.value = userLocation;
+            
+            // Make it visually distinct
+            originSelect.style.backgroundColor = '#f5f5f5';
+            originSelect.title = 'Origin is automatically set based on your location: ' + userLocation;
+            
+            console.log('Origin auto-set to:', userLocation);
+        }, 100);
     }
 }
 
@@ -1989,81 +2826,6 @@ function initializeAutoFillFunctions() {
     setLocationParticularToUppercase();
 }
 
-// Update fetchActiveRecords to use initializeTable
-function fetchActiveRecords() {
-    fetch("/api/members/records?status=active")
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Response is not JSON');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Format dates
-            data.forEach(row => {
-                if (row.declaration_date) {
-                    const date = new Date(row.declaration_date);
-                    row.declaration_date = date.toLocaleDateString('en-US');
-                }
-                if (row.effectivity_date) {
-                    const date = new Date(row.effectivity_date);
-                    row.effectivity_date = date.toLocaleDateString('en-US');
-                }
-            });
-
-            // Initialize or update the table
-            if (!hotInstance) {
-                initializeTable(data);
-            } else {
-                allData = [...data];
-                filteredData = [...data];
-                renderTable();
-                populateYearPicker();
-            }
-            
-            console.log('Active records loaded:', data.length);
-        })
-        .catch(error => {
-            console.error('Error fetching active records:', error);
-            toastError("Error", "Failed to load active records: " + error.message);
-        });
-}
-
-// Update fetchArchivedRecords to use initializeTable
-function fetchArchivedRecords() {
-    fetch("/api/members/records?status=archived")
-        .then(response => response.json())
-        .then(data => {
-            // Format dates
-            data.forEach(row => {
-                if (row.declaration_date) {
-                    const date = new Date(row.declaration_date);
-                    row.declaration_date = date.toLocaleDateString('en-US');
-                }
-                if (row.effectivity_date) {
-                    const date = new Date(row.effectivity_date);
-                    row.effectivity_date = date.toLocaleDateString('en-US');
-                }
-            });
-
-            // Update the table with archived data
-            archiveAllData = [...data];
-            archiveFilteredData = [...data];
-            renderArchiveTable();
-            populateYearPicker();
-            
-            console.log('Archived records loaded:', data.length);
-        })
-        .catch(error => {
-            console.error('Error fetching archived records:', error);
-            toastError("Error", "Failed to load archived records");
-        });
-}
-
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Page loaded, setting up close confirmation');
@@ -2072,6 +2834,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize auto-fill functions
     initializeAutoFillFunctions();
+    
+    // Load filter dropdowns
+    populateFilterDropdowns();
     
     // Add archive button event listener
     const archiveBtn = document.querySelector('.btn-archive');
@@ -2091,7 +2856,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load initial data (active records)
     fetchActiveRecords();
 });
+
+window.populateEntryForm = populateEntryForm;
 </script>
-
-
 {% endblock %}
