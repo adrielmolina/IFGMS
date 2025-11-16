@@ -1,7 +1,8 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, send_file, send_from_directory, abort
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from livereload import Server
-from py_scripts import db_conn, tools
+from py_scripts import db_conn, tools, models
+from py_scripts.db_conn import SessionLocal
 from datetime import date, datetime
 import os
 import pandas as pd
@@ -9,7 +10,6 @@ import openpyxl
 from functools import wraps
 from io import BytesIO
 from flask import send_file
-
 
 
 server = Flask(__name__)
@@ -426,32 +426,39 @@ def export_record_entries(record_id):
 # TODO move to accounts api routes section
 @server.route('/create_acc_submit', methods=['POST'])
 def create_acc_submit():
-    data = request.get_json()
-    print(data)
-    
-    user = data.get('username')
-    password = data.get('password')
-    email = data.get('email')
+    user = request.form.get('username')
+    password = request.form.get('password')
+    email = request.form.get('email')
 
-    fname = data.get('fname').upper()
-    mname = data.get('mname').upper()
-    lname = data.get('lname').upper()
-    suffix = data.get('suffix')
+    fname = request.form.get('fname').upper()
+    mname = request.form.get('mname').upper()
+    lname = request.form.get('lname').upper()
+    suffix = request.form.get('suffix')
 
-    bdate = data.get('bdate')
-    contact = data.get('contact_no')
+    bdate = request.form.get('bdate')
+    contact = request.form.get('contact_no')
 
     acct_created = date.today().strftime("%Y-%m-%d")
-    branch = data.get('branch')
+    branch = request.form.get('branch')
 
     if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
         create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
                             suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
     
     if not create_new_acc == True:
-        return jsonify({"success": False, "error": 'Account Creation Failed'}), 500
+        flash({
+            "title": "Account creation failed!",
+            "text": f"{create_new_acc}. Please try again.",
+            "redirect_url": url_for('create_acc')
+        }, "error")
+        return render_template('create_account.html')
     else:
-        return jsonify({"success": True})
+        flash({
+        "title": "Account created successfully!",
+        "text": "Click continue to go back to login screen.",
+        "redirect_url": url_for('landing_page')
+        }, "success")
+        return render_template('create_account.html')
 
 
     # TODO add condition to check if the username already exists
@@ -661,6 +668,30 @@ def upload_profile_pic():
         print("Exception in upload_profile_pic:", e)
         return jsonify({"success": False, "error": str(e)}), 500
 
+@server.route('/api/members/filter_options', methods=['GET'])
+@login_required
+def get_member_filter_options():
+    db_session = SessionLocal()
+    try:
+        # Get distinct years from records
+        years = db_session.query(models.Records.year).distinct().filter(models.Records.year.isnot(None)).order_by(models.Records.year.desc()).all()
+        years_list = [year[0] for year in years]
+        
+        # Get distinct origins from records
+        origins = db_session.query(models.Records.origin).distinct().filter(models.Records.origin.isnot(None)).order_by(models.Records.origin).all()
+        origins_list = [origin[0] for origin in origins]
+        
+        return jsonify({
+            'years': years_list,
+            'origins': origins_list
+        })
+        
+    except Exception as e:
+        print(f"Error fetching filter options: {e}")
+        return jsonify({'years': [], 'origins': []}), 500
+    finally:
+        db_session.close()
+
 # === Fetch profile picture ===
 @server.route('/api/get_profile_pic/<int:user_id>')
 @login_required
@@ -693,89 +724,6 @@ def get_dispatch_records():
     return jsonify([record.to_dict() for record in dispatch_records])
 
 
-# ====== API FOR DASHBOARD STATS ======
-
-@server.route('/api/members/count', methods=['GET'])
-def get_members_count():
-    try:
-        # Count all entries across all records
-        total_count = 0
-        all_records = db_conn.get_member_records()
-        
-        for record in all_records:
-            entries = db_conn.get_entries(record.record_id)  # or record.id
-            total_count += len(entries)
-            
-        return jsonify({
-            'success': True,
-            'total_members': total_count
-        })
-    except Exception as e:
-        print(f"Error in get_members_count: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@server.route('/api/members/expiring_soon', methods=['GET'])
-def get_expiring_soon_count():
-    try:
-        from datetime import datetime, timedelta
-        today = datetime.now().date()
-        thirty_days_from_now = today + timedelta(days=30)
-        last_month = today - timedelta(days=30)
-        
-        # Get all records and their entries
-        all_records = db_conn.get_member_records()
-        
-        current_expiring = 0
-        previous_expiring = 0
-        
-        for record in all_records:
-            # Get entries for this record
-            entries = db_conn.get_entries(record.record_id)
-            
-            for entry in entries:
-                # Check OR_date for expiration
-                if hasattr(entry, 'OR_date') and entry.OR_date:
-                    # Convert to date object if it's string
-                    if isinstance(entry.OR_date, str):
-                        or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
-                    else:
-                        or_date = entry.OR_date
-                    
-                    # Calculate expiration date (OR_date + 1 year)
-                    expiration_date = or_date + timedelta(days=365)
-                    
-                    # Current period: expiring in next 30 days
-                    if today <= expiration_date <= thirty_days_from_now:
-                        current_expiring += 1
-                    
-                    # Previous period: expired in last 30 days
-                    if last_month <= expiration_date <= today:
-                        previous_expiring += 1
-        
-        # Calculate percentage change
-        if previous_expiring > 0:
-            percentage_change = ((current_expiring - previous_expiring) / previous_expiring) * 100
-        else:
-            percentage_change = 0
-        
-        return jsonify({
-            'success': True,
-            'expiring_soon_count': current_expiring,
-            'previous_period_count': previous_expiring,
-            'percentage_change': round(percentage_change, 2),
-            'timeframe_days': 30
-        })
-    except Exception as e:
-        print(f"Error in get_expiring_soon_count: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
 # API FOR MEMBERS PAGE
 
 # TODO fix api route names ex. /api/members/get_records
@@ -783,11 +731,10 @@ def get_expiring_soon_count():
 @server.route('/api/members/records', methods=['GET'])
 def get_members():
     try:
-        office_loc = current_user.office_location
         status = request.args.get('status', 'active')
         print(f"DEBUG: Fetching member records with status: {status}")
         
-        member_records = db_conn.get_member_records(status=status, office_loc=office_loc)
+        member_records = db_conn.get_member_records(status=status)
         print(f"DEBUG: Records fetched: {len(member_records) if member_records else 'None'}")
         
         if member_records is None:
@@ -811,16 +758,6 @@ def get_members():
         import traceback
         traceback.print_exc()
         return jsonify({"error": "Internal server error"}), 500
-    
-    # TODO fix this after merge  
-    
-    '''
-    office_loc = current_user.office_location
-    
-    member_records = db_conn.get_member_records(office_loc)
-    return jsonify([record.to_dict() for record in member_records])
-    '''
-    
     '''
     records = db_conn.get_member_records()
     members_list = []
@@ -1468,288 +1405,7 @@ def generate_report():
         print(f"Error generating report: {e}")
         flash("Error generating the report. Please try again later.", "error")
         return render_template('error_page.html')  # Render an error page
-    
 
-# ==================== API ROUTES FOR AUDIT TRAILS ====================
-# SIMPLE WORKING API ROUTES
-@server.route('/api/get_users', methods=['GET'])
-@login_required
-@roles_required('admin', 'superadmin')
-def api_get_users():
-    try:
-        print("🔍 Getting users...")
-        db_session = db_conn.SessionLocal()
-        users = db_session.query(db_conn.models.Accounts).filter(
-            db_conn.models.Accounts.acct_status.in_(['approved', 'staff'])
-        ).all()
-        
-        users_list = []
-        for user in users:
-            users_list.append({
-                'user_id': user.account_id,
-                'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name
-            })
-        
-        print(f"✅ Found {len(users_list)} users")
-        return jsonify(users_list)
-        
-    except Exception as e:
-        print(f"❌ Error getting users: {e}")
-        return jsonify([])
-    finally:
-        db_session.close()
-
-@server.route('/api/get_filtered_logs', methods=['GET'])
-@login_required
-@roles_required('admin', 'superadmin')
-def api_get_filtered_logs():
-    try:
-        user_id = request.args.get('user_id', '')
-        filter_date = request.args.get('date', '')
-        
-        print(f"🔍 Filtering - User: {user_id}, Date: {filter_date}")
-        
-        # Get all logs
-        all_logs = db_conn.GET_audit_logs()
-        print(f"📋 Total logs: {len(all_logs)}")
-        
-        filtered_logs = []
-        
-        for log in all_logs:
-            # Get user ID - try different attribute names
-            log_user_id = getattr(log, 'account_id', None)
-            if log_user_id is None:
-                log_user_id = getattr(log, 'user_id', None)
-            
-            log_timestamp = getattr(log, 'timestamp', None)
-            
-            # Check user filter
-            user_match = not user_id or (log_user_id and str(log_user_id) == user_id)
-            
-            # Check date filter
-            date_match = True
-            if filter_date:
-                if log_timestamp:
-                    if hasattr(log_timestamp, 'strftime'):
-                        log_date = log_timestamp.strftime('%Y-%m-%d')
-                    else:
-                        log_date = str(log_timestamp)[:10]
-                    date_match = (log_date == filter_date)
-                else:
-                    date_match = False
-            
-            if user_match and date_match:
-                # Format timestamp
-                if log_timestamp and hasattr(log_timestamp, 'strftime'):
-                    timestamp_str = log_timestamp.strftime('%Y-%m-%d %H:%M:%S')
-                else:
-                    timestamp_str = str(log_timestamp)
-                
-                filtered_logs.append({
-                    'log_id': getattr(log, 'log_id', ''),
-                    'username': getattr(log, 'username', ''),
-                    'user_level': getattr(log, 'user_level', ''),
-                    'action': getattr(log, 'action', ''),
-                    'details': getattr(log, 'details', ''),
-                    'timestamp': timestamp_str,
-                    'ip_address': getattr(log, 'ip_address', '')
-                })
-        
-        print(f"✅ Filtered logs: {len(filtered_logs)}")
-        return jsonify({
-            "success": True, 
-            "logs": filtered_logs,
-            "filters": {"user_id": user_id, "date": filter_date}
-        })
-        
-    except Exception as e:
-        print(f"❌ Error in get_filtered_logs: {e}")
-        return jsonify({
-            "success": False, 
-            "error": str(e),
-            "logs": []
-        }), 500
-    
-    # DEBUG ROUTE - Check if APIs are working
-@server.route('/api/debug_test')
-def debug_test():
-    return jsonify({"message": "API is working!", "status": "success"})
-
-# DEBUG ROUTE - Check audit logs structure
-@server.route('/api/debug_logs_info')
-@login_required
-@roles_required('admin', 'superadmin')
-def debug_logs_info():
-    try:
-        logs = db_conn.GET_audit_logs()
-        if not logs:
-            return jsonify({"message": "No logs found", "count": 0})
-        
-        # Check first log structure
-        first_log = logs[0]
-        log_attrs = {}
-        for attr in dir(first_log):
-            if not attr.startswith('_'):
-                try:
-                    value = getattr(first_log, attr)
-                    log_attrs[attr] = {
-                        "type": str(type(value)),
-                        "value": str(value)[:100] if value else "None"
-                    }
-                except:
-                    pass
-        
-        return jsonify({
-            "total_logs": len(logs),
-            "first_log_attributes": log_attrs,
-            "sample_data": {
-                "log_id": getattr(first_log, 'log_id', 'N/A'),
-                "username": getattr(first_log, 'username', 'N/A'),
-                "account_id": getattr(first_log, 'account_id', 'N/A'),
-                "timestamp": str(getattr(first_log, 'timestamp', 'N/A'))
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({"error": str(e)})
-#? -------------------- NOTIFICATIONS -------------------- ?#
-
-@server.route('/api/notifications', methods=['GET'])
-def get_notifications():
-    try:
-        from datetime import datetime, timedelta
-        today = datetime.now().date()
-        notifications = []
-        
-        print("🔍 Starting notifications check...")
-        
-        # Get all member records
-        all_records = db_conn.get_member_records()
-        print(f"📊 Found {len(all_records)} records")
-        
-        # 1. Check for birthdays today
-        birthday_count = 0
-        for record in all_records:
-            try:
-                # Get record ID safely
-                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
-                if not record_id:
-                    continue
-                    
-                # Get entries for this record
-                entries = db_conn.get_entries(record_id)
-                
-                for entry in entries:
-                    # Check if entry has birth_date
-                    birth_date = getattr(entry, 'birth_date', None)
-                    if birth_date:
-                        # Convert to date object if string
-                        if isinstance(birth_date, str):
-                            try:
-                                birth_date = datetime.strptime(birth_date, '%Y-%m-%d').date()
-                            except:
-                                continue
-                        elif isinstance(birth_date, datetime):
-                            birth_date = birth_date.date()
-                        
-                        # Check if birthday is today
-                        if birth_date.month == today.month and birth_date.day == today.day:
-                            first_name = getattr(entry, 'first_name', '')
-                            last_name = getattr(entry, 'last_name', '')
-                            email = getattr(entry, 'email', '')
-                            
-                            notifications.append({
-                                'type': 'birthday',
-                                'message': f"🎂 {first_name} {last_name} has birthday today!",
-                                'member_name': f"{first_name} {last_name}",
-                                'member_email': email,
-                                'priority': 'high'
-                            })
-                            birthday_count += 1
-            except Exception as e:
-                print(f"❌ Error processing record: {e}")
-                continue
-        
-        print(f"🎂 Found {birthday_count} birthdays today")
-        
-        # 2. Check for expiring memberships (30 days)
-        expiring_count = 0
-        thirty_days_from_now = today + timedelta(days=30)
-        
-        for record in all_records:
-            try:
-                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
-                if not record_id:
-                    continue
-                    
-                entries = db_conn.get_entries(record_id)
-                
-                for entry in entries:
-                    or_date = getattr(entry, 'OR_date', None)
-                    if or_date:
-                        # Convert to date object if string
-                        if isinstance(or_date, str):
-                            try:
-                                or_date = datetime.strptime(or_date, '%Y-%m-%d').date()
-                            except:
-                                continue
-                        elif isinstance(or_date, datetime):
-                            or_date = or_date.date()
-                        
-                        # Calculate expiration (OR_date + 1 year)
-                        expiration_date = or_date + timedelta(days=365)
-                        days_until_expiry = (expiration_date - today).days
-                        
-                        # Check if expiring within 30 days
-                        if 0 <= days_until_expiry <= 30:
-                            first_name = getattr(entry, 'first_name', '')
-                            last_name = getattr(entry, 'last_name', '')
-                            email = getattr(entry, 'email', '')
-                            
-                            notifications.append({
-                                'type': 'expiring',
-                                'message': f"⏰ {first_name} {last_name} membership expires in {days_until_expiry} days",
-                                'member_name': f"{first_name} {last_name}",
-                                'member_email': email,
-                                'additional_data': {'days_left': days_until_expiry},
-                                'priority': 'medium'
-                            })
-                            expiring_count += 1
-            except Exception as e:
-                print(f"❌ Error processing record for expiring: {e}")
-                continue
-        
-        print(f"⏰ Found {expiring_count} expiring memberships")
-        print(f"📨 Total notifications: {len(notifications)}")
-        
-        return jsonify({
-            'success': True,
-            'notifications': notifications,
-            'total_count': len(notifications),
-            'summary': {
-                'birthdays': birthday_count,
-                'expiring': expiring_count
-            }
-        })
-        
-    except Exception as e:
-        print(f"❌ Major error in get_notifications: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'notifications': [],
-            'total_count': 0
-        }), 500
-
-# TEST ROUTE - OPTIONAL
-@server.route('/api/notifications/test', methods=['GET'])
-def test_notifications_route():
-    return jsonify({"message": "Notifications route is working", "success": True})
 
 #? -------------------- MISC ROUTES -------------------- ?#
 

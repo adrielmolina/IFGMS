@@ -90,6 +90,9 @@ class Records(Base):
     remarks = Column(Text)
     tags = Column(String(255))
     status = Column(String(255), default='Active')
+    dispatch_ready = Column(Boolean)
+    dispatch_id = Column(Integer)
+    # TODO add the foerign key later 
     
     @property
     def declaration_date_YMD(self):
