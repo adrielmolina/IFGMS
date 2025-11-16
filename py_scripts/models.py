@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, ForeignKey, Enum, SmallInteger, DateTime, TIMESTAMP, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from flask_login import UserMixin
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -399,6 +400,28 @@ class Claims_Archive(Base):
     sent_advanced_notice = Column(Boolean)
     claim_type = Column(Enum('ACCIDENT', 'DEATH'))
 
+
+class ArchiveAccounts(Base):
+    __tablename__ = 'archive_accounts'
+    
+    archive_id = Column(Integer, primary_key=True)
+    account_id = Column(Integer)
+    username = Column(String(50), nullable=False)
+    email = Column(String(100))
+    first_name = Column(String(50), nullable=False)
+    middle_name = Column(String(50))
+    last_name = Column(String(50), nullable=False)
+    suffix = Column(String(10))
+    birth_date = Column(Date)
+    contact_no = Column(String(15))
+    office_location = Column(String(50))
+    user_level = Column(String(20))
+    acct_created = Column(Date)
+    acct_status = Column(String(20))
+    original_created_at = Column(DateTime)
+    archived_by = Column(Integer)
+    archived_at = Column(DateTime, default=datetime.now)
+    reason = Column(String(255))
 
 class Report_TvA(Base):
     __tablename__ = 'target_per_year'

@@ -123,7 +123,135 @@ def create_account(**kwargs):
         db_session.rollback()
         print(f"Error creating account: {e}")
         return str(e)
-    
+# Add these to your db_conn class if they don't exist
+def username_exists(self, username):
+    """Check if username already exists in database"""
+    try:
+        # If you're using SQLAlchemy
+        db_session = SessionLocal()
+        existing_user = db_session.query(models.Accounts).filter(
+            models.Accounts.username == username
+        ).first()
+        db_session.close()
+        return existing_user is not None
+    except Exception as e:
+        print(f"Error in username_exists: {e}")
+        return False
+
+def email_exists(self, email):
+    """Check if email already exists in database"""
+    if not email:
+        return False
+    try:
+        db_session = SessionLocal()
+        existing_email = db_session.query(models.Accounts).filter(
+            models.Accounts.email == email
+        ).first()
+        db_session.close()
+        return existing_email is not None
+    except Exception as e:
+        print(f"Error in email_exists: {e}")
+        return False
+
+# ADD THESE FUNCTIONS TO YOUR db_conn.py
+
+def archive_account_to_table(account_id, archived_by_id):
+    """
+    Simple archive - just update account status to 'archived'
+    """
+    db_session = SessionLocal()
+    try:
+        print(f"🔄 Archiving account {account_id}...")
+        
+        # Direct update without fetching the object first
+        result = db_session.query(models.Accounts).filter(
+            models.Accounts.account_id == account_id
+        ).update({
+            models.Accounts.acct_status: 'archived'
+        })
+        
+        db_session.commit()
+        
+        if result > 0:
+            print(f"✅ Successfully archived account {account_id}")
+            
+            # Try to log, but don't fail if logging fails
+            try:
+                archiver = db_session.query(models.Accounts).filter(
+                    models.Accounts.account_id == archived_by_id
+                ).first()
+                
+                if archiver:
+                    POST_action_log(
+                        archiver.username,
+                        archiver.user_level,
+                        "Archive Account",
+                        f"Archived account ID: {account_id}",
+                        archived_by_id
+                    )
+            except Exception as log_error:
+                print(f"⚠️ Logging failed but archive succeeded: {log_error}")
+            
+            return True
+        else:
+            print(f"❌ Account {account_id} not found")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error archiving account {account_id}: {e}")
+        db_session.rollback()
+        return False
+    finally:
+        db_session.close()
+
+def name_exists(fname, lname, mname=None):
+    """Check if name combination already exists in database"""
+    try:
+        db_session = SessionLocal()
+        query = db_session.query(models.Accounts).filter(
+            models.Accounts.first_name == fname,
+            models.Accounts.last_name == lname
+        )
+        if mname and mname.strip():
+            query = query.filter(models.Accounts.middle_name == mname)
+        else:
+            query = query.filter(
+                (models.Accounts.middle_name == '') | 
+                (models.Accounts.middle_name.is_(None))
+            )
+        
+        existing_user = query.first()
+        return existing_user is not None
+    except Exception as e:
+        print(f"Error checking name existence: {e}")
+        return False
+    finally:
+        db_session.close()
+
+def name_exists(fname, lname, mname=None):
+    """Check if name combination already exists in database"""
+    try:
+        db_session = SessionLocal()
+        query = db_session.query(models.Accounts).filter(
+            models.Accounts.first_name == fname,
+            models.Accounts.last_name == lname
+        )
+        if mname and mname.strip():
+            query = query.filter(models.Accounts.middle_name == mname)
+        else:
+            query = query.filter(
+                (models.Accounts.middle_name == '') | 
+                (models.Accounts.middle_name.is_(None))
+            )
+        
+        existing_user = query.first()
+        return existing_user is not None
+    except Exception as e:
+        print(f"Error checking name existence: {e}")
+        return False
+    finally:
+        db_session.close()
+  
     
 def save_otp(email, otp):
     """Save OTP in the database with expiration time."""
@@ -361,19 +489,42 @@ def reset_account(id):
     try:
         account = db_session.query(models.Accounts).filter_by(account_id=id).first()
         if account:
-            print(f"Resetting password for account ID {id}")
-            initials = (account.first_name[:1] + account.middle_name[:1] + account.last_name[:1]).lower().strip()
-            bdate = str(account.birth_date).replace('-', '') if account.birth_date else '00000000'
+            print(f"=== RESET PASSWORD DEBUG ===")
+            print(f"Account: {account.first_name} {account.last_name}")
+            print(f"Birthdate: {account.birth_date}")
             
-            account.password = tools.hash_password(bdate + initials)
+            # Generate new password
+            from datetime import datetime
+            now = datetime.now()
+            current_year = now.year
+            current_month = str(now.month).zfill(2)
+            initials = (account.first_name[0] + account.last_name[0]).upper()
             
+            new_password = f"{current_year}{current_month}{initials}"
+            print(f"New password: {new_password}")
+            
+            # Hash the password
+            hashed_password = tools.hash_password(new_password)
+            print(f"Password hashed: {len(hashed_password)} characters")
+            
+            # Update the account
+            account.password = hashed_password
             db_session.commit()
+            
+            print(f"✅ Password reset successful!")
             return True
-        return False
+        else:
+            print(f"❌ Account {id} not found")
+            return False
+            
     except Exception as e:
+        print(f"❌ Error in reset_account: {e}")
+        import traceback
+        traceback.print_exc()
         db_session.rollback()
-        print(f"Error approving account: {e}")
         return False
+    finally:
+        db_session.close()
 
 
 def update_userlvl(id, new_level):

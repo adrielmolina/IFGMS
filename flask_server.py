@@ -423,44 +423,6 @@ def export_record_entries(record_id):
     finally:
         db_session.close()
 
-# TODO move to accounts api routes section
-@server.route('/create_acc_submit', methods=['POST'])
-def create_acc_submit():
-    data = request.get_json()
-    print(data)
-    
-    user = data.get('username')
-    password = data.get('password')
-    email = data.get('email')
-
-    fname = data.get('fname').upper()
-    mname = data.get('mname').upper()
-    lname = data.get('lname').upper()
-    suffix = data.get('suffix')
-
-    bdate = data.get('bdate')
-    contact = data.get('contact_no')
-
-    acct_created = date.today().strftime("%Y-%m-%d")
-    branch = data.get('branch')
-
-    if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
-        create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
-                            suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
-    
-    if not create_new_acc == True:
-        return jsonify({"success": False, "error": 'Account Creation Failed'}), 500
-    else:
-        return jsonify({"success": True})
-
-
-    # TODO add condition to check if the username already exists
-    # TODO fix condition to check if account creation succeeded
-    # TODO fix duplicate email/username error flash message not showing up
-
-
-
-
 # ========================== FORGOT PASSWORD ==========================
 @server.route("/forgot_password_otp", methods=["GET", "POST"])
 def forgot_password_otp():
@@ -1326,17 +1288,57 @@ def decline_account():
 @login_required
 @roles_required('admin', 'superadmin')
 def reset_account():
-    data = request.get_json()
-    ids = data.get('ids', [])
-
-    for acc_id in ids:
-        success = db_conn.reset_account(acc_id)
-
-        if not success:
-            return jsonify({"success": False, "error": f"Failed to reset password of account ID {acc_id}"}), 500
+    try:
+        data = request.get_json()
+        ids = data.get('ids', [])
         
-    return jsonify({"success": True})
+        print(f"🔍 RESET PASSWORD API CALLED")
+        print(f"📋 Account IDs to reset: {ids}")
+        
+        if not ids:
+            return jsonify({"success": False, "error": "No account IDs provided"}), 400
 
+        success_count = 0
+        failed_ids = []
+        
+        for acc_id in ids:
+            print(f"🔄 Processing account ID: {acc_id}")
+            
+            success = db_conn.reset_account(acc_id)
+            
+            if success:
+                success_count += 1
+                print(f"✅ Successfully reset password for account {acc_id}")
+            else:
+                failed_ids.append(acc_id)
+                print(f"❌ Failed to reset password for account {acc_id}")
+        
+        print(f"📊 Reset summary: {success_count} successful, {len(failed_ids)} failed")
+        
+        if success_count > 0:
+            response = {
+                "success": True, 
+                "reset_count": success_count,
+                "message": f"Passwords reset for {success_count} account(s)!"
+            }
+            if failed_ids:
+                response["warning"] = f"Failed to reset {len(failed_ids)} account(s)"
+            return jsonify(response)
+        else:
+            return jsonify({
+                "success": False, 
+                "error": f"Failed to reset passwords for all {len(ids)} account(s)"
+            }), 500
+            
+    except Exception as e:
+        print(f"❌ ERROR in reset_account route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False, 
+            "error": f"Internal server error: {str(e)}"
+        }), 500
+    
 @server.route('/api/accounts/update_userlvl', methods=['PATCH'])
 @login_required
 @roles_required('admin', 'superadmin')
@@ -1377,99 +1379,203 @@ def update_ofc():
     except Exception as e:
         print(f"Error updating office location: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+# UPDATE YOUR FLASK ROUTES
 
+@server.route('/create_acc_submit', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def create_account_submit():
+    
+    def username_exists(username):
+        """Check if username already exists in database using SQLAlchemy"""
+        db_session = db_conn.SessionLocal()
+        try:
+            existing_user = db_session.query(db_conn.models.Accounts).filter(
+                db_conn.models.Accounts.username == username
+            ).first()
+            return existing_user is not None
+        finally:
+            db_session.close()
 
+    def email_exists(email):
+        """Check if email already exists in database using SQLAlchemy"""
+        if not email:  # Email is optional
+            return False
+            
+        db_session = db_conn.SessionLocal()
+        try:
+            existing_email = db_session.query(db_conn.models.Accounts).filter(
+                db_conn.models.Accounts.email == email
+            ).first()
+            return existing_email is not None
+        finally:
+            db_session.close()
+
+    def name_exists(fname, lname, mname=None):
+        """Check if name combination already exists"""
+        db_session = db_conn.SessionLocal()
+        try:
+            query = db_session.query(db_conn.models.Accounts).filter(
+                db_conn.models.Accounts.first_name == fname,
+                db_conn.models.Accounts.last_name == lname
+            )
+            if mname and mname.strip():
+                query = query.filter(db_conn.models.Accounts.middle_name == mname)
+            else:
+                query = query.filter(
+                    (db_conn.models.Accounts.middle_name == '') | 
+                    (db_conn.models.Accounts.middle_name.is_(None))
+                )
+            
+            existing_user = query.first()
+            return existing_user is not None
+        finally:
+            db_session.close()
+
+    try:
+        data = request.get_json()
+        print("=== CREATE ACCOUNT DEBUG ===")
+        print("Received data:", data)
+        
+        # Validate required fields - UPDATED: removed password from required fields
+        required_fields = ['username', 'fname', 'lname', 'contact_no', 'branch']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        if missing_fields:
+            print(f"Missing fields: {missing_fields}")
+            return jsonify({
+                "success": False, 
+                "message": f"Missing required fields: {', '.join(missing_fields)}"
+            }), 400
+
+        # Validate birthdate - NEW: birthdate is now required
+        bdate = data.get('bdate')
+        if not bdate:
+            print("Birthdate is missing")
+            return jsonify({
+                "success": False, 
+                "message": "Birthdate is required"
+            }), 400
+
+        user = data.get('username')
+        password = data.get('password')  # This is now auto-generated from frontend
+        email = data.get('email')
+
+        fname = data.get('fname').upper()
+        mname = data.get('mname', '').upper()
+        lname = data.get('lname').upper()
+        suffix = data.get('suffix', 'NA')
+
+        contact = data.get('contact_no')
+        acct_created = date.today().strftime("%Y-%m-%d")
+        branch = data.get('branch')
+
+        print(f"Processing account creation for: {fname} {lname} ({user})")
+        print(f"Auto-generated password: {password}")
+
+        # Check if username already exists
+        print(f"Checking if username exists: {user}")
+        if username_exists(user):
+            print(f"Username already exists: {user}")
+            return jsonify({
+                "success": False, 
+                "message": "Username already exists. Please choose a different username."
+            }), 400
+
+        # Check if name combination already exists - NEW: name validation
+        print(f"Checking if name exists: {fname} {mname} {lname}")
+        if name_exists(fname, lname, mname):
+            print(f"Name already exists: {fname} {mname} {lname}")
+            return jsonify({
+                "success": False, 
+                "message": "An account with this name already exists. Please check the name details."
+            }), 400
+
+        # Check if email already exists (if email provided)
+        if email:
+            print(f"Checking if email exists: {email}")
+            if email_exists(email):
+                print(f"Email already exists: {email}")
+                return jsonify({
+                    "success": False, 
+                    "message": "Email address already exists. Please use a different email."
+                }), 400
+
+        # Create account using db_conn
+        print("Calling db_conn.create_account...")
+        create_new_acc = db_conn.create_account(
+            user=user, 
+            password=password, 
+            email=email, 
+            fname=fname, 
+            mname=mname, 
+            lname=lname,
+            suffix=suffix, 
+            bdate=bdate, 
+            contact=contact, 
+            acct_created=acct_created, 
+            branch=branch
+        )
+        
+        print(f"db_conn.create_account returned: {create_new_acc}")
+    
+        if create_new_acc is True:
+            print("Account creation successful!")
+            return jsonify({
+                "success": True,
+                "message": "Account created successfully!"
+            })
+        else:
+            print(f"Account creation failed with: {create_new_acc}")
+            return jsonify({
+                "success": False, 
+                "message": f"Account creation failed: {create_new_acc}"
+            }), 500
+
+    except Exception as e:
+        print(f"Error creating account: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({
+            "success": False, 
+            "message": "An unexpected error occurred. Please try again."
+        }), 500
+
+# UPDATE ARCHIVE FUNCTION
 @server.route('/api/accounts/archive', methods=['PATCH'])
 @login_required
 @roles_required('admin', 'superadmin')
 def archive_account():
-    data = request.get_json()
-    ids = data.get('ids', [])
-
-    for acc_id in ids:
-        success = db_conn.archive_account(acc_id)
-        
-        if not success:
-            return jsonify({"success": False, "error": f"Failed to archive account ID {acc_id}"}), 500
-
-    return jsonify({"success": True})
-
-# TODO add batch account creation (tickbox + toast message)
-# TODO set default password format (bdate + initials)
-# TODO make an overlay page for creating accounts on the accounts page and make it auto approved
-#* -------------------- END ACCOUNTS API ROUTES -------------------- *#
-
-
-@server.route('/inventory_action', methods=['POST'])
-def inventory_action():
-    pass
-
-
-# ! TEST FUNCTIONS GO HERE
-@server.route('/api/hot-update', methods=['POST'])
-def hot_update_data():
-    updates = request.json  # List of row dicts
-    conn = db_conn.conn_init()
-    cursor = conn.cursor()
-    for row in updates:
-        cursor.execute(
-            "UPDATE people SET name = %s, age = %s WHERE id = %s",
-            (row['name'], row['age'], row['id'])
-        )
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "success"})
-
-
-# declaration report
-@server.route('/generate_report', methods=['POST'])
-def generate_report():
     try:
-        # Get the date inputs
-        from_date = request.form.get('fromdate')
-        to_date = request.form.get('todate')
+        data = request.get_json()
+        ids = data.get('ids', [])
+        
+        print(f"🔍 ARCHIVE REQUEST - IDs: {ids}")
+        
+        if not ids:
+            return jsonify({"success": False, "error": "No account IDs provided"}), 400
 
-        # Validate the input dates (optional)
-        if not from_date or not to_date:
-            flash("Please select both from and to dates.", "error")
-            return render_template('declaration.html')
-
-        # Generate the report file name with timestamp
-        report_filename = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        report_folder = os.path.join(os.path.dirname(__file__), "reports")
-        report_path = os.path.join(report_folder, report_filename)
-
-        # Ensure the _reports folder exists
-        os.makedirs(report_folder, exist_ok=True)
-        print(f"Report will be saved to: {report_path}")
-
-        # Your report generation logic here, for example, using pandas
-        data = [
-            {"Transaction No.": 1001, "Year": 2025, "MAAB No.": "MAAB001", "Member ID": "M1234", "Effectivity Date": "2025-01-10",
-            "Expiry Date": "2026-01-10", "Particular Location": "Location A", "Location Category": "Urban", "Municipality": "City A",
-            "District": "D1", "OR Number": 123456, "OR Date": "2025-01-15", "Paid": "Yes", "Remarks": "Active Member",
-            "Origin": "Branch 1", "Count in Group": 3, "ID Received": "Yes", "Declared": "Yes", "Tags": "Renewal", "Declaration Date": "2025-01-10"},
-            {"Transaction No.": 1002, "Year": 2025, "MAAB No.": "MAAB002", "Member ID": "M1235", "Effectivity Date": "2025-02-05",
-            "Expiry Date": "2026-02-05", "Particular Location": "Location B", "Location Category": "Rural", "Municipality": "City B",
-            "District": "D2", "OR Number": 123457, "OR Date": "2025-02-07", "Paid": "Yes", "Remarks": "Pending Update",
-            "Origin": "Branch 2", "Count in Group": 2, "ID Received": "Yes", "Declared": "No", "Tags": "New Member", "Declaration Date": "2025-02-05"}
-        ]
-
-        # Create a DataFrame
-        df = pd.DataFrame(data)
-
-        # Save the DataFrame to an Excel file
-        df.to_excel(report_path, index=False)
-
-        flash(f"Report generated and saved as {report_filename}!", "success")
-        return redirect(url_for('declaration_page'))  # Redirect back to the page
-
+        success_count = 0
+        for acc_id in ids:
+            print(f"📦 Archiving account ID: {acc_id}")
+            # Use the new archive function that moves to archive_accounts table
+            success = db_conn.archive_account_to_table(acc_id, current_user.account_id)
+            if success:
+                success_count += 1
+                print(f"✅ Successfully archived account {acc_id}")
+            else:
+                print(f"❌ Failed to archive account {acc_id}")
+        
+        print(f"📊 Archive summary: {success_count}/{len(ids)} successful")
+        
+        if success_count > 0:
+            return jsonify({"success": True, "archived_count": success_count})
+        else:
+            return jsonify({"success": False, "error": "Failed to archive any accounts"}), 500
+            
     except Exception as e:
-        print(f"Error generating report: {e}")
-        flash("Error generating the report. Please try again later.", "error")
-        return render_template('error_page.html')  # Render an error page
+        print(f"❌ Error in archive_account: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
     
-
 # ==================== API ROUTES FOR AUDIT TRAILS ====================
 # SIMPLE WORKING API ROUTES
 @server.route('/api/get_users', methods=['GET'])
