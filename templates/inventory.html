@@ -174,705 +174,674 @@
 
 {% block extra_scripts %}
     <script>
-      // ADD ID FORM
-      const inventoryData = JSON.parse('{{ inventory_data | tojson | safe }}');
-      console.log(inventoryData);
+      document.addEventListener('DOMContentLoaded', function() {
+        // ADD ID FORM
+        const inventoryData = JSON.parse('{{ inventory_data | tojson | safe }}');
+        console.log(inventoryData);
 
-      const prefixBox = document.getElementById('prefixBox');
-      const numberInput = document.getElementById('ID_Number');
-      const countInput = document.getElementById('numIds');
-      const seriesEndBox = document.getElementById('idNumberBox');
-      const categorySelect = document.getElementById('cards');
+        const prefixBox = document.getElementById('prefixBox');
+        const numberInput = document.getElementById('ID_Number');
+        const countInput = document.getElementById('numIds');
+        const seriesEndBox = document.getElementById('idNumberBox');
+        const categorySelect = document.getElementById('cards');
 
-      const categoryPrefixes = {
-          "Classic": "PC",
-          "Bronze": "PB",
-          "Silver": "PS",
-          "Gold": "PG",
-          "Platinum": "PP",
-          "Enhanced Platinum": "PEP",
-          "Senior": "S",
-          "Senior+": "SP"
-      };
+        const categoryPrefixes = {
+            "Classic": "PC",
+            "Bronze": "PB",
+            "Silver": "PS",
+            "Gold": "PG",
+            "Platinum": "PP",
+            "Enhanced Platinum": "PEP",
+            "Senior": "S",
+            "Senior+": "SP"
+        };
 
-      function padNumber(num, length) {
-          return num.toString().padStart(length, '0');
-      }
+        function padNumber(num, length) {
+            return num.toString().padStart(length, '0');
+        }
 
-      function updatePrefix() {
-          const prefix = categoryPrefixes[categorySelect.value] || '';
-          prefixBox.value = prefix;
-          updateSeriesEnd();
-      }
+        function updatePrefix() {
+            const prefix = categoryPrefixes[categorySelect.value] || '';
+            prefixBox.value = prefix;
+            updateSeriesEnd();
+        }
 
-      function updateSeriesEnd() {
-          const prefix = prefixBox.value;
-          let startVal = parseInt(numberInput.value, 10);
-          const countVal = parseInt(countInput.value, 10);
+        function updateSeriesEnd() {
+            const prefix = prefixBox.value;
+            let startVal = parseInt(numberInput.value, 10);
+            const countVal = parseInt(countInput.value, 10);
 
-          if (isNaN(startVal) || startVal < 0) {
-              startVal = 0;
-              numberInput.value = '0';
-          }
+            if (isNaN(startVal) || startVal < 0) {
+                startVal = 0;
+                numberInput.value = '0';
+            }
 
-          if (!isNaN(countVal) && countVal > 0) {
-              const endNumber = startVal + countVal - 1;
-              seriesEndBox.value = prefix + padNumber(endNumber, 7);
-          } else {
-              seriesEndBox.value = '';
-          }
-      }
+            if (!isNaN(countVal) && countVal > 0) {
+                const endNumber = startVal + countVal - 1;
+                seriesEndBox.value = prefix + padNumber(endNumber, 7);
+            } else {
+                seriesEndBox.value = '';
+            }
+        }
 
-      categorySelect.addEventListener('change', updatePrefix);
+        categorySelect.addEventListener('change', updatePrefix);
 
-    // Limit length to 7 digits
-    if (numberInput.value.length > 7) {
-        numberInput.value = numberInput.value.slice(0, 7);
-    }
-
-    updateSeriesEnd();
-//});
-
-// When count input changes, ensure positive number then update
-countInput.addEventListener('input', () => {
-    let val = parseInt(countInput.value, 10);
-    if (isNaN(val) || val < 1) {
-        countInput.value = '0';
-    }
-    updateSeriesEnd();
-});
-
-// Initialize prefix and series end on page load
-updatePrefix();
-
-const addIdForm = document.querySelector('#popupForm1 form');
-const addIdButton = document.getElementById('add_ID');
-
-addIdForm.addEventListener('submit', async function (event) {
-    event.preventDefault();
-
-    const category = categorySelect.value;
-    const prefix = prefixBox.value.trim();
-    const startNum = numberInput.value.trim();
-    const countVal = parseInt(countInput.value.trim(), 10);
-    const seriesEnd = seriesEndBox.value.trim();
-
-    if (!category || !prefix || !startNum || isNaN(countVal) || countVal <= 0) {
-        toastAlert("Incomplete Form", "Please fill in all fields correctly before adding an ID.");
-        return;
-    }
-
-    // Show loading state
-    addIdButton.disabled = true;
-    addIdButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding IDs...';
-
-    try {
-        const response = await fetch('/api/inventory/add_stock', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                category: category,
-                prefix: prefix,
-                start_num: parseInt(startNum),
-                count: countVal
-            })
+        // Limit length to 7 digits
+        numberInput.addEventListener('input', function() {
+            if (this.value.length > 7) {
+                this.value = this.value.slice(0, 7);
+            }
+            updateSeriesEnd();
         });
 
-        const result = await response.json();
+        // When count input changes, ensure positive number then update
+        countInput.addEventListener('input', () => {
+            let val = parseInt(countInput.value, 10);
+            if (isNaN(val) || val < 1) {
+                countInput.value = '1';
+            }
+            updateSeriesEnd();
+        });
 
-        if (result.success) {
-            let message = result.message;
+        // Initialize prefix and series end on page load
+        updatePrefix();
+
+        const addIdForm = document.querySelector('#popupForm1 form');
+        const addIdButton = document.getElementById('add_ID');
+
+        addIdForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const category = categorySelect.value;
+            const prefix = prefixBox.value.trim();
+            const startNum = numberInput.value.trim();
+            const countVal = parseInt(countInput.value.trim(), 10);
+            const seriesEnd = seriesEndBox.value.trim();
+
+            if (!category || !prefix || !startNum || isNaN(countVal) || countVal <= 0) {
+                toastAlert("Incomplete Form", "Please fill in all fields correctly before adding an ID.");
+                return;
+            }
+
+            // Show loading state
+            addIdButton.disabled = true;
+            addIdButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding IDs...';
+
+            try {
+                const response = await fetch('/api/inventory/add_stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        category: category,
+                        prefix: prefix,
+                        start_num: parseInt(startNum),
+                        count: countVal
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    let message = result.message;
+                    
+                    // Add warning message if there were duplicates
+                    if (result.warning) {
+                        message += `<br><small>${result.warning}</small>`;
+                    }
+                    
+                    // Show detailed success message
+                    toastSuccess("IDs Added Successfully", message);
+                    
+                    // Clear form
+                    numberInput.value = "";
+                    countInput.value = "1";
+                    seriesEndBox.value = "";
+                    updatePrefix();
+                    
+                    // Close the popup after delay
+                    setTimeout(() => {
+                        popupForm1.style.display = 'none';
+                        
+                        // Refresh the inventory table to show new IDs
+                        location.reload();
+                    }, 2000);
+                    
+                } else {
+                    toastAlert("Error Adding IDs", result.error || "Failed to add IDs to inventory.");
+                }
+            } catch (error) {
+                console.error('Error adding IDs:', error);
+                toastAlert("Network Error", "Failed to connect to server. Please try again.");
+            } finally {
+                // Reset button state
+                addIdButton.disabled = false;
+                addIdButton.innerHTML = 'Add ID';
+            }
+        });
+
+        // POPUP FORMS - DECLARE THESE ONCE
+        const openFormBtn1 = document.getElementById('openFormBtn1');
+        const popupForm1 = document.getElementById('popupForm1');
+        const closeBtn1 = document.getElementById('closeBtn1');
+        const openFormBtn2 = document.getElementById('openFormBtn2');
+        const popupForm2 = document.getElementById('popupForm2');
+        const closeBtn2 = document.getElementById('closeBtn2');
+
+        openFormBtn1.addEventListener('click', () => {
+            popupForm1.style.display = 'flex';
+        });
+
+        closeBtn1.addEventListener('click', () => {
+            popupForm1.style.display = 'none'; 
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === popupForm1) {
+                popupForm1.style.display = 'none'; 
+            }
+        });
+
+        openFormBtn2.addEventListener('click', () => {
+            popupForm2.style.display = 'flex'; 
+        });
+
+        closeBtn2.addEventListener('click', () => {
+            popupForm2.style.display = 'none'; 
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === popupForm2) {
+                popupForm2.style.display = 'none'; 
+            }
+        });
+
+        /* ---------------- GALLERY DATA ---------------- */
+        const descriptions = {
+            classic: {
+                title: "CLASSIC ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 12,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 12,000.00 - Unprovoked Murder and Assault",
+                    "Php 5,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            "premier-bronze": {
+                title: "PREMIER BRONZE ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 35,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 35,000.00 - Unprovoked Murder and Assault",
+                    "Php 5,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            "premier-silver": {
+                title: "PREMIER SILVER ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 100,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 100,000.00 - Unprovoked Murder and Assault",
+                    "Php 10,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            "premier-gold": {
+                title: "PREMIER GOLD ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 200,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 200,000.00 - Unprovoked Murder and Assault",
+                    "Php 10,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            "premier-platinum": {
+                title: "PREMIER PLATINUM ID",
+                details: [
+                    "Issuance Age is 3 - 65 years old",
+                    "Php 300,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 300,000.00 - Unprovoked Murder and Assault",
+                    "Php 10,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            senior: {
+                title: "SENIOR ID",
+                details: [
+                    "Issuance Age is 66 - 80 years old",
+                    "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 50,000.00 - Unprovoked Murder and Assault",
+                    "Php 5,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            },
+            seniorplus: {
+                title: "SENIOR PLUS ID",
+                details: [
+                    "Issuance Age is 81 - 85 years old",
+                    "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+                    "Php 50,000.00 - Unprovoked Murder and Assault",
+                    "Php 5,000.00 - Accidental Medical Reimbursement",
+                    "Php 5,000.00 - Burial Assistance (if Accident)",
+                    "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+                ]
+            }
+        };
+
+        const galleryData = [
+            {
+                id: "classic",
+                image: "{{ url_for('static', filename='assets/ID1.png') }}",
+                title: "CLASSIC ID",
+                description: descriptions.classic.details
+            },
+            {
+                id: "premier-bronze", 
+                image: "{{ url_for('static', filename='assets/ID2.png') }}",
+                title: "PREMIER BRONZE ID",
+                description: descriptions["premier-bronze"].details
+            },
+            {
+                id: "premier-silver",
+                image: "{{ url_for('static', filename='assets/ID3.png') }}", 
+                title: "PREMIER SILVER ID",
+                description: descriptions["premier-silver"].details
+            },
+            {
+                id: "premier-gold",
+                image: "{{ url_for('static', filename='assets/ID4.png') }}", 
+                title: "PREMIER GOLD ID",
+                description: descriptions["premier-gold"].details
+            },
+            {
+                id: "premier-platinum",
+                image: "{{ url_for('static', filename='assets/ID5.png') }}",
+                title: "PREMIER PLATINUM ID",
+                description: descriptions["premier-platinum"].details
+            },
+            {
+                id: "senior",
+                image: "{{ url_for('static', filename='assets/ID6.png') }}",
+                title: "SENIOR ID",
+                description: descriptions.senior.details
+            },
+            {
+                id: "seniorplus", 
+                image: "{{ url_for('static', filename='assets/ID7.png') }}",
+                title: "SENIOR PLUS ID",
+                description: descriptions.seniorplus.details
+            }
+        ];
+
+        let currentImageIndex = 0;
+
+        function updateGalleryDisplay() {
+            const currentData = galleryData[currentImageIndex];
             
-            // Add warning message if there were duplicates
-            if (result.warning) {
-                message += `<br><small>${result.warning}</small>`;
+            const galleryImage = document.getElementById('galleryImage');
+            if (galleryImage) {
+                galleryImage.src = currentData.image;
+                galleryImage.alt = currentData.title;
             }
             
-            // Show detailed success message
-            toastSuccess("IDs Added Successfully", message);
+            const caption = document.getElementById('caption');
+            if (caption) caption.textContent = currentData.title;
             
-            // Clear form
-            numberInput.value = "";
-            countInput.value = "";
-            seriesEndBox.value = "";
-            updatePrefix();
-            
-            // Close the popup after delay
-            setTimeout(() => {
-                popupForm1.style.display = 'none';
-                
-                // Refresh the inventory table to show new IDs
-                location.reload();
-            }, 2000);
-            
-        } else {
-            toastAlert("Error Adding IDs", result.error || "Failed to add IDs to inventory.");
+            const descriptionDiv = document.getElementById('idDescription');
+            if (descriptionDiv) {
+                descriptionDiv.innerHTML = '';
+                currentData.description.forEach(item => {
+                    const p = document.createElement('p');
+                    p.textContent = item;
+                    descriptionDiv.appendChild(p);
+                });
+            }
         }
-    } catch (error) {
-        console.error('Error adding IDs:', error);
-        toastAlert("Network Error", "Failed to connect to server. Please try again.");
-    } finally {
-        // Reset button state
-        addIdButton.disabled = false;
-        addIdButton.innerHTML = 'Add ID';
-    }
-});
 
-//TODO commented out for now, remove if not needed @JOSH
-/*
-      const addIdForm = document.querySelector('#popupForm1 form');
-      const addIdButton = document.getElementById('add_ID');
-
-      addIdForm.addEventListener('submit', function (event) {
-          event.preventDefault();
-
-          const category = categorySelect.value;
-          const prefix = prefixBox.value.trim();
-          const startNum = numberInput.value.trim();
-          const countVal = parseInt(countInput.value.trim(), 10);
-          const seriesEnd = seriesEndBox.value.trim();
-
-          if (!category || !prefix || !startNum || isNaN(countVal) || countVal <= 0) {
-              toastAlert("Incomplete Form","Please fill in all fields correctly before adding an ID.");
-              return;
-          }
-
-          toastSuccess("IDs Added Successfully",`Added ${countVal} new ID(s) for ${category} series.`);
-
-          numberInput.value = "";
-          countInput.value = "";
-          seriesEndBox.value = "";
-          updatePrefix();
-      });
-*/
-      // POPUP FORMS
-      const openFormBtn1 = document.getElementById('openFormBtn1');
-      const popupForm1 = document.getElementById('popupForm1');
-      const closeBtn1 = document.getElementById('closeBtn1');
-
-      openFormBtn1.addEventListener('click', () => {
-          popupForm1.style.display = 'flex';
-      });
-
-      closeBtn1.addEventListener('click', () => {
-          popupForm1.style.display = 'none'; 
-      });
-
-      window.addEventListener('click', (event) => {
-          if (event.target === popupForm1) {
-              popupForm1.style.display = 'none'; 
-          }
-      });
-
-      const openFormBtn2 = document.getElementById('openFormBtn2');
-      const popupForm2 = document.getElementById('popupForm2');
-      const closeBtn2 = document.getElementById('closeBtn2');
-
-      openFormBtn2.addEventListener('click', () => {
-          popupForm2.style.display = 'flex'; 
-      });
-
-      closeBtn2.addEventListener('click', () => {
-          popupForm2.style.display = 'none'; 
-      });
-
-      window.addEventListener('click', (event) => {
-          if (event.target === popupForm2) {
-              popupForm2.style.display = 'none'; 
-          }
-      });
-
-      /* ---------------- GALLERY DATA ---------------- */
-      const descriptions = {
-          classic: {
-              title: "CLASSIC ID",
-              details: [
-                  "Issuance Age is 3 - 65 years old",
-                  "Php 12,000.00 - Accident Death, Disablement & Dismemberment",
-                  "Php 12,000.00 - Unprovoked Murder and Assault",
-                  "Php 5,000.00 - Accidental Medical Reimbursement",
-                  "Php 5,000.00 - Burial Assistance (if Accident)",
-                  "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-              ]
-          },
-          "premier-bronze": {
-              title: "PREMIER BRONZE ID",
-              details: [
-                  "Issuance Age is 3 - 65 years old",
-                  "Php 35,000.00 - Accident Death, Disablement & Dismemberment",
-                  "Php 35,000.00 - Unprovoked Murder and Assault",
-                  "Php 5,000.00 - Accidental Medical Reimbursement",
-                  "Php 5,000.00 - Burial Assistance (if Accident)",
-                  "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-              ]
-          },
-          "premier-silver": {
-              title: "PREMIER SILVER ID",
-              details: [
-                  "Issuance Age is 3 - 65 years old",
-                  "Php 100,000.00 - Accident Death, Disablement & Dismemberment",
-                  "Php 100,000.00 - Unprovoked Murder and Assault",
-                  "Php 10,000.00 - Accidental Medical Reimbursement",
-                  "Php 5,000.00 - Burial Assistance (if Accident)",
-                  "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-              ]
-          },
-          "premier-gold": {
-              title: "PREMIER GOLD ID",
-              details: [
-                  "Issuance Age is 3 - 65 years old",
-                  "Php 200,000.00 - Accident Death, Disablement & Dismemberment",
-                  "Php 200,000.00 - Unprovoked Murder and Assault",
-                  "Php 10,000.00 - Accidental Medical Reimbursement",
-                  "Php 5,000.00 - Burial Assistance (if Accident)",
-                  "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-              ]
-          },
-          "premier-platinum": {
-              title: "PREMIER PLATINUM ID",
-              details: [
-                  "Issuance Age is 3 - 65 years old",
-                  "Php 300,000.00 - Accident Death, Disablement & Dismemberment",
-                  "Php 300,000.00 - Unprovoked Murder and Assault",
-                  "Php 10,000.00 - Accidental Medical Reimbursement",
-                  "Php 5,000.00 - Burial Assistance (if Accident)",
-                  "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-              ]
-          },
-          senior: {
-              title: "SENIOR ID",
-              details: [
-                  "Issuance Age is 66 - 80 years old",
-                  "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
-                  "Php 50,000.00 - Unprovoked Murder and Assault",
-                  "Php 5,000.00 - Accidental Medical Reimbursement",
-                  "Php 5,000.00 - Burial Assistance (if Accident)",
-                  "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-              ]
-          },
-          seniorplus: {
-              title: "SENIOR PLUS ID",
-              details: [
-                  "Issuance Age is 81 - 85 years old",
-                  "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
-                  "Php 50,000.00 - Unprovoked Murder and Assault",
-                  "Php 5,000.00 - Accidental Medical Reimbursement",
-                  "Php 5,000.00 - Burial Assistance (if Accident)",
-                  "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
-              ]
-          }
-      };
-
-      const galleryData = [
-          {
-              id: "classic",
-              image: "{{ url_for('static', filename='assets/ID1.png') }}",
-              title: "CLASSIC ID",
-              description: descriptions.classic.details
-          },
-          {
-              id: "premier-bronze", 
-              image: "{{ url_for('static', filename='assets/ID2.png') }}",
-              title: "PREMIER BRONZE ID",
-              description: descriptions["premier-bronze"].details
-          },
-          {
-              id: "premier-silver",
-              image: "{{ url_for('static', filename='assets/ID3.png') }}", 
-              title: "PREMIER SILVER ID",
-              description: descriptions["premier-silver"].details
-          },
-          {
-              id: "premier-gold",
-              image: "{{ url_for('static', filename='assets/ID4.png') }}", 
-              title: "PREMIER GOLD ID",
-              description: descriptions["premier-gold"].details
-          },
-          {
-              id: "premier-platinum",
-              image: "{{ url_for('static', filename='assets/ID5.png') }}",
-              title: "PREMIER PLATINUM ID",
-              description: descriptions["premier-platinum"].details
-          },
-          {
-              id: "senior",
-              image: "{{ url_for('static', filename='assets/ID6.png') }}",
-              title: "SENIOR ID",
-              description: descriptions.senior.details
-          },
-          {
-              id: "seniorplus", 
-              image: "{{ url_for('static', filename='assets/ID7.png') }}",
-              title: "SENIOR PLUS ID",
-              description: descriptions.seniorplus.details
-          }
-      ];
-
-      let currentImageIndex = 0;
-
-      function updateGalleryDisplay() {
-          const currentData = galleryData[currentImageIndex];
-          
-          const galleryImage = document.getElementById('galleryImage');
-          if (galleryImage) {
-              galleryImage.src = currentData.image;
-              galleryImage.alt = currentData.title;
-          }
-          
-          const caption = document.getElementById('caption');
-          if (caption) caption.textContent = currentData.title;
-          
-          const descriptionDiv = document.getElementById('idDescription');
-          if (descriptionDiv) {
-              descriptionDiv.innerHTML = '';
-              currentData.description.forEach(item => {
-                  const p = document.createElement('p');
-                  p.textContent = item;
-                  descriptionDiv.appendChild(p);
-              });
-          }
-      }
-
-      function nextImage() {
-          currentImageIndex = (currentImageIndex + 1) % galleryData.length;
-          updateGalleryDisplay();
-      }
-
-      function prevImage() {
-          currentImageIndex = (currentImageIndex - 1 + galleryData.length) % galleryData.length;
-          updateGalleryDisplay();
-      }
-
-      document.addEventListener('DOMContentLoaded', function() {
-          const leftBtn = document.getElementById('leftBtn');
-          const rightBtn = document.getElementById('rightBtn');
-          
-          if (leftBtn) leftBtn.addEventListener('click', prevImage);
-          if (rightBtn) rightBtn.addEventListener('click', nextImage);
-          
-          const openFormBtn2 = document.getElementById('openFormBtn2');
-          if (openFormBtn2) {
-              openFormBtn2.addEventListener('click', function() {
-                  currentImageIndex = 0;
-                  updateGalleryDisplay();
-              });
-          }
-          
-          updateGalleryDisplay();
-      });
-
-      // ============================================================
-      // 🔸 Handsontable Columns
-      // ============================================================
-      const hotColumns = [
-        { data: 'inv_id', type: 'text', title: 'ID' },
-        { data: 'maab_category', type: 'text', title: 'Maab Category' },
-        { data: 'maab_no', type: 'text', title: 'Maab No.' },
-        { data: 'used', type: 'text', title: 'Used' },
-        { data: 'allocated_to', type: 'text', title: 'Allocated To' },
-        { data: 'remarks', type: 'text', title: 'Remarks' }
-      ];
-
-      let currentHotInstance = null;
-      let currentCategory = 'all';
-      let currentPage = 1;
-      let entriesPerPage = parseInt(document.getElementById('entriesPerPage').value, 10);
-      let searchQuery = '';
-
-      const summaryText = document.getElementById('summaryText');
-      const paginationControls = document.getElementById('paginationControls');
-      const entriesSelect = document.getElementById('entriesPerPage');
-
-      // ============================================================
-      // 🔹 Helper Functions
-      // ============================================================
-      function getCategoryColor(cat) {
-        switch (cat) {
-          case 'Classic': return '#f07474';
-          case 'Bronze': return '#c97a57';
-          case 'Silver': return '#a0a0a0';
-          case 'Gold': return '#e0b84c';
-          case 'Platinum': return '#7fbcd2';
-          case 'Enhanced Platinum': return '#4d8fac';
-          case 'Senior': return '#b86bbf';
-          case 'Senior+': return '#6a4fbf';
-          default: return '#f07474'; // 'all'
+        function nextImage() {
+            currentImageIndex = (currentImageIndex + 1) % galleryData.length;
+            updateGalleryDisplay();
         }
-      }
 
-      function darkenColor(hex, amount = 20) {
-        let usePound = false;
-        if (hex[0] === "#") {
-          hex = hex.slice(1);
-          usePound = true;
+        function prevImage() {
+            currentImageIndex = (currentImageIndex - 1 + galleryData.length) % galleryData.length;
+            updateGalleryDisplay();
         }
-        let num = parseInt(hex, 16);
-        let r = Math.max(0, (num >> 16) - amount);
-        let g = Math.max(0, ((num >> 8) & 0x00FF) - amount);
-        let b = Math.max(0, (num & 0x0000FF) - amount);
-        return (usePound ? "#" : "") + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
-      }
 
-      function safeLower(v) {
-        return (v && typeof v === 'string') ? v.toLowerCase() : '';
-      }
-
-      function getFilteredData() {
-        return inventoryData.filter(item => {
-          if (currentCategory !== 'all' && item.maab_category !== currentCategory) return false;
-          return (
-            safeLower(item.inv_id).includes(searchQuery) ||
-            safeLower(item.maab_no).includes(searchQuery) ||
-            safeLower(item.maab_category).includes(searchQuery) ||
-            safeLower(item.allocated_to).includes(searchQuery) ||
-            safeLower(item.remarks).includes(searchQuery)
-          );
+        // Gallery event listeners - ONLY ONCE
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        
+        if (leftBtn) leftBtn.addEventListener('click', prevImage);
+        if (rightBtn) rightBtn.addEventListener('click', nextImage);
+        
+        // Reset gallery when opening form 2
+        openFormBtn2.addEventListener('click', function() {
+            currentImageIndex = 0;
+            updateGalleryDisplay();
         });
-      }
+        
+        updateGalleryDisplay();
 
-      // ============================================================
-      // 🔹 SINGLE TABLE APPROACH - isang table lang ang visible
-      // ============================================================
-      function showCategory(cat) {
-        currentCategory = cat;
-        
-        // Update the table wrapper category attribute for CSS styling
-        const tableWrapper = document.getElementById('current_table_wrapper');
-        const displayName = cat === 'all' ? 'All Categories' : cat;
-        tableWrapper.setAttribute('data-category', displayName);
-        
-        // Destroy previous instance if exists
-        if (currentHotInstance) {
-          currentHotInstance.destroy();
-        }
-        
-        // Get filtered data for current category
-        const filteredData = getFilteredData();
-        const totalItems = filteredData.length;
-        const startIndex = (currentPage - 1) * entriesPerPage;
-        const endIndex = startIndex + entriesPerPage;
-        const pageData = filteredData.slice(startIndex, endIndex);
-        
-        // Create new Handsontable instance
-        currentHotInstance = new Handsontable(document.getElementById('current_hot_container'), {
-          data: pageData,
-          colHeaders: hotColumns.map(c => c.title),
-          columns: hotColumns,
-          rowHeaders: true,
-          stretchH: 'all',
-          width: '100%',
-          height: 520,
-          licenseKey: 'non-commercial-and-evaluation',
-          readOnly: true,  // ADD THIS LINE
-          afterRender: function() {
-          applyHeaderColor(this, cat);
-  }
-});
-        
-        renderPagination(totalItems);
-      }
+        // ============================================================
+        // 🔸 Handsontable Columns
+        // ============================================================
+        const hotColumns = [
+          { data: 'inv_id', type: 'text', title: 'ID' },
+          { data: 'maab_category', type: 'text', title: 'Maab Category' },
+          { data: 'maab_no', type: 'text', title: 'Maab No.' },
+          { data: 'used', type: 'text', title: 'Used' },
+          { data: 'allocated_to', type: 'text', title: 'Allocated To' },
+          { data: 'remarks', type: 'text', title: 'Remarks' }
+        ];
 
-      function renderCurrentTable() {
-        if (!currentHotInstance) return;
-        
-        const filtered = getFilteredData();
-        const totalItems = filtered.length;
-        const startIndex = (currentPage - 1) * entriesPerPage;
-        const endIndex = startIndex + entriesPerPage;
-        const pageData = filtered.slice(startIndex, endIndex);
-        
-        currentHotInstance.loadData(pageData);
-        currentHotInstance.render();
-        
-        // Re-apply header color after render
-        setTimeout(() => {
-          applyHeaderColor(currentHotInstance, currentCategory);
-        }, 0);
-        
-        renderPagination(totalItems);
-      }
+        let currentHotInstance = null;
+        let currentCategory = 'all';
+        let currentPage = 1;
+        let entriesPerPage = parseInt(document.getElementById('entriesPerPage').value, 10);
+        let searchQuery = '';
 
-function applyHeaderColor(hotInstance, cat) {
-    const color = getCategoryColor(cat);
-    const borderColor = darkenColor(color, 30);
+        const summaryText = document.getElementById('summaryText');
+        const paginationControls = document.getElementById('paginationControls');
+        const entriesSelect = document.getElementById('entriesPerPage');
 
-    const ths = hotInstance.rootElement.querySelectorAll('th');
-    ths.forEach(th => {
-        // Check if this is the row header column (first column)
-        if (th.classList.contains('ht_clone_left') || 
-            th.classList.contains('htRowHeaders') ||
-            th.cellIndex === 0) {
-            th.style.backgroundColor = '#fff';
-            th.style.color = '#333';
-        } else {
-            th.style.backgroundColor = color;
-            th.style.color = '#fff';
-        }
-        th.style.borderColor = borderColor;
-    });
-}
-
-      function renderPagination(totalItems) {
-        const totalPages = Math.ceil(totalItems / entriesPerPage) || 1;
-        paginationControls.innerHTML = '';
-
-        // Previous button
-        const prevBtn = document.createElement('button');
-        prevBtn.textContent = 'Previous';
-        prevBtn.disabled = currentPage === 1;
-        prevBtn.addEventListener('click', () => {
-          if (currentPage > 1) {
-            currentPage--;
-            renderCurrentTable();
+        // ============================================================
+        // 🔹 Helper Functions
+        // ============================================================
+        function getCategoryColor(cat) {
+          switch (cat) {
+            case 'Classic': return '#f07474';
+            case 'Bronze': return '#c97a57';
+            case 'Silver': return '#a0a0a0';
+            case 'Gold': return '#e0b84c';
+            case 'Platinum': return '#7fbcd2';
+            case 'Enhanced Platinum': return '#4d8fac';
+            case 'Senior': return '#b86bbf';
+            case 'Senior+': return '#6a4fbf';
+            default: return '#f07474'; // 'all'
           }
-        });
-        paginationControls.appendChild(prevBtn);
+        }
 
-        // Page buttons
-        function createPageButton(page) {
-          const btn = document.createElement('button');
-          btn.textContent = page;
-          btn.classList.add('page-btn');
-          if (page === currentPage) btn.classList.add('active');
-          btn.addEventListener('click', () => {
-            currentPage = page;
-            renderCurrentTable();
+        function darkenColor(hex, amount = 20) {
+          let usePound = false;
+          if (hex[0] === "#") {
+            hex = hex.slice(1);
+            usePound = true;
+          }
+          let num = parseInt(hex, 16);
+          let r = Math.max(0, (num >> 16) - amount);
+          let g = Math.max(0, ((num >> 8) & 0x00FF) - amount);
+          let b = Math.max(0, (num & 0x0000FF) - amount);
+          return (usePound ? "#" : "") + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
+        }
+
+        function safeLower(v) {
+          return (v && typeof v === 'string') ? v.toLowerCase() : '';
+        }
+
+        function getFilteredData() {
+          return inventoryData.filter(item => {
+            if (currentCategory !== 'all' && item.maab_category !== currentCategory) return false;
+            return (
+              safeLower(item.inv_id).includes(searchQuery) ||
+              safeLower(item.maab_no).includes(searchQuery) ||
+              safeLower(item.maab_category).includes(searchQuery) ||
+              safeLower(item.allocated_to).includes(searchQuery) ||
+              safeLower(item.remarks).includes(searchQuery)
+            );
           });
-          paginationControls.appendChild(btn);
         }
 
-        function addEllipsis() {
-          const span = document.createElement('span');
-          span.textContent = '...';
-          span.classList.add('ellipsis');
-          paginationControls.appendChild(span);
-        }
-
-        if (totalPages <= 10) {
-          for (let i = 1; i <= totalPages; i++) createPageButton(i);
-        } else {
-          const visiblePages = 5;
-
-          if (currentPage <= visiblePages) {
-            for (let i = 1; i <= visiblePages; i++) createPageButton(i);
-            addEllipsis();
-            createPageButton(totalPages);
-          } else if (currentPage >= totalPages - visiblePages + 1) {
-            createPageButton(1);
-            addEllipsis();
-            for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
-          } else {
-            createPageButton(1);
-            addEllipsis();
-            for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
-            addEllipsis();
-            createPageButton(totalPages);
+        // ============================================================
+        // 🔹 SINGLE TABLE APPROACH - isang table lang ang visible
+        // ============================================================
+        function showCategory(cat) {
+          currentCategory = cat;
+          
+          // Update the table wrapper category attribute for CSS styling
+          const tableWrapper = document.getElementById('current_table_wrapper');
+          const displayName = cat === 'all' ? 'All Categories' : cat;
+          tableWrapper.setAttribute('data-category', displayName);
+          
+          // Destroy previous instance if exists
+          if (currentHotInstance) {
+            currentHotInstance.destroy();
           }
+          
+          // Get filtered data for current category
+          const filteredData = getFilteredData();
+          const totalItems = filteredData.length;
+          const startIndex = (currentPage - 1) * entriesPerPage;
+          const endIndex = startIndex + entriesPerPage;
+          const pageData = filteredData.slice(startIndex, endIndex);
+          
+          // Create new Handsontable instance
+          currentHotInstance = new Handsontable(document.getElementById('current_hot_container'), {
+            data: pageData,
+            colHeaders: hotColumns.map(c => c.title),
+            columns: hotColumns,
+            rowHeaders: true,
+            stretchH: 'all',
+            width: '100%',
+            height: 520,
+            licenseKey: 'non-commercial-and-evaluation',
+            readOnly: true,
+            afterRender: function() {
+              applyHeaderColor(this, cat);
+            }
+          });
+          
+          renderPagination(totalItems);
         }
 
-        // Next button
-        const nextBtn = document.createElement('button');
-        nextBtn.textContent = 'Next';
-        nextBtn.disabled = currentPage === totalPages;
-        nextBtn.addEventListener('click', () => {
-          if (currentPage < totalPages) {
-            currentPage++;
-            renderCurrentTable();
-          }
-        });
-        paginationControls.appendChild(nextBtn);
+        function renderCurrentTable() {
+          if (!currentHotInstance) return;
+          
+          const filtered = getFilteredData();
+          const totalItems = filtered.length;
+          const startIndex = (currentPage - 1) * entriesPerPage;
+          const endIndex = startIndex + entriesPerPage;
+          const pageData = filtered.slice(startIndex, endIndex);
+          
+          currentHotInstance.loadData(pageData);
+          currentHotInstance.render();
+          
+          // Re-apply header color after render
+          setTimeout(() => {
+            applyHeaderColor(currentHotInstance, currentCategory);
+          }, 0);
+          
+          renderPagination(totalItems);
+        }
 
-        // Summary text
-        const start = totalItems === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
-        const end = Math.min(currentPage * entriesPerPage, totalItems);
-        summaryText.textContent = `Showing ${start} to ${end} of ${totalItems} entries`;
-      }
-
-      // ============================================================
-      // 🔹 Event Listeners
-      // ============================================================
-      entriesSelect.addEventListener('change', () => {
-        entriesPerPage = parseInt(entriesSelect.value, 10);
-        currentPage = 1;
-        renderCurrentTable();
-      });
-
-      // Custom Dropdown
-      const customSelect = document.querySelector('.custom-select');
-      const selected = customSelect.querySelector('.selected');
-      const options = customSelect.querySelectorAll('.options li');
-
-      selected.addEventListener('click', () => {
-        customSelect.classList.toggle('open');
-      });
-
-      options.forEach(option => {
-        option.addEventListener('click', () => {
-          const cat = option.dataset.value;
-          selected.textContent = option.textContent;
-          selected.dataset.value = cat;
+        function applyHeaderColor(hotInstance, cat) {
           const color = getCategoryColor(cat);
-          selected.style.background = color;
-          selected.style.color = (cat === 'all') ? '#333' : '#fff';
-          selected.style.borderColor = darkenColor(color, 30);
+          const borderColor = darkenColor(color, 30);
 
-          options.forEach(opt => opt.classList.remove('active'));
-          option.classList.add('active');
-
-          showCategory(cat);
-          customSelect.classList.remove('open');
-        });
-      });
-
-      document.addEventListener('click', e => {
-        if (!customSelect.contains(e.target)) customSelect.classList.remove('open');
-      });
-
-      // Search
-      const searchInput = document.getElementById('searchInput');
-      const clearBtn = document.getElementById('search_clear');
-
-      searchInput.addEventListener('input', function () {
-        searchQuery = this.value.trim().toLowerCase();
-        currentPage = 1;
-        renderCurrentTable();
-
-        clearBtn.classList.toggle('visible', searchQuery !== '');
-      });
-
-      clearBtn.addEventListener('click', function () {
-        searchQuery = '';
-        searchInput.value = '';
-        currentPage = 1;
-        renderCurrentTable();
-        searchInput.focus();
-      });
-
-      // ============================================================
-      // 🔹 Initialize page
-      // ============================================================
-      showCategory('all');
-
-      // UPLOADED IMAGE
-      document.addEventListener("DOMContentLoaded", function() {
-          const navProfileImage = document.getElementById("navProfileImage");
-          if (navProfileImage) {
-              const savedProfileImage = localStorage.getItem("profileImage");
-              if (savedProfileImage) {
-                  navProfileImage.src = savedProfileImage;
+          const ths = hotInstance.rootElement.querySelectorAll('th');
+          ths.forEach(th => {
+              // Check if this is the row header column (first column)
+              if (th.classList.contains('ht_clone_left') || 
+                  th.classList.contains('htRowHeaders') ||
+                  th.cellIndex === 0) {
+                  th.style.backgroundColor = '#fff';
+                  th.style.color = '#333';
+              } else {
+                  th.style.backgroundColor = color;
+                  th.style.color = '#fff';
               }
-          }
-          
-          window.addEventListener('storage', function(e) {
-              if (e.key === 'profileImage') {
-                  const navProfileImage = document.getElementById("navProfileImage");
-                  if (navProfileImage) {
-                      navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
-                  }
-              }
+              th.style.borderColor = borderColor;
           });
+        }
+
+        function renderPagination(totalItems) {
+          const totalPages = Math.ceil(totalItems / entriesPerPage) || 1;
+          paginationControls.innerHTML = '';
+
+          // Previous button
+          const prevBtn = document.createElement('button');
+          prevBtn.textContent = 'Previous';
+          prevBtn.disabled = currentPage === 1;
+          prevBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+              currentPage--;
+              renderCurrentTable();
+            }
+          });
+          paginationControls.appendChild(prevBtn);
+
+          // Page buttons
+          function createPageButton(page) {
+            const btn = document.createElement('button');
+            btn.textContent = page;
+            btn.classList.add('page-btn');
+            if (page === currentPage) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+              currentPage = page;
+              renderCurrentTable();
+            });
+            paginationControls.appendChild(btn);
+          }
+
+          function addEllipsis() {
+            const span = document.createElement('span');
+            span.textContent = '...';
+            span.classList.add('ellipsis');
+            paginationControls.appendChild(span);
+          }
+
+          if (totalPages <= 10) {
+            for (let i = 1; i <= totalPages; i++) createPageButton(i);
+          } else {
+            const visiblePages = 5;
+
+            if (currentPage <= visiblePages) {
+              for (let i = 1; i <= visiblePages; i++) createPageButton(i);
+              addEllipsis();
+              createPageButton(totalPages);
+            } else if (currentPage >= totalPages - visiblePages + 1) {
+              createPageButton(1);
+              addEllipsis();
+              for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
+            } else {
+              createPageButton(1);
+              addEllipsis();
+              for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
+              addEllipsis();
+              createPageButton(totalPages);
+            }
+          }
+
+          // Next button
+          const nextBtn = document.createElement('button');
+          nextBtn.textContent = 'Next';
+          nextBtn.disabled = currentPage === totalPages;
+          nextBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+              currentPage++;
+              renderCurrentTable();
+            }
+          });
+          paginationControls.appendChild(nextBtn);
+
+          // Summary text
+          const start = totalItems === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
+          const end = Math.min(currentPage * entriesPerPage, totalItems);
+          summaryText.textContent = `Showing ${start} to ${end} of ${totalItems} entries`;
+        }
+
+        // ============================================================
+        // 🔹 Event Listeners
+        // ============================================================
+        entriesSelect.addEventListener('change', () => {
+          entriesPerPage = parseInt(entriesSelect.value, 10);
+          currentPage = 1;
+          renderCurrentTable();
+        });
+
+        // Custom Dropdown
+        const customSelect = document.querySelector('.custom-select');
+        const selected = customSelect.querySelector('.selected');
+        const options = customSelect.querySelectorAll('.options li');
+
+        selected.addEventListener('click', () => {
+          customSelect.classList.toggle('open');
+        });
+
+        options.forEach(option => {
+          option.addEventListener('click', () => {
+            const cat = option.dataset.value;
+            selected.textContent = option.textContent;
+            selected.dataset.value = cat;
+            const color = getCategoryColor(cat);
+            selected.style.background = color;
+            selected.style.color = (cat === 'all') ? '#333' : '#fff';
+            selected.style.borderColor = darkenColor(color, 30);
+
+            options.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+
+            showCategory(cat);
+            customSelect.classList.remove('open');
+          });
+        });
+
+        document.addEventListener('click', e => {
+          if (!customSelect.contains(e.target)) customSelect.classList.remove('open');
+        });
+
+        // Search
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('search_clear');
+
+        searchInput.addEventListener('input', function () {
+          searchQuery = this.value.trim().toLowerCase();
+          currentPage = 1;
+          renderCurrentTable();
+
+          clearBtn.classList.toggle('visible', searchQuery !== '');
+        });
+
+        clearBtn.addEventListener('click', function () {
+          searchQuery = '';
+          searchInput.value = '';
+          currentPage = 1;
+          renderCurrentTable();
+          searchInput.focus();
+        });
+
+        // ============================================================
+        // 🔹 Initialize page
+        // ============================================================
+        showCategory('all');
+
+        // UPLOADED IMAGE
+        const navProfileImage = document.getElementById("navProfileImage");
+        if (navProfileImage) {
+            const savedProfileImage = localStorage.getItem("profileImage");
+            if (savedProfileImage) {
+                navProfileImage.src = savedProfileImage;
+            }
+        }
+        
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'profileImage') {
+                const navProfileImage = document.getElementById("navProfileImage");
+                if (navProfileImage) {
+                    navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+                }
+            }
+        });
       });
     </script>
 {% endblock %}
