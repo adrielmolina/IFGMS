@@ -88,9 +88,19 @@
             color: #ffd1d1;
         }
 
-        .glass-card input,
+        .glass-card input {
+            width: 50px; /* Keep OTP inputs small */
+            padding: 10px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 23px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
         .glass-card button {
-            width: 70px;
+            width: 345px;
             padding: 10px;
             margin-bottom: 15px;
             border: none;
@@ -108,10 +118,10 @@
 
         .divider {
             display: table; 
-            font-size: 24px; 
+            font-size: 17px; 
             text-align: center; 
-            width: 95%; 					
-            margin: 7% auto;					
+            width: 95%; 				
+            margin: 3% auto;					
         }
 
         .divider span { display: table-cell; position: relative; }
@@ -124,16 +134,8 @@
             background-repeat: no-repeat;
         }
 
-        .divider span:first-child {
-            background-image: linear-gradient(90deg, transparent, #ffffff);
-        }
-
         .divider span:nth-child(2) {
-            color: #ffffff; padding: 0px 5px; width: auto; white-space: nowrap;
-        }
-
-        .divider span:last-child {
-            background-image: linear-gradient(90deg, #ffffff, transparent);
+            color: #d2cbcb; padding: 0px 5px; width: auto; white-space: nowrap;
         }
 
         .glass-card button {
@@ -141,6 +143,7 @@
             color: #fff;
             cursor: pointer;
             transition: all 0.25s ease;
+            margin-top: 5%;
         }
 
         .glass-card button:hover {
@@ -154,7 +157,7 @@
             display: flex;
             justify-content: center;
             gap: 8px;
-            margin: 20px 0;
+            margin: 1px;
         }
 
         .otp-input {
@@ -180,12 +183,12 @@
             color: #ffd1d1;
             text-decoration: none;
             font-size: 14px;
-            margin-top: 10px;
             transition: color 0.3s ease;
+            align-self: flex-end; /* Align to right within flex container */
+            margin-left: 250px; /* Add some right margin */
         }
 
         .resend-otp:hover {
-            color: #ffffff;
             text-decoration: underline;
         }
 
@@ -215,13 +218,7 @@
         
         <h1>Verify <span>OTP</span></h1>
         
-        <p>Enter the 6-digit OTP sent to your email address.</p>
-        
-        <div class="divider">
-            <span></span>
-            <span>Enter OTP</span>
-            <span></span>
-        </div>
+        <p>Enter the 6 digit One Time Pin sent to your <br> email address.</p>
         
         <form action="/verify_otp" method="POST" onsubmit="return handleOtpVerification(event)">
             <!-- Hidden email input field -->
@@ -235,6 +232,10 @@
                 <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="one-time-code">
                 <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="one-time-code">
                 <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="one-time-code">
+            </div>
+
+            <div> <a href="#" class="resend-otp" onclick="resendOtp()">Resend OTP</a> 
+            
             </div>
             
             <!-- Hidden field to store the complete OTP -->
@@ -250,13 +251,7 @@
             </div>
         </form>
         
-        <div class="divider">
-            <span></span>
-            <span>Didn't receive OTP?</span>
-            <span></span>
-        </div>
-        
-        <a href="#" class="resend-otp" onclick="resendOtp()">Resend OTP</a>
+       
     </div>
 </div>
 
