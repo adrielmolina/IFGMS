@@ -72,58 +72,131 @@
         {% endif %}
     </button>
 
-    <button type="button" class="btn history" onclick="showHistory()">
+      <button type="button" class="btn history" onclick="showHistory()">
         <i class="fa-solid fa-clock-rotate-left"></i> History
-    </button>
-    
-    <!-- Dispatch Details Toggle Button -->
-  <button type="button" class="btn dispatch-details" onclick="toggleDispatchDetails()">
-    <i class="fa-solid fa-circle-info"></i> Dispatch Details
-  </button>
-</div>
-
-
+      </button>
     </div>
 </div>
 
+<div class="dispatch-details-panel">
+    <div class="dispatch-header">
+        <h3><i class="fa-solid fa-truck-fast"></i> Current Dispatch Status</h3>
+        <span class="dispatch-status-badge status-active">
+            {{ active_dispatch.dispatch_status if active_dispatch else 'No Active Dispatch' }}
+        </span>
+    </div>
+    
+    <div class="dispatch-grid">
+        <div class="dispatch-item">
+            <span class="dispatch-label">Dispatch ID</span>
+            <span class="dispatch-value">{{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="dispatch-item">
+            <span class="dispatch-label">Dispatch Type</span>
+            <span class="dispatch-value">{{ active_dispatch.dispatch_type if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="dispatch-item">
+            <span class="dispatch-label">Origin</span>
+            <span class="dispatch-value">{{ active_dispatch.dispatch_origin if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="dispatch-item">
+            <span class="dispatch-label">Year</span>
+            <span class="dispatch-value">{{ active_dispatch.dispatch_year if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="dispatch-item">
+            <span class="dispatch-label">Cutoff Date</span>
+            <span class="dispatch-value">{{ active_dispatch.dispatch_cutoff if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="dispatch-item">
+            <span class="dispatch-label">Date Dispatched</span>
+            <span class="dispatch-value">{{ active_dispatch.date_dispatched if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="dispatch-item">
+            <span class="dispatch-label">Total Entries</span>
+            <span class="dispatch-value">{{ active_dispatch.dispatch_total if active_dispatch else 'N/A' }}</span>
+        </div>
+        
+        <div class="dispatch-item">
+            <span class="dispatch-label">Late Declare</span>
+            <span class="dispatch-value">
+                {% if active_dispatch %}
+                    {{ 'Yes' if active_dispatch.late_declare == 'yes' else 'No' }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    
+    {% if active_dispatch and active_dispatch.dispatch_remarks %}
+    <div class="dispatch-item full-width">
+        <span class="dispatch-label">Remarks</span>
+        <span class="dispatch-value">{{ active_dispatch.dispatch_remarks }}</span>
+    </div>
+    {% endif %}
+    
+    <div class="dispatch-actions">
+        <button type="button" class="btn-edit" onclick="openEditOverlay()">
+            <i class="fa-solid fa-pen-to-square"></i> Edit Details
+        </button>
+    </div>
+</div>
 
-<!-- Dispatch Details Overlay -->
-<div class="dispatch-overlay" id="dispatchOverlay" style="display: none;">
+<!-- Edit Dispatch Details Overlay -->
+<div class="dispatch-overlay" id="editDispatchOverlay" style="display: none;">
   <div class="dispatch-modal">
     <div class="dispatch-header">
-      <h3>Dispatch Details</h3>
-      <button class="close-btn" onclick="closeDispatchDetails()">&times;</button>
+      <h3>Edit Dispatch Details</h3>
+      <button class="close-btn" onclick="closeEditOverlay()">&times;</button>
     </div>
     
     <div class="dispatch-content">
       <div class="details-grid">
+        <!-- Read-only Fields (grayed out) -->
         <div class="detail-item">
-          <label><strong>Dispatch ID:</strong></label>
-          <span>{{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}</span>
+          <label for="dispatch_id"><strong>Dispatch ID:</strong></label>
+          <input type="text" id="dispatch_id" name="dispatch_id" 
+                 value="{{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}" 
+                 readonly disabled class="readonly-field">
         </div>
         
         <div class="detail-item">
-          <label><strong>Dispatch Type:</strong></label>
-          <span>{{ active_dispatch.dispatch_type if active_dispatch else 'N/A' }}</span>
+          <label for="dispatch_type"><strong>Dispatch Type:</strong></label>
+          <input type="text" id="dispatch_type" name="dispatch_type" 
+                 value="{{ active_dispatch.dispatch_type if active_dispatch else 'N/A' }}" 
+                 readonly disabled class="readonly-field">
         </div>
         
         <div class="detail-item">
-          <label><strong>Dispatch Origin:</strong></label>
-          <span>{{ active_dispatch.dispatch_origin if active_dispatch else 'N/A' }}</span>
+          <label for="dispatch_origin"><strong>Dispatch Origin:</strong></label>
+          <input type="text" id="dispatch_origin" name="dispatch_origin" 
+                 value="{{ active_dispatch.dispatch_origin if active_dispatch else 'N/A' }}" 
+                 readonly disabled class="readonly-field">
         </div>
         
         <div class="detail-item">
-          <label><strong>Dispatch Year:</strong></label>
-          <span>{{ active_dispatch.dispatch_year if active_dispatch else 'N/A' }}</span>
+          <label for="dispatch_year"><strong>Dispatch Year:</strong></label>
+          <input type="text" id="dispatch_year" name="dispatch_year" 
+                 value="{{ active_dispatch.dispatch_year if active_dispatch else 'N/A' }}" 
+                 readonly disabled class="readonly-field">
         </div>
         
-        <div class="detail-item full-width">
+        <!-- Editable Fields -->
+        <div class="detail-item">
           <label for="dispatch_cutoff"><strong>Dispatch Cutoff:</strong></label>
-          <input type="date" id="dispatch_cutoff" name="dispatch_cutoff" 
-                 value="{% if active_dispatch and active_dispatch.dispatch_cutoff %}{{ active_dispatch.dispatch_cutoff }}{% endif %}">
+          <select id="dispatch_cutoff" name="dispatch_cutoff">
+            <option value="10th" {% if active_dispatch and active_dispatch.dispatch_cutoff == '10th' %}selected{% endif %}>10th of the month</option>
+            <option value="25th" {% if active_dispatch and active_dispatch.dispatch_cutoff == '25th' %}selected{% endif %}>25th of the month</option>
+          </select>
         </div>
         
-        <div class="detail-item full-width">
+        <div class="detail-item">
           <label><strong>Late Declare:</strong></label>
           <div class="radio-group">
             <label>
@@ -142,26 +215,33 @@
           <textarea id="dispatch_remarks" name="dispatch_remarks" rows="3" placeholder="Enter remarks here...">{% if active_dispatch %}{{ active_dispatch.dispatch_remarks }}{% endif %}</textarea>
         </div>
         
+        <!-- More Read-only Fields -->
         <div class="detail-item">
-          <label><strong>Dispatch Status:</strong></label>
-          <span>{{ active_dispatch.dispatch_status if active_dispatch else 'N/A' }}</span>
+          <label for="dispatch_status"><strong>Dispatch Status:</strong></label>
+          <input type="text" id="dispatch_status" name="dispatch_status" 
+                 value="{{ active_dispatch.dispatch_status if active_dispatch else 'N/A' }}" 
+                 readonly disabled class="readonly-field">
         </div>
         
         <div class="detail-item">
-          <label><strong>Date Dispatched:</strong></label>
-          <span>{{ active_dispatch.date_dispatched if active_dispatch else 'N/A' }}</span>
+          <label for="date_dispatched"><strong>Date Dispatched:</strong></label>
+          <input type="text" id="date_dispatched" name="date_dispatched" 
+                 value="{{ active_dispatch.date_dispatched if active_dispatch else 'N/A' }}" 
+                 readonly disabled class="readonly-field">
         </div>
         
         <div class="detail-item">
-          <label><strong>Dispatch Total:</strong></label>
-          <span>{{ active_dispatch.dispatch_total if active_dispatch else 'N/A' }}</span>
+          <label for="dispatch_total"><strong>Dispatch Total:</strong></label>
+          <input type="text" id="dispatch_total" name="dispatch_total" 
+                 value="{{ active_dispatch.dispatch_total if active_dispatch else 'N/A' }}" 
+                 readonly disabled class="readonly-field">
         </div>
       </div>
     </div>
     
     <div class="dispatch-footer">
       <button type="button" class="btn btn-primary" onclick="saveDispatchDetails()">Save Changes</button>
-      <button type="button" class="btn btn-secondary" onclick="closeDispatchDetails()">Cancel</button>
+      <button type="button" class="btn btn-secondary" onclick="closeEditOverlay()">Cancel</button>
     </div>
   </div>
 </div>
@@ -240,7 +320,9 @@
 
 {% block extra_scripts %}
 <!-- Include your custom toast.js -->
-<script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
 
 <!-- ✅ Main JavaScript Code -->
 <script>
@@ -260,18 +342,24 @@ const mainTableData = [
     }{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
-    
 
 let filteredData = [...mainTableData];
 let currentPage = 1;
 let entriesPerPage = 10;
 const dispatchData = [];
 
+// ✅ DEBUG: Check if functions are available
+console.log("🔄 JavaScript loading...");
+console.log("showHistory:", typeof showHistory);
+console.log("openEditOverlay:", typeof openEditOverlay);
+
 // ✅ Fixed Selection Logic
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("✅ DOM Content Loaded");
   initializeCheckboxListeners();
   initializePagination();
   setupEventListeners();
+  setupOverlayListeners(); 
 });
 
 function setupEventListeners() {
@@ -280,6 +368,28 @@ function setupEventListeners() {
   if (transmitBtn) {
     transmitBtn.addEventListener('click', exportSelectedToServer);
   }
+}
+
+// ✅ ADD THIS FUNCTION - Setup overlay event listeners
+function setupOverlayListeners() {
+  console.log("🔧 Setting up overlay listeners");
+  
+  // Close overlay when clicking outside content
+  const editOverlay = document.getElementById('editDispatchOverlay');
+  if (editOverlay) {
+    editOverlay.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeEditOverlay();
+      }
+    });
+  }
+
+  // Close with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeEditOverlay();
+    }
+  });
 }
 
 function updateSelection() {
@@ -308,7 +418,6 @@ function updateSelection() {
 
   // Update buttons text and state
   const transmitBtn = document.querySelector(".btn.transmit");
-  const historyBtn = document.querySelector(".btn.history");
   
   if (transmitBtn) {
     transmitBtn.disabled = checkedCount === 0;
@@ -327,7 +436,6 @@ function updateSelection() {
 function initializeCheckboxListeners() {
   const rowChecks = document.querySelectorAll(".row-check");
   const selectAllCheckbox = document.getElementById("selectAll");
-  const selectAllBtn = document.querySelector(".btn.select-all");
   
   // Remove existing listeners to prevent duplicates
   rowChecks.forEach(cb => {
@@ -346,11 +454,6 @@ function initializeCheckboxListeners() {
     selectAllCheckbox.addEventListener("change", handleSelectAll);
   }
 
-  if (selectAllBtn) {
-    selectAllBtn.removeEventListener("click", handleSelectAllButton);
-    selectAllBtn.addEventListener("click", handleSelectAllButton);
-  }
-
   // Initial selection update
   updateSelection();
 }
@@ -365,39 +468,6 @@ function handleSelectAll() {
       checkbox.checked = isChecked;
     }
   });
-  
-  updateSelection();
-}
-
-function handleSelectAllButton() {
-  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
-  const allChecked = visibleRows.every(row => {
-    const checkbox = row.querySelector(".row-check");
-    return checkbox && checkbox.checked;
-  });
-  
-  // Toggle all checkboxes
-  const newState = !allChecked;
-  
-  visibleRows.forEach(row => {
-    const checkbox = row.querySelector(".row-check");
-    if (checkbox) {
-      checkbox.checked = newState;
-    }
-  });
-  
-  // Update select all checkbox
-  const selectAllCheckbox = document.getElementById("selectAll");
-  if (selectAllCheckbox) {
-    selectAllCheckbox.checked = newState;
-    selectAllCheckbox.indeterminate = false;
-  }
-  
-  // Update button text
-  const selectAllBtn = document.querySelector(".btn.select-all");
-  if (selectAllBtn) {
-    selectAllBtn.innerHTML = newState ? '<i class="fa-solid fa-check-double"></i> Deselect All' : '<i class="fa-solid fa-check-double"></i> Select All';
-  }
   
   updateSelection();
 }
@@ -429,51 +499,6 @@ document.getElementById('search_clear').addEventListener('click', function() {
   this.classList.remove('visible');
 });
 
-// ====================== DISPATCH OVERLAY =================================================
-function toggleDispatchDetails() {
-  const overlay = document.getElementById('dispatchOverlay');
-  overlay.style.display = 'flex';
-  document.body.style.overflow = 'hidden'; // Prevent background scrolling
-}
-
-function closeDispatchDetails() {
-  const overlay = document.getElementById('dispatchOverlay');
-  overlay.style.display = 'none';
-  document.body.style.overflow = ''; // Restore scrolling
-}
-
-function saveDispatchDetails() {
-  // Add your save logic here
-  const dispatchCutoff = document.getElementById('dispatch_cutoff').value;
-  const lateDeclare = document.querySelector('input[name="late_declare"]:checked')?.value;
-  const dispatchRemarks = document.getElementById('dispatch_remarks').value;
-  
-  console.log('Saving dispatch details:', {
-    dispatchCutoff,
-    lateDeclare,
-    dispatchRemarks
-  });
-  
-  // TODO: Add your API call here to save the changes
-  // fetch('/api/update_dispatch', { ... })
-  
-  closeDispatchDetails();
-}
-
-// Close overlay when clicking outside content
-document.getElementById('dispatchOverlay').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeDispatchDetails();
-  }
-});
-
-// Close with Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeDispatchDetails();
-  }
-});
-
 // Show/hide clear button based on search input
 document.getElementById('search_input').addEventListener('input', function(e) {
   const clearBtn = document.getElementById('search_clear');
@@ -484,44 +509,345 @@ document.getElementById('search_input').addEventListener('input', function(e) {
   }
 });
 
-// 📦 Dispatch Create
-document.getElementById('btn_create_dispatch').addEventListener('click', function() {
-  const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):");
-  if (!dispatch_cutoff) return; // User cancelled
-  
-  const late_declare = prompt("Include Late Declarations? (yes/no):");
-  if (late_declare === null) return; // User cancelled
-  
-  const dispatch_remarks = prompt("Enter Remarks (optional):");
+// ====================== DISPATCH DETAILS OVERLAY FUNCTIONS ======================
+function openEditOverlay() {
+  console.log("🎯 Opening edit overlay");
+  try {
+    const overlay = document.getElementById('editDispatchOverlay');
+    if (!overlay) {
+      throw new Error('Edit overlay not found');
+    }
+    
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    console.log("✅ Overlay opened successfully");
+    
+  } catch (error) {
+    console.error('❌ Error opening overlay:', error);
+    showToast('error', 'Cannot open edit form. Please try again.');
+  }
+}
 
-  fetch('/api/declaration', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ 
-      dispatch_cutoff, 
-      late_declare: late_declare.toLowerCase() === 'yes',
-      dispatch_remarks: dispatch_remarks || ''
-    })
-  })
-  .then(response => response.json())
-  .then(result => {
+function closeEditOverlay() {
+  console.log("🎯 Closing edit overlay");
+  try {
+    const overlay = document.getElementById('editDispatchOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  } catch (error) {
+    console.error('Error closing overlay:', error);
+  }
+}
+
+function validateDispatchForm() {
+  const dispatchCutoff = document.getElementById('dispatch_cutoff').value;
+  const lateDeclare = document.querySelector('input[name="late_declare"]:checked')?.value;
+  
+  // Clear previous error styles
+  document.querySelectorAll('.error-field').forEach(el => {
+    el.classList.remove('error-field');
+  });
+  document.querySelectorAll('.error-message').forEach(el => el.remove());
+  
+  let isValid = true;
+  let errorMessages = [];
+  
+  // Validate Cutoff Date
+  if (!dispatchCutoff) {
+    const cutoffField = document.getElementById('dispatch_cutoff');
+    cutoffField.classList.add('error-field');
+    showFieldError(cutoffField, 'Please select a cutoff date');
+    isValid = false;
+    errorMessages.push('Cutoff date is required');
+  }
+  
+  // Validate Late Declare
+  if (!lateDeclare) {
+    const radioGroup = document.querySelector('.radio-group');
+    radioGroup.classList.add('error-field');
+    showFieldError(radioGroup, 'Please select Yes or No for late declare');
+    isValid = false;
+    errorMessages.push('Late declare selection is required');
+  }
+  
+  // Validate Remarks length (optional but with limit)
+  const dispatchRemarks = document.getElementById('dispatch_remarks').value;
+  if (dispatchRemarks.length > 500) {
+    const remarksField = document.getElementById('dispatch_remarks');
+    remarksField.classList.add('error-field');
+    showFieldError(remarksField, 'Remarks cannot exceed 500 characters');
+    isValid = false;
+    errorMessages.push('Remarks too long (max 500 characters)');
+  }
+  
+  if (!isValid && errorMessages.length > 0) {
+    showToast('error', 'Please check the following:<br>' + errorMessages.join('<br>• '));
+  }
+  
+  return isValid;
+}
+
+function showFieldError(field, message) {
+  // Remove existing error message for this field
+  const existingError = field.parentNode.querySelector('.error-message');
+  if (existingError) {
+    existingError.remove();
+  }
+  
+  // Create and append error message
+  const errorElement = document.createElement('div');
+  errorElement.className = 'error-message';
+  errorElement.textContent = message;
+  errorElement.style.cssText = 'color: #dc2626; font-size: 0.75rem; margin-top: 4px;';
+  
+  field.parentNode.appendChild(errorElement);
+}
+
+async function saveDispatchDetails() {
+  console.log("🎯 Saving dispatch details");
+  
+  try {
+    // Validate form first
+    if (!validateDispatchForm()) {
+      return; // Stop if validation fails
+    }
+    
+    const dispatchCutoff = document.getElementById('dispatch_cutoff').value;
+    const lateDeclare = document.querySelector('input[name="late_declare"]:checked').value;
+    const dispatchRemarks = document.getElementById('dispatch_remarks').value;
+    
+    console.log('Saving dispatch details:', {
+      dispatchCutoff,
+      lateDeclare,
+      dispatchRemarks
+    });
+    
+    // Show loading state
+    const saveBtn = document.querySelector('.dispatch-footer .btn-primary');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    saveBtn.disabled = true;
+    
+    // API call to save changes
+    const response = await fetch('/api/update_dispatch', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        dispatch_cutoff: dispatchCutoff,
+        late_declare: lateDeclare,
+        dispatch_remarks: dispatchRemarks
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Server error: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
     if (result.success) {
-      toastSuccess('Success', 'Dispatch created successfully!');
+      showToast('success', 'Dispatch details updated successfully!');
+      closeEditOverlay();
+      
+      // Optional: Refresh the page or update UI
       setTimeout(() => {
-        location.reload(); // Refresh to show new dispatch
+        location.reload();
+      }, 1000);
+      
+    } else {
+      throw new Error(result.error || 'Failed to save changes');
+    }
+    
+  } catch (error) {
+    console.error('❌ Error saving dispatch details:', error);
+    
+    let userMessage = 'Failed to save changes. ';
+    
+    if (error.message.includes('Network') || error.message.includes('Fetch')) {
+      userMessage = 'Please check your internet connection and try again.';
+    } else if (error.message.includes('Server error')) {
+      userMessage = 'Server is temporarily unavailable. Please try again later.';
+    } else if (error.message.includes('unauthorized') || error.message.includes('permission')) {
+      userMessage = 'You do not have permission to make these changes.';
+    } else {
+      userMessage = 'Please check your entries and try again.';
+    }
+    
+    showToast('error', userMessage);
+    
+  } finally {
+    // Restore button state
+    const saveBtn = document.querySelector('.dispatch-footer .btn-primary');
+    if (saveBtn) {
+      saveBtn.innerHTML = 'Save Changes';
+      saveBtn.disabled = false;
+    }
+  }
+}
+
+// 📦 Dispatch Create with Validation
+document.getElementById('btn_create_dispatch').addEventListener('click', async function() {
+  try {
+    // Validate inputs with user-friendly prompts
+    const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):");
+    if (!dispatch_cutoff) {
+      showToast('info', 'Dispatch creation was cancelled');
+      return;
+    }
+    
+    // Validate cutoff format
+    if (!/^\d{2}-\d{2}$/.test(dispatch_cutoff)) {
+      showToast('error', 'Please use MM-DD format (e.g., 12-25)');
+      return;
+    }
+    
+    const late_declare = prompt("Include Late Declarations? (Please type 'yes' or 'no'):");
+    if (late_declare === null) {
+      showToast('info', 'Dispatch creation was cancelled');
+      return;
+    }
+    
+    // Validate late_declare input
+    const lateDeclareLower = late_declare.toLowerCase();
+    if (lateDeclareLower !== 'yes' && lateDeclareLower !== 'no') {
+      showToast('error', "Please type exactly 'yes' or 'no'");
+      return;
+    }
+    
+    const dispatch_remarks = prompt("Enter Remarks (optional):") || '';
+    
+    // Validate remarks length
+    if (dispatch_remarks.length > 500) {
+      showToast('error', 'Remarks cannot exceed 500 characters');
+      return;
+    }
+    
+    // Show loading state
+    const createBtn = document.getElementById('btn_create_dispatch');
+    const originalText = createBtn.innerHTML;
+    createBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+    createBtn.disabled = true;
+    
+    const response = await fetch('/api/declaration', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ 
+        dispatch_cutoff, 
+        late_declare: lateDeclareLower === 'yes',
+        dispatch_remarks 
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Server error: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      showToast('success', 'New dispatch created successfully!');
+      setTimeout(() => {
+        location.reload();
       }, 1500);
     } else {
-      toastError('Error', 'Failed to create dispatch: ' + result.error);
+      throw new Error(result.error || 'Failed to create dispatch');
     }
-  })
-  .catch(error => {
-    console.error('Error creating dispatch:', error);
-    toastError('Error', 'Error creating dispatch');
-  });
+    
+  } catch (error) {
+    console.error('❌ Error creating dispatch:', error);
+    
+    let userMessage = 'Failed to create dispatch. ';
+    
+    if (error.message.includes('Network') || error.message.includes('Fetch')) {
+      userMessage = 'Please check your internet connection.';
+    } else if (error.message.includes('already exists')) {
+      userMessage = 'A dispatch with these details already exists.';
+    } else if (error.message.includes('permission') || error.message.includes('unauthorized')) {
+      userMessage = 'You do not have permission to create dispatches.';
+    } else {
+      userMessage = 'Please try again with different details.';
+    }
+    
+    showToast('error', userMessage);
+    
+  } finally {
+    // Restore button state
+    const createBtn = document.getElementById('btn_create_dispatch');
+    if (createBtn) {
+      createBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Create Dispatch';
+      createBtn.disabled = false;
+    }
+  }
 });
+
+// Simple toast function compatible with your setup
+function showToast(type, message) {
+  if (typeof Toastify === 'undefined') {
+    // Fallback to alert if Toastify not available
+    alert(`${type.toUpperCase()}: ${message}`);
+    return;
+  }
+  
+  const config = {
+    text: message,
+    duration: 4000,
+    gravity: "top",
+    position: "right",
+    stopOnFocus: true,
+    escapeMarkup: false
+  };
+  
+  switch(type) {
+    case 'success':
+      config.backgroundColor = "#10b981";
+      break;
+    case 'error':
+      config.backgroundColor = "#ef4444";
+      break;
+    case 'info':
+      config.backgroundColor = "#3b82f6";
+      break;
+    default:
+      config.backgroundColor = "#6b7280";
+  }
+  
+  Toastify(config).showToast();
+}
+
+// Add CSS for error states
+const errorStyles = `
+.error-field {
+    border-color: #dc2626 !important;
+    background-color: #fef2f2 !important;
+}
+
+.error-field:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1) !important;
+}
+
+.radio-group.error-field {
+    border: 1px solid #dc2626 !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    background-color: #fef2f2 !important;
+}
+`;
+
+// Inject error styles
+const styleSheet = document.createElement('style');
+styleSheet.textContent = errorStyles;
+document.head.appendChild(styleSheet);
 
 // 📜 History Toggle
 function showHistory() {
+  console.log("🎯 Show History clicked");
   fetch('/api/get_all_dispatch')
     .then(response => {
       if (!response.ok) {
@@ -577,11 +903,6 @@ function backToMain() {
 
   // ✅ Restore checkbox functionality
   initializeCheckboxListeners();
-  
-  const selectAllBtn = document.querySelector(".btn.select-all");
-  const transmitBtn = document.querySelector(".btn.transmit");
-  if (selectAllBtn) selectAllBtn.disabled = false;
-  if (transmitBtn) transmitBtn.disabled = false;
 }
 
 function showDispatchTable() {
@@ -619,7 +940,7 @@ function showDispatchTable() {
 
 // ✅ FULL Pagination + Show Entries
 function initializePagination() {
-  const entriesSelect = document.getElementById("entriesPerPage");
+  const entriesSelect = document.getElementById("showEntries"); // FIXED: Changed from entriesPerPage to showEntries
 
   entriesPerPage = parseInt(entriesSelect.value);
 
@@ -634,8 +955,8 @@ function initializePagination() {
 
 function renderTable() {
   const tableBody = document.querySelector("#dataTable tbody");
-  const start = (window.currentPage - 1) * window.entriesPerPage;
-  const end = start + window.entriesPerPage;
+  const start = (currentPage - 1) * entriesPerPage;
+  const end = start + entriesPerPage;
   const paginatedData = filteredData.slice(start, end);
 
   if (filteredData[0]?.dispatch_id) {
@@ -659,12 +980,6 @@ function renderTable() {
     const transmitBtn = document.querySelector(".btn.transmit");
     if (selectAllBtn) selectAllBtn.disabled = true;
     if (transmitBtn) transmitBtn.disabled = true;
-    
-    // Disable selection buttons in history view
-    const selectAllBtn = document.querySelector(".btn.select-all");
-    const transmitBtn = document.querySelector(".btn.transmit");
-    if (selectAllBtn) selectAllBtn.disabled = true;
-    if (transmitBtn) transmitBtn.disabled = true;
   } else {
     // Main table (Dispatch Contents)
     tableBody.innerHTML = paginatedData.map(item => `
@@ -681,15 +996,6 @@ function renderTable() {
         <td>${item.lateDeclare || ''}</td>
       </tr>
     `).join('');
-    
-    // Enable selection buttons in main view
-    const selectAllBtn = document.querySelector(".btn.select-all");
-    const transmitBtn = document.querySelector(".btn.transmit");
-    if (selectAllBtn) {
-      selectAllBtn.disabled = false;
-      selectAllBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Select All'; // Reset button text
-    }
-    if (transmitBtn) transmitBtn.disabled = false;
     
     // REINITIALIZE CHECKBOX LISTENERS AFTER RENDERING
     setTimeout(() => {
@@ -735,12 +1041,6 @@ function updatePagination() {
     paginationControls.appendChild(btn);
   }
 
-  function addEllipsis() {
-    const ellipsis = document.createElement("span");
-    ellipsis.textContent = "...";
-    ellipsis.classList.add("ellipsis");
-    paginationControls.appendChild(ellipsis);
-  }
   function addEllipsis() {
     const ellipsis = document.createElement("span");
     ellipsis.textContent = "...";
@@ -886,26 +1186,6 @@ function exportSelectedToServer() {
   });
 }
 
-// UPLOADED IMAGE
-document.addEventListener("DOMContentLoaded", function() {
-    const navProfileImage = document.getElementById("navProfileImage");
-    if (navProfileImage) {
-        const savedProfileImage = localStorage.getItem("profileImage");
-        if (savedProfileImage) {
-            navProfileImage.src = savedProfileImage;
-        }
-    }
-    
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'profileImage') {
-            const navProfileImage = document.getElementById("navProfileImage");
-            if (navProfileImage) {
-                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
-            }
-        }
-    });
-});
-
 // Global error handlers
 window.addEventListener('error', function(e) {
     console.error('Global error:', e.error);
@@ -916,4 +1196,6 @@ window.addEventListener('unhandledrejection', function(e) {
     toastError('JavaScript Error', 'An unexpected error occurred: ' + e.reason);
 });
 </script>
+
+
 {% endblock %}

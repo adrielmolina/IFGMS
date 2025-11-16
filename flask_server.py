@@ -1,7 +1,8 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, send_file, send_from_directory, abort
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from livereload import Server
-from py_scripts import db_conn, tools
+from py_scripts import db_conn, tools, models
+from py_scripts.db_conn import SessionLocal
 from datetime import date, datetime
 import os
 import pandas as pd
@@ -666,6 +667,30 @@ def upload_profile_pic():
     except Exception as e:
         print("Exception in upload_profile_pic:", e)
         return jsonify({"success": False, "error": str(e)}), 500
+
+@server.route('/api/members/filter_options', methods=['GET'])
+@login_required
+def get_member_filter_options():
+    db_session = SessionLocal()
+    try:
+        # Get distinct years from records
+        years = db_session.query(models.Records.year).distinct().filter(models.Records.year.isnot(None)).order_by(models.Records.year.desc()).all()
+        years_list = [year[0] for year in years]
+        
+        # Get distinct origins from records
+        origins = db_session.query(models.Records.origin).distinct().filter(models.Records.origin.isnot(None)).order_by(models.Records.origin).all()
+        origins_list = [origin[0] for origin in origins]
+        
+        return jsonify({
+            'years': years_list,
+            'origins': origins_list
+        })
+        
+    except Exception as e:
+        print(f"Error fetching filter options: {e}")
+        return jsonify({'years': [], 'origins': []}), 500
+    finally:
+        db_session.close()
 
 # === Fetch profile picture ===
 @server.route('/api/get_profile_pic/<int:user_id>')

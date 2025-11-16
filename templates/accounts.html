@@ -26,7 +26,7 @@
     </div>
     
   
-    <div class="pending-requests-wrapper">
+    <div class="pending-requests-wrapper" hidden>
                     <div class="table-top">
                 <label>
                     Show
@@ -58,11 +58,6 @@
         </div>
     </div>
 </div>
-
-        <div id="btn_row_pending" class="btn_row">
-        <button id="approve" name="action" value="approve">APPROVE</button>
-        <button id="decline" name="action" value="decline">DECLINE</button>
-    </div>
     
 <div class="active-requests-wrapper">
                 <div class="table-top">
@@ -157,7 +152,7 @@
                             </div>
                             <div class="div16">
                                 <label for="email">Email Address</label>
-                                <input type="text" id="email" name="email" required autocomplete="off">
+                                <input type="email" id="email" name="email" required autocomplete="off">
                             </div>
                             <div class="div17">
                                 <label for="username">Username</label>
