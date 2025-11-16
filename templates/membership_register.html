@@ -5,6 +5,11 @@
     <meta charset="UTF-8" />
     <title>MAAB Registration</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <style>
         /* ===== OVERLAY STYLES ===== */
         .overlay {
@@ -767,7 +772,6 @@
 
                     <div class="overlay-actions">
                         <button class="download-btn" id="downloadConfirmation">📥 Download Confirmation</button>
-                        <button class="screenshot-btn" id="takeScreenshot">📸 Take Screenshot</button>
                         <button class="close-btn" id="closeConfirmation">Close</button>
                     </div>
                 </div>
@@ -891,6 +895,44 @@
 
     <!-- ================= javascript ======================================================= -->
     <script>
+        // ===== TOAST FUNCTIONS =====
+        function showToast(message, type = 'success', duration = 3000) {
+            let backgroundColor = "#4CAF50"; // success - green
+            if (type === 'error') backgroundColor = "#f44336"; // error - red
+            if (type === 'warning') backgroundColor = "#ff9800"; // warning - orange
+            if (type === 'info') backgroundColor = "#2196F3"; // info - blue
+
+            Toastify({
+                text: message,
+                duration: duration,
+                gravity: "top",
+                position: "right",
+                backgroundColor: backgroundColor,
+                stopOnFocus: true,
+            }).showToast();
+        }
+
+        // Convenience functions
+        function toastSuccess(message, duration = 3000) {
+            showToast(message, 'success', duration);
+        }
+
+        function toastError(message, duration = 3000) {
+            showToast(message, 'error', duration);
+        }
+
+        function toastWarning(message, duration = 3000) {
+            showToast(message, 'warning', duration);
+        }
+
+        function toastInfo(message, duration = 3000) {
+            showToast(message, 'info', duration);
+        }
+
+        function toastAlert(message, duration = 3000) {
+            showToast(message, 'error', duration);
+        }
+
         // ===== HERO IMAGE FUNCTIONALITY =====
         const heroImages = [
             "{{ url_for('static', filename='assets/bg4.png') }}",
@@ -1078,11 +1120,13 @@
         function nextImage() {
             currentImageIndex = (currentImageIndex + 1) % galleryData.length;
             updateGalleryDisplay();
+            toastSuccess(`Now viewing: ${galleryData[currentImageIndex].title}`);
         }
 
         function prevImage() {
             currentImageIndex = (currentImageIndex - 1 + galleryData.length) % galleryData.length;
             updateGalleryDisplay();
+            toastSuccess(`Now viewing: ${galleryData[currentImageIndex].title}`);
         }
 
         // ===== STEP INDICATOR LOGIC =====
@@ -1138,6 +1182,7 @@
                 termsOverlay.style.display = 'flex';
                 termsOverlay.setAttribute('aria-hidden', 'false');
                 document.body.style.overflow = 'hidden';
+                toastInfo("Please read and agree to the terms and conditions");
             });
         }
 
@@ -1188,6 +1233,7 @@
             confirmationOverlay.style.display = 'flex';
             confirmationOverlay.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
+            toastSuccess("Your registration has been completed successfully!");
         }
 
         // Close Confirmation Overlay
@@ -1226,6 +1272,7 @@
         // ===== FORM SUBMISSION =====
         document.getElementById('back_btn').addEventListener('click', () => {
             window.location.href = '/';
+            toastInfo("Returning to homepage");
         });
 
         document.getElementById('submit_btn').addEventListener('click', () => {
@@ -1267,15 +1314,21 @@
             });
 
             if (!isValid) {
-                alert('Please fill in all required fields marked with *');
+                toastError("Please fill in all required fields marked with *");
                 return;
             }
 
             // Check terms and conditions
             if (!termsCheckbox.checked) {
-                alert('Please agree to the Terms and Conditions');
+                toastError("Please agree to the Terms and Conditions");
                 return;
             }
+
+            // Show loading state
+            const submitBtn = document.getElementById('submit_btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Processing...';
 
             fetch('/api/member_register', {
                 method: 'POST',
@@ -1290,11 +1343,15 @@
                     // Show confirmation overlay
                     showConfirmationOverlay(member_info, data.reference_id);
                 } else {
-                    alert('Registration failed: ' + data.error);
+                    toastError(data.error || "Registration failed. Please try again");
                 }
             }).catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred during registration.');
+                toastError("An error occurred during registration. Please try again.");
+            }).finally(() => {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
             });
         });
 
@@ -1321,6 +1378,7 @@
 
             ageInput.value = age;
             updateStepsProgress();
+            
         });
 
         // ===== FAQ FUNCTIONALITY =====
@@ -1346,6 +1404,9 @@
                     if (!isActive) {
                         answer.classList.add('active');
                         this.classList.add('active');
+                        toastInfo(`Opened: ${this.textContent}`);
+                    } else {
+                        toastInfo(`Closed: ${this.textContent}`);
                     }
                 });
             });
@@ -1397,15 +1458,101 @@
             document.querySelectorAll('.section-fade').forEach(section => {
                 observer.observe(section);
             });
+// Download Confirmation as PDF
+document.getElementById('downloadConfirmation').addEventListener('click', function() {
+    downloadConfirmationPDF();
+});
 
-            // Download and screenshot functionality
-            document.getElementById('downloadConfirmation').addEventListener('click', function() {
-                alert('Download functionality would be implemented here');
-            });
-
-            document.getElementById('takeScreenshot').addEventListener('click', function() {
-                alert('Screenshot functionality would be implemented here');
-            });
+function downloadConfirmationPDF() {
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    const memberName = document.getElementById('confirmName').textContent;
+    const category = document.getElementById('confirmCategory').textContent;
+    const branch = document.getElementById('confirmBranch').textContent;
+    const referenceNo = document.getElementById('referenceNumber').textContent;
+    const date = document.getElementById('confirmDate').textContent;
+    const branchAddress = document.getElementById('branchAddress').textContent;
+    
+    // Add logo/header
+    doc.setFillColor(211, 47, 47); // Red color
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PHILIPPINE RED CROSS', 105, 15, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text('MAAB REGISTRATION CONFIRMATION', 105, 25, { align: 'center' });
+    
+    // Content
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    
+    let yPosition = 60;
+    
+    // Success message
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Congratulations ${memberName}!`, 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Your MAAB registration has been successfully processed.', 20, yPosition);
+    yPosition += 15;
+    
+    // Registration Details
+    doc.setFont('helvetica', 'bold');
+    doc.text('REGISTRATION DETAILS:', 20, yPosition);
+    yPosition += 8;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Name: ${memberName}`, 25, yPosition);
+    yPosition += 6;
+    doc.text(`MAAB Category: ${category}`, 25, yPosition);
+    yPosition += 6;
+    doc.text(`Reference Number: ${referenceNo}`, 25, yPosition);
+    yPosition += 6;
+    doc.text(`Branch to Visit: ${branch}`, 25, yPosition);
+    yPosition += 6;
+    doc.text(`Registration Date: ${date}`, 25, yPosition);
+    yPosition += 15;
+    
+    // Branch Address
+    doc.setFont('helvetica', 'bold');
+    doc.text('BRANCH ADDRESS:', 20, yPosition);
+    yPosition += 8;
+    
+    doc.setFont('helvetica', 'normal');
+    const splitAddress = doc.splitTextToSize(branchAddress, 160);
+    doc.text(splitAddress, 25, yPosition);
+    yPosition += splitAddress.length * 5 + 10;
+    
+    // Important Instructions
+    doc.setFont('helvetica', 'bold');
+    doc.text('IMPORTANT INSTRUCTIONS:', 20, yPosition);
+    yPosition += 8;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text('1. Visit your chosen Red Cross branch', 25, yPosition);
+    yPosition += 6;
+    doc.text('2. Present this confirmation and pay membership fee', 25, yPosition);
+    yPosition += 6;
+    doc.text('3. Claim your MAAB ID on the spot!', 25, yPosition);
+    yPosition += 15;
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Generated on: ' + new Date().toLocaleString(), 20, 280);
+    doc.text('Philippine Red Cross Cavite Chapter - MAAB Program', 105, 285, { align: 'center' });
+    
+    // Save PDF
+    doc.save(`MAAB-Confirmation-${referenceNo}.pdf`);
+    toastSuccess("PDF downloaded successfully!");
+}
         });
     </script>
 </body>
