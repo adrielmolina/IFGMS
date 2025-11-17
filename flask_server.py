@@ -119,9 +119,12 @@ def login():
 @server.route('/logout')
 @login_required
 def logout():
+    db_conn.POST_action_log(current_user.username, current_user.user_level, 'Logout', 'User logged out', current_user.account_id)
     logout_user()
     session.clear()
     return redirect(url_for("landing_page"))
+
+
 
 #? -------------------- END -------------------- ?#
 
@@ -407,7 +410,7 @@ def export_record_entries(record_id):
             for col_letter, width in column_widths.items():
                 worksheet.column_dimensions[col_letter].width = width
         
-        # Return success response with file info
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Record', f'Exported record {record_id} with {len(entries)} entries', current_user.account_id)
         return jsonify({
             'success': True,
             'message': f'File exported successfully to record_exports folder',
@@ -532,6 +535,7 @@ def declaration_api():
     try:
         data = request.get_json()
         if not data:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Dispatch Failed', 'No data provided', current_user.account_id)
             return jsonify({"success": False, "error": "No data provided"}), 400
 
         dispatch_type = 'transmission' if current_user.office_location != 'Chapter' else 'declaration' 
@@ -544,12 +548,15 @@ def declaration_api():
         result = db_conn.create_dispatch(dispatch_type, dispatch_origin, dispatch_year, dispatch_cutoff, late_declare, dispatch_remarks)
         
         if result == True:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Dispatch', f'Created {dispatch_type} dispatch from {dispatch_origin}', current_user.account_id)
             return jsonify({"success": True})
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Dispatch Failed', f'Failed: {result}', current_user.account_id)
             return jsonify({"success": False, "error": result}), 500
             
     except Exception as e:
         print(f"Declaration API error: {e}")
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Dispatch Error', f'Error: {str(e)}', current_user.account_id)
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
@@ -580,6 +587,7 @@ def settings_save_changes():
             )
 
             if update_success:
+                db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Profile', 'Updated personal profile information', current_user.account_id)
                 flash("Details updated successfully!", "success")
             else:
                 flash("Update failed!", "error")
@@ -614,7 +622,7 @@ def upload_profile_pic():
         saved = db_conn.save_profile_pic(current_user.account_id, file_data)
         if saved:
             print("Saved profile pic to DB for user", current_user.account_id)
-            # Return updated state (whether the user has a profile pic)
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Upload Profile Picture', 'Uploaded new profile picture', current_user.account_id)
             return jsonify({"success": True, "has_profile_pic": True})
         else:
             print("db_conn.save_profile_pic returned False")
@@ -662,6 +670,7 @@ def get_profile_pic(user_id):
 @login_required
 def delete_profile_pic():
     success = db_conn.save_profile_pic(current_user.account_id, None)
+    db_conn.POST_action_log(current_user.username, current_user.user_level, 'Delete Profile Picture', 'Deleted profile picture', current_user.account_id)
     return jsonify({"success": success})
 
 # API FOR DASHBOARD
@@ -742,20 +751,24 @@ def archive_record():
         record_id = data.get('record_id')
         
         if not record_id:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record Failed', 'No record ID provided', current_user.account_id)
             return jsonify({"success": False, "error": "No record ID provided"}), 400
         
         # Use the new function that handles both archiving and logging in one session
         success = db_conn.archive_member_record_with_log(record_id, current_user.account_id)
         
         if success:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record', f'Archived record ID: {record_id}', current_user.account_id)
             return jsonify({"success": True})
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record Failed', f'Failed to archive record ID: {record_id}', current_user.account_id)
             return jsonify({"success": False, "error": "Failed to archive record"}), 500
             
     except Exception as e:
         print(f"Error archiving record: {e}")
         import traceback
         traceback.print_exc()
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record Error', f'Error: {str(e)}', current_user.account_id)
         return jsonify({"success": False, "error": "Internal server error"}), 500
     
 @server.route('/api/add_record', methods=['POST'])
@@ -833,10 +846,13 @@ def save_entry_details():
         result = db_conn.save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birthdate, age, sex, bloodtype, contact, email, address, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready)
 
         if result:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry', f'Added entry for {first_name} {last_name}', current_user.account_id)
             return jsonify({"success": True})
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry Failed', f'Failed to add entry for {first_name} {last_name}', current_user.account_id)
             return jsonify({"success": False, "error": result}), 500
     else:
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry Failed', 'No data provided', current_user.account_id)
         return jsonify({"success": False, "error": "No data provided"}), 400
 
 
@@ -850,6 +866,7 @@ def save_entry_update():
         print(f"Data types: { {k: type(v) for k, v in data.items()} }")
         
         if not data:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Entry Failed', 'No data provided', current_user.account_id)
             return jsonify({"success": False, "error": "No data provided"}), 400
             
         entry_id = data.get('entry_id')
@@ -858,9 +875,11 @@ def save_entry_update():
         result = db_conn.save_entry_updates(data)
         
         if result:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Entry', f'Updated entry ID: {entry_id}', current_user.account_id)
             print("✅ Entry update successful")
             return jsonify({"success": True})
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Entry Failed', f'Failed to update entry ID: {entry_id}', current_user.account_id)
             print("❌ Entry update failed in db_conn")
             return jsonify({"success": False, "error": "Database update failed"}), 500
             
@@ -898,6 +917,7 @@ def add_inventory_stock():
         
         # Validate required fields
         if not all([category, prefix, start_num, count]):
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory Failed', 'Missing required fields', current_user.account_id)
             return jsonify({
                 "success": False, 
                 "error": "All fields are required"
@@ -931,6 +951,7 @@ def add_inventory_stock():
         result = db_conn.add_inventory_ids(category, prefix, start_num, count)
         
         if result["success"]:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory', f'Added {result["added_count"]} {category} IDs starting from {prefix}{start_num}', current_user.account_id)
             response_data = {
                 "success": True,
                 "message": f"Successfully added {result['added_count']} ID(s) for {category} category",
@@ -943,6 +964,7 @@ def add_inventory_stock():
                 
             return jsonify(response_data)
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory Failed', f'Failed to add {category} IDs: {result.get("error")}', current_user.account_id)
             return jsonify({
                 "success": False,
                 "error": result.get("error", "Failed to add IDs to inventory")
@@ -950,6 +972,7 @@ def add_inventory_stock():
             
     except Exception as e:
         print(f"Error adding inventory stock: {e}")
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory Error', f'Error: {str(e)}', current_user.account_id)
         return jsonify({
             "success": False,
             "error": "Internal server error"
@@ -964,6 +987,7 @@ def add_to_dispatch():
         result = db_conn.add_to_dispatch()
         print('add_to_dispatch result:', result)
         if result:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add to Dispatch', f'Added {result} entries to dispatch', current_user.account_id)
             return jsonify({"success": True, "added_to_dispatch_count": result})
         else:
             return jsonify({"success": False, "error": "No entries to add to dispatch"}), 500
@@ -980,11 +1004,13 @@ def export_dispatch():
     try:
         data = request.get_json()
         if not data:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Data Failed', 'No JSON data provided', current_user.account_id)
             return jsonify({"success": False, "error": "No JSON data provided"}), 400
             
         selected_rows = data.get('selected_rows', [])
         
         if not selected_rows:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Data Failed', 'No rows selected', current_user.account_id)
             return jsonify({"success": False, "error": "No rows selected"}), 400
 
         # Create DataFrame from selected rows
@@ -1056,6 +1082,7 @@ def export_dispatch():
             number_format = workbook.add_format({'align': 'center'})
             worksheet.set_column('A:A', 5, number_format)
 
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Data', f'Exported dispatch report with {len(selected_rows)} entries', current_user.account_id)
         return jsonify({
             "success": True, 
             "message": "File saved successfully",
@@ -1065,6 +1092,7 @@ def export_dispatch():
 
     except Exception as e:
         print(f"Export error: {e}")
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Data Error', f'Error: {str(e)}', current_user.account_id)
         return jsonify({"success": False, "error": str(e)}), 500
 
 # TODO check if a record exist for Online Registration on the same day. if yes put the entry on that record
@@ -1209,6 +1237,7 @@ def approve_account():
 
         if not success:
             return jsonify({"success": False, "error": f"Failed to approve account ID {acc_id}"}), 500
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Approve Accounts', f'Approved {len(ids)} account(s)', current_user.account_id)
 
     return jsonify({"success": True})
 
@@ -1239,6 +1268,7 @@ def reset_account():
         print(f"📋 Account IDs to reset: {ids}")
         
         if not ids:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Password Failed', 'No account IDs provided', current_user.account_id)
             return jsonify({"success": False, "error": "No account IDs provided"}), 400
 
         success_count = 0
@@ -1255,25 +1285,30 @@ def reset_account():
             else:
                 failed_ids.append(acc_id)
                 print(f"❌ Failed to reset password for account {acc_id}")
+                db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Password Failed', f'Failed to reset password for account ID {acc_id}', current_user.account_id)
         
         print(f"📊 Reset summary: {success_count} successful, {len(failed_ids)} failed")
         
         if success_count > 0:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Passwords', f'Reset passwords for {success_count} account(s)', current_user.account_id)
             response = {
                 "success": True, 
                 "reset_count": success_count,
                 "message": f"Passwords reset for {success_count} account(s)!"
             }
             if failed_ids:
+
                 response["warning"] = f"Failed to reset {len(failed_ids)} account(s)"
             return jsonify(response)
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Password Failed', f'Failed to reset passwords for all {len(ids)} account(s)', current_user.account_id)
             return jsonify({
                 "success": False, 
                 "error": f"Failed to reset passwords for all {len(ids)} account(s)"
             }), 500
             
     except Exception as e:
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Password Error', f'Error: {str(e)}', current_user.account_id)
         print(f"❌ ERROR in reset_account route: {e}")
         import traceback
         traceback.print_exc()
@@ -1294,6 +1329,7 @@ def update_userlvl():
         success = db_conn.update_userlvl(id, user_level)
 
         if success:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update User Level', f'Updated user level to {user_level} for account {id}', current_user.account_id)
             return jsonify({"success": True})
         else:
             return jsonify({"success": False, "error": "Failed to update user level"}), 500
@@ -1315,6 +1351,7 @@ def update_ofc():
         success = db_conn.update_ofc(id, location)
 
         if success:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Office Location', f'Updated office location to {location} for account {id}', current_user.account_id)
             return jsonify({"success": True})
         else:
             return jsonify({"success": False, "error": "Failed to update office location"}), 500
@@ -1513,6 +1550,7 @@ def archive_account():
             success_count = result
             
             print(f"✅ Successfully archived {success_count} accounts in one operation")
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Accounts', f'Archived {success_count} account(s)', current_user.account_id)
             
             # Log the bulk action
             if success_count > 0:
