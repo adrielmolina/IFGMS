@@ -294,53 +294,103 @@ function cancelChanges() {
         history.style.display = (history.style.display === 'none') ? 'block' : 'none';
     }
 
-// Upload Image Function
-document.addEventListener("DOMContentLoaded", function() {
-    const profileImageInput = document.getElementById("profileImageInput");
-    const profileImage = document.getElementById("profileImage");
-    const successMessage = document.getElementById("successMessage");
+    // Upload Image Function
+    // document.addEventListener("DOMContentLoaded", function() {
+    //     const profileImageInput = document.getElementById("profileImageInput");
+    //     const profileImage = document.getElementById("profileImage");
+    //     const successMessage = document.getElementById("successMessage");
 
-    // Load saved profile image if exists
-    const savedProfileImage = localStorage.getItem("profileImage");
-    if (savedProfileImage) {
-        profileImage.src = savedProfileImage;
-        // Also update navigation bar image
-        updateNavigationBarImage(savedProfileImage);
-    }
+    //     // Load saved profile image if exists
+    //     const savedProfileImage = localStorage.getItem("profileImage");
+    //     if (savedProfileImage) {
+    //         profileImage.src = savedProfileImage;
+    //         // Also update navigation bar image
+    //         updateNavigationBarImage(savedProfileImage);
+    //     }
 
-    // Handle profile picture upload
-    profileImageInput.addEventListener("change", async function (e) {
-    const file = e.target.files[0];
-    if (file) {
-        if (file.size > 5 * 1024 * 1024) {
-            toastAlert("File size exceeds 5MB limit.");
-            return;
+    //     // Handle profile picture upload
+    //     profileImageInput.addEventListener("change", async function (e) {
+    //     const file = e.target.files[0];
+    //     if (file) {
+    //         if (file.size > 5 * 1024 * 1024) {
+    //             toastAlert("File size exceeds 5MB limit.");
+    //             return;
+    //         }
+
+    //         const formData = new FormData();
+    //         formData.append("profile_pic", file);
+
+    //         const response = await fetch("/api/upload_profile_pic", {
+    //             method: "POST",
+    //             body: formData
+    //         });
+
+    //         const result = await response.json();
+
+    //         if (result.success) {
+    //             // Update image preview instantly
+    //             const reader = new FileReader();
+    //             reader.onload = e => profileImage.src = e.target.result;
+    //             reader.readAsDataURL(file);
+
+    //             toastSuccess("Profile picture updated successfully!");
+    //         } else {
+    //             toastAlert("Failed to update picture: " + result.error);
+    //         }
+    //     }
+    // Upload Image Function
+
+    // RELOADS THE PAGE AFTER UPLOADING NEW PROFILE PICTURE
+    document.addEventListener("DOMContentLoaded", function() {
+        const profileImageInput = document.getElementById("profileImageInput");
+        const profileImage = document.getElementById("profileImage");
+        const successMessage = document.getElementById("successMessage");
+
+        // Load saved profile image if exists
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) {
+            profileImage.src = savedProfileImage;
+            // Also update navigation bar image
+            updateNavigationBarImage(savedProfileImage);
         }
 
-        const formData = new FormData();
-        formData.append("profile_pic", file);
+        // Handle profile picture upload
+        profileImageInput.addEventListener("change", async function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toastAlert("File size exceeds 5MB limit.");
+                return;
+            }
 
-        const response = await fetch("/api/upload_profile_pic", {
-            method: "POST",
-            body: formData
-        });
+            const formData = new FormData();
+            formData.append("profile_pic", file);
 
-        const result = await response.json();
+            const response = await fetch("/api/upload_profile_pic", {
+                method: "POST",
+                body: formData
+            });
 
-        if (result.success) {
-            // Update image preview instantly
-            const reader = new FileReader();
-            reader.onload = e => profileImage.src = e.target.result;
-            reader.readAsDataURL(file);
+            const result = await response.json();
 
-            toastSuccess("Profile picture updated successfully!");
-        } else {
-            toastAlert("Failed to update picture: " + result.error);
+            if (result.success) {
+                // Update image preview instantly
+                const reader = new FileReader();
+                reader.onload = e => profileImage.src = e.target.result;
+                reader.readAsDataURL(file);
+
+                toastSuccess("Profile picture updated successfully!");
+                
+                // ADD THIS LINE - Refresh the page after successful upload
+                location.reload();
+            } else {
+                toastAlert("Failed to update picture: " + result.error);
+            }
         }
-    }
+    });
 });
 
-});
+
 
 function updateNavigationBarImage(imageUrl) {
     const navProfileImage = document.getElementById("navProfileImage");
@@ -373,11 +423,13 @@ async function deleteCurrentPhoto() {
 
         if (result.success) {
             const defaultImage = "/static/assets/pfp.jpg";
+            location.reload();
 
             // Reset to default image locally
             document.getElementById("profileImage").src = defaultImage;
             updateNavigationBarImage(defaultImage);
             localStorage.removeItem("profileImage");
+            
 
             // Trigger UI update
             window.dispatchEvent(new StorageEvent("storage", {

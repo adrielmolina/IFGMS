@@ -703,6 +703,15 @@ def get_profile_pic(user_id):
     else:
         return send_file('static/assets/pfp.jpg', mimetype='image/jpeg')
 
+# === Inject profile picture state into templates ===
+@server.context_processor
+def inject_profile_pic_state():
+    if current_user.is_authenticated:
+        has_pic = db_conn.get_profile_pic(current_user.account_id) is not None
+        return {"has_profile_pic": has_pic}
+    return {"has_profile_pic": False}
+
+# === Delete profile picture ===
 @server.route('/api/delete_profile_pic', methods=['DELETE'])
 @login_required
 def delete_profile_pic():
