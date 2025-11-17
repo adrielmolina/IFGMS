@@ -100,7 +100,7 @@
                     </div>
 
                     <div class="controls_box_right">
-                        <button id="save_claim_record" class="btn-save">Save</button>
+                        <button id="save_claim_record" class="btn-save" disabled >Save</button>
                         <button id="delete_claim_record" class="btn-delete">Delete</button>
                     </div>
                 </div>
@@ -353,7 +353,7 @@
                         <label for="claimant_contact_no">Claimant Contact No.</label>
                     </div>
 
-                    <div class="input_set floating_label">
+                    <div class="input_set">
                         <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
                         <label for="claimant_email">Claimant Email</label>
                     </div>
@@ -1330,6 +1330,8 @@ function refreshMembersTable() {
 // Add Record logic (keeps pagination correct and opens the newly added record)
 // ------------------------
 document.getElementById('add_record_btn').addEventListener('click', function () {
+    document.getElementById('overlay').style.display = 'flex';
+
     fetch('/api/add_claim_record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
@@ -1661,15 +1663,36 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 */
 
+const saveBtn = document.getElementById("save_claim_record");
+const overlay  = document.getElementById("overlay");
+console.log(saveBtn.disabled); 
+
+overlay .addEventListener("input", enableSaveBTN);
+overlay .addEventListener("change", enableSaveBTN);
+
+function enableSaveBTN() {
+    if (event.target && !event.target.disabled) {
+        saveBtn.disabled = false;
+    }
+}
+
+
 // for x button in overlay
 document.getElementById('close-overlay').addEventListener('click', function () {
     document.getElementById('overlay').style.display = 'none';
+    saveBtn.disabled = true;
 });
+
 // close overlay on ESC key
 document.addEventListener('keydown', function(event) {
     if (event.key === "Escape") {
         document.getElementById('overlay').style.display = 'none';
+        saveBtn.disabled = true;
     }
 });
+
+
+
+
 </script>
 {% endblock %}

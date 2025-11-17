@@ -170,6 +170,11 @@ body {
   background-color: #16a34a;
 }
 
+#save_claim_record:disabled {
+    opacity: 0.5;       /* make it look grayed out */
+    cursor: not-allowed; /* show the disabled cursor */
+}
+
 .btn-delete {
   background-color: #ef4444;
 }
@@ -330,14 +335,19 @@ body {
 
 /* === INPUT SETS === */
 #claim_info .input_set,
+#claimant_info .input_set,
 #principal_insured_info .input_set {
   position: relative;
   display: flex;
   flex-direction: column;
 }
 
+#claimant_info .input_set input,
+#claimant_info .input_set select,
+
 #claim_info .input_set input,
 #claim_info .input_set select,
+
 #principal_insured_info .input_set input,
 #principal_insured_info .input_set select {
   width: 100%;
@@ -593,7 +603,7 @@ body {
 
 /* TODO DO NOT DELETE. COMMENT OUT WHEN DONE TESTING */
 #overlay {
-  display: flex;
+  /* display: flex; */
 }
 
 .overlay {
