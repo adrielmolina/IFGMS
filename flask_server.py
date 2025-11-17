@@ -674,6 +674,89 @@ def delete_profile_pic():
     return jsonify({"success": success})
 
 # API FOR DASHBOARD
+
+# ====== API FOR DASHBOARD STATS ======
+
+@server.route('/api/members/count', methods=['GET'])
+def get_members_count():
+    try:
+        # Count all entries across all records
+        total_count = 0
+        all_records = db_conn.get_member_records()
+        
+        for record in all_records:
+            entries = db_conn.get_entries(record.record_id)  # or record.id
+            total_count += len(entries)
+            
+        return jsonify({
+            'success': True,
+            'total_members': total_count
+        })
+    except Exception as e:
+        print(f"Error in get_members_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@server.route('/api/members/expiring_soon', methods=['GET'])
+def get_expiring_soon_count():
+    try:
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        thirty_days_from_now = today + timedelta(days=30)
+        last_month = today - timedelta(days=30)
+        
+        # Get all records and their entries
+        all_records = db_conn.get_member_records()
+        
+        current_expiring = 0
+        previous_expiring = 0
+        
+        for record in all_records:
+            # Get entries for this record
+            entries = db_conn.get_entries(record.record_id)
+            
+            for entry in entries:
+                # Check OR_date for expiration
+                if hasattr(entry, 'OR_date') and entry.OR_date:
+                    # Convert to date object if it's string
+                    if isinstance(entry.OR_date, str):
+                        or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
+                    else:
+                        or_date = entry.OR_date
+                    
+                    # Calculate expiration date (OR_date + 1 year)
+                    expiration_date = or_date + timedelta(days=365)
+                    
+                    # Current period: expiring in next 30 days
+                    if today <= expiration_date <= thirty_days_from_now:
+                        current_expiring += 1
+                    
+                    # Previous period: expired in last 30 days
+                    if last_month <= expiration_date <= today:
+                        previous_expiring += 1
+        
+        # Calculate percentage change
+        if previous_expiring > 0:
+            percentage_change = ((current_expiring - previous_expiring) / previous_expiring) * 100
+        else:
+            percentage_change = 0
+        
+        return jsonify({
+            'success': True,
+            'expiring_soon_count': current_expiring,
+            'previous_period_count': previous_expiring,
+            'percentage_change': round(percentage_change, 2),
+            'timeframe_days': 30
+        })
+    except Exception as e:
+        print(f"Error in get_expiring_soon_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    
 @server.route('/api/get_pending_claims_count')
 def get_pending_claims_count():
     count = db_conn.get_pending_claims_count()
@@ -1391,27 +1474,6 @@ def create_account_submit():
         finally:
             db_session.close()
 
-    def name_exists(fname, lname, mname=None):
-        """Check if name combination already exists"""
-        db_session = db_conn.SessionLocal()
-        try:
-            query = db_session.query(db_conn.models.Accounts).filter(
-                db_conn.models.Accounts.first_name == fname,
-                db_conn.models.Accounts.last_name == lname
-            )
-            if mname and mname.strip():
-                query = query.filter(db_conn.models.Accounts.middle_name == mname)
-            else:
-                query = query.filter(
-                    (db_conn.models.Accounts.middle_name == '') | 
-                    (db_conn.models.Accounts.middle_name.is_(None))
-                )
-            
-            existing_user = query.first()
-            return existing_user is not None
-        finally:
-            db_session.close()
-
     try:
         data = request.get_json()
         print("=== CREATE ACCOUNT DEBUG ===")
@@ -1422,6 +1484,8 @@ def create_account_submit():
         missing_fields = [field for field in required_fields if not data.get(field)]
         if missing_fields:
             print(f"Missing fields: {missing_fields}")
+            # ADD FAILED LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', f'Missing required fields: {", ".join(missing_fields)}', current_user.account_id)
             return jsonify({
                 "success": False, 
                 "message": f"Missing required fields: {', '.join(missing_fields)}"
@@ -1431,6 +1495,8 @@ def create_account_submit():
         bdate = data.get('bdate')
         if not bdate:
             print("Birthdate is missing")
+            # ADD FAILED LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', 'Birthdate is required', current_user.account_id)
             return jsonify({
                 "success": False, 
                 "message": "Birthdate is required"
@@ -1456,18 +1522,11 @@ def create_account_submit():
         print(f"Checking if username exists: {user}")
         if username_exists(user):
             print(f"Username already exists: {user}")
+            # ADD FAILED LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', f'Username already exists: {user}', current_user.account_id)
             return jsonify({
                 "success": False, 
                 "message": "Username already exists. Please choose a different username."
-            }), 400
-
-        # Check if name combination already exists - NEW: name validation
-        print(f"Checking if name exists: {fname} {mname} {lname}")
-        if name_exists(fname, lname, mname):
-            print(f"Name already exists: {fname} {mname} {lname}")
-            return jsonify({
-                "success": False, 
-                "message": "An account with this name already exists. Please check the name details."
             }), 400
 
         # Check if email already exists (if email provided)
@@ -1475,6 +1534,8 @@ def create_account_submit():
             print(f"Checking if email exists: {email}")
             if email_exists(email):
                 print(f"Email already exists: {email}")
+                # ADD FAILED LOG:
+                db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', f'Email already exists: {email}', current_user.account_id)
                 return jsonify({
                     "success": False, 
                     "message": "Email address already exists. Please use a different email."
@@ -1500,12 +1561,16 @@ def create_account_submit():
     
         if create_new_acc is True:
             print("Account creation successful!")
+            # ADD SUCCESS LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account', f'Created account for {fname} {lname} (Username: {user})', current_user.account_id)
             return jsonify({
                 "success": True,
                 "message": "Account created successfully!"
             })
         else:
             print(f"Account creation failed with: {create_new_acc}")
+            # ADD FAILED LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', f'Database error: {create_new_acc}', current_user.account_id)
             return jsonify({
                 "success": False, 
                 "message": f"Account creation failed: {create_new_acc}"
@@ -1515,11 +1580,13 @@ def create_account_submit():
         print(f"Error creating account: {str(e)}")
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
+        # ADD FAILED LOG FOR EXCEPTION:
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Error', f'Exception: {str(e)}', current_user.account_id)
         return jsonify({
             "success": False, 
             "message": "An unexpected error occurred. Please try again."
         }), 500
-
+    
 @server.route('/api/accounts/archive', methods=['PATCH'])
 @login_required
 @roles_required('admin', 'superadmin')

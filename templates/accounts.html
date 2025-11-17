@@ -189,8 +189,9 @@
                             </select>
                         </div>
                         <div class="div14">
-                            <label for="bdate">Birthdate</label>
-                            <input type="date" id="bdate" name="bdate">
+                            <label for="bdate" class="required-field">Birthdate</label>
+                            <input type="date" id="bdate" name="bdate" required>
+                            <div class="error-message" id="bdate-error">Birthdate is required</div>
                         </div>
                         <div class="div15">
                             <label for="contact_no" class="required-field">Contact No.</label>
@@ -790,81 +791,96 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ====================== CREATE ACCOUNT BUTTON ======================
-    document.getElementById('create_account_btn').addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (!validateForm(true)) {
-            toastError('Form Error', 'Please check the form for errors. All required fields must be filled correctly.');
-            return;
-        }
+// ====================== CREATE ACCOUNT BUTTON ======================
+document.getElementById('create_account_btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!validateForm(true)) {
+        toastError('Form Error', 'Please check the form for errors. All required fields must be filled correctly.');
+        return;
+    }
 
-        // Double check birthdate
-        const bdate = document.getElementById('bdate').value;
-        if (!bdate) {
-            toastError('Missing Information', 'Birthdate is required');
-            document.getElementById('bdate').classList.add('input-error');
-            return;
-        }
+    // Double check birthdate
+    const bdate = document.getElementById('bdate').value;
+    if (!bdate) {
+        toastError('Missing Information', 'Birthdate is required');
+        document.getElementById('bdate').classList.add('input-error');
+        return;
+    }
 
-        // Generate default password automatically
-        const fname = document.getElementById('fname').value.trim();
-        const lname = document.getElementById('lname').value.trim();
-        const defaultPassword = generateDefaultPassword(fname, lname);
+    // Generate default password automatically
+    const fname = document.getElementById('fname').value.trim();
+    const lname = document.getElementById('lname').value.trim();
+    const defaultPassword = generateDefaultPassword(fname, lname);
 
-        const payload = {
-            username: document.getElementById('username').value.trim(),
-            password: defaultPassword,
-            email: document.getElementById('email').value.trim(),
-            fname: fname,
-            mname: document.getElementById('mname').value.trim(),
-            lname: lname,
-            suffix: document.getElementById('suffix').value,
-            bdate: bdate,
-            contact_no: document.getElementById('contact_no').value.trim(),
-            branch: document.getElementById('branch').value
-        };
+    const payload = {
+        username: document.getElementById('username').value.trim(),
+        password: defaultPassword,
+        email: document.getElementById('email').value.trim(),
+        fname: fname,
+        mname: document.getElementById('mname').value.trim(),
+        lname: lname,
+        suffix: document.getElementById('suffix').value,
+        bdate: bdate,
+        contact_no: document.getElementById('contact_no').value.trim(),
+        branch: document.getElementById('branch').value
+    };
 
-        if (payload.email && !isValidEmail(payload.email)) {
-            toastError('Invalid Email', 'Please enter a valid email address (e.g., name@example.com).');
-            return;
-        }
+    // Email validation - only if email is provided
+    if (payload.email && !isValidEmail(payload.email)) {
+        toastError('Invalid Email', 'Please enter a valid email address (e.g., name@example.com).');
+        document.getElementById('email').classList.add('input-error');
+        return;
+    }
 
-        const originalButtonText = this.innerHTML;
-        this.disabled = true;
-        this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating Account...`;
-        this.style.opacity = '0.7';
+    const originalButtonText = this.innerHTML;
+    this.disabled = true;
+    this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating Account...`;
+    this.style.opacity = '0.7';
 
-        fetch('/create_acc_submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                toastSuccess('Account Created', 'Account was created successfully!');
-                // AUTO-CLOSE OVERLAY AND RESET FORM
-                closeOverlayAndReset();
-                // Refresh accounts table
-                fetchAccounts();
+    fetch('/create_acc_submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            toastSuccess('Account Created', 'Account was created successfully!');
+            // AUTO-CLOSE OVERLAY AND RESET FORM
+            closeOverlayAndReset();
+            // Refresh accounts table
+            fetchAccounts();
+        } else {
+            // Show specific error messages based on server response
+            if (data.message.includes('Username already exists')) {
+                toastError('Username Taken', 'This username is already taken. Please choose a different username.');
+                document.getElementById('username').classList.add('input-error');
+            } else if (data.message.includes('Email address already exists')) {
+                toastError('Email Taken', 'This email address is already registered. Please use a different email.');
+                document.getElementById('email').classList.add('input-error');
+            } else if (data.message.includes('Missing required fields')) {
+                toastError('Missing Information', 'Please fill in all required fields.');
+            } else if (data.message.includes('Birthdate is required')) {
+                toastError('Missing Information', 'Birthdate is required');
+                document.getElementById('bdate').classList.add('input-error');
             } else {
                 toastError('Creation Failed', data.message || 'Failed to create account');
             }
-        })
-        .catch(err => {
-            console.error('Create account error:', err);
-            toastError('Server Error', 'Failed to create account. Please try again.');
-        })
-        .finally(() => {
-            this.disabled = false;
-            this.innerHTML = originalButtonText;
-            this.style.opacity = '1';
-            updateCreateAccountButton();
-        });
+        }
+    })
+    .catch(err => {
+        console.error('Create account error:', err);
+        toastError('Server Error', 'Failed to create account. Please try again.');
+    })
+    .finally(() => {
+        this.disabled = false;
+        this.innerHTML = originalButtonText;
+        this.style.opacity = '1';
+        updateCreateAccountButton();
     });
-
+});
 // ====================== ACCOUNT TYPE FILTER ======================
 document.getElementById('accountTypeFilter').addEventListener('change', function() {
     const filterValue = this.value.toLowerCase();
