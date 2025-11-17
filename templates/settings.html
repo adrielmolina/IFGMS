@@ -32,8 +32,6 @@
         id="profileImage"
         />
 
-
-        
         <input type="file" id="profileImageInput" accept="image/*" style="display: none;" />
         
         <button class="profile-button" onclick="showImageOptions()">
@@ -41,7 +39,9 @@
         </button>
 
         <h5 class="name">{{ current_user.first_name }} {{ current_user.middle_name }} {{ current_user.last_name }}</h5>
-        <p class="level">{{ current_user.user_level }}</p>
+        <p class="username">@{{ current_user.username }}</p> 
+        <p class="level">{{ current_user.user_level }}  |  {{ current_user.office_location }}</p><br>
+        <p class="username">Account Activation Date: {{ current_user.acct_created}}</p>
     </div>
 
 
