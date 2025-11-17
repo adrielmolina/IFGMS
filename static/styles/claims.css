@@ -223,117 +223,140 @@ body {
   cursor: pointer;
 }
 
+/* ========================================================= */
+/* UPDATED COLLAPSIBLE SECTIONS - MATCHING UPLOADED DESIGN  */
+/* ========================================================= */
+
 .collapse_box_header {
-    color: rgb(55, 49, 49);
-    font-weight: 600;
-    background-color: #c49191;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    background-color: #f0f0f0;
     border-radius: 8px;
-    padding: 2px 6px; /* smaller height and side space */
+    padding: 12px 15px;
+    margin: 15px 0 10px 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    margin: 4px 0;
     cursor: pointer;
-    transition: box-shadow 0.2s ease;
-    box-sizing: border-box;
-    min-height: 40px; /* force smaller height */
+    transition: background-color 0.2s;
+    border: 1px solid #ddd;
 }
 
 .collapse_box_header:hover {
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
-
-.collapse_box_label {
-    background: transparent;
-    color: inherit;
-    font-weight: 600;
-    font-size: 0.65rem; /* visibly smaller */
-    line-height: 1; /* tighten text spacing */
-    user-select: none;
-    display: flex;
-    align-items: center;
-    margin: 0;
+    background-color: #e6e6e6;
 }
 
 .collapse_box_checkbox {
     display: none;
 }
 
-/* Base label style */
 .collapse_box_label {
-  cursor: pointer;
-  font-size: 20px;
-  user-select: none;
-  /* margin-left: 1%; */
-  margin: 1%
-}
-.collapse_box_label:hover {
-  text-decoration: underline;
-}
-/* Default arrow (right) */
-.collapse_box_label::before {
-  content: "▶";  /* right-pointing triangle */
-  display: inline-block;
-  margin-right: 6px;
-  transition: transform 1s;
+    font-weight: bold;
+    font-size: 16px;
+    color: #2563eb;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    user-select: none;
 }
 
-/* Checked arrow (down) */
-.collapse_box_checkbox:checked + .collapse_box_label::before {
-  content: "▼";  /* down-pointing triangle */
-  color: rgb(36, 183, 36);
+.collapse_box_label::before {
+    content: "▼";
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.3s;
+    color: #2563eb;
 }
+
+.collapse_box_checkbox:not(:checked) + .collapse_box_label::before {
+    transform: rotate(-90deg);
+}
+
+/* ========================================================= */
+/* UPDATED FORM SECTIONS - WHITE BACKGROUND WITH BORDER     */
+/* ========================================================= */
 
 .collapse_group {
-    /* background-color: #5f0909bf; */
-    /* border: 1px solid black; */
-    margin-bottom: 1%;
-    display: flex;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
     padding: 20px;
-    width: 99%;
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
 }
 
-/* === CLAIM INFO & PRINCIPAL INSURED INFO GROUP BOXES === */
+.collapse_box_checkbox:not(:checked) ~ .collapse_group {
+    display: none;
+}
+
+/* ========================================================= */
+/* UPDATED INPUT FIELDS - LABELS ABOVE, NO HOVER EFFECTS    */
+/* ========================================================= */
+
+.input_set {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input_set label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 14px;
+}
+
+.input_set input,
+.input_set select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+/* Remove hover effects to match uniform design */
+.input_set input:hover,
+.input_set select:hover {
+    /* No hover effects - keeping it simple and uniform */
+}
+
+.input_set input:focus,
+.input_set select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* ========================================================= */
+/* UPDATED FORM SECTIONS LAYOUT                             */
+/* ========================================================= */
+
 #claim_info,
 #principal_insured_info,
 #claimant_info,
 #requirements,
 #claim_status_info {
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  padding: 24px 20px; 
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  padding: 20px;
   margin: 10px 0 16px 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  grid-auto-rows: minmax(60px, auto); /* ensures consistent row height */
-  gap: 20px; /* uniform spacing between inputs */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
   width: 100%;
   box-sizing: border-box;
+  border: 1px solid #e0e0e0;
 }
 
-/* === Wider Principal Insured Name Fields === */
-#principal_insured_info #prpl_insured_fname,
-#principal_insured_info #prpl_insured_mname,
-#principal_insured_info #prpl_insured_lname {
-  min-width: 280px;        /* wider to accommodate longer names */
-  max-width: 100%;         /* prevent overflowing container */
-  grid-column: span 2;     /* span 2 columns in the grid */
-  box-sizing: border-box;  
-  margin-bottom: 16px;     /* consistent spacing below each input */
-}
+/* ========================================================= */
+/* UPDATED INPUT FIELD STYLING                              */
+/* ========================================================= */
 
-/* Ensure the parent grid has enough space for wider inputs */
-#principal_insured_info {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px 20px;          /* vertical and horizontal spacing */
-}
-
-
-/* === INPUT SETS === */
 #claim_info .input_set,
 #claimant_info .input_set,
 #principal_insured_info .input_set {
@@ -344,37 +367,36 @@ body {
 
 #claimant_info .input_set input,
 #claimant_info .input_set select,
-
 #claim_info .input_set input,
 #claim_info .input_set select,
-
 #principal_insured_info .input_set input,
 #principal_insured_info .input_set select {
   width: 100%;
-  padding: 20px 12px 8px 12px; /* taller input for floating label */
-  font-size: 1rem;
-  border: 1.5px solid #ccc;
-  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
   background-color: #fff;
   box-sizing: border-box;
-  appearance: none; /* removes default select arrow spacing */
 }
 
-/* === FLOATING LABELS === */
+/* Updated labels to be above inputs (non-floating) */
 #claim_info .input_set label,
-#principal_insured_info .input_set label {
-  position: absolute;
-  top: 14px;
-  left: 12px;
-  font-size: 0.9rem;
-  color: #777;
-  background: #fff;
-  padding: 0 4px;
-  pointer-events: none;
-  transition: all 0.2s ease;
+#principal_insured_info .input_set label,
+#claimant_info .input_set label {
+  position: static;
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
+  background: transparent;
+  padding: 0;
+  pointer-events: auto;
+  transition: none;
 }
 
-/* Label moves when input/select is focused or has value */
+/* Remove floating label transitions */
 #claim_info .input_set input:focus + label,
 #claim_info .input_set input:not(:placeholder-shown) + label,
 #claim_info .input_set select:focus + label,
@@ -383,45 +405,38 @@ body {
 #principal_insured_info .input_set input:not(:placeholder-shown) + label,
 #principal_insured_info .input_set select:focus + label,
 #principal_insured_info .input_set select:valid + label {
-  top: -8px;     
-  left: 10px;
-  font-size: 0.75rem;
-  color: #B92F2F;
+  position: static;
+  font-size: 14px;
+  color: #333;
+  background: transparent;
 }
 
-/* === FOCUS EFFECT === */
-#claim_info .input_set input:focus,
-#claim_info .input_set select:focus,
-#principal_insured_info .input_set input:focus,
-#principal_insured_info .input_set select:focus,
-#claimant_info .input_set input:focus,
-#claimant_info .input_set select:focus.bottom_section {
-  outline: none;
-  border-color: #B92F2F;
-  box-shadow: 0 0 0 2px rgba(185, 47, 47, 0.15);
-}
+/* ========================================================= */
+/* UPDATED BUTTON STYLING                                   */
+/* ========================================================= */
 
-/* === BUTTONS (Verify, Today, etc.) === */
 #claim_info .input_set button,
 #principal_insured_info .input_set button {
   margin-top: 6px; 
   align-self: flex-start;
-  background-color: #f07474;
+  background-color: #64748b;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 0.85rem;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
   cursor: pointer;
-  transition: background 0.2s ease;
 }
 
 #claim_info .input_set button:hover,
 #principal_insured_info .input_set button:hover {
-  background-color: #d85f5f;
+  background-color: #475569;
 }
 
-/* ✅ Refined Same as Insured styling (compact + centered) */
+/* ========================================================= */
+/* UPDATED SAME AS INSURED STYLING                          */
+/* ========================================================= */
+
 .input_set label[for="same_as_insureed"] {
   position: static !important;
   display: flex !important;
@@ -432,7 +447,7 @@ body {
   color: #333 !important;
   line-height: 1.2 !important;
   margin: 0 auto 6px auto !important;
-  width: 50% !important; /* narrower span */
+  width: 50% !important;
 }
 
 .input_set input[type="checkbox"]#same_as_insureed {
@@ -444,12 +459,9 @@ body {
   transform: scale(1) !important;
 }
 
-/* ✅ Keep suffix aligned and consistent width */
-#claimant_info #claimant_suffix {
-  width: 50% !important;
-  margin: 0 auto !important;
-  display: block !important;
-}
+/* ========================================================= */
+/* REST OF EXISTING STYLES REMAIN UNCHANGED                 */
+/* ========================================================= */
 
 .ht_master .wtHolder {
     padding-bottom: 1%; /* adjust this value */
@@ -826,15 +838,16 @@ input:checked + .slider:before {
 /* === PARENT FLEX SETTINGS === */
 #requirements {
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  padding: 24px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  padding: 20px;
   margin: 10px 0 16px 0;
   display: flex;        
   justify-content: flex-start;
   align-items: flex-start;
   width: 100%;
   box-sizing: border-box;
+  border: 1px solid #e0e0e0;
 }
 
 .requiements_section {
@@ -915,39 +928,39 @@ input:checked + .slider:before {
 
 #requirements .input_set input#claim_remarks {
     width: 100%;
-    padding: 16px 12px 8px 12px;
-    font-size: 1rem;
-    border: 1.5px solid #ccc;
-    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     box-sizing: border-box;
     left: -40px;  
     position: relative;
 }
 
 #requirements .input_set label[for="claim_remarks"] {
-    position: absolute;
-    top: 16px;
-    left: -28px;  
-    font-size: 0.9rem;
-    color: #777;
-    background: #fff;
-    padding: 0 4px;
-    pointer-events: none;
-    transition: all 0.2s ease;
+    position: static;
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 14px;
+    background: transparent;
+    padding: 0;
+    left: 0;
+    top: 0;
 }
 
 #requirements .input_set input#claim_remarks:focus + label,
 #requirements .input_set input#claim_remarks:not(:placeholder-shown) + label {
-    top: -8px;
-    left: -38px;  
-    font-size: 0.75rem;
-    color: #B92F2F;
+    position: static;
+    font-size: 14px;
+    color: #333;
 }
 
 #requirements .input_set input#claim_remarks:focus {
     outline: none;
-    border-color: #B92F2F;
-    box-shadow: 0 0 0 2px rgba(185, 47, 47, 0.15);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
 #requirements .right_section {
@@ -962,9 +975,9 @@ input:checked + .slider:before {
 /* Keep consistent with other card sections */
   .release_section {
     background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    padding: 24px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 20px;
     margin: 10px 0 16px 0;
     display: flex;
     flex-direction: column;
@@ -972,6 +985,7 @@ input:checked + .slider:before {
     width: 100%;
     box-sizing: border-box;
     grid-column: 1 / -1;  
+    border: 1px solid #e0e0e0;
   }
 
   /* Restore two-column structure */
@@ -998,9 +1012,9 @@ input:checked + .slider:before {
   /* Form controls */
   .release_section input,
   .release_section select {
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     font-size: 14px;
     box-sizing: border-box;
   }
@@ -1042,26 +1056,26 @@ input:checked + .slider:before {
 
   /* Labels and inputs alignment */
   .release_sectin_column label {
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 4px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
   }
 
   .release_sectin_column input,
   .release_sectin_column select {
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px 12px;
     font-size: 14px;
     background-color: #fff;
-    transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   }
 
   .release_sectin_column input:focus,
   .release_sectin_column select:focus {
     outline: none;
-    border-color: #64748b;
-    box-shadow: 0 0 0 2px rgba(100,116,139,0.2);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
   }
 
   /* Buttons */
@@ -1071,12 +1085,11 @@ input:checked + .slider:before {
     background-color: #64748b;
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 8px 14px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s ease-in-out;
     width: fit-content;
   }
 
@@ -1092,13 +1105,12 @@ input:checked + .slider:before {
     background-color: #64748b;
     color: #fff;
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 8px 14px;
     font-size: 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s ease-in-out;
     width: fit-content;
   }
 
@@ -1111,13 +1123,13 @@ input:checked + .slider:before {
   .release_remarks_section {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
 
   .release_remarks_section input {
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px 12px;
     font-size: 14px;
     background-color: #fff;
   }
@@ -1150,10 +1162,9 @@ span button[onclick*="date_released"] {
   background-color: #64748b;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.2s ease-in-out;
   height: 36px; /* matches input height */
   line-height: 20px;
   position: relative;
@@ -1202,3 +1213,24 @@ span button[onclick*="date_released"]:hover {
   left: 270px; /* align visually with the label */
 }
 
+/* ========================================================= */
+/* RESPONSIVE DESIGN                                         */
+/* ========================================================= */
+
+@media (max-width: 768px) {
+    .collapse_group {
+        grid-template-columns: 1fr;
+    }
+    
+    .release_section {
+        grid-template-columns: 1fr;
+    }
+    
+    .requiements_section {
+        flex-direction: column;
+    }
+    
+    .columns {
+        grid-template-columns: 1fr;
+    }
+}

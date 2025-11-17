@@ -116,44 +116,43 @@
 
                 <div id="claim_info" class="collapse_group">                                  
                     <div class="input_set">
-                        <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" placeholder=" " readonly>
                         <label for="claim_id">Claim ID</label>
+                        <input type="text" id="claim_id" name="claim_id" value="0" autocomplete="off" placeholder=" " readonly>
                     </div>
 
                     <div class="input_set">
-                        <input type="date" id="date_filed" name="date_filed" autocomplete="off" placeholder=" ">
                         <label for="date_filed">Date Filed</label>
+                        <input type="date" id="date_filed" name="date_filed" autocomplete="off" placeholder=" ">
                         <button type="button" onclick="document.getElementById('date_filed').value = new Date().toISOString().slice(0, 10);">
                             Today
                         </button>
                     </div>
 
                     <div class="input_set">
-                        <input type="text" id="received_by" name="received_by" autocomplete="off" placeholder=" " value="{{ current_user.first_name }} {{ current_user.last_name }}">
                         <label for="received_by">Received by</label>
+                        <input type="text" id="received_by" name="received_by" autocomplete="off" placeholder=" " value="{{ current_user.first_name }} {{ current_user.last_name }}">
                     </div>
 
                     <div class="input_set">
-                        <!-- <label for="claim_origin">Claim Origin</label> -->
+                        <label for="claim_origin">Claim Origin</label>
                         <select name="claim_origin" id="claim_origin">
                             <option value="Chapter">Chapter</option>
                             <option value="Dasmariñas">Dasmariñas</option>
                             <option value="Silang">Silang</option>
                         </select>
-                        <label for="claim_origin">Claim Origin</label>
                     </div>
 
                     <div class="input_set">
-                        <input type="date" id="date_of_loss" name="date_of_loss" autocomplete="off" placeholder=" ">
                         <label for="date_of_loss">Date Filed</label>
+                        <input type="date" id="date_of_loss" name="date_of_loss" autocomplete="off" placeholder=" ">
                     </div>
 
                     <div class="input_set">
+                        <label for="claim_type">Claim Type</label>
                         <select id="claim_type" name="claim_type" required>
                             <option value="ACCIDENT">Accident</option>
                             <option value="DEATH">Death</option>
                         </select>
-                        <label for="claim_type">Claim Type</label>
                     </div>
                 </div>
 
@@ -167,29 +166,29 @@
 
                 <div id="principal_insured_info" class="collapse_group">      
                     <div class="input_set">
-                        <input type="text" id="maab_no" name="maab_no" autocomplete="off" required>
                         <label for="maab_no">MAAB No.</label>
+                        <input type="text" id="maab_no" name="maab_no" autocomplete="off" required>
                         <button id="verify_maab_no" class="verify_maab_no">Verify</button>
                     </div>
 
                     <div class="input_set">
-                        <input type="date" id="eff_date" name="eff_date" readonly required>
                         <label for="eff_date">Effectivity Date</label>
+                        <input type="date" id="eff_date" name="eff_date" readonly required>
                     </div>
 
                     <div class="input_set">
-                        <input type="text" id="prpl_insured_fname" name="prpl_insured_fname" readonly>
                         <label for="prpl_insured_fname">Principal Insured First Name</label>
+                        <input type="text" id="prpl_insured_fname" name="prpl_insured_fname" readonly>
                     </div>
 
                     <div class="input_set">
-                        <input type="text" id="prpl_insured_mname" name="prpl_insured_mname" readonly>
                         <label for="prpl_insured_mname">Principal Insured Middle Name</label>
+                        <input type="text" id="prpl_insured_mname" name="prpl_insured_mname" readonly>
                     </div>
 
                     <div class="input_set">
-                        <input type="text" id="prpl_insured_lname" name="prpl_insured_lname" readonly>
                         <label for="prpl_insured_lname">Principal Insured Last Name</label>
+                        <input type="text" id="prpl_insured_lname" name="prpl_insured_lname" readonly>
                     </div>
 
                     <div class="input_set">
@@ -207,8 +206,8 @@
                             <option value="VII">VII</option>
                         </select> 
                         -->
-                        <input type="text" name="prpl_insured_suffix" id="prpl_insured_suffix" readonly>
                         <label for="prpl_insured_suffix">Principal Insured Suffix</label>
+                        <input type="text" name="prpl_insured_suffix" id="prpl_insured_suffix" readonly>
                     </div>
 
                     <input type="text" id="prpl_insured_contact" name="prpl_insured_contact" hidden>
@@ -296,26 +295,27 @@
                 <div id="claimant_info" class="collapse_group">
 
                     <div class="input_set">
-                        <input type="checkbox" id="same_as_insureed" name="same_as_insureed">
                         <label for="same_as_insureed">Same as Insured</label>
+                        <input type="checkbox" id="same_as_insureed" name="same_as_insureed">
                     </div>
 
                     <div class="input_set">
-                        <input type="text" id="claimant_fname" name="claimant_fname" required autocomplete="off">
                         <label for="claimant_fname">Claimant First Name</label>
+                        <input type="text" id="claimant_fname" name="claimant_fname" required autocomplete="off">
                     </div>
 
                     <div class="input_set">
-                        <input type="text" id="claimant_mname" name="claimant_mname" required autocomplete="off">
                         <label for="claimant_mname">Claimant Middle Name</label>
+                        <input type="text" id="claimant_mname" name="claimant_mname" required autocomplete="off">
                     </div>
 
                     <div class="input_set">
-                        <input type="text" id="claimant_lname" name="claimant_lname" required autocomplete="off">
                         <label for="claimant_lname">Claimant Last Name</label>
+                        <input type="text" id="claimant_lname" name="claimant_lname" required autocomplete="off">
                     </div>
 
                     <div class="input_set">
+                        <label for="claimant_suffix">Claimant Suffix</label>
                         <select name="claimant_suffix" id="claimant_suffix">
                             <option value="NA">NA</option>
                             <option value="Jr">Jr</option>
@@ -327,12 +327,11 @@
                             <option value="VI">VI</option>
                             <option value="VII">VII</option>
                         </select>
-                        <label for="claimant_suffix">Claimant Suffix</label>
                     </div>
 
                     <div class="input_set">
-                        <input list="relation_list" id="relation" name="relation" autocomplete="off">
                         <label for="relation">Relation to Principal Insured</label>
+                        <input list="relation_list" id="relation" name="relation" autocomplete="off">
                         <datalist id="relation_list">
                             <option value="Spouse">Spouse</option>
                             <option value="Son">Son</option>
@@ -349,13 +348,13 @@
                     </div>
 
                     <div class="input_set">
-                        <input type="tel" id="claimant_contact_no" name="claimant_contact_no">
                         <label for="claimant_contact_no">Claimant Contact No.</label>
+                        <input type="tel" id="claimant_contact_no" name="claimant_contact_no">
                     </div>
 
                     <div class="input_set">
-                        <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
                         <label for="claimant_email">Claimant Email</label>
+                        <input type="email" id="claimant_email" name="claimant_email" required autocomplete="off">
                     </div>
 
                 </div>
