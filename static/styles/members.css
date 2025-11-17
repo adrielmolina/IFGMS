@@ -280,6 +280,22 @@ label {
   color:hsl(0, 0%, 21%); 
 }
 
+/* Add to Dispatch button disabled state */
+#add_to_dispatch:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+#add_to_dispatch:disabled:hover {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
 /* ----------- BUTTONS SA OVERLAY (ORIGINAL STYLES) ------------- */
 .save_record_details,
 .delete_record,

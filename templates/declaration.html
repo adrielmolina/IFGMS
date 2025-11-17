@@ -31,45 +31,48 @@
 <div class="filter_search_container">
   <div class="filters_box">
     <div class="filter">
-      <label for="filterCategory">Category:</label>
-      <select id="filterCategory">
-        <option value="all">All Categories</option>
-        <option>Classic</option>
-        <option>Bronze</option>
-        <option>Silver</option>
-        <option>Gold</option>
-        <option>Platinum</option>
-        <option>Safecard</option>
-        <option>Senior</option>
-        <option>Senior Plus</option>
-      </select>
+        <label for="filterCategory">Category:</label>
+        <select id="filterCategory">
+            <option value="all">All Categories</option>
+            {% for category in categories %}
+            <option value="{{ category }}">{{ category }}</option>
+            {% endfor %}
+        </select>
     </div>
 
-    <!-- TODO fix this. remove hardcoded values and replace with dispatch_contents.location_particular -->
     <div class="filter">
-      <label for="filterLocation">Location:</label>
-      <select id="filterLocation">
-        <option value="all">All Locations</option>
-        <option>Cavite State University</option>
-        <option>De La Salle University Dasmarinas</option>
-      </select>
+        <label for="filterLocation">Location:</label>
+        <select id="filterLocation">
+            <option value="all">All Locations</option>
+            {% for location in locations %}
+            <option value="{{ location }}">{{ location }}</option>
+            {% endfor %}
+        </select>
     </div>
-  </div>
+</div>
 
   <div class="action-buttons">
     <button id="btn_create_dispatch" type="button" class="btn_create_dispatch">
         <i class="fa-solid fa-plus"></i> Create Dispatch
     </button>
 
-    <button type="button" class="btn transmit" disabled>
+    <button id="btn_remove_dispatch" type="button" class="btn remove-dispatch" disabled>
+        <i class="fa-solid fa-trash"></i> Remove from Dispatch
+    </button>
+
+    <button type="button" class="btn transmit">
         <i class="fa-solid fa-paper-plane"></i>
         {% if current_user.office_location == 'Chapter' %}
           Declare
         {% elif current_user.office_location in ['Dasmarinas', 'Silang'] %}
-          Transmit
+          Dispatch
         {% else %}
           Action
         {% endif %}
+    </button>
+
+    <button type="button" class="btn select-all" onclick="selectAllRows()">
+        <i class="fa-solid fa-check-double"></i> Select All
     </button>
 
       <button type="button" class="btn history" onclick="showHistory()">
@@ -310,10 +313,10 @@
 
 <!-- Hidden alternate buttons for History view -->
 <div class="action-buttons hidden" id="historyButtons">
-  <!-- Back button shown only in History view -->
-  <button class="btn back hidden" id="backButton" onclick="backToMain()">
-    <i class="fa-solid fa-arrow-left"></i> Back
-  </button>
+    <!-- Back button shown only in History view -->
+    <button class="btn back hidden" id="backButton" onclick="backToMain()">
+        <i class="fa-solid fa-arrow-left"></i> Back
+    </button>
 </div>
 
 {% endblock %}
@@ -353,21 +356,81 @@ console.log("🔄 JavaScript loading...");
 console.log("showHistory:", typeof showHistory);
 console.log("openEditOverlay:", typeof openEditOverlay);
 
+// Filter functionality
+function initializeFilters() {
+    const categoryFilter = document.getElementById('filterCategory');
+    const locationFilter = document.getElementById('filterLocation');
+    
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', applyFilters);
+    }
+    
+    if (locationFilter) {
+        locationFilter.addEventListener('change', applyFilters);
+    }
+}
+
+function applyFilters() {
+    const categoryValue = document.getElementById('filterCategory').value;
+    const locationValue = document.getElementById('filterLocation').value;
+    
+    // Filter the data based on selections
+    filteredData = mainTableData.filter(item => {
+        const categoryMatch = categoryValue === 'all' || item.category === categoryValue;
+        const locationMatch = locationValue === 'all' || item.location === locationValue;
+        
+        return categoryMatch && locationMatch;
+    });
+    
+    // Reset to first page and re-render
+    currentPage = 1;
+    renderTable();
+}
+
 // ✅ Fixed Selection Logic
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ DOM Content Loaded");
-  initializeCheckboxListeners();
-  initializePagination();
-  setupEventListeners();
-  setupOverlayListeners(); 
+    console.log("✅ DOM Content Loaded");
+    initializeCheckboxListeners();
+    initializePagination();
+    setupEventListeners();
+    setupOverlayListeners();
+    initializeFilters(); // Add this line
+    updateTransmitButtonText();
+    
+    // Add event listener for remove button
+    const removeBtn = document.getElementById('btn_remove_dispatch');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', removeFromDispatch);
+    }
 });
 
+function updateTransmitButtonText() {
+    const transmitBtn = document.querySelector('.btn.transmit');
+    if (transmitBtn) {
+        const userLocation = '{{ current_user.office_location }}'; // This comes from Flask
+        if (userLocation === 'Chapter') {
+            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Declare';
+        } else if (['Dasmarinas', 'Silang'].includes(userLocation)) {
+            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Transmit';
+        } else {
+            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Action';
+        }
+    }
+}
+
+// Update the event listener to use the new transmit function
 function setupEventListeners() {
-  // Transmit button event listener
-  const transmitBtn = document.querySelector('.btn.transmit');
-  if (transmitBtn) {
-    transmitBtn.addEventListener('click', exportSelectedToServer);
-  }
+    // Transmit button event listener - UPDATED
+    const transmitBtn = document.querySelector('.btn.transmit');
+    if (transmitBtn) {
+        transmitBtn.addEventListener('click', transmitDispatch);
+    }
+    
+    // Remove button event listener
+    const removeBtn = document.getElementById('btn_remove_dispatch');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', removeFromDispatch);
+    }
 }
 
 // ✅ ADD THIS FUNCTION - Setup overlay event listeners
@@ -392,46 +455,7 @@ function setupOverlayListeners() {
   });
 }
 
-function updateSelection() {
-  const summaryText = document.getElementById("summaryText");
-  const selectAllCheckbox = document.getElementById("selectAll");
-  
-  // Count checked checkboxes from VISIBLE rows only
-  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
-  let checkedCount = 0;
-  
-  visibleRows.forEach(row => {
-    const checkbox = row.querySelector(".row-check");
-    if (checkbox && checkbox.checked) {
-      checkedCount++;
-    }
-  });
 
-  const totalVisible = visibleRows.length;
-  
-  // Update summary text
-  if (summaryText) {
-    const start = (currentPage - 1) * entriesPerPage + 1;
-    const end = Math.min(currentPage * entriesPerPage, totalVisible);
-    summaryText.textContent = `Showing ${start} to ${end} of ${filteredData.length} entries • ${checkedCount} selected`;
-  }
-
-  // Update buttons text and state
-  const transmitBtn = document.querySelector(".btn.transmit");
-  
-  if (transmitBtn) {
-    transmitBtn.disabled = checkedCount === 0;
-    transmitBtn.innerHTML = checkedCount === 0 
-      ? `<i class="fa-solid fa-paper-plane"></i> Transmit`
-      : `<i class="fa-solid fa-paper-plane"></i> Transmit (${checkedCount})`;
-  }
-
-  // Update select all checkbox state
-  if (selectAllCheckbox && totalVisible > 0) {
-    selectAllCheckbox.checked = checkedCount === totalVisible;
-    selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalVisible;
-  }
-}
 
 function initializeCheckboxListeners() {
   const rowChecks = document.querySelectorAll(".row-check");
@@ -470,6 +494,169 @@ function handleSelectAll() {
   });
   
   updateSelection();
+}
+
+// Add to your existing JavaScript code
+
+// Select All functionality
+function selectAllRows() {
+    const selectAllCheckbox = document.getElementById("selectAll");
+    const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+    
+    if (visibleRows.length === 0) return;
+    
+    // Check if all are already selected
+    const allChecked = visibleRows.every(row => {
+        const checkbox = row.querySelector(".row-check");
+        return checkbox && checkbox.checked;
+    });
+    
+    // Toggle selection
+    const newState = !allChecked;
+    
+    visibleRows.forEach(row => {
+        const checkbox = row.querySelector(".row-check");
+        if (checkbox) {
+            checkbox.checked = newState;
+        }
+    });
+    
+    // Update select all checkbox
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = newState;
+        selectAllCheckbox.indeterminate = false;
+    }
+    
+    updateSelection();
+}
+
+// Remove from Dispatch functionality
+async function removeFromDispatch() {
+    const selectedRows = getSelectedRows();
+    
+    if (selectedRows.length === 0) {
+        showToast('warning', 'Please select at least one entry to remove');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to remove ${selectedRows.length} selected entries from dispatch?`)) {
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const removeBtn = document.getElementById('btn_remove_dispatch');
+        const originalText = removeBtn.innerHTML;
+        removeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Removing...';
+        removeBtn.disabled = true;
+        
+        const response = await fetch('/api/remove_from_dispatch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                selected_rows: selectedRows
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to remove entries from dispatch');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('success', `Successfully removed ${selectedRows.length} entries from dispatch`);
+            // Refresh the page or update UI
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            throw new Error(result.error || 'Failed to remove entries');
+        }
+        
+    } catch (error) {
+        console.error('Error removing from dispatch:', error);
+        showToast('error', 'Failed to remove entries from dispatch. Please try again.');
+    } finally {
+        // Restore button state
+        const removeBtn = document.getElementById('btn_remove_dispatch');
+        if (removeBtn) {
+            removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Remove from Dispatch';
+            removeBtn.disabled = false;
+        }
+    }
+}
+
+// Helper function to get selected rows
+function getSelectedRows() {
+    const selectedRows = [];
+    const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+    
+    visibleRows.forEach((row, index) => {
+        const checkbox = row.querySelector(".row-check");
+        if (checkbox && checkbox.checked) {
+            const cells = row.querySelectorAll("td");
+            if (cells.length >= 9) {
+                selectedRows.push({
+                    entry_id: cells[2]?.textContent?.trim() || '',
+                    dispatch_id: cells[1]?.textContent?.trim() || '',
+                    member_name: cells[5]?.textContent?.trim() || '',  // Now using the combined name
+                    maab_no: cells[4]?.textContent?.trim() || ''
+                });
+            }
+        }
+    });
+    
+    return selectedRows;
+}
+
+function updateSelection() {
+  const summaryText = document.getElementById("summaryText");
+  const selectAllCheckbox = document.getElementById("selectAll");
+  const removeBtn = document.getElementById("btn_remove_dispatch");
+  
+  // Count checked checkboxes from VISIBLE rows only
+  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+  let checkedCount = 0;
+  
+  visibleRows.forEach(row => {
+    const checkbox = row.querySelector(".row-check");
+    if (checkbox && checkbox.checked) {
+      checkedCount++;
+    }
+  });
+
+  const totalVisible = visibleRows.length;
+  
+  // Update summary text
+  if (summaryText) {
+    const start = (currentPage - 1) * entriesPerPage + 1;
+    const end = Math.min(currentPage * entriesPerPage, totalVisible);
+    summaryText.textContent = `Showing ${start} to ${end} of ${filteredData.length} entries • ${checkedCount} selected for removal`;
+  }
+
+  // Transmit button is ALWAYS enabled (no count displayed)
+  const transmitBtn = document.querySelector(".btn.transmit");
+  if (transmitBtn) {
+    transmitBtn.disabled = false;
+    transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
+  }
+  
+  // Update remove button state - only enabled when items are selected
+  if (removeBtn) {
+    removeBtn.disabled = checkedCount === 0;
+    removeBtn.innerHTML = checkedCount === 0
+      ? `<i class="fa-solid fa-trash"></i> Remove from Dispatch`
+      : `<i class="fa-solid fa-trash"></i> Remove from Dispatch (${checkedCount})`;
+  }
+
+  // Update select all checkbox state
+  if (selectAllCheckbox && totalVisible > 0) {
+    selectAllCheckbox.checked = checkedCount === totalVisible;
+    selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalVisible;
+  }
 }
 
 // 🔎 Search Function
@@ -903,6 +1090,12 @@ function backToMain() {
 
   // ✅ Restore checkbox functionality
   initializeCheckboxListeners();
+
+  // ✅ RE-ENABLE THE SELECT ALL BUTTON (ADD THIS)
+  const selectAllBtn = document.querySelector(".btn.select-all");
+  if (selectAllBtn) {
+    selectAllBtn.disabled = false;
+  }
 }
 
 function showDispatchTable() {
@@ -931,11 +1124,14 @@ function showDispatchTable() {
   // ✅ Update summary text
   document.getElementById("summaryText").textContent = `Showing ${dispatchData.length} dispatch history records`;
 
-  // Disable selection buttons during history view
+  // ✅ Disable selection buttons during history view (BE SPECIFIC)
   const selectAllBtn = document.querySelector(".btn.select-all");
   const transmitBtn = document.querySelector(".btn.transmit");
+  const removeBtn = document.getElementById("btn_remove_dispatch");
+  
   if (selectAllBtn) selectAllBtn.disabled = true;
   if (transmitBtn) transmitBtn.disabled = true;
+  if (removeBtn) removeBtn.disabled = true;
 }
 
 // ✅ FULL Pagination + Show Entries
@@ -975,11 +1171,14 @@ function renderTable() {
       </tr>
     `).join('');
     
-    // Disable selection buttons in history view
+    // ✅ Disable selection buttons in history view
     const selectAllBtn = document.querySelector(".btn.select-all");
     const transmitBtn = document.querySelector(".btn.transmit");
+    const removeBtn = document.getElementById("btn_remove_dispatch");
+    
     if (selectAllBtn) selectAllBtn.disabled = true;
     if (transmitBtn) transmitBtn.disabled = true;
+    if (removeBtn) removeBtn.disabled = true;
   } else {
     // Main table (Dispatch Contents)
     tableBody.innerHTML = paginatedData.map(item => `
@@ -996,6 +1195,12 @@ function renderTable() {
         <td>${item.lateDeclare || ''}</td>
       </tr>
     `).join('');
+    
+    // ✅ RE-ENABLE SELECT ALL BUTTON IN MAIN VIEW
+    const selectAllBtn = document.querySelector(".btn.select-all");
+    if (selectAllBtn) {
+      selectAllBtn.disabled = false;
+    }
     
     // REINITIALIZE CHECKBOX LISTENERS AFTER RENDERING
     setTimeout(() => {
@@ -1103,98 +1308,123 @@ function updateSummary() {
   summaryText.textContent = `Showing ${start} to ${end} of ${total} entries • ${checkedCount} selected`;
 }
 
-// 📤 Export to Server Function
-function exportSelectedToServer() {
-  // Get all selected rows
-  const selectedRows = [];
-  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
-  
-  visibleRows.forEach((row, index) => {
-    const checkbox = row.querySelector(".row-check");
-    if (checkbox && checkbox.checked) {
-      const cells = row.querySelectorAll("td");
-      if (cells.length >= 9) {
-        selectedRows.push({
-          name: cells[5]?.textContent?.trim() || '',
-          category: cells[3]?.textContent?.trim() || '',
-          effectivity: cells[7]?.textContent?.trim() || '',
-          birthday: cells[6]?.textContent?.trim() || '',
-          location: cells[8]?.textContent?.trim() || ''
+// 📤 Transmit Dispatch Function - MARKS ENTRIES AS DECLARED AND CLEARS DISPATCH
+async function transmitDispatch() {
+    console.log("Starting transmission process for entire dispatch...");
+    
+    // Get ALL entry IDs from the current dispatch
+    const allEntryIds = mainTableData.map(item => item.entryID).filter(id => id);
+    
+    if (allEntryIds.length === 0) {
+        showToast('error', 'No entries found in dispatch to transmit.');
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to transmit ${allEntryIds.length} entries? This will mark them as declared and clear the dispatch.`)) {
+        return;
+    }
+
+    console.log(`Transmitting entire dispatch with ${allEntryIds.length} entries`);
+
+    // Show loading state
+    const transmitBtn = document.querySelector(".btn.transmit");
+    const originalText = transmitBtn.innerHTML;
+    transmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Transmitting...';
+    transmitBtn.disabled = true;
+
+    try {
+        // First, transmit the entries (mark as declared, update dispatch, etc.)
+        const transmitResponse = await fetch('/api/transmit_dispatch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                // Send minimal data to satisfy the JSON requirement
+                action: 'transmit',
+                timestamp: new Date().toISOString()
+            })
         });
-      }
-    }
-  });
 
-  if (selectedRows.length === 0) {
-    toastError('Export Failed', 'Please select at least one row to export.');
-    return;
-  }
-
-  console.log("Selected rows for export:", selectedRows);
-
-  // Show loading state
-  const transmitBtn = document.querySelector(".btn.transmit");
-  const originalText = transmitBtn.innerHTML;
-  transmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting...';
-  transmitBtn.disabled = true;
-
-  // Send data to server
-  fetch('/api/export_dispatch', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      selected_rows: selectedRows
-    })
-  })
-  .then(response => {
-    console.log("Response status:", response.status);
-    if (!response.ok) {
-      // Try to get error message from response
-      return response.text().then(text => {
-        let errorMsg = `HTTP error! status: ${response.status}`;
-        try {
-          const errorData = JSON.parse(text);
-          errorMsg = errorData.error || errorMsg;
-        } catch (e) {
-          // If not JSON, use the text as is
-          if (text) errorMsg = text;
+        if (!transmitResponse.ok) {
+            const errorData = await transmitResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || `Server error: ${transmitResponse.status}`);
         }
-        throw new Error(errorMsg);
-      });
+
+        const transmitResult = await transmitResponse.json();
+        
+        if (!transmitResult.success) {
+            throw new Error(transmitResult.error || "Transmission failed");
+        }
+
+        console.log("Transmission successful:", transmitResult);
+
+        // After successful transmission, generate and download the Excel file
+        const exportResponse = await fetch('/api/export_dispatch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                selected_rows: allEntryIds.map(entryId => ({
+                    entry_id: entryId,
+                    category: '',
+                    maab_no: '',
+                    member_name: '',
+                    birthdate: '',
+                    effectivity_date: '',
+                    location: ''
+                }))
+            })
+        });
+
+        if (!exportResponse.ok) {
+            throw new Error("Failed to generate Excel file after transmission");
+        }
+
+        const blob = await exportResponse.blob();
+        
+        if (blob.size === 0) {
+            throw new Error("Empty file received from server");
+        }
+        
+        // Create download link and trigger download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        
+        // Get current date for filename
+        const today = new Date();
+        const dateString = today.toISOString().split('T')[0];
+        
+        // Create filename with dispatch cutoff date
+        const activeDispatchElement = document.querySelector('.dispatch-item:nth-child(5) .dispatch-value');
+        const cutoffDate = activeDispatchElement ? activeDispatchElement.textContent.trim() : dateString;
+        
+        a.href = url;
+        a.download = `dispatch_transmitted_${cutoffDate.replace(/\//g, '-').replace(/\\/g, '-').replace(/\s/g, '_')}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showToast('success', `Successfully transmitted ${transmitResult.transmitted_count} entries and generated declaration file!`);
+        
+        // Refresh the page to show updated state
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Transmit error:', error);
+        showToast('error', "Failed to transmit dispatch: " + error.message);
+        
+        // Restore button state on error
+        transmitBtn.innerHTML = originalText;
+        transmitBtn.disabled = false;
     }
-    return response.json();
-  })
-  .then(result => {
-    console.log("Export result:", result);
-    if (result.success) {
-      toastSuccess("Export Successful!", `File saved as: ${result.filename}`);
-      console.log("File saved to:", result.file_path);
-    } else {
-      toastError("Export Failed", result.error || "Unknown error occurred");
-    }
-  })
-  .catch(error => {
-    console.error('Export error:', error);
-    toastError("Export Error", "Failed to export file: " + error.message);
-  })
-  .finally(() => {
-    // Restore button state
-    transmitBtn.innerHTML = originalText;
-    transmitBtn.disabled = false;
-  });
 }
-
-// Global error handlers
-window.addEventListener('error', function(e) {
-    console.error('Global error:', e.error);
-});
-
-window.addEventListener('unhandledrejection', function(e) {
-    console.error('Unhandled promise rejection:', e.reason);
-    toastError('JavaScript Error', 'An unexpected error occurred: ' + e.reason);
-});
 </script>
 
 

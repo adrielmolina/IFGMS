@@ -195,16 +195,41 @@ def declaration_page():
     active_dispatch = db_conn.get_current_active_dispatch()
     if active_dispatch:
         dispatch_contents = db_conn.get_current_dispatch_contents(active_dispatch.dispatch_id)
+        
+        # Get unique categories and locations from dispatch_contents
+        unique_categories = set()
+        unique_locations = set()
+        
+        for row in dispatch_contents:
+            if hasattr(row, 'maab_category') and row.maab_category:
+                unique_categories.add(row.maab_category)
+            if hasattr(row, 'location_particular') and row.location_particular:
+                unique_locations.add(row.location_particular)
+        
+        # Convert to sorted lists
+        categories_list = sorted(list(unique_categories))
+        locations_list = sorted(list(unique_locations))
+        
         if dispatch_contents:      
             print('current_dispatch', active_dispatch)
             print('dispatch_contents', dispatch_contents)  
-            return render_template('declaration.html', active_dispatch=active_dispatch, dispatch_contents=dispatch_contents)
-            
+            return render_template('declaration.html', 
+                                active_dispatch=active_dispatch, 
+                                dispatch_contents=dispatch_contents,
+                                categories=categories_list,
+                                locations=locations_list)
         else:
             # if empty or error
-            return render_template('declaration.html', active_dispatch=active_dispatch, dispatch_contents=[])
+            return render_template('declaration.html', 
+                                active_dispatch=active_dispatch, 
+                                dispatch_contents=[],
+                                categories=[],
+                                locations=[])
     else:
-        return render_template('declaration.html', active_dispatch=False)
+        return render_template('declaration.html', 
+                            active_dispatch=False,
+                            categories=[],
+                            locations=[])
 
 @server.route('/inventory')
 @login_required
@@ -808,12 +833,77 @@ def add_new_record():
     new_record_id = db_conn.add_new_record()
     return jsonify({"success": True, "record_id": new_record_id})
 
-@server.route('/api/save_record_details', methods=['PATCH'])
+@server.route('/api/save_record_details', methods=['POST', 'PATCH'])
 def save_record_details():
     data = request.get_json()
-    if data:
-        db_conn.save_record_details(data)
-        return jsonify({"success": True})
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+    
+    db_session = SessionLocal()
+    try:
+        if request.method == 'POST':
+            # Create new record
+            new_record = models.Records(
+                year=data.get('year', datetime.now().year),
+                id_received=data.get('id_received', 0),
+                declared=data.get('declared', 0),
+                declaration_date=data.get('declaration_date'),
+                effectivity_date=data.get('effectivity_date'),
+                location_particular=data.get('location_particular'),
+                location_category=data.get('location_category'),
+                municipality=data.get('municipality'),
+                district=data.get('district'),
+                paid=data.get('paid', 0),
+                origin=data.get('origin'),
+                remarks=data.get('remarks'),
+                tags=data.get('tags'),
+                dispatch_ready=data.get('dispatch_ready', 0),
+                status='active'
+            )
+            db_session.add(new_record)
+            db_session.commit()
+            
+            return jsonify({
+                "success": True, 
+                "record_id": new_record.record_id,
+                "message": "Record created successfully"
+            })
+            
+        else:  # PATCH method
+            record_id = data.get('record_id')
+            if not record_id:
+                return jsonify({"success": False, "error": "No record ID provided"}), 400
+                
+            record = db_session.query(models.Records).filter_by(record_id=record_id).first()
+            if not record:
+                return jsonify({"success": False, "error": "Record not found"}), 404
+
+            # Update fields if present in data
+            update_fields = [
+                'year', 'id_received', 'declared', 'declaration_date', 'effectivity_date',
+                'location_particular', 'location_category', 'municipality', 'district',
+                'paid', 'origin', 'remarks', 'tags', 'dispatch_ready'
+            ]
+            
+            for field in update_fields:
+                if field in data:
+                    value = data[field]
+                    # Convert empty string to None for date/string fields
+                    if value == '':
+                        value = None
+                    setattr(record, field, value)
+                    
+            db_session.commit()
+            return jsonify({"success": True, "message": "Record updated successfully"})
+            
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving record details: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db_session.close()
 
 
 @server.route('/api/members/<int:record_id>/entries', methods=['GET'])
@@ -824,65 +914,123 @@ def get_entries(record_id):
 @server.route('/api/save_entry_details', methods=['POST'])
 def save_entry_details():
     data = request.get_json()
-    print(data)
-    if data:
+    print("=== ENTRY SAVE REQUEST ===")
+    print("Received data:", data)
+    
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+    
+    db_session = SessionLocal()
+    try:
+        # Extract and validate required fields
         record_id = data.get('record_id')
-        maab_category = data.get('maab_category')
-        maab_no = data.get('maab_no')
-                
-        first_name = data.get('first_name').upper()
-        middle_name = data.get('middle_name').upper()
-        last_name = data.get('last_name').upper()
-        suffix = data.get('suffix')
+        if not record_id:
+            return jsonify({"success": False, "error": "Record ID is required"}), 400
+
+        # Extract member data with proper None handling
+        first_name = data.get('first_name')
+        middle_name = data.get('middle_name')
+        last_name = data.get('last_name')
+        suffix = data.get('suffix', 'NA')
         
-        birthdate_string = data.get('birth_date')        
+        # Validate required fields
+        if not first_name or not last_name:
+            return jsonify({"success": False, "error": "First name and last name are required"}), 400
+
+        # Handle string fields - convert None to empty string, then strip
+        first_name = (first_name or '').strip().upper()
+        middle_name = (middle_name or '').strip().upper()
+        last_name = (last_name or '').strip().upper()
+        
+        # Parse birthdate
+        birthdate = None
+        birthdate_string = data.get('birth_date')
         if birthdate_string:
-            birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
-        else:
-            birthdate = None
-            
-        age = data.get('age')
-        
-        sex = data.get('sex')
-        if sex == "null" or sex == "":
-            sex = None
-            
-        bloodtype = data.get('blood_type')
-        if bloodtype == "null" or bloodtype == "":
-            bloodtype = None
-        
-        contact = data.get('contact_no')
-        email = data.get('email')
-        address = data.get('address')
-        
-        id_received = data.get('id_received')
-        declared = data.get('declared')
+            try:
+                birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
+            except ValueError as e:
+                print(f"Birthdate parsing error: {e}")
+                # Continue without birthdate rather than failing
+
+        # Parse other dates
+        declaration_date = None
         declaration_date_string = data.get('declaration_date')
         if declaration_date_string:
-            declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
-        else:
-            declaration_date = None
-                
-        paid = data.get('paid')
-        OR_num = int(data.get('OR_num')) if data.get('OR_num') else None
+            try:
+                declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+
+        OR_date = None
         OR_date_string = data.get('OR_date')
         if OR_date_string:
-            OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
-        else:
-            OR_date = None
-            
-        remarks = data.get('remarks')
-        tags = data.get('tags')
-        dispatch_ready = data.get('dispatch_ready')
-        
-        result = db_conn.save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birthdate, age, sex, bloodtype, contact, email, address, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready)
+            try:
+                OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
+            except ValueError:
+                pass
 
-        if result:
-            return jsonify({"success": True})
-        else:
-            return jsonify({"success": False, "error": result}), 500
-    else:
-        return jsonify({"success": False, "error": "No data provided"}), 400
+        # Create new member with proper None handling for all fields
+        new_member = models.Members(
+            first_name=first_name,
+            middle_name=middle_name or None,  # Convert empty string back to None
+            last_name=last_name,
+            suffix=suffix,
+            birth_date=birthdate,
+            age=data.get('age'),
+            sex=data.get('sex'),
+            contact_no=data.get('contact_no'),
+            email=data.get('email'),
+            address=data.get('address'),
+            blood_type=data.get('blood_type')
+        )
+        db_session.add(new_member)
+        db_session.flush()  # Get member_id without committing
+        
+        member_id = new_member.member_id
+        print(f"Created new member with ID: {member_id}")
+
+        # Create new entry
+        new_entry = models.Entries(
+            record_id=record_id,
+            maab_category=data.get('maab_category', 'Classic'),
+            maab_no=data.get('maab_no'),
+            member_id=member_id,
+            id_received=bool(data.get('id_received', False)),
+            declared=bool(data.get('declared', False)),
+            declaration_date=declaration_date,
+            paid=bool(data.get('paid', False)),
+            OR_num=data.get('OR_num'),
+            OR_date=OR_date,
+            remarks=data.get('remarks'),
+            tags=data.get('tags'),
+            dispatch_ready=bool(data.get('dispatch_ready', False))
+        )
+        db_session.add(new_entry)
+        db_session.flush()
+        
+        entry_id = new_entry.entry_id
+        print(f"Created new entry with ID: {entry_id}")
+
+        # Commit both member and entry
+        db_session.commit()
+        
+        print("=== ENTRY SAVE SUCCESS ===")
+        return jsonify({
+            "success": True, 
+            "message": "Entry added successfully",
+            "entry_id": entry_id,
+            "member_id": member_id
+        })
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"=== ENTRY SAVE ERROR ===")
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+    finally:
+        db_session.close()
 
 
 @server.route('/api/save_entry_update', methods=['POST'])
@@ -1111,6 +1259,42 @@ def export_dispatch():
     except Exception as e:
         print(f"Export error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+    
+@server.route('/api/transmit_dispatch', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def transmit_dispatch():
+    """
+    Transmit/declare the current dispatch:
+    - Mark entries as declared with current date
+    - Generate Excel declaration
+    - Clear dispatch contents
+    - Update dispatch status and totals
+    - Update records declaration status
+    """
+    try:
+        # Get the active dispatch - no need for request data
+        active_dispatch = db_conn.get_current_active_dispatch()
+        if not active_dispatch:
+            return jsonify({"success": False, "error": "No active dispatch found"}), 400
+
+        # Call the transmission function
+        result = db_conn.transmit_dispatch_entries(active_dispatch.dispatch_id, current_user.account_id)
+        
+        if result["success"]:
+            return jsonify({
+                "success": True, 
+                "message": f"Successfully transmitted {result['transmitted_count']} entries",
+                "transmitted_count": result['transmitted_count']
+            })
+        else:
+            return jsonify({"success": False, "error": result["error"]}), 500
+            
+    except Exception as e:
+        print(f"Transmit dispatch error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 # TODO check if a record exist for Online Registration on the same day. if yes put the entry on that record
 @server.route('/api/member_register', methods=['POST'])
@@ -1152,6 +1336,20 @@ def member_register():
             return jsonify({"success": False, "error": result}), 500
     else:
         return jsonify({"success": False, "error": "No data provided"}), 400
+    
+@server.route('/api/check_active_dispatch', methods=['GET'])
+@login_required
+@roles_required('admin', 'superadmin')
+def check_active_dispatch():
+    try:
+        active_dispatch = db_conn.get_current_active_dispatch()
+        return jsonify({
+            'has_active_dispatch': active_dispatch is not None,
+            'dispatch_id': active_dispatch.dispatch_id if active_dispatch else None
+        })
+    except Exception as e:
+        print(f"Error checking active dispatch: {e}")
+        return jsonify({'has_active_dispatch': False}), 500
     
 @server.route('/api/get_claim_records')
 def get_claim_records():

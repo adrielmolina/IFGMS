@@ -789,6 +789,14 @@ function fetchActiveRecords() {
                 }
             });
 
+            // DEBUG: Check first record's municipality data
+            if (data.length > 0) {
+                console.log('=== FIRST RECORD DATA FOR DEBUG ===');
+                console.log('First record municipality:', data[0].municipality);
+                console.log('First record district:', data[0].district);
+                console.log('First record full data:', data[0]);
+            }
+
             // Initialize or update the table
             if (!hotInstance) {
                 initializeTable(data);
@@ -1899,6 +1907,66 @@ function saveAndCloseOverlay() {
         });
 }
 
+// ===== OPTIMIZED ADD RECORD FUNCTIONALITY =====
+
+function openEmptyRecordOverlay() {
+    // Clear all form fields
+    clearRecordForm();
+    
+    // Set default values for new record
+    document.getElementById('record_id').value = '0'; // Temporary value
+    document.getElementById('year').value = new Date().getFullYear();
+    
+    // Show the overlay
+    document.getElementById('overlay').style.display = 'flex';
+    
+    // Scroll to top of overlay
+    const overlayContent = document.getElementById('overlay-content');
+    if (overlayContent) {
+        overlayContent.scrollTop = 0;
+    }
+    
+    // Initialize change tracking and auto-fill functions
+    setTimeout(() => {
+        initializeChangeTracking();
+        setDistrictFromMunicipality();
+        setOriginBasedOnUser();
+        setLocationParticularToUppercase();
+        highlightRequiredFields();
+        switchToAddMode();
+        
+        // Clear entries table for new record
+        if (window.entriesHotInstance) {
+            window.entriesHotInstance.loadData([]);
+        }
+    }, 100);
+}
+
+function clearRecordForm() {
+    // Clear all record form fields except year
+    const fieldsToClear = [
+        'record_id', 'id_rcv', 'paid', 'declared', 'record_dispatch_ready',
+        'dec_date', 'eff_date', 'loc_par', 'loc_cat', 'municipality',
+        'district', 'origin', 'remarks', 'tags'
+    ];
+    
+    fieldsToClear.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            if (element.type === 'checkbox') {
+                element.checked = false;
+            } else if (element.type === 'select-one') {
+                element.selectedIndex = 0;
+            } else {
+                element.value = '';
+            }
+        }
+    });
+    
+    // Clear any validation errors
+    clearAllValidationErrors();
+}
+
 // Modified saveRecordDetails function - removes automatic overlay closing
 function saveRecordDetails() {
     return new Promise((resolve, reject) => {
@@ -1911,28 +1979,40 @@ function saveRecordDetails() {
             return;
         }
         
+        // Helper function to convert empty strings to null
+        function emptyToNull(value) {
+            return value === '' ? null : value;
+        }
+        
+        const recordId = document.getElementById('record_id').value;
+        const isNewRecord = recordId === '0' || recordId === '';
+        
         const payload = {
-            record_id: document.getElementById('record_id').value,
+            record_id: isNewRecord ? null : recordId,
             year: document.getElementById('year').value,
             id_received: document.getElementById('id_rcv').checked ? 1 : 0,
             paid: document.getElementById('paid').checked ? 1 : 0,
             declared: document.getElementById('declared').checked ? 1 : 0,
             dispatch_ready: document.getElementById('record_dispatch_ready').checked ? 1 : 0,
-            declaration_date: document.getElementById('dec_date').value || null,
-            effectivity_date: document.getElementById('eff_date').value || null,
-            location_particular: document.getElementById('loc_par').value || null,
-            location_category: document.getElementById('loc_cat').value || null,
-            municipality: document.getElementById('municipality').value || null,
-            district: document.getElementById('district').value || null,
-            origin: document.getElementById('origin').value || null,
-            remarks: document.getElementById('remarks').value || null,
-            tags: document.getElementById('tags').value || null
+            declaration_date: emptyToNull(document.getElementById('dec_date').value),
+            effectivity_date: emptyToNull(document.getElementById('eff_date').value),
+            location_particular: emptyToNull(document.getElementById('loc_par').value),
+            location_category: emptyToNull(document.getElementById('loc_cat').value),
+            municipality: emptyToNull(document.getElementById('municipality').value),
+            district: emptyToNull(document.getElementById('district').value),
+            origin: emptyToNull(document.getElementById('origin').value),
+            remarks: emptyToNull(document.getElementById('remarks').value),
+            tags: emptyToNull(document.getElementById('tags').value)
         };
 
         console.log('Saving record details:', payload);
 
-        fetch('/api/save_record_details', {
-            method: 'PATCH',
+        // Use POST for new records, PATCH for updates
+        const method = isNewRecord ? 'POST' : 'PATCH';
+        const url = '/api/save_record_details';
+
+        fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
@@ -1942,6 +2022,12 @@ function saveRecordDetails() {
                 console.error('Save failed:', result);
                 reject(new Error("Failed to save record"));
                 return;
+            }
+            
+            // If this was a new record, update the record_id field
+            if (isNewRecord && result.record_id) {
+                document.getElementById('record_id').value = result.record_id;
+                console.log('New record created with ID:', result.record_id);
             }
             
             hasUnsavedChanges = false;
@@ -1985,29 +2071,40 @@ function addNewEntry(recordId) {
         return;
     }
     
+    // Calculate age if not already calculated
+    const ageInput = document.getElementById('age');
+    if (!ageInput.value && document.getElementById('bdate').value) {
+        calculateAgeFromBirthdate();
+    }
+    
+    // Helper function to convert empty strings to null
+    function emptyToNull(value) {
+        return value === '' ? null : value;
+    }
+    
     const payload = {
         record_id: recordId,
         maab_category: document.getElementById('maab_cat').value,
-        maab_no: document.getElementById('maab_no').value,
+        maab_no: emptyToNull(document.getElementById('maab_no').value),
         first_name: document.getElementById('fname').value,
-        middle_name: document.getElementById('mname').value,
+        middle_name: emptyToNull(document.getElementById('mname').value),
         last_name: document.getElementById('lname').value,
         suffix: document.getElementById('suffix').value,
         birth_date: document.getElementById('bdate').value,
-        age: document.getElementById('age').value,
-        sex: document.getElementById('sex').value,
-        contact_no: document.getElementById('contact').value,
-        email: document.getElementById('email').value,
-        address: document.getElementById('address').value,
-        blood_type: document.getElementById('blood_type').value,
+        age: document.getElementById('age').value ? parseInt(document.getElementById('age').value) : null,
+        sex: emptyToNull(document.getElementById('sex').value),
+        contact_no: emptyToNull(document.getElementById('contact').value),
+        email: emptyToNull(document.getElementById('email').value),
+        address: emptyToNull(document.getElementById('address').value),
+        blood_type: emptyToNull(document.getElementById('blood_type').value),
         id_received: document.getElementById('id_received').checked,
         declared: document.getElementById('entry_declared').checked,
-        declaration_date: document.getElementById('declare_date').value,
+        declaration_date: emptyToNull(document.getElementById('declare_date').value),
         paid: document.getElementById('entry_paid').checked,
-        OR_num: document.getElementById('entry_or_no').value,
-        OR_date: document.getElementById('entry_or_date').value,
-        remarks: document.getElementById('entry_remarks').value,
-        tags: document.getElementById('entry_tags').value
+        OR_num: emptyToNull(document.getElementById('entry_or_no').value),
+        OR_date: emptyToNull(document.getElementById('entry_or_date').value),
+        remarks: emptyToNull(document.getElementById('entry_remarks').value),
+        tags: emptyToNull(document.getElementById('entry_tags').value)
     };
 
     console.log('Adding new entry:', payload);
@@ -2017,7 +2114,15 @@ function addNewEntry(recordId) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success === true) {
             toastSuccess("Entry Added", "Entry added successfully!");
@@ -2031,19 +2136,14 @@ function addNewEntry(recordId) {
                 updateDispatchReadyFromEntries();
             }, 500);
         } else {
-            toastError("Entry Failed", "Entry adding failed: " + data.error);
+            toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        toastError("Error", "An error occurred during entry adding.");
+        toastError("Error", "An error occurred during entry adding: " + error.message);
     });
 }
-
-// Auto-calculate age when birthdate changes
-document.getElementById('bdate').addEventListener('change', function() {
-    calculateAgeFromBirthdate();
-});
 
 function calculateAgeFromBirthdate() {
     const birthdateInput = document.getElementById('bdate');
@@ -2061,7 +2161,7 @@ function calculateAgeFromBirthdate() {
         
         ageInput.value = age;
     } else {
-        ageInput.value = '';
+        ageInput.value = ''; // Clear the field if no birthdate
     }
 }
 
@@ -2074,32 +2174,43 @@ function updateEntry(entryId, recordId) {
         return;
     }
     
+    // Calculate age if not already calculated
+    const ageInput = document.getElementById('age');
+    if (!ageInput.value && document.getElementById('bdate').value) {
+        calculateAgeFromBirthdate();
+    }
+    
+    // Helper function to convert empty strings to null
+    function emptyToNull(value) {
+        return value === '' ? null : value;
+    }
+    
     const payload = {
         entry_id: entryId,
         record_id: recordId,
         maab_category: document.getElementById('maab_cat').value,
-        maab_no: document.getElementById('maab_no').value,
+        maab_no: emptyToNull(document.getElementById('maab_no').value),
         first_name: document.getElementById('fname').value,
-        middle_name: document.getElementById('mname').value,
+        middle_name: emptyToNull(document.getElementById('mname').value),
         last_name: document.getElementById('lname').value,
         suffix: document.getElementById('suffix').value,
         birth_date: document.getElementById('bdate').value,
-        age: document.getElementById('age').value,
-        sex: document.getElementById('sex').value,
-        contact_no: document.getElementById('contact').value,
-        email: document.getElementById('email').value,
-        address: document.getElementById('address').value,
-        blood_type: document.getElementById('blood_type').value,
+        age: document.getElementById('age').value ? parseInt(document.getElementById('age').value) : null,
+        sex: emptyToNull(document.getElementById('sex').value),
+        contact_no: emptyToNull(document.getElementById('contact').value),
+        email: emptyToNull(document.getElementById('email').value),
+        address: emptyToNull(document.getElementById('address').value),
+        blood_type: emptyToNull(document.getElementById('blood_type').value),
         id_received: document.getElementById('id_received').checked,
         declared: document.getElementById('entry_declared').checked,
-        declaration_date: document.getElementById('declare_date').value,
+        declaration_date: emptyToNull(document.getElementById('declare_date').value),
         paid: document.getElementById('entry_paid').checked,
-        OR_num: document.getElementById('entry_or_no').value,
-        OR_date: document.getElementById('entry_or_date').value,
-        remarks: document.getElementById('entry_remarks').value,
-        tags: document.getElementById('entry_tags').value,
+        OR_num: emptyToNull(document.getElementById('entry_or_no').value),
+        OR_date: emptyToNull(document.getElementById('entry_or_date').value),
+        remarks: emptyToNull(document.getElementById('entry_remarks').value),
+        tags: emptyToNull(document.getElementById('entry_tags').value),
         dispatch_ready: document.getElementById('record_dispatch_ready').checked,
-        dispatch_id: null // Send null instead of empty string
+        dispatch_id: null
     };
 
     console.log('Updating entry with payload:', payload);
@@ -2112,8 +2223,8 @@ function updateEntry(entryId, recordId) {
     .then(response => {
         console.log('Response status:', response.status);
         if (!response.ok) {
-            return response.json().then(err => {
-                throw new Error(err.error || `HTTP error! status: ${response.status}`);
+            return response.text().then(text => {
+                throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
             });
         }
         return response.json();
@@ -2204,6 +2315,9 @@ document.getElementById('back_to_add').addEventListener('click', function() {
 
 // Update the openRecordInOverlay function to setup entry table clicks
 function openRecordInOverlay(recordData) {
+    console.log('=== OPEN RECORD IN OVERLAY ===');
+    console.log('Full record data:', recordData);
+    
     function convertToYYYYMMDD(dateStr) {
         const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
         if (parts.length === 3) {
@@ -2222,6 +2336,7 @@ function openRecordInOverlay(recordData) {
         recordData.effectivity_date = convertToYYYYMMDD(recordData.effectivity_date);
     }
 
+    // Populate the form fields
     document.getElementById('record_id').value = recordData.record_id;
     document.getElementById('year').value = recordData.year;
     document.getElementById('id_rcv').checked = recordData.id_received;
@@ -2232,8 +2347,21 @@ function openRecordInOverlay(recordData) {
     document.getElementById('eff_date').value = recordData.effectivity_date;
     document.getElementById('loc_par').value = recordData.location_particular;
     document.getElementById('loc_cat').value = recordData.location_category;
-    document.getElementById('municipality').value = recordData.municipality;
-    document.getElementById('district').value = recordData.district;
+    
+    // DEBUG: Municipality field
+    const municipalityField = document.getElementById('municipality');
+    console.log('Municipality from record data:', recordData.municipality);
+    console.log('Municipality field before setting:', municipalityField.value);
+    municipalityField.value = recordData.municipality || '';
+    console.log('Municipality field after setting:', municipalityField.value);
+    
+    // DEBUG: District field
+    const districtField = document.getElementById('district');
+    console.log('District from record data:', recordData.district);
+    console.log('District field before setting:', districtField.value);
+    districtField.value = recordData.district || '';
+    console.log('District field after setting:', districtField.value);
+    
     document.getElementById('origin').value = recordData.origin;
     document.getElementById('remarks').value = recordData.remarks;
     document.getElementById('tags').value = recordData.tags;
@@ -2249,8 +2377,15 @@ function openRecordInOverlay(recordData) {
 
     // Initialize change tracking AFTER a short delay to ensure form is populated
     setTimeout(() => {
+        console.log('=== INITIALIZING CHANGE TRACKING ===');
         initializeChangeTracking();
+        
+        // DEBUG: Check municipality and district after form is populated
+        console.log('Municipality after form populated:', document.getElementById('municipality').value);
+        console.log('District after form populated:', document.getElementById('district').value);
+        
         // Re-initialize district and origin for this record
+        console.log('=== CALLING SET DISTRICT FROM MUNICIPALITY ===');
         setDistrictFromMunicipality();
         setOriginBasedOnUser();
         setLocationParticularToUppercase();
@@ -2260,6 +2395,10 @@ function openRecordInOverlay(recordData) {
         
         // Make sure we're in add mode initially (hide back button)
         switchToAddMode();
+        
+        // DEBUG: Final check
+        console.log('Municipality final:', document.getElementById('municipality').value);
+        console.log('District final:', document.getElementById('district').value);
     }, 100);
 
     // Fetch entries for this record
@@ -2570,47 +2709,12 @@ columns: [
         });
     }
 
-    // Add Record button
+    // ===== OPTIMIZED ADD RECORD BUTTON =====
     const addRecordBtn = document.querySelector('.btn-add');
     if (addRecordBtn) {
         addRecordBtn.addEventListener('click', function () {
-            fetch('/api/add_record', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (!result.success) {
-                    toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
-                    return;
-                }
-                
-                // Get the newly created record ID
-                const newRecordId = result.record_id;
-                
-                return fetch("/api/members/records?status=active").then(res => res.json())
-                    .then(data => {
-                        data.forEach(row => {
-                            if (row.declaration_date) row.declaration_date = new Date(row.declaration_date).toLocaleDateString('en-US');
-                            if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
-                        });
-
-                        allData = [...data];
-                        filteredData = [...data];
-                        currentPage = 1;
-                        renderTable();
-
-                        // Find and open the newly added record
-                        const newRecord = allData.find(record => record.record_id === newRecordId);
-                        if (newRecord) {
-                            openRecordInOverlay(newRecord);
-                        }
-                    });
-            })
-            .catch(err => {
-                console.error("Add Record Error:", err);
-                toastError("Error Adding Record!", "Failed to save the record. Check the console for more information.");
-            });
+            // Immediately open overlay with empty form - no database query first
+            openEmptyRecordOverlay();
         });
     }
 
@@ -2756,34 +2860,182 @@ const municipalityToDistrict = {
     'Ternate': '8'
 };
 
+// Function to check if there's an active dispatch and update button state
+function checkActiveDispatch() {
+    fetch('/api/check_active_dispatch')
+        .then(response => response.json())
+        .then(data => {
+            const addToDispatchBtn = document.getElementById('add_to_dispatch');
+            const statusMessage = document.getElementById('dispatch_status_message');
+            
+            if (data.has_active_dispatch) {
+                // Enable the button
+                addToDispatchBtn.disabled = false;
+                addToDispatchBtn.style.opacity = '1';
+                addToDispatchBtn.style.cursor = 'pointer';
+                addToDispatchBtn.title = 'Add selected records to current dispatch';
+                if (statusMessage) statusMessage.style.display = 'none';
+                console.log('Active dispatch available:', data.dispatch_id);
+            } else {
+                // Disable the button and show message
+                addToDispatchBtn.disabled = true;
+                addToDispatchBtn.style.opacity = '0.6';
+                addToDispatchBtn.style.cursor = 'not-allowed';
+                addToDispatchBtn.title = 'No active dispatch available. Create one first.';
+                if (statusMessage) statusMessage.style.display = 'inline';
+                console.log('No active dispatch available');
+            }
+        })
+        .catch(error => {
+            console.error('Error checking active dispatch:', error);
+            // Default to disabled on error
+            const addToDispatchBtn = document.getElementById('add_to_dispatch');
+            const statusMessage = document.getElementById('dispatch_status_message');
+            addToDispatchBtn.disabled = true;
+            addToDispatchBtn.style.opacity = '0.6';
+            addToDispatchBtn.style.cursor = 'not-allowed';
+            addToDispatchBtn.title = 'Error checking dispatch status';
+            if (statusMessage) {
+                statusMessage.style.display = 'inline';
+                statusMessage.textContent = 'Error checking dispatch status';
+            }
+        });
+}
+
+// Add to Dispatch button functionality
+document.getElementById('add_to_dispatch').addEventListener('click', function() {
+    if (this.disabled) {
+        toastAlert("No Active Dispatch", "Please create an active dispatch first before adding records.");
+        return;
+    }
+
+    // Get selected records from the table
+    const selectedRecords = getSelectedRecords();
+    
+    if (selectedRecords.length === 0) {
+        toastAlert("No Records Selected", "Please select records to add to dispatch.");
+        return;
+    }
+
+    // Show loading state
+    const originalText = this.innerHTML;
+    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding to Dispatch...';
+    this.disabled = true;
+
+    // Call the API to add records to dispatch
+    fetch('/api/add_to_dispatch', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ record_ids: selectedRecords })
+    })
+    .then(response => response.json())
+    .then(result => {
+        // Restore button state
+        this.innerHTML = originalText;
+        this.disabled = false;
+        
+        if (result.success) {
+            toastSuccess("Records Added to Dispatch", 
+                `Successfully added ${result.added_to_dispatch_count} records to the current dispatch.`);
+            // Refresh the table to show updated dispatch status
+            refreshTableData();
+        } else {
+            toastError("Add to Dispatch Failed", result.error || "Failed to add records to dispatch.");
+        }
+    })
+    .catch(error => {
+        console.error('Error adding to dispatch:', error);
+        // Restore button state
+        this.innerHTML = originalText;
+        this.disabled = false;
+        toastError("Error", "An error occurred while adding records to dispatch.");
+    });
+});
+
+// Function to get selected records from the table
+function getSelectedRecords() {
+    const selectedRecords = [];
+    
+    if (hotInstance) {
+        const selected = hotInstance.getSelected();
+        if (selected) {
+            for (let i = 0; i < selected.length; i++) {
+                const [startRow, startCol, endRow, endCol] = selected[i];
+                for (let row = startRow; row <= endRow; row++) {
+                    const rowData = hotInstance.getSourceDataAtRow(row);
+                    if (rowData && rowData.record_id) {
+                        selectedRecords.push(rowData.record_id);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Remove duplicates
+    return [...new Set(selectedRecords)];
+}
+
+
 // Function to auto-set district based on municipality selection
 function setDistrictFromMunicipality() {
     const municipalitySelect = document.getElementById('municipality');
     const districtInput = document.getElementById('district');
     
+    console.log('=== SET DISTRICT FROM MUNICIPALITY CALLED ===');
+    console.log('Municipality select value:', municipalitySelect?.value);
+    console.log('District input value before:', districtInput?.value);
+    
     if (municipalitySelect && districtInput) {
-        // Remove existing event listeners to prevent duplicates
+        // Store the current value before cloning
+        const currentValue = municipalitySelect.value;
+        
+        // Remove existing event listeners by replacing the element
         const newMunicipalitySelect = municipalitySelect.cloneNode(true);
+        
+        // Restore the value after cloning
+        newMunicipalitySelect.value = currentValue;
+        
         municipalitySelect.parentNode.replaceChild(newMunicipalitySelect, municipalitySelect);
         
         // Add event listener to the new select element
         newMunicipalitySelect.addEventListener('change', function() {
             const selectedMunicipality = this.value;
-            const district = municipalityToDistrict[selectedMunicipality] || '';
-            districtInput.value = district;
+            console.log('Municipality changed to:', selectedMunicipality);
             
-            console.log('Municipality selected:', selectedMunicipality, 'District set to:', district);
-            
-            // Trigger form change for unsaved changes tracking
-            const event = new Event('change', { bubbles: true });
-            districtInput.dispatchEvent(event);
+            // Only set district if a municipality is actually selected (not empty)
+            if (selectedMunicipality) {
+                const district = municipalityToDistrict[selectedMunicipality] || '';
+                districtInput.value = district;
+                
+                console.log('Municipality selected:', selectedMunicipality, 'District set to:', district);
+                
+                // Trigger form change for unsaved changes tracking
+                const event = new Event('change', { bubbles: true });
+                districtInput.dispatchEvent(event);
+            } else {
+                // Clear district if municipality is empty
+                districtInput.value = '';
+                console.log('Municipality empty, district cleared');
+            }
         });
         
-        // Also set district immediately if municipality already has a value
-        if (newMunicipalitySelect.value) {
-            const district = municipalityToDistrict[newMunicipalitySelect.value] || '';
+        // Also set district immediately if municipality already has a value (and it's not empty)
+        const currentMunicipality = newMunicipalitySelect.value;
+        console.log('Current municipality value after restore:', currentMunicipality);
+        
+        if (currentMunicipality) {
+            const district = municipalityToDistrict[currentMunicipality] || '';
             districtInput.value = district;
+            console.log('District set from current municipality:', district);
+        } else {
+            // Clear district if municipality is empty
+            districtInput.value = '';
+            console.log('No municipality value, district cleared');
         }
+        
+        console.log('District input value after:', districtInput.value);
+    } else {
+        console.log('Municipality select or district input not found');
     }
 }
 
@@ -2826,7 +3078,6 @@ function initializeAutoFillFunctions() {
     setLocationParticularToUppercase();
 }
 
-// Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Page loaded, setting up close confirmation');
     setupCloseOverlayWithConfirmation();
@@ -2837,6 +3088,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load filter dropdowns
     populateFilterDropdowns();
+    
+    // Check for active dispatch and update button state
+    checkActiveDispatch();
     
     // Add archive button event listener
     const archiveBtn = document.querySelector('.btn-archive');
@@ -2852,6 +3106,32 @@ document.addEventListener('DOMContentLoaded', function() {
             showActiveView();
         }
     });
+    
+    // ===== CRITICAL FIX: Ensure age calculation is always triggered =====
+    // Add event listener for birthdate changes
+    document.getElementById('bdate').addEventListener('change', function() {
+        calculateAgeFromBirthdate();
+    });
+    
+    // Also calculate age when the overlay opens (in case birthdate is already filled)
+    const overlay = document.getElementById('overlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target.id === 'close-overlay' || e.target.closest('#close-overlay')) {
+                // When overlay opens, check if we need to calculate age
+                setTimeout(() => {
+                    const bdate = document.getElementById('bdate');
+                    const age = document.getElementById('age');
+                    if (bdate.value && !age.value) {
+                        calculateAgeFromBirthdate();
+                    }
+                }, 100);
+            }
+        });
+    }
+    
+    // Check dispatch status periodically (every 30 seconds)
+    setInterval(checkActiveDispatch, 30000);
     
     // Load initial data (active records)
     fetchActiveRecords();

@@ -46,6 +46,19 @@ label {
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
 
+.btn.select-all:hover, .btn.remove-dispatch:hover {
+    background: #2563eb !important;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn.remove-dispatch:disabled {
+    background: #ef4444 !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* ========================================================= */
 /* SPECIFIC BUTTON STYLES                                    */
 /* ========================================================= */
@@ -53,6 +66,8 @@ label {
 /* All action buttons use the same blue */
 .action-buttons .btn.transmit,
 .action-buttons .btn.history,
+.action-buttons .btn.select-all,
+.action-buttons .btn.remove-dispatch,
 .action-buttons .btn.select-all,
 .btn.export,
 .btn.dispatch-details,

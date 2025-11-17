@@ -1254,18 +1254,19 @@ def get_report_target_vs_actual(year):
 def get_current_active_dispatch():
     db_session = SessionLocal()
     try:
-
         last_dispatch = (
             db_session.query(models.Dispatch)
-            .filter(models.Dispatch.dispatch_status == 'current')
-            .order_by(models.Dispatch.dispatch_id.desc())  # or .order_by(models.Dispatch.created_at.desc())
+            .filter(models.Dispatch.dispatch_status == 'current')  # This is correct
+            .order_by(models.Dispatch.dispatch_id.desc())
             .first()
         )
-        print('db_conn - current active dispatch', last_dispatch.dispatch_id)
+        print('db_conn - current active dispatch', last_dispatch.dispatch_id if last_dispatch else None)
         return last_dispatch
     except Exception as e:
         print(f"Error fetching current active dispatch: {e}")
         return None
+    finally:
+        db_session.close()
 
 def add_to_dispatch():
     db_session = SessionLocal()
@@ -1306,9 +1307,109 @@ def add_to_dispatch():
         print(f"Error assigning entries to active dispatch: {e}")
         return None
 
+def transmit_dispatch_entries(dispatch_id, account_id=None):
+    """
+    Transmit all entries in a dispatch:
+    1. Mark entries as declared with current date
+    2. Update dispatch status to 'dispatched' (the correct enum value)
+    3. Update records declaration status
+    4. Clear entries from dispatch (set dispatch_id to NULL)
+    """
+    db_session = SessionLocal()
+    try:
+        print(f"DEBUG: Starting transmission for dispatch {dispatch_id}")
+        
+        # Get the dispatch
+        dispatch = db_session.query(models.Dispatch).filter_by(dispatch_id=dispatch_id).first()
+        if not dispatch:
+            print(f"DEBUG: Dispatch {dispatch_id} not found")
+            return {"success": False, "error": "Dispatch not found"}
+        
+        print(f"DEBUG: Found dispatch - current status: {dispatch.dispatch_status}")
+        
+        # Get all entries in this dispatch
+        entries = db_session.query(models.Entries).filter_by(dispatch_id=dispatch_id).all()
+        print(f"DEBUG: Found {len(entries)} entries in dispatch")
+        
+        if not entries:
+            return {"success": False, "error": "No entries found in dispatch"}
+        
+        transmitted_count = 0
+        current_date = datetime.now().date()
+        
+        # Process each entry
+        for entry in entries:
+            try:
+                print(f"DEBUG: Processing entry {entry.entry_id}")
+                # Mark entry as declared with current date
+                entry.declared = True
+                entry.declaration_date = current_date
+                
+                # Clear from dispatch (set dispatch_id to NULL)
+                entry.dispatch_id = None
+                
+                # Update the corresponding record's declared status
+                record = db_session.query(models.Records).filter_by(record_id=entry.record_id).first()
+                if record:
+                    record.declared = True
+                    if not record.declaration_date:
+                        record.declaration_date = current_date
+                        print(f"DEBUG: Updated record {record.record_id} declaration date")
+                
+                transmitted_count += 1
+                print(f"DEBUG: Successfully processed entry {entry.entry_id}")
+                
+            except Exception as e:
+                print(f"Error processing entry {entry.entry_id}: {e}")
+                continue
+        
+        # Update dispatch status and totals - USE THE CORRECT ENUM VALUE 'dispatched'
+        print(f"DEBUG: Updating dispatch status from '{dispatch.dispatch_status}' to 'dispatched'")
+        
+        dispatch.dispatch_status = 'dispatched'  # This is the correct enum value
+        dispatch.date_dispatched = current_date
+        dispatch.dispatch_total = transmitted_count
+        
+        print(f"DEBUG: Final update - status: 'dispatched', date: {current_date}, total: {transmitted_count}")
+        
+        # Commit all changes
+        db_session.commit()
+        print("DEBUG: Commit successful")
+        
+        # Log the action
+        if account_id:
+            user = db_session.query(models.Accounts).filter_by(account_id=account_id).first()
+            if user:
+                POST_action_log(
+                    user.username,
+                    user.user_level,
+                    'Transmit Dispatch',
+                    f'Transmitted {transmitted_count} entries from dispatch {dispatch_id}',
+                    account_id
+                )
+        
+        return {
+            "success": True,
+            "transmitted_count": transmitted_count,
+            "dispatch_id": dispatch_id
+        }
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error transmitting dispatch: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}
+    finally:
+        db_session.close()
+
 def get_current_dispatch_contents(dispatch_id):
     db_session = SessionLocal()
     try:
+        if not dispatch_id:
+            print("No dispatch_id provided")
+            return []
+            
         current_dispatch_contents = (
             db_session.query(
                 models.Entries.entry_id,
@@ -1329,11 +1430,15 @@ def get_current_dispatch_contents(dispatch_id):
             .filter(models.Entries.dispatch_id == dispatch_id)
             .all()
         )
-        print('db_conn - current dispatch contents', current_dispatch_contents)
+        print(f'db_conn - current dispatch contents count: {len(current_dispatch_contents)}')
         return current_dispatch_contents
     except Exception as e:
         print(f"Error fetching current dispatch contents: {e}")
-        return None
+        import traceback
+        traceback.print_exc()
+        return []  # Return empty list instead of None
+    finally:
+        db_session.close()
 
 def get_all_dispatch_records():
     db_session = SessionLocal()
