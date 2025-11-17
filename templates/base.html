@@ -227,6 +227,35 @@
             }
         });
     });
+
+    document.addEventListener("DOMContentLoaded", function() {
+    const savedFont = localStorage.getItem("appFont");
+    const savedFontSize = localStorage.getItem("appFontSize");
+    
+        if (savedFont) {
+            document.documentElement.style.setProperty("--app-font", savedFont);
+            // Apply to all elements
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(element => {
+                element.style.fontFamily = savedFont + ' !important';
+            });
+        }
+        
+        if (savedFontSize) {
+            document.documentElement.style.setProperty("--app-font-size", savedFontSize);
+            document.body.style.fontSize = savedFontSize;
+        }
+        
+        // Listen for storage changes from settings page
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'profileImage') {
+                const navProfileImage = document.getElementById("navProfileImage");
+                if (navProfileImage) {
+                    navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+                }
+            }
+        });
+    });
 </script>
     
     {% endblock %}

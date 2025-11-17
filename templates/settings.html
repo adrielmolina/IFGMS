@@ -225,6 +225,26 @@
         });
 
         // Helpers
+        // function applyFontStyle(key) {
+        //     const map = {
+        //         "georgia": "Georgia, serif",
+        //         "century-gothic": "'Century Gothic', sans-serif",
+        //         "jetbrains-mono": "'JetBrains Mono', monospace",
+        //         "default": "'Montserrat', sans-serif"
+        //     };
+        //     document.documentElement.style.setProperty("--app-font", map[key] || map["default"]);
+        //     localStorage.setItem("appFontFamily", map[key] || map["default"]);
+        // }
+
+        // function applyFontSize(key) {
+        //     const map = {
+        //         "small": "0.875rem",   // ~14px
+        //         "medium": "1rem",      // ~16px
+        //         "large": "1.125rem"    // ~18px
+        //     };
+        //     document.documentElement.style.setProperty("--app-font-size", map[key] || map["medium"]);
+        //     localStorage.setItem("appFontSize", map[key] || map["medium"]);
+        // }
         function applyFontStyle(key) {
             const map = {
                 "georgia": "Georgia, serif",
@@ -232,8 +252,21 @@
                 "jetbrains-mono": "'JetBrains Mono', monospace",
                 "default": "'Montserrat', sans-serif"
             };
-            document.documentElement.style.setProperty("--app-font", map[key] || map["default"]);
-            localStorage.setItem("appFontFamily", map[key] || map["default"]);
+            
+            const selectedFont = map[key] || map["default"];
+            
+            // Update CSS variable
+            document.documentElement.style.setProperty("--app-font", selectedFont);
+            
+            // Force apply to all elements immediately
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(element => {
+                element.style.fontFamily = selectedFont + ' !important';
+            });
+            
+            // Save to localStorage
+            localStorage.setItem("appFont", selectedFont);
+            localStorage.setItem("appFontKey", key);
         }
 
         function applyFontSize(key) {
@@ -242,8 +275,18 @@
                 "medium": "1rem",      // ~16px
                 "large": "1.125rem"    // ~18px
             };
-            document.documentElement.style.setProperty("--app-font-size", map[key] || map["medium"]);
-            localStorage.setItem("appFontSize", map[key] || map["medium"]);
+            
+            const selectedSize = map[key] || map["medium"];
+            
+            // Update CSS variable
+            document.documentElement.style.setProperty("--app-font-size", selectedSize);
+            
+            // Force apply to body immediately
+            document.body.style.fontSize = selectedSize;
+            
+            // Save to localStorage
+            localStorage.setItem("appFontSize", selectedSize);
+            localStorage.setItem("appFontSizeKey", key);
         }
     });
 
