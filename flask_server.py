@@ -1222,6 +1222,8 @@ def member_register():
 @server.route('/api/get_claim_records')
 def get_claim_records():
     claim_records = db_conn.get_claim_records()
+    claim_records = list(reversed(claim_records))  # reverse the list
+    #print('flask_server: claim_records', claim_records)
     return jsonify(claim_records)
 
     '''
