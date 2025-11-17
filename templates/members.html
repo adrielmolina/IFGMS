@@ -905,7 +905,6 @@ function setupEntryTableClickHandlers() {
     }, 100);
 }
 
-// Archive state management functions
 function showArchiveView() {
     isArchiveView = true;
     
@@ -925,6 +924,16 @@ function showArchiveView() {
     const moduleTitle = document.querySelector('.module_name h1');
     if (moduleTitle) {
         moduleTitle.textContent = 'Archived Members';
+    }
+    
+    // Reset search when switching views
+    const searchInput = document.getElementById('search_input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    const searchClear = document.getElementById('search_clear');
+    if (searchClear) {
+        searchClear.classList.remove('visible');
     }
     
     // Reset archive pagination
@@ -955,6 +964,16 @@ function showActiveView() {
     const moduleTitle = document.querySelector('.module_name h1');
     if (moduleTitle) {
         moduleTitle.textContent = 'Members';
+    }
+    
+    // Reset search when switching views
+    const searchInput = document.getElementById('search_input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    const searchClear = document.getElementById('search_clear');
+    if (searchClear) {
+        searchClear.classList.remove('visible');
     }
     
     // Reset active pagination
@@ -1211,19 +1230,37 @@ function applyFilters() {
     }
 }
 
-// Search functionality for both views
+// Enhanced search functionality for both views
 function performSearch(query) {
     const searchQuery = query.toLowerCase().trim();
+    console.log(`🔍 Performing search: "${searchQuery}" - Archive view: ${isArchiveView}`);
     
     if (isArchiveView) {
         if (searchQuery === '') {
             archiveFilteredData = [...archiveAllData];
+            console.log('📊 Archive search cleared, showing all records:', archiveFilteredData.length);
         } else {
-            archiveFilteredData = archiveAllData.filter(row =>
-                Object.values(row).some(val =>
-                    String(val || "").toLowerCase().includes(searchQuery)
-                )
-            );
+            archiveFilteredData = archiveAllData.filter(row => {
+                // Search through all relevant fields
+                const searchableFields = [
+                    String(row.record_id || ''),
+                    String(row.year || ''),
+                    String(row.location_particular || ''),
+                    String(row.location_category || ''),
+                    String(row.municipality || ''),
+                    String(row.district || ''),
+                    String(row.origin || ''),
+                    String(row.remarks || ''),
+                    String(row.tags || '')
+                ];
+                
+                const matches = searchableFields.some(field => 
+                    field.toLowerCase().includes(searchQuery)
+                );
+                
+                return matches;
+            });
+            console.log('📊 Archive search results:', archiveFilteredData.length);
         }
         
         archiveCurrentPage = 1;
@@ -1231,22 +1268,95 @@ function performSearch(query) {
     } else {
         if (searchQuery === '') {
             filteredData = [...allData];
+            console.log('📊 Active search cleared, showing all records:', filteredData.length);
         } else {
-            filteredData = allData.filter(row =>
-                Object.values(row).some(val =>
-                    String(val || "").toLowerCase().includes(searchQuery)
-                )
-            );
+            filteredData = allData.filter(row => {
+                // Search through all relevant fields
+                const searchableFields = [
+                    String(row.record_id || ''),
+                    String(row.year || ''),
+                    String(row.location_particular || ''),
+                    String(row.location_category || ''),
+                    String(row.municipality || ''),
+                    String(row.district || ''),
+                    String(row.origin || ''),
+                    String(row.remarks || ''),
+                    String(row.tags || '')
+                ];
+                
+                const matches = searchableFields.some(field => 
+                    field.toLowerCase().includes(searchQuery)
+                );
+                
+                return matches;
+            });
+            console.log('📊 Active search results:', filteredData.length);
         }
         
         currentPage = 1;
         renderTable();
     }
     
+    // Update Handsontable search plugin if available
     if (hotInstance) {
-        const searchPlugin = hotInstance.getPlugin('search');
-        searchQuery ? searchPlugin.query(searchQuery) : searchPlugin.query('');
-        hotInstance.render();
+        try {
+            const searchPlugin = hotInstance.getPlugin('search');
+            if (searchPlugin) {
+                searchQuery ? searchPlugin.query(searchQuery) : searchPlugin.query('');
+                hotInstance.render();
+            }
+        } catch (error) {
+            console.log('Search plugin not available, continuing without it');
+        }
+    }
+}
+
+// ===== SEARCH FUNCTIONALITY FUNCTIONS =====
+function setupSearchFunctionality() {
+    const searchInput = document.getElementById('search_input');
+    const searchClear = document.getElementById('search_clear');
+
+    if (searchInput) {
+        // Remove any existing event listeners first
+        searchInput.removeEventListener('input', handleSearchInput);
+        searchInput.addEventListener('input', handleSearchInput);
+        
+        // Also add keyup for better responsiveness
+        searchInput.addEventListener('keyup', handleSearchInput);
+    }
+
+    if (searchClear) {
+        searchClear.removeEventListener('click', handleSearchClear);
+        searchClear.addEventListener('click', handleSearchClear);
+    }
+}
+
+function handleSearchInput(e) {
+    const query = e.target.value;
+    performSearch(query);
+    
+    const searchClear = document.getElementById('search_clear');
+    if (searchClear) {
+        if (query.trim() !== "") {
+            searchClear.classList.add('visible');
+        } else {
+            searchClear.classList.remove('visible');
+        }
+    }
+}
+
+function handleSearchClear() {
+    const searchInput = document.getElementById('search_input');
+    const searchClear = document.getElementById('search_clear');
+    
+    if (searchInput) {
+        searchInput.value = "";
+        performSearch("");
+        searchInput.focus();
+    }
+    
+    if (searchClear) {
+        searchClear.classList.remove('visible');
     }
 }
 
@@ -2690,27 +2800,8 @@ columns: [
     const searchInput = document.getElementById('search_input');
     const searchClear = document.getElementById('search_clear');
 
-    // Search functionality
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            performSearch(e.target.value);
-            
-            if (e.target.value.trim() !== "") {
-                searchClear.classList.add('visible');
-            } else {
-                searchClear.classList.remove('visible');
-            }
-        });
-    }
-
-    if (searchClear) {
-        searchClear.addEventListener('click', () => {
-            searchInput.value = "";
-            searchClear.classList.remove('visible');
-            performSearch("");
-            searchInput.focus();
-        });
-    }
+    // Initialize search functionality
+    setupSearchFunctionality();
 
     // ===== OPTIMIZED ADD RECORD BUTTON =====
     const addRecordBtn = document.querySelector('.btn-add');
@@ -3209,6 +3300,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize auto-fill functions
     initializeAutoFillFunctions();
+
+    // Initialize search functionality
+    setupSearchFunctionality();
     
     // Load filter dropdowns
     populateFilterDropdowns();
