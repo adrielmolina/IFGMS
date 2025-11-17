@@ -47,13 +47,13 @@
                 </select>
             </div>
  
-            <div class="controls_box">
-                <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
-            </div>
+            <!-- <div class="controls_box"> -->
+                <!-- <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button> -->
+            <!-- </div> -->
         </div>
 
         <input id="search_input" type="text" placeholder="Search...">
-    </div>
+    
 
     <div class="controls_box">
         <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
@@ -95,8 +95,8 @@
 
                 <div class="controls_box">
                     <div class="controls_box_left">
-                        <button class="btn-expand" onclick="expandAll()">Expand all groups</button>
-                        <button class="btn-expand" onclick="collapseAll()">Collapse all groups</button>
+                        <button class="btn-expand" hidden>Expand all groups</button>
+                        <button class="btn-expand" hidden>Collapse all groups</button>
                     </div>
 
                     <div class="controls_box_right">
@@ -129,33 +129,27 @@
                     </div>
 
                     <div class="input_set">
-                        <input type="text" id="received_by" name="received_by" autocomplete="off" placeholder=" ">
+                        <input type="text" id="received_by" name="received_by" autocomplete="off" placeholder=" " value="{{ current_user.first_name }} {{ current_user.last_name }}">
                         <label for="received_by">Received by</label>
                     </div>
 
                     <div class="input_set">
-                        <label for="claim_origin">Claim Origin</label>
+                        <!-- <label for="claim_origin">Claim Origin</label> -->
                         <select name="claim_origin" id="claim_origin">
-                            <option value="chapter">Chapter</option>
-                            <option value="dasma">Dasmariñas</option>
-                            <option value="silang">Silang</option>
+                            <option value="Chapter">Chapter</option>
+                            <option value="Dasmariñas">Dasmariñas</option>
+                            <option value="Silang">Silang</option>
                         </select>
                         <label for="claim_origin">Claim Origin</label>
                     </div>
 
                     <div class="input_set">
                         <input type="date" id="date_of_loss" name="date_of_loss" autocomplete="off" placeholder=" ">
-                        <label for="date_of_loss">Date of Loss</label>
-                    </div>
-
-                    <div class="input_set">
-                        <input type="date" id="claim_type" name="claim_type" required placeholder=" ">
-                        <label for="claim_type">Date of Loss</label>
+                        <label for="date_of_loss">Date Filed</label>
                     </div>
 
                     <div class="input_set">
                         <select id="claim_type" name="claim_type" required>
-                            <option value="" disabled selected hidden></option>
                             <option value="ACCIDENT">Accident</option>
                             <option value="DEATH">Death</option>
                         </select>
@@ -199,7 +193,9 @@
                     </div>
 
                     <div class="input_set">
-                        <select name="prpl_insured_suffix" id="prpl_insured_suffix" disabled required>
+                        
+                        <!--
+                        <select name="prpl_insured_suffix" id="prpl_insured_suffix"  required> 
                             <option value="NA">NA</option>
                             <option value="Jr">Jr</option>
                             <option value="Sr">Sr</option>
@@ -209,7 +205,9 @@
                             <option value="V">V</option>
                             <option value="VI">VI</option>
                             <option value="VII">VII</option>
-                        </select>
+                        </select> 
+                        -->
+                        <input type="text" name="prpl_insured_suffix" id="prpl_insured_suffix" readonly>
                         <label for="prpl_insured_suffix">Principal Insured Suffix</label>
                     </div>
 
@@ -297,27 +295,27 @@
 
                 <div id="claimant_info" class="collapse_group">
 
-                    <div class="input_set checkbox_set">
+                    <div class="input_set">
                         <input type="checkbox" id="same_as_insureed" name="same_as_insureed">
                         <label for="same_as_insureed">Same as Insured</label>
                     </div>
 
-                    <div class="input_set floating_label">
+                    <div class="input_set">
                         <input type="text" id="claimant_fname" name="claimant_fname" required autocomplete="off">
                         <label for="claimant_fname">Claimant First Name</label>
                     </div>
 
-                    <div class="input_set floating_label">
+                    <div class="input_set">
                         <input type="text" id="claimant_mname" name="claimant_mname" required autocomplete="off">
                         <label for="claimant_mname">Claimant Middle Name</label>
                     </div>
 
-                    <div class="input_set floating_label">
+                    <div class="input_set">
                         <input type="text" id="claimant_lname" name="claimant_lname" required autocomplete="off">
                         <label for="claimant_lname">Claimant Last Name</label>
                     </div>
 
-                    <div class="input_set select_label">
+                    <div class="input_set">
                         <select name="claimant_suffix" id="claimant_suffix">
                             <option value="NA">NA</option>
                             <option value="Jr">Jr</option>
@@ -332,7 +330,7 @@
                         <label for="claimant_suffix">Claimant Suffix</label>
                     </div>
 
-                    <div class="input_set floating_label">
+                    <div class="input_set">
                         <input list="relation_list" id="relation" name="relation" autocomplete="off">
                         <label for="relation">Relation to Principal Insured</label>
                         <datalist id="relation_list">
@@ -350,7 +348,7 @@
                         </datalist>
                     </div>
 
-                    <div class="input_set floating_label">
+                    <div class="input_set">
                         <input type="tel" id="claimant_contact_no" name="claimant_contact_no">
                         <label for="claimant_contact_no">Claimant Contact No.</label>
                     </div>
@@ -568,7 +566,9 @@
                         </div> -->
 
                         <!-- Right side section -->
-                        <div class="input_set right_section">
+                        
+                        <!-- TODO section hidden for now unhide later  -->
+                        <div class="input_set right_section" style="display: none;">
                             <button class="generate_claim_letter" id="generate_claim_letter">
                                 Generate Claim Letter Template
                             </button>
@@ -605,9 +605,9 @@
                                 <label for="bpi_check_no">BPI Check No.</label>
                                 <input type="text" id="bpi_check_no" name="bpi_check_no" required autocomplete="off">   
 
-                                <button class="generate_prm" id="generate_prm">Generate PRM Template</button>
-                                <input type="file" accept=".xlsx" id="upload_prm" name="upload_prm" required autocomplete="off">
-                                <a class="prm_file" id="prm_file" href="drive.google.com">View PRM File</a>
+                                <button class="generate_prm" id="generate_prm" hidden>Generate PRM Template</button>
+                                <input type="file" accept=".xlsx" id="upload_prm" name="upload_prm" required autocomplete="off" hidden>
+                                <a class="prm_file" id="prm_file" href="drive.google.com" style="display: none;">View PRM File</a>
 
                             </div>
 
@@ -628,9 +628,9 @@
                                 <label for="bpi_amount">BPI Amount</label>  
                                 <input type="text" id="bpi_amount" name="bpi_amount" required autocomplete="off">
 
-                                <button class="generate_quit_claim" id="generate_quit_claim">Generate Quit Claim Template</button>
-                                <input type="file" accept=".docx" id="upload_quit_claim" name="upload_quit_claim" required autocomplete="off">
-                                <a class="quit_claim_file" id="quit_claim_file" href="drive.google.com">View Quit Claim File</a>
+                                <button class="generate_quit_claim" id="generate_quit_claim" hidden>Generate Quit Claim Template</button>
+                                <input type="file" accept=".docx" id="upload_quit_claim" name="upload_quit_claim" required autocomplete="off" hidden>
+                                <a class="quit_claim_file" id="quit_claim_file" href="drive.google.com" style="display: none;" >View Quit Claim File</a>
                             </div>
                         </div>
 
@@ -868,7 +868,9 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('bpi_check_no').value = claimDetails.bpi_check_no || '';
             document.getElementById('bpi_amount').value = claimDetails.bpi_amount || '';
             document.getElementById('release_remarks').value = claimDetails.release_remarks || '';
+            
             document.getElementById('scanned_docs').value = claimDetails.scanned_docs || '';
+    
             document.getElementById('prm_file').value = claimDetails.prm_file || '';
             document.getElementById('quit_claim_file').value = claimDetails.quit_claim_file || '';
             document.getElementById('picked_up').checked = !!claimDetails.picked_up;
@@ -1636,6 +1638,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+/*
 // UPLOADED IMAGE (unchanged)
 document.addEventListener("DOMContentLoaded", function() {
     const navProfileImage = document.getElementById("navProfileImage");
@@ -1656,6 +1659,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
+*/
 
 // for x button in overlay
 document.getElementById('close-overlay').addEventListener('click', function () {
