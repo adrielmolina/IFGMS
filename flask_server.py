@@ -990,6 +990,11 @@ def target_vs_actual(year):
 @roles_required('admin', 'superadmin')
 def add_inventory_stock():
     try:
+        # ✅ FIX: Save user data to variables first
+        user_id = current_user.account_id
+        username = current_user.username
+        user_level = current_user.user_level
+        
         data = request.get_json()
         
         # Extract form data
@@ -1000,7 +1005,7 @@ def add_inventory_stock():
         
         # Validate required fields
         if not all([category, prefix, start_num, count]):
-            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory Failed', 'Missing required fields', current_user.account_id)
+            db_conn.POST_action_log(username, user_level, 'Add Inventory Failed', 'Missing required fields', user_id)
             return jsonify({
                 "success": False, 
                 "error": "All fields are required"
@@ -1034,7 +1039,8 @@ def add_inventory_stock():
         result = db_conn.add_inventory_ids(category, prefix, start_num, count)
         
         if result["success"]:
-            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory', f'Added {result["added_count"]} {category} IDs starting from {prefix}{start_num}', current_user.account_id)
+            db_conn.POST_action_log(username, user_level, 'Add Inventory', f'Added {result["added_count"]} {category} IDs starting from {prefix}{start_num}', user_id)
+            
             response_data = {
                 "success": True,
                 "message": f"Successfully added {result['added_count']} ID(s) for {category} category",
@@ -1047,7 +1053,7 @@ def add_inventory_stock():
                 
             return jsonify(response_data)
         else:
-            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory Failed', f'Failed to add {category} IDs: {result.get("error")}', current_user.account_id)
+            db_conn.POST_action_log(username, user_level, 'Add Inventory Failed', f'Failed to add {category} IDs: {result.get("error")}', user_id)
             return jsonify({
                 "success": False,
                 "error": result.get("error", "Failed to add IDs to inventory")
@@ -1055,12 +1061,253 @@ def add_inventory_stock():
             
     except Exception as e:
         print(f"Error adding inventory stock: {e}")
-        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory Error', f'Error: {str(e)}', current_user.account_id)
+        # ✅ FIX: Use the saved variables here too
+        db_conn.POST_action_log(username, user_level, 'Add Inventory Error', f'Error: {str(e)}', user_id)
         return jsonify({
             "success": False,
             "error": "Internal server error"
         }), 500
+# ============================================================
+# 🔹 ASSIGN ID TO MEMBER - USING allocated_to FOR MEMBER NAMES
+# ============================================================
 
+@server.route('/api/inventory/assign_id', methods=['POST'])
+@login_required
+def assign_id_to_member():
+    try:
+        data = request.get_json()
+        print(f"🔍 Assign ID Request Data: {data}")  # Debug log
+        
+        # Validate required fields
+        required_fields = ['category', 'id_number', 'member_name']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                print(f"❌ Missing field: {field}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Missing required field: {field}'
+                }), 400
+        
+        category = data['category']
+        id_number = data['id_number']
+        member_name = data['member_name']
+        
+        print(f"🔍 Processing assignment: {id_number} to {member_name} in category {category}")
+        
+        # Validate MAAB number format
+        import re
+        if not re.match(r'^(PC|PB|PS|PG|PP|PEP|S|SP)\d{7}$', id_number):
+            print(f"❌ Invalid MAAB format: {id_number}")
+            return jsonify({
+                'success': False,
+                'error': 'Invalid MAAB number format'
+            }), 400
+        
+        # Check if ID exists and is available
+        db_session = SessionLocal()
+        
+        try:
+            # Check if the ID exists and is available
+            inventory_item = db_session.query(models.Inventory).filter(
+                models.Inventory.maab_no == id_number,
+                models.Inventory.maab_category == category
+            ).first()
+            
+            print(f"🔍 Found inventory item: {inventory_item}")
+            
+            if not inventory_item:
+                return jsonify({
+                    'success': False,
+                    'error': f'ID {id_number} not found in category {category}'
+                }), 400
+            
+            # Check if already used (used = 1 means used, 0 means available)
+            if inventory_item.used == 1:
+                return jsonify({
+                    'success': False,
+                    'error': f'ID {id_number} is already assigned to {inventory_item.allocated_to}'
+                }), 400
+            
+            # Update the inventory item - use allocated_to for member name
+            inventory_item.used = 1  # Set to used
+            inventory_item.allocated_to = member_name  # Store member name here
+            
+            db_session.commit()
+            
+            print(f"✅ Successfully assigned {id_number} to {member_name}")
+            
+            # Log the action
+            db_conn.POST_action_log(
+                current_user.username, 
+                current_user.user_level, 
+                'Assign ID', 
+                f'Assigned {id_number} to {member_name}', 
+                current_user.account_id
+            )
+            
+            return jsonify({
+                'success': True,
+                'message': f'ID {id_number} successfully assigned to {member_name}'
+            })
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Database error in assign_id_to_member: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': f'Database error: {str(e)}'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in assign_id_to_member route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}'
+        }), 500
+
+# ============================================================
+# 🔹 GET AVAILABLE IDs FOR CATEGORY
+# ============================================================
+
+@server.route('/api/inventory/available_ids/<category>', methods=['GET'])
+@login_required
+def get_available_ids(category):
+    try:
+        count = request.args.get('count', 1, type=int)
+        
+        print(f"🔍 Getting {count} available IDs for category: {category}")
+        
+        db_session = SessionLocal()
+        
+        try:
+            # Get available IDs for the category - used = 0 means available
+            available_ids = db_session.query(models.Inventory).filter(
+                models.Inventory.maab_category == category,
+                models.Inventory.used == 0  # 0 = available, 1 = used
+            ).limit(count).all()
+            
+            ids_list = [item.maab_no for item in available_ids]
+            
+            print(f"✅ Found {len(ids_list)} available IDs: {ids_list}")
+            
+            return jsonify({
+                'success': True,
+                'available_ids': ids_list,
+                'count': len(ids_list)
+            })
+            
+        except Exception as e:
+            print(f"❌ Database error in get_available_ids: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in get_available_ids route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+    
+    # ============================================================
+# 🔹 GET ASSIGNED IDs (For Verification)
+# ============================================================
+
+@server.route('/api/inventory/assigned_ids', methods=['GET'])
+@login_required
+def get_assigned_ids():
+    try:
+        db_session = SessionLocal()
+        
+        try:
+            # Get assigned IDs (used = 1)
+            assigned_ids = db_session.query(models.Inventory).filter(
+                models.Inventory.used == 1
+            ).all()
+            
+            result = []
+            for item in assigned_ids:
+                result.append({
+                    'maab_no': item.maab_no,
+                    'category': item.maab_category,
+                    'allocated_to': item.allocated_to,
+                    'remarks': item.remarks
+                })
+            
+            return jsonify({
+                'success': True,
+                'assigned_ids': result,
+                'count': len(result)
+            })
+            
+        except Exception as e:
+            print(f"❌ Database error in get_assigned_ids: {e}")
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in get_assigned_ids route: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+    
+    # ============================================================
+# 🔹 TEST INVENTORY ASSIGNMENT
+# ============================================================
+
+@server.route('/api/debug/test_assignment', methods=['POST'])
+@login_required
+def test_assignment():
+    """Test route to check if assignment works"""
+    try:
+        db_session = SessionLocal()
+        
+        # Get one available ID
+        available_item = db_session.query(models.Inventory).filter(
+            models.Inventory.used == 0
+        ).first()
+        
+        if not available_item:
+            return jsonify({'success': False, 'error': 'No available IDs found'})
+        
+        test_data = {
+            'category': available_item.maab_category,
+            'id_number': available_item.maab_no,
+            'member_name': 'TEST MEMBER'
+        }
+        
+        return jsonify({
+            'success': True,
+            'test_data': test_data,
+            'message': 'Use this data to test assignment'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+    finally:
+        db_session.close()
+    
 @server.route('/api/add_to_dispatch', methods=['PATCH'])
 @login_required
 @roles_required('admin', 'superadmin')
