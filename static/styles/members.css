@@ -280,6 +280,22 @@ label {
   color:hsl(0, 0%, 21%); 
 }
 
+/* Add to Dispatch button disabled state */
+#add_to_dispatch:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+#add_to_dispatch:disabled:hover {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
 /* ----------- BUTTONS SA OVERLAY (ORIGINAL STYLES) ------------- */
 .save_record_details,
 .delete_record,
@@ -354,6 +370,7 @@ button,
   margin-left: 300px !important;
 }
 
+/* Dispatch ready auto styling */
 .dispatch-ready-auto {
     opacity: 0.6;
     cursor: not-allowed !important;
@@ -1095,6 +1112,7 @@ div.table-container {
 }
 
 .required-field {
+    border-color: #ff4444 !important;
     background-color: #fff8f8 !important;
 }
 
@@ -1167,7 +1185,7 @@ div.table-container {
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Disabled button styles */
+/* Save button disabled state */
 .save_record_details:disabled,
 .add_entry_details:disabled {
     background-color: #cccccc !important;

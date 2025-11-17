@@ -309,9 +309,9 @@ class Dispatch(Base):
     dispatch_origin = Column(String(255))
     dispatch_year = Column(Integer)
     dispatch_cutoff = Column(Date)
-    dispatch_status = Column(String(255))
+    dispatch_status = Column(Enum('current', 'dispatched', 'disregard', name='dispatch_status'))  # Fixed: Use the actual enum values
     date_dispatched = Column(Date)
-    dispatch_total = Column(DECIMAL(10, 0))
+    dispatch_total = Column(Integer)  # Changed from DECIMAL to Integer
     late_declare = Column(Boolean)
     dispatch_remarks = Column(Text)
     
@@ -335,7 +335,7 @@ class Dispatch(Base):
             'dispatch_cutoff': safe(self.dispatch_cutoff_YMD),
             'dispatch_status': safe(self.dispatch_status),
             'date_dispatched': safe(self.date_dispatched_YMD),
-            'dispatch_total': int(self.dispatch_total) if self.dispatch_total is not None else 0,
+            'dispatch_total': self.dispatch_total if self.dispatch_total is not None else 0,
             'late_declare': safe(self.late_declare),
             'dispatch_remarks': safe(self.dispatch_remarks)
         }
