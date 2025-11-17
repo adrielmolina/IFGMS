@@ -24,17 +24,17 @@ body {
     color: #B92F2F
 }
 
-/* Buttons Container */
 .filter_search_container {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* Changed back to space-between */
     align-items: center;
     background: #fff;
     padding: 15px 20px;
-    margin: 20px 0 20px 15px;
+    margin: 10px 0 20px 15px;
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.249);
     width: auto;
+    gap: 10px;
 }
 
 /* Main Buttons */
@@ -66,6 +66,48 @@ body {
     pointer-events: auto !important;
     cursor: pointer !important;
     z-index: 1000 !important;
+}
+
+.filters-left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.buttons-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    min-width: 150px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.reset-filters-btn {
+    background: #6b7280 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+    font-size: 14px !important;
+}
+
+.reset-filters-btn:hover {
+    background: #4b5563 !important;
 }
 
 #overlay {
@@ -1117,7 +1159,7 @@ table, th, tr, td {
     flex: 1;
 }
 
-/* Create Account Button - Centered at Bottom */
+/* Create Account Button */
 #create_account_btn {
     padding: 8px 12px;
     background: linear-gradient(135deg, #3498db, #2980b9);
@@ -1134,7 +1176,7 @@ table, th, tr, td {
     gap: 8px;
     min-width: 200px;
     margin-top: 10px;
-    margin-right: 620px;
+    margin-right: 450px;
 }
 
 #create_account_btn:hover {
@@ -1197,3 +1239,4 @@ table, th, tr, td {
     font-family: "Font Awesome 6 Free" !important;
     font-weight: 900; 
 }
+

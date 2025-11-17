@@ -1180,11 +1180,15 @@ def delete_claim_record():
 @login_required
 @roles_required('admin', 'superadmin')
 def get_accounts():
-    active_accounts = db_conn.get_accounts(status=['approved', 'archived', 'declined'])
+    # ACTIVE accounts should only be 'approved' status (EXCLUDE archived)
+    active_accounts = db_conn.get_accounts(status=['approved'])
+    # PENDING accounts
     pending_accounts = db_conn.get_accounts(status=['pending'])
 
-    return jsonify({"active": [acc.to_dict() for acc in active_accounts],
-                    "pending": [acc.to_dict() for acc in pending_accounts]})
+    return jsonify({
+        "active": [acc.to_dict() for acc in active_accounts],
+        "pending": [acc.to_dict() for acc in pending_accounts]
+    })
 
 @server.route('/api/accounts/<id>/create', methods=['POST'])
 @login_required
@@ -1479,7 +1483,6 @@ def create_account_submit():
             "message": "An unexpected error occurred. Please try again."
         }), 500
 
-# UPDATE ARCHIVE FUNCTION
 @server.route('/api/accounts/archive', methods=['PATCH'])
 @login_required
 @roles_required('admin', 'superadmin')
@@ -1493,16 +1496,47 @@ def archive_account():
         if not ids:
             return jsonify({"success": False, "error": "No account IDs provided"}), 400
 
+        # Use SINGLE session for ALL operations
+        db_session = SessionLocal()
         success_count = 0
-        for acc_id in ids:
-            print(f"📦 Archiving account ID: {acc_id}")
-            # Use the new archive function that moves to archive_accounts table
-            success = db_conn.archive_account_to_table(acc_id, current_user.account_id)
-            if success:
-                success_count += 1
-                print(f"✅ Successfully archived account {acc_id}")
-            else:
-                print(f"❌ Failed to archive account {acc_id}")
+        failed_ids = []
+        
+        try:
+            # BULK UPDATE - archive all accounts in one query
+            result = db_session.query(models.Accounts).filter(
+                models.Accounts.account_id.in_(ids)
+            ).update({
+                models.Accounts.acct_status: 'archived'
+            }, synchronize_session=False)
+            
+            db_session.commit()
+            success_count = result
+            
+            print(f"✅ Successfully archived {success_count} accounts in one operation")
+            
+            # Log the bulk action
+            if success_count > 0:
+                try:
+                    archiver = db_session.query(models.Accounts).filter(
+                        models.Accounts.account_id == current_user.account_id
+                    ).first()
+                    
+                    if archiver:
+                        db_conn.POST_action_log(
+                            archiver.username,
+                            archiver.user_level,
+                            "Bulk Archive Accounts",
+                            f"Archived {success_count} account(s): {ids}",
+                            current_user.account_id
+                        )
+                except Exception as log_error:
+                    print(f"⚠️ Logging failed but archive succeeded: {log_error}")
+            
+        except Exception as e:
+            db_session.rollback()
+            raise e
+        finally:
+            db_session.close()
         
         print(f"📊 Archive summary: {success_count}/{len(ids)} successful")
         
@@ -1514,7 +1548,6 @@ def archive_account():
     except Exception as e:
         print(f"❌ Error in archive_account: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-    
 # ==================== API ROUTES FOR AUDIT TRAILS ====================
 # SIMPLE WORKING API ROUTES
 @server.route('/api/get_users', methods=['GET'])

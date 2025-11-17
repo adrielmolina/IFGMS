@@ -54,9 +54,39 @@
 
 <!-- Move buttons here -->
 <div id="btn_row_active" class="filter_search_container">
-    <button id="create" name="action" value="create">NEW ACCOUNT</button>
-    <button id="archive" name="archive" value="archive" disabled style="opacity: 0.5; cursor: not-allowed;">ARCHIVE</button>
-    <button id="reset" name="reset" value="reset" title="This will set the password to the user's Birthdate(YYYYMMDD)+initials" disabled style="opacity: 0.5; cursor: not-allowed;">RESET PASSWORD ⓘ</button>
+    <!-- Left side - Filters -->
+    <div class="filters-left">
+        <select id="accountTypeFilter" class="filter-select">
+            <option value="">All Account Types</option>
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+            <option value="superadmin">Super Admin</option>
+        </select>
+        
+        <select id="officeFilter" class="filter-select">
+            <option value="">All Offices</option>
+            <option value="Chapter">Chapter</option>
+            <option value="Dasmarinas">Dasmarinas</option>
+            <option value="Silang">Silang</option>
+        </select>
+
+        <button onclick="resetFilters()" class="btn-reset" style="font-size: 14px;">
+            <i class="fa-solid fa-arrow-rotate-left"></i> Reset Filters
+        </button>
+        </div>
+    
+<!-- Right side - Buttons  -->
+<div class="buttons-right">
+    <button id="create" name="action" value="create">
+        <i class="fa-solid fa-user-plus"></i> NEW ACCOUNT
+    </button>
+    <button id="archive" name="archive" value="archive" disabled style="opacity: 0.5; cursor: not-allowed;">
+        <i class="fa-solid fa-box-archive"></i> ARCHIVE
+    </button>
+    <button id="reset" name="reset" value="reset" title="This will set the password to Current Year + Current Month + user's initials" disabled style="opacity: 0.5; cursor: not-allowed;">
+        <i class="fa-solid fa-key"></i> RESET PASSWORD ⓘ
+    </button>
+</div>
 </div>
 
     <div class="pending-requests-wrapper" hidden>
@@ -79,6 +109,8 @@
             <input type="text" id="pending_search" placeholder="Search..." autocomplete="off">
             <button id="pending_clear_search"><i class="fa-solid fa-xmark"></i></button>
         </div>
+    
+        
 
         <!-- Table layout -->
         <div class="table-container">
@@ -236,81 +268,98 @@ document.addEventListener('DOMContentLoaded', function () {
         return `${currentYear}${currentMonth}${initials}`;
     }
 
-// ====================== FORM VALIDATION ======================
-function validateForm(showErrors = false) {
-    const requiredFields = [
-        {id: 'fname', name: 'First Name'},
-        {id: 'lname', name: 'Last Name'},
-        {id: 'contact_no', name: 'Contact Number'},
-        {id: 'username', name: 'Username'},
-        {id: 'branch', name: 'Office Branch'}
-    ];
-    
-    let isValid = true;
-    
-    if (showErrors) {
-        document.querySelectorAll('.error-message').forEach(el => {
-            el.style.display = 'none';
-        });
-        document.querySelectorAll('.input-error').forEach(el => {
-            el.classList.remove('input-error');
-        });
-    }
-    
-    // Validate required fields
-    requiredFields.forEach(field => {
-        const element = document.getElementById(field.id);
-        if (!element.value.trim()) {
-            isValid = false;
-            if (showErrors) {
-                element.classList.add('input-error');
-                const errorEl = document.getElementById(`${field.id}-error`);
-                if (errorEl) {
-                    errorEl.textContent = `${field.name} is required`;
-                    errorEl.style.display = 'block';
+    // ====================== FORM VALIDATION ======================
+    function validateForm(showErrors = false) {
+        const requiredFields = [
+            {id: 'fname', name: 'First Name'},
+            {id: 'lname', name: 'Last Name'},
+            {id: 'contact_no', name: 'Contact Number'},
+            {id: 'username', name: 'Username'},
+            {id: 'branch', name: 'Office Branch'}
+        ];
+        
+        let isValid = true;
+        
+        if (showErrors) {
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('.input-error').forEach(el => {
+                el.classList.remove('input-error');
+            });
+        }
+        
+        // Validate required fields
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (!element.value.trim()) {
+                isValid = false;
+                if (showErrors) {
+                    element.classList.add('input-error');
+                    const errorEl = document.getElementById(`${field.id}-error`);
+                    if (errorEl) {
+                        errorEl.textContent = `${field.name} is required`;
+                        errorEl.style.display = 'block';
+                    }
                 }
             }
+        });
+        
+        // Validate birthdate
+        const bdate = document.getElementById('bdate').value;
+        if (!bdate) {
+            isValid = false;
+            if (showErrors) {
+                document.getElementById('bdate').classList.add('input-error');
+                toastError('Missing Information', 'Birthdate is required');
+            }
         }
-    });
-    
-    // Validate birthdate - NEW
-    const bdate = document.getElementById('bdate').value;
-    if (!bdate) {
-        isValid = false;
-        if (showErrors) {
-            document.getElementById('bdate').classList.add('input-error');
-            toastError('Birthdate is required');
+        
+        // Validate email
+        const email = document.getElementById('email').value;
+        if (email && !isValidEmail(email)) {
+            isValid = false;
+            if (showErrors) {
+                document.getElementById('email').classList.add('input-error');
+                document.getElementById('email-error').textContent = 'Please enter a valid email address';
+                document.getElementById('email-error').style.display = 'block';
+            }
         }
+        
+        // Validate contact number
+        const contactNo = document.getElementById('contact_no').value;
+        if (contactNo && !/^\d{10}$/.test(contactNo)) {
+            isValid = false;
+            if (showErrors) {
+                document.getElementById('contact_no').classList.add('input-error');
+                document.getElementById('contact_no-error').textContent = 'Contact number must be exactly 10 digits';
+                document.getElementById('contact_no-error').style.display = 'block';
+            }
+        }
+        
+        return isValid;
     }
-    
-    // Validate email
-    const email = document.getElementById('email').value;
-    if (email && !isValidEmail(email)) {
-        isValid = false;
-        if (showErrors) {
-            document.getElementById('email').classList.add('input-error');
-            document.getElementById('email-error').style.display = 'block';
-        }
-    }
-    
-    // Validate contact number
-    const contactNo = document.getElementById('contact_no').value;
-    if (contactNo && !/^\d{10}$/.test(contactNo)) {
-        isValid = false;
-        if (showErrors) {
-            document.getElementById('contact_no').classList.add('input-error');
-            document.getElementById('contact_no-error').textContent = 'Contact number must be exactly 10 digits';
-            document.getElementById('contact_no-error').style.display = 'block';
-        }
-    }
-    
-    return isValid;
-}
-
 
     function isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
+        // More strict email validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        
+        if (!emailRegex.test(email)) {
+            return false;
+        }
+        
+        // Additional checks for common email providers
+        const commonDomains = [
+            'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 
+            'icloud.com', 'protonmail.com', 'aol.com', 'zoho.com',
+            'gmail.com.ph', 'yahoo.com.ph'
+        ];
+        
+        const domain = email.split('@')[1].toLowerCase();
+        
+        // Check if domain has valid TLD
+        const validTLD = /\.(com|org|net|edu|gov|ph|info|biz|co|io)$/i;
+        return validTLD.test(domain);
     }
 
     function updateCreateAccountButton() {
@@ -462,7 +511,7 @@ function validateForm(showErrors = false) {
             })
             .catch(err => {
                 console.error('Error fetching accounts:', err);
-                toastError('We encountered a problem loading the accounts. Please refresh the page and try again.');
+                toastError('Load Error', 'We encountered a problem loading the accounts. Please refresh the page and try again.');
             });
     }
 
@@ -515,77 +564,72 @@ function validateForm(showErrors = false) {
         }, 100);
     });
 
-// IMPROVED ARCHIVE FUNCTIONALITY
-document.getElementById('archive').addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (this.disabled) return;
-    
-    const selectedData = activeTable.getSelectedData();
-    const ids = selectedData.map(row => row.account_id);
-    const names = selectedData.map(row => `${row.first_name} ${row.last_name}`);
-    
-    if (!ids.length) {
-        toastError('Please select at least one account to archive.');
-        return;
-    }
-
-    const accountList = names.join('\n');
-    if (!confirm(`Are you sure you want to archive ${ids.length} selected account(s)?\n\nAccounts:\n${accountList}\n\nThis will mark them as archived but keep their data.`)) {
-        return;
-    }
-
-    // Show loading state
-    const originalText = this.innerHTML;
-    this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Archiving ${ids.length} account(s)...`;
-    this.disabled = true;
-
-    console.log('Archiving accounts:', names);
-
-    fetch('/api/accounts/archive', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: ids })
-    })
-    .then(res => {
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
+    // ====================== ARCHIVE FUNCTIONALITY ======================
+    document.getElementById('archive').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (this.disabled) return;
+        
+        const selectedData = activeTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        const names = selectedData.map(row => `${row.first_name} ${row.last_name}`);
+        
+        if (!ids.length) {
+            toastError('Selection Required', 'Please select at least one account to archive.');
+            return;
         }
-        return res.json();
-    })
-    .then(data => {
-        console.log('Archive response:', data);
-        if (data.success) {
-            const successCount = data.archived_count || ids.length;
-            toastSuccess(`✅ Successfully archived ${successCount} account(s)! They will be removed from the active list.`);
-            
-            if (data.warning) {
-                toastError(data.warning);
+
+        const accountList = names.join('\n');
+        if (!confirm(`Are you sure you want to archive ${ids.length} selected account(s)?\n\nAccounts:\n${accountList}\n\nThis will mark them as archived but keep their data.`)) {
+            return;
+        }
+
+        // Show loading state
+        const originalText = this.innerHTML;
+        this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Archiving ${ids.length} account(s)...`;
+        this.disabled = true;
+
+        console.log('Archiving accounts:', names);
+
+        fetch('/api/accounts/archive', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
             }
-            
-            // Clear selection and refresh table
-            activeTable.deselectRow();
-            setTimeout(() => {
+            return res.json();
+        })
+        .then(data => {
+            console.log('Archive response:', data);
+            if (data.success) {
+                const successCount = data.archived_count || ids.length;
+                toastSuccess('Accounts Archived', `Successfully archived ${successCount} account(s)!`);
+                
+                // Clear selection and refresh table
+                activeTable.deselectRow();
                 fetchAccounts();
-            }, 1000);
-            
-        } else {
-            throw new Error(data.error || 'Archive failed');
-        }
-    })
-    .catch(err => {
-        console.error('Archive error:', err);
-        toastError('Failed to archive accounts: ' + err.message);
-    })
-    .finally(() => {
-        // Restore button state
-        this.innerHTML = originalText;
-        this.disabled = false;
-        updateButtonStates();
+                
+            } else {
+                throw new Error(data.error || 'Archive failed');
+            }
+        })
+        .catch(err => {
+            console.error('Archive error:', err);
+            toastError('Archive Failed', 'Failed to archive accounts: ' + err.message);
+        })
+        .finally(() => {
+            // Restore button state
+            this.innerHTML = originalText;
+            this.disabled = false;
+            updateButtonStates();
+        });
     });
-});
-    // FIXED RESET FUNCTIONALITY - USING YOUR EXISTING FLASK ENDPOINT
+
+    // ====================== RESET FUNCTIONALITY ======================
     document.getElementById('reset').addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -595,7 +639,7 @@ document.getElementById('archive').addEventListener('click', function(e) {
         const selectedData = activeTable.getSelectedData();
         const ids = selectedData.map(row => row.account_id);
         if (!ids.length) {
-            toastError('Please select at least one account to reset password.');
+            toastError('Selection Required', 'Please select at least one account to reset password.');
             return;
         }
 
@@ -611,10 +655,9 @@ document.getElementById('archive').addEventListener('click', function(e) {
 
         // Show loading state
         const originalText = this.innerHTML;
-        this.innerHTML = 'Resetting...';
+        this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Resetting...`;
         this.disabled = true;
 
-        // USING YOUR EXISTING FLASK ENDPOINT - PATCH method and 'ids' parameter
         fetch('/api/accounts/reset', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -629,8 +672,9 @@ document.getElementById('archive').addEventListener('click', function(e) {
         .then(data => {
             console.log('Reset response:', data);
             if (data.success) {
-                toastSuccess(`Passwords reset for ${ids.length} account(s)!`);
-                // IMMEDIATE REFRESH
+                toastSuccess('Passwords Reset', `Passwords reset for ${data.reset_count || ids.length} account(s)!`);
+                // Clear selection and refresh immediately
+                activeTable.deselectRow();
                 fetchAccounts();
             } else {
                 throw new Error(data.error || 'Server returned failure');
@@ -638,7 +682,7 @@ document.getElementById('archive').addEventListener('click', function(e) {
         })
         .catch(err => {
             console.error('Reset error:', err);
-            toastError('Failed to reset passwords: ' + err.message);
+            toastError('Reset Failed', 'Failed to reset passwords: ' + err.message);
         })
         .finally(() => {
             // Restore button state
@@ -669,11 +713,11 @@ document.getElementById('archive').addEventListener('click', function(e) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                toastSuccess(`Account settings updated successfully!`);
+                toastSuccess('Settings Updated', 'Account settings updated successfully!');
                 // Refresh table after edit
                 fetchAccounts();
             } else {
-                toastError('We were unable to update the account. Please try again.');
+                toastError('Update Failed', 'We were unable to update the account. Please try again.');
                 // Revert the cell change
                 cell.getRow().reload();
             }
@@ -712,102 +756,164 @@ document.getElementById('archive').addEventListener('click', function(e) {
     }, 500);
 
     // ====================== FORM INPUT LISTENERS ======================
-const formInputs = ['fname', 'lname', 'contact_no', 'username', 'email', 'branch', 'bdate'];
-formInputs.forEach(field => {
-    const element = document.getElementById(field);
-    if (element) {
-        element.addEventListener('input', function() {
-            updateCreateAccountButton();
-            if (this.value.trim()) {
-                this.classList.remove('input-error');
-                const errorMsg = this.parentNode.querySelector('.error-message');
-                if (errorMsg) {
-                    errorMsg.style.display = 'none';
+    const formInputs = ['fname', 'lname', 'contact_no', 'username', 'email', 'branch', 'bdate'];
+    formInputs.forEach(field => {
+        const element = document.getElementById(field);
+        if (element) {
+            element.addEventListener('input', function() {
+                updateCreateAccountButton();
+                if (this.value.trim()) {
+                    this.classList.remove('input-error');
+                    const errorMsg = this.parentNode.querySelector('.error-message');
+                    if (errorMsg) {
+                        errorMsg.style.display = 'none';
+                    }
                 }
-            }
-        });
-        element.addEventListener('change', updateCreateAccountButton);
-    }
-});
-
-// Contact number validation - numbers only
-document.getElementById('contact_no').addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^0-9]/g, '');
-});
-
-// ====================== CREATE ACCOUNT BUTTON ======================
-document.getElementById('create_account_btn').addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!validateForm(true)) {
-        toastError('Please check the form for errors. All required fields must be filled correctly.');
-        return;
-    }
-
-    // Double check birthdate
-    const bdate = document.getElementById('bdate').value;
-    if (!bdate) {
-        toastError('Birthdate is required');
-        document.getElementById('bdate').classList.add('input-error');
-        return;
-    }
-
-    // Generate default password automatically
-    const fname = document.getElementById('fname').value.trim();
-    const lname = document.getElementById('lname').value.trim();
-    const defaultPassword = generateDefaultPassword(fname, lname);
-
-    const payload = {
-        username: document.getElementById('username').value.trim(),
-        password: defaultPassword,
-        email: document.getElementById('email').value.trim(),
-        fname: fname,
-        mname: document.getElementById('mname').value.trim(),
-        lname: lname,
-        suffix: document.getElementById('suffix').value,
-        bdate: bdate,
-        contact_no: document.getElementById('contact_no').value.trim(),
-        branch: document.getElementById('branch').value
-    };
-
-    if (payload.email && !isValidEmail(payload.email)) {
-        toastError('Please enter a valid email address (e.g., name@example.com).');
-        return;
-    }
-
-    const originalButtonText = this.textContent;
-    this.disabled = true;
-    this.textContent = 'Creating Account...';
-    this.style.opacity = '0.7';
-
-    fetch('/create_acc_submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            toastSuccess(`Account created successfully! Default password: ${defaultPassword}`);
-            fetchAccounts().then(() => {
-                closeOverlayAndReset();
             });
-        } else {
-            toastError(data.message);
+            element.addEventListener('change', updateCreateAccountButton);
         }
-    })
-    .catch(err => {
-        console.error('Create account error:', err);
-        toastError('Connection problem. Please check your internet connection and try again.');
-    })
-    .finally(() => {
-        this.disabled = false;
-        this.textContent = originalButtonText;
-        this.style.opacity = '1';
-        updateCreateAccountButton();
     });
+
+    // Contact number validation - numbers only
+    document.getElementById('contact_no').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Email validation on blur
+    document.getElementById('email').addEventListener('blur', function() {
+        const email = this.value.trim();
+        if (email && !isValidEmail(email)) {
+            this.classList.add('input-error');
+            document.getElementById('email-error').textContent = 'Please enter a valid email address (e.g., name@gmail.com)';
+            document.getElementById('email-error').style.display = 'block';
+            updateCreateAccountButton();
+        }
+    });
+
+    // ====================== CREATE ACCOUNT BUTTON ======================
+    document.getElementById('create_account_btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!validateForm(true)) {
+            toastError('Form Error', 'Please check the form for errors. All required fields must be filled correctly.');
+            return;
+        }
+
+        // Double check birthdate
+        const bdate = document.getElementById('bdate').value;
+        if (!bdate) {
+            toastError('Missing Information', 'Birthdate is required');
+            document.getElementById('bdate').classList.add('input-error');
+            return;
+        }
+
+        // Generate default password automatically
+        const fname = document.getElementById('fname').value.trim();
+        const lname = document.getElementById('lname').value.trim();
+        const defaultPassword = generateDefaultPassword(fname, lname);
+
+        const payload = {
+            username: document.getElementById('username').value.trim(),
+            password: defaultPassword,
+            email: document.getElementById('email').value.trim(),
+            fname: fname,
+            mname: document.getElementById('mname').value.trim(),
+            lname: lname,
+            suffix: document.getElementById('suffix').value,
+            bdate: bdate,
+            contact_no: document.getElementById('contact_no').value.trim(),
+            branch: document.getElementById('branch').value
+        };
+
+        if (payload.email && !isValidEmail(payload.email)) {
+            toastError('Invalid Email', 'Please enter a valid email address (e.g., name@example.com).');
+            return;
+        }
+
+        const originalButtonText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating Account...`;
+        this.style.opacity = '0.7';
+
+        fetch('/create_acc_submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                toastSuccess('Account Created', 'Account was created successfully!');
+                // AUTO-CLOSE OVERLAY AND RESET FORM
+                closeOverlayAndReset();
+                // Refresh accounts table
+                fetchAccounts();
+            } else {
+                toastError('Creation Failed', data.message || 'Failed to create account');
+            }
+        })
+        .catch(err => {
+            console.error('Create account error:', err);
+            toastError('Server Error', 'Failed to create account. Please try again.');
+        })
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = originalButtonText;
+            this.style.opacity = '1';
+            updateCreateAccountButton();
+        });
+    });
+
+// ====================== ACCOUNT TYPE FILTER ======================
+document.getElementById('accountTypeFilter').addEventListener('change', function() {
+    const filterValue = this.value.toLowerCase();
+    
+    activeTable.setFilter((data) => {
+        if (!filterValue) return true;
+        return data.user_level.toLowerCase() === filterValue;
+    });
+    
+    updateTableInfo(activeTable, "active_info");
 });
+
+// ====================== OFFICE FILTER ======================
+document.getElementById('officeFilter').addEventListener('change', function() {
+    const filterValue = this.value;
+    
+    activeTable.setFilter((data) => {
+        if (!filterValue) return true;
+        return data.office_location === filterValue;
+    });
+    
+    updateTableInfo(activeTable, "active_info");
+});
+
+// ====================== CLEAR FILTERS WHEN SEARCHING ======================
+document.getElementById("active_search").addEventListener("input", function() {
+    // Clear dropdown filters when searching
+    document.getElementById('accountTypeFilter').value = '';
+    document.getElementById('officeFilter').value = '';
+});
+
+// ====================== CLEAR SEARCH WHEN FILTERING ======================
+function clearSearchWhenFiltering() {
+    document.getElementById("active_search").value = '';
+}
+
+document.getElementById('accountTypeFilter').addEventListener('change', clearSearchWhenFiltering);
+document.getElementById('officeFilter').addEventListener('change', clearSearchWhenFiltering);
+
+// ====================== RESET FILTERS FUNCTION ======================
+function resetAllFilters() {
+    document.getElementById('accountTypeFilter').value = '';
+    document.getElementById('officeFilter').value = '';
+    document.getElementById("active_search").value = '';
+    activeTable.clearFilter();
+    updateTableInfo(activeTable, "active_info");
+}
+
+document.getElementById('resetFilters').addEventListener('click', resetAllFilters);
 
     // ====================== PROFILE IMAGE ======================
     const navProfileImage = document.getElementById("navProfileImage");
