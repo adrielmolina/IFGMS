@@ -330,14 +330,19 @@ body {
 
 /* === INPUT SETS === */
 #claim_info .input_set,
+#claimant_info .input_set,
 #principal_insured_info .input_set {
   position: relative;
   display: flex;
   flex-direction: column;
 }
 
+#claimant_info .input_set input,
+#claimant_info .input_set select,
+
 #claim_info .input_set input,
 #claim_info .input_set select,
+
 #principal_insured_info .input_set input,
 #principal_insured_info .input_set select {
   width: 100%;
