@@ -119,9 +119,12 @@ def login():
 @server.route('/logout')
 @login_required
 def logout():
+    db_conn.POST_action_log(current_user.username, current_user.user_level, 'Logout', 'User logged out', current_user.account_id)
     logout_user()
     session.clear()
     return redirect(url_for("landing_page"))
+
+
 
 #? -------------------- END -------------------- ?#
 
@@ -407,7 +410,7 @@ def export_record_entries(record_id):
             for col_letter, width in column_widths.items():
                 worksheet.column_dimensions[col_letter].width = width
         
-        # Return success response with file info
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Record', f'Exported record {record_id} with {len(entries)} entries', current_user.account_id)
         return jsonify({
             'success': True,
             'message': f'File exported successfully to record_exports folder',
@@ -423,51 +426,6 @@ def export_record_entries(record_id):
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
     finally:
         db_session.close()
-
-# TODO move to accounts api routes section
-@server.route('/create_acc_submit', methods=['POST'])
-def create_acc_submit():
-    user = request.form.get('username')
-    password = request.form.get('password')
-    email = request.form.get('email')
-
-    fname = request.form.get('fname').upper()
-    mname = request.form.get('mname').upper()
-    lname = request.form.get('lname').upper()
-    suffix = request.form.get('suffix')
-
-    bdate = request.form.get('bdate')
-    contact = request.form.get('contact_no')
-
-    acct_created = date.today().strftime("%Y-%m-%d")
-    branch = request.form.get('branch')
-
-    if (fname, mname, lname, suffix, bdate, contact, email, user, password, branch):
-        create_new_acc = db_conn.create_account(user=user, password=password, email=email, fname=fname, mname=mname, lname=lname,
-                            suffix=suffix, bdate=bdate, contact=contact, acct_created=acct_created, branch=branch)
-    
-    if not create_new_acc == True:
-        flash({
-            "title": "Account creation failed!",
-            "text": f"{create_new_acc}. Please try again.",
-            "redirect_url": url_for('create_acc')
-        }, "error")
-        return render_template('create_account.html')
-    else:
-        flash({
-        "title": "Account created successfully!",
-        "text": "Click continue to go back to login screen.",
-        "redirect_url": url_for('landing_page')
-        }, "success")
-        return render_template('create_account.html')
-
-
-    # TODO add condition to check if the username already exists
-    # TODO fix condition to check if account creation succeeded
-    # TODO fix duplicate email/username error flash message not showing up
-
-
-
 
 # ========================== FORGOT PASSWORD ==========================
 @server.route("/forgot_password_otp", methods=["GET", "POST"])
@@ -577,6 +535,7 @@ def declaration_api():
     try:
         data = request.get_json()
         if not data:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Dispatch Failed', 'No data provided', current_user.account_id)
             return jsonify({"success": False, "error": "No data provided"}), 400
 
         dispatch_type = 'transmission' if current_user.office_location != 'Chapter' else 'declaration' 
@@ -589,12 +548,15 @@ def declaration_api():
         result = db_conn.create_dispatch(dispatch_type, dispatch_origin, dispatch_year, dispatch_cutoff, late_declare, dispatch_remarks)
         
         if result == True:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Dispatch', f'Created {dispatch_type} dispatch from {dispatch_origin}', current_user.account_id)
             return jsonify({"success": True})
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Dispatch Failed', f'Failed: {result}', current_user.account_id)
             return jsonify({"success": False, "error": result}), 500
             
     except Exception as e:
         print(f"Declaration API error: {e}")
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Dispatch Error', f'Error: {str(e)}', current_user.account_id)
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
@@ -625,6 +587,7 @@ def settings_save_changes():
             )
 
             if update_success:
+                db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Profile', 'Updated personal profile information', current_user.account_id)
                 flash("Details updated successfully!", "success")
             else:
                 flash("Update failed!", "error")
@@ -659,7 +622,7 @@ def upload_profile_pic():
         saved = db_conn.save_profile_pic(current_user.account_id, file_data)
         if saved:
             print("Saved profile pic to DB for user", current_user.account_id)
-            # Return updated state (whether the user has a profile pic)
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Upload Profile Picture', 'Uploaded new profile picture', current_user.account_id)
             return jsonify({"success": True, "has_profile_pic": True})
         else:
             print("db_conn.save_profile_pic returned False")
@@ -716,9 +679,93 @@ def inject_profile_pic_state():
 @login_required
 def delete_profile_pic():
     success = db_conn.save_profile_pic(current_user.account_id, None)
+    db_conn.POST_action_log(current_user.username, current_user.user_level, 'Delete Profile Picture', 'Deleted profile picture', current_user.account_id)
     return jsonify({"success": success})
 
 # API FOR DASHBOARD
+
+# ====== API FOR DASHBOARD STATS ======
+
+@server.route('/api/members/count', methods=['GET'])
+def get_members_count():
+    try:
+        # Count all entries across all records
+        total_count = 0
+        all_records = db_conn.get_member_records()
+        
+        for record in all_records:
+            entries = db_conn.get_entries(record.record_id)  # or record.id
+            total_count += len(entries)
+            
+        return jsonify({
+            'success': True,
+            'total_members': total_count
+        })
+    except Exception as e:
+        print(f"Error in get_members_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@server.route('/api/members/expiring_soon', methods=['GET'])
+def get_expiring_soon_count():
+    try:
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        thirty_days_from_now = today + timedelta(days=30)
+        last_month = today - timedelta(days=30)
+        
+        # Get all records and their entries
+        all_records = db_conn.get_member_records()
+        
+        current_expiring = 0
+        previous_expiring = 0
+        
+        for record in all_records:
+            # Get entries for this record
+            entries = db_conn.get_entries(record.record_id)
+            
+            for entry in entries:
+                # Check OR_date for expiration
+                if hasattr(entry, 'OR_date') and entry.OR_date:
+                    # Convert to date object if it's string
+                    if isinstance(entry.OR_date, str):
+                        or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
+                    else:
+                        or_date = entry.OR_date
+                    
+                    # Calculate expiration date (OR_date + 1 year)
+                    expiration_date = or_date + timedelta(days=365)
+                    
+                    # Current period: expiring in next 30 days
+                    if today <= expiration_date <= thirty_days_from_now:
+                        current_expiring += 1
+                    
+                    # Previous period: expired in last 30 days
+                    if last_month <= expiration_date <= today:
+                        previous_expiring += 1
+        
+        # Calculate percentage change
+        if previous_expiring > 0:
+            percentage_change = ((current_expiring - previous_expiring) / previous_expiring) * 100
+        else:
+            percentage_change = 0
+        
+        return jsonify({
+            'success': True,
+            'expiring_soon_count': current_expiring,
+            'previous_period_count': previous_expiring,
+            'percentage_change': round(percentage_change, 2),
+            'timeframe_days': 30
+        })
+    except Exception as e:
+        print(f"Error in get_expiring_soon_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    
 @server.route('/api/get_pending_claims_count')
 def get_pending_claims_count():
     count = db_conn.get_pending_claims_count()
@@ -796,20 +843,24 @@ def archive_record():
         record_id = data.get('record_id')
         
         if not record_id:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record Failed', 'No record ID provided', current_user.account_id)
             return jsonify({"success": False, "error": "No record ID provided"}), 400
         
         # Use the new function that handles both archiving and logging in one session
         success = db_conn.archive_member_record_with_log(record_id, current_user.account_id)
         
         if success:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record', f'Archived record ID: {record_id}', current_user.account_id)
             return jsonify({"success": True})
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record Failed', f'Failed to archive record ID: {record_id}', current_user.account_id)
             return jsonify({"success": False, "error": "Failed to archive record"}), 500
             
     except Exception as e:
         print(f"Error archiving record: {e}")
         import traceback
         traceback.print_exc()
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record Error', f'Error: {str(e)}', current_user.account_id)
         return jsonify({"success": False, "error": "Internal server error"}), 500
     
 @server.route('/api/add_record', methods=['POST'])
@@ -887,10 +938,13 @@ def save_entry_details():
         result = db_conn.save_entry_details(record_id, maab_category, maab_no, first_name, middle_name, last_name, suffix, birthdate, age, sex, bloodtype, contact, email, address, id_received, declared, declaration_date, paid, OR_num, OR_date, remarks, tags, dispatch_ready)
 
         if result:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry', f'Added entry for {first_name} {last_name}', current_user.account_id)
             return jsonify({"success": True})
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry Failed', f'Failed to add entry for {first_name} {last_name}', current_user.account_id)
             return jsonify({"success": False, "error": result}), 500
     else:
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry Failed', 'No data provided', current_user.account_id)
         return jsonify({"success": False, "error": "No data provided"}), 400
 
 
@@ -904,6 +958,7 @@ def save_entry_update():
         print(f"Data types: { {k: type(v) for k, v in data.items()} }")
         
         if not data:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Entry Failed', 'No data provided', current_user.account_id)
             return jsonify({"success": False, "error": "No data provided"}), 400
             
         entry_id = data.get('entry_id')
@@ -912,9 +967,11 @@ def save_entry_update():
         result = db_conn.save_entry_updates(data)
         
         if result:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Entry', f'Updated entry ID: {entry_id}', current_user.account_id)
             print("✅ Entry update successful")
             return jsonify({"success": True})
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Entry Failed', f'Failed to update entry ID: {entry_id}', current_user.account_id)
             print("❌ Entry update failed in db_conn")
             return jsonify({"success": False, "error": "Database update failed"}), 500
             
@@ -952,6 +1009,7 @@ def add_inventory_stock():
         
         # Validate required fields
         if not all([category, prefix, start_num, count]):
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory Failed', 'Missing required fields', current_user.account_id)
             return jsonify({
                 "success": False, 
                 "error": "All fields are required"
@@ -985,6 +1043,7 @@ def add_inventory_stock():
         result = db_conn.add_inventory_ids(category, prefix, start_num, count)
         
         if result["success"]:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory', f'Added {result["added_count"]} {category} IDs starting from {prefix}{start_num}', current_user.account_id)
             response_data = {
                 "success": True,
                 "message": f"Successfully added {result['added_count']} ID(s) for {category} category",
@@ -997,6 +1056,7 @@ def add_inventory_stock():
                 
             return jsonify(response_data)
         else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory Failed', f'Failed to add {category} IDs: {result.get("error")}', current_user.account_id)
             return jsonify({
                 "success": False,
                 "error": result.get("error", "Failed to add IDs to inventory")
@@ -1004,6 +1064,7 @@ def add_inventory_stock():
             
     except Exception as e:
         print(f"Error adding inventory stock: {e}")
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Inventory Error', f'Error: {str(e)}', current_user.account_id)
         return jsonify({
             "success": False,
             "error": "Internal server error"
@@ -1018,6 +1079,7 @@ def add_to_dispatch():
         result = db_conn.add_to_dispatch()
         print('add_to_dispatch result:', result)
         if result:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add to Dispatch', f'Added {result} entries to dispatch', current_user.account_id)
             return jsonify({"success": True, "added_to_dispatch_count": result})
         else:
             return jsonify({"success": False, "error": "No entries to add to dispatch"}), 500
@@ -1034,11 +1096,13 @@ def export_dispatch():
     try:
         data = request.get_json()
         if not data:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Data Failed', 'No JSON data provided', current_user.account_id)
             return jsonify({"success": False, "error": "No JSON data provided"}), 400
             
         selected_rows = data.get('selected_rows', [])
         
         if not selected_rows:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Data Failed', 'No rows selected', current_user.account_id)
             return jsonify({"success": False, "error": "No rows selected"}), 400
 
         # Create DataFrame from selected rows
@@ -1110,6 +1174,7 @@ def export_dispatch():
             number_format = workbook.add_format({'align': 'center'})
             worksheet.set_column('A:A', 5, number_format)
 
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Data', f'Exported dispatch report with {len(selected_rows)} entries', current_user.account_id)
         return jsonify({
             "success": True, 
             "message": "File saved successfully",
@@ -1119,6 +1184,7 @@ def export_dispatch():
 
     except Exception as e:
         print(f"Export error: {e}")
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Export Data Error', f'Error: {str(e)}', current_user.account_id)
         return jsonify({"success": False, "error": str(e)}), 500
 
 # TODO check if a record exist for Online Registration on the same day. if yes put the entry on that record
@@ -1236,11 +1302,15 @@ def delete_claim_record():
 @login_required
 @roles_required('admin', 'superadmin')
 def get_accounts():
-    active_accounts = db_conn.get_accounts(status=['approved', 'archived', 'declined'])
+    # ACTIVE accounts should only be 'approved' status (EXCLUDE archived)
+    active_accounts = db_conn.get_accounts(status=['approved'])
+    # PENDING accounts
     pending_accounts = db_conn.get_accounts(status=['pending'])
 
-    return jsonify({"active": [acc.to_dict() for acc in active_accounts],
-                    "pending": [acc.to_dict() for acc in pending_accounts]})
+    return jsonify({
+        "active": [acc.to_dict() for acc in active_accounts],
+        "pending": [acc.to_dict() for acc in pending_accounts]
+    })
 
 @server.route('/api/accounts/<id>/create', methods=['POST'])
 @login_required
@@ -1261,6 +1331,7 @@ def approve_account():
 
         if not success:
             return jsonify({"success": False, "error": f"Failed to approve account ID {acc_id}"}), 500
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Approve Accounts', f'Approved {len(ids)} account(s)', current_user.account_id)
 
     return jsonify({"success": True})
 
@@ -1283,17 +1354,63 @@ def decline_account():
 @login_required
 @roles_required('admin', 'superadmin')
 def reset_account():
-    data = request.get_json()
-    ids = data.get('ids', [])
-
-    for acc_id in ids:
-        success = db_conn.reset_account(acc_id)
-
-        if not success:
-            return jsonify({"success": False, "error": f"Failed to reset password of account ID {acc_id}"}), 500
+    try:
+        data = request.get_json()
+        ids = data.get('ids', [])
         
-    return jsonify({"success": True})
+        print(f"🔍 RESET PASSWORD API CALLED")
+        print(f"📋 Account IDs to reset: {ids}")
+        
+        if not ids:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Password Failed', 'No account IDs provided', current_user.account_id)
+            return jsonify({"success": False, "error": "No account IDs provided"}), 400
 
+        success_count = 0
+        failed_ids = []
+        
+        for acc_id in ids:
+            print(f"🔄 Processing account ID: {acc_id}")
+            
+            success = db_conn.reset_account(acc_id)
+            
+            if success:
+                success_count += 1
+                print(f"✅ Successfully reset password for account {acc_id}")
+            else:
+                failed_ids.append(acc_id)
+                print(f"❌ Failed to reset password for account {acc_id}")
+                db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Password Failed', f'Failed to reset password for account ID {acc_id}', current_user.account_id)
+        
+        print(f"📊 Reset summary: {success_count} successful, {len(failed_ids)} failed")
+        
+        if success_count > 0:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Passwords', f'Reset passwords for {success_count} account(s)', current_user.account_id)
+            response = {
+                "success": True, 
+                "reset_count": success_count,
+                "message": f"Passwords reset for {success_count} account(s)!"
+            }
+            if failed_ids:
+
+                response["warning"] = f"Failed to reset {len(failed_ids)} account(s)"
+            return jsonify(response)
+        else:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Password Failed', f'Failed to reset passwords for all {len(ids)} account(s)', current_user.account_id)
+            return jsonify({
+                "success": False, 
+                "error": f"Failed to reset passwords for all {len(ids)} account(s)"
+            }), 500
+            
+    except Exception as e:
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Reset Password Error', f'Error: {str(e)}', current_user.account_id)
+        print(f"❌ ERROR in reset_account route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False, 
+            "error": f"Internal server error: {str(e)}"
+        }), 500
+    
 @server.route('/api/accounts/update_userlvl', methods=['PATCH'])
 @login_required
 @roles_required('admin', 'superadmin')
@@ -1306,6 +1423,7 @@ def update_userlvl():
         success = db_conn.update_userlvl(id, user_level)
 
         if success:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update User Level', f'Updated user level to {user_level} for account {id}', current_user.account_id)
             return jsonify({"success": True})
         else:
             return jsonify({"success": False, "error": "Failed to update user level"}), 500
@@ -1327,6 +1445,7 @@ def update_ofc():
         success = db_conn.update_ofc(id, location)
 
         if success:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Update Office Location', f'Updated office location to {location} for account {id}', current_user.account_id)
             return jsonify({"success": True})
         else:
             return jsonify({"success": False, "error": "Failed to update office location"}), 500
@@ -1334,98 +1453,497 @@ def update_ofc():
     except Exception as e:
         print(f"Error updating office location: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+# UPDATE YOUR FLASK ROUTES
 
+@server.route('/create_acc_submit', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def create_account_submit():
+    
+    def username_exists(username):
+        """Check if username already exists in database using SQLAlchemy"""
+        db_session = db_conn.SessionLocal()
+        try:
+            existing_user = db_session.query(db_conn.models.Accounts).filter(
+                db_conn.models.Accounts.username == username
+            ).first()
+            return existing_user is not None
+        finally:
+            db_session.close()
 
+    def email_exists(email):
+        """Check if email already exists in database using SQLAlchemy"""
+        if not email:  # Email is optional
+            return False
+            
+        db_session = db_conn.SessionLocal()
+        try:
+            existing_email = db_session.query(db_conn.models.Accounts).filter(
+                db_conn.models.Accounts.email == email
+            ).first()
+            return existing_email is not None
+        finally:
+            db_session.close()
+
+    try:
+        data = request.get_json()
+        print("=== CREATE ACCOUNT DEBUG ===")
+        print("Received data:", data)
+        
+        # Validate required fields - UPDATED: removed password from required fields
+        required_fields = ['username', 'fname', 'lname', 'contact_no', 'branch']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        if missing_fields:
+            print(f"Missing fields: {missing_fields}")
+            # ADD FAILED LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', f'Missing required fields: {", ".join(missing_fields)}', current_user.account_id)
+            return jsonify({
+                "success": False, 
+                "message": f"Missing required fields: {', '.join(missing_fields)}"
+            }), 400
+
+        # Validate birthdate - NEW: birthdate is now required
+        bdate = data.get('bdate')
+        if not bdate:
+            print("Birthdate is missing")
+            # ADD FAILED LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', 'Birthdate is required', current_user.account_id)
+            return jsonify({
+                "success": False, 
+                "message": "Birthdate is required"
+            }), 400
+
+        user = data.get('username')
+        password = data.get('password')  # This is now auto-generated from frontend
+        email = data.get('email')
+
+        fname = data.get('fname').upper()
+        mname = data.get('mname', '').upper()
+        lname = data.get('lname').upper()
+        suffix = data.get('suffix', 'NA')
+
+        contact = data.get('contact_no')
+        acct_created = date.today().strftime("%Y-%m-%d")
+        branch = data.get('branch')
+
+        print(f"Processing account creation for: {fname} {lname} ({user})")
+        print(f"Auto-generated password: {password}")
+
+        # Check if username already exists
+        print(f"Checking if username exists: {user}")
+        if username_exists(user):
+            print(f"Username already exists: {user}")
+            # ADD FAILED LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', f'Username already exists: {user}', current_user.account_id)
+            return jsonify({
+                "success": False, 
+                "message": "Username already exists. Please choose a different username."
+            }), 400
+
+        # Check if email already exists (if email provided)
+        if email:
+            print(f"Checking if email exists: {email}")
+            if email_exists(email):
+                print(f"Email already exists: {email}")
+                # ADD FAILED LOG:
+                db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', f'Email already exists: {email}', current_user.account_id)
+                return jsonify({
+                    "success": False, 
+                    "message": "Email address already exists. Please use a different email."
+                }), 400
+
+        # Create account using db_conn
+        print("Calling db_conn.create_account...")
+        create_new_acc = db_conn.create_account(
+            user=user, 
+            password=password, 
+            email=email, 
+            fname=fname, 
+            mname=mname, 
+            lname=lname,
+            suffix=suffix, 
+            bdate=bdate, 
+            contact=contact, 
+            acct_created=acct_created, 
+            branch=branch
+        )
+        
+        print(f"db_conn.create_account returned: {create_new_acc}")
+    
+        if create_new_acc is True:
+            print("Account creation successful!")
+            # ADD SUCCESS LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account', f'Created account for {fname} {lname} (Username: {user})', current_user.account_id)
+            return jsonify({
+                "success": True,
+                "message": "Account created successfully!"
+            })
+        else:
+            print(f"Account creation failed with: {create_new_acc}")
+            # ADD FAILED LOG:
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Failed', f'Database error: {create_new_acc}', current_user.account_id)
+            return jsonify({
+                "success": False, 
+                "message": f"Account creation failed: {create_new_acc}"
+            }), 500
+
+    except Exception as e:
+        print(f"Error creating account: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        # ADD FAILED LOG FOR EXCEPTION:
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Create Account Error', f'Exception: {str(e)}', current_user.account_id)
+        return jsonify({
+            "success": False, 
+            "message": "An unexpected error occurred. Please try again."
+        }), 500
+    
 @server.route('/api/accounts/archive', methods=['PATCH'])
 @login_required
 @roles_required('admin', 'superadmin')
 def archive_account():
-    data = request.get_json()
-    ids = data.get('ids', [])
-
-    for acc_id in ids:
-        success = db_conn.archive_account(acc_id)
-        
-        if not success:
-            return jsonify({"success": False, "error": f"Failed to archive account ID {acc_id}"}), 500
-
-    return jsonify({"success": True})
-
-# TODO add batch account creation (tickbox + toast message)
-# TODO set default password format (bdate + initials)
-# TODO make an overlay page for creating accounts on the accounts page and make it auto approved
-#* -------------------- END ACCOUNTS API ROUTES -------------------- *#
-
-
-@server.route('/inventory_action', methods=['POST'])
-def inventory_action():
-    pass
-
-
-# ! TEST FUNCTIONS GO HERE
-@server.route('/api/hot-update', methods=['POST'])
-def hot_update_data():
-    updates = request.json  # List of row dicts
-    conn = db_conn.conn_init()
-    cursor = conn.cursor()
-    for row in updates:
-        cursor.execute(
-            "UPDATE people SET name = %s, age = %s WHERE id = %s",
-            (row['name'], row['age'], row['id'])
-        )
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "success"})
-
-
-# declaration report
-@server.route('/generate_report', methods=['POST'])
-def generate_report():
     try:
-        # Get the date inputs
-        from_date = request.form.get('fromdate')
-        to_date = request.form.get('todate')
+        data = request.get_json()
+        ids = data.get('ids', [])
+        
+        print(f"🔍 ARCHIVE REQUEST - IDs: {ids}")
+        
+        if not ids:
+            return jsonify({"success": False, "error": "No account IDs provided"}), 400
 
-        # Validate the input dates (optional)
-        if not from_date or not to_date:
-            flash("Please select both from and to dates.", "error")
-            return render_template('declaration.html')
-
-        # Generate the report file name with timestamp
-        report_filename = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        report_folder = os.path.join(os.path.dirname(__file__), "reports")
-        report_path = os.path.join(report_folder, report_filename)
-
-        # Ensure the _reports folder exists
-        os.makedirs(report_folder, exist_ok=True)
-        print(f"Report will be saved to: {report_path}")
-
-        # Your report generation logic here, for example, using pandas
-        data = [
-            {"Transaction No.": 1001, "Year": 2025, "MAAB No.": "MAAB001", "Member ID": "M1234", "Effectivity Date": "2025-01-10",
-            "Expiry Date": "2026-01-10", "Particular Location": "Location A", "Location Category": "Urban", "Municipality": "City A",
-            "District": "D1", "OR Number": 123456, "OR Date": "2025-01-15", "Paid": "Yes", "Remarks": "Active Member",
-            "Origin": "Branch 1", "Count in Group": 3, "ID Received": "Yes", "Declared": "Yes", "Tags": "Renewal", "Declaration Date": "2025-01-10"},
-            {"Transaction No.": 1002, "Year": 2025, "MAAB No.": "MAAB002", "Member ID": "M1235", "Effectivity Date": "2025-02-05",
-            "Expiry Date": "2026-02-05", "Particular Location": "Location B", "Location Category": "Rural", "Municipality": "City B",
-            "District": "D2", "OR Number": 123457, "OR Date": "2025-02-07", "Paid": "Yes", "Remarks": "Pending Update",
-            "Origin": "Branch 2", "Count in Group": 2, "ID Received": "Yes", "Declared": "No", "Tags": "New Member", "Declaration Date": "2025-02-05"}
-        ]
-
-        # Create a DataFrame
-        df = pd.DataFrame(data)
-
-        # Save the DataFrame to an Excel file
-        df.to_excel(report_path, index=False)
-
-        flash(f"Report generated and saved as {report_filename}!", "success")
-        return redirect(url_for('declaration_page'))  # Redirect back to the page
-
+        # Use SINGLE session for ALL operations
+        db_session = SessionLocal()
+        success_count = 0
+        failed_ids = []
+        
+        try:
+            # BULK UPDATE - archive all accounts in one query
+            result = db_session.query(models.Accounts).filter(
+                models.Accounts.account_id.in_(ids)
+            ).update({
+                models.Accounts.acct_status: 'archived'
+            }, synchronize_session=False)
+            
+            db_session.commit()
+            success_count = result
+            
+            print(f"✅ Successfully archived {success_count} accounts in one operation")
+            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Accounts', f'Archived {success_count} account(s)', current_user.account_id)
+            
+            # Log the bulk action
+            if success_count > 0:
+                try:
+                    archiver = db_session.query(models.Accounts).filter(
+                        models.Accounts.account_id == current_user.account_id
+                    ).first()
+                    
+                    if archiver:
+                        db_conn.POST_action_log(
+                            archiver.username,
+                            archiver.user_level,
+                            "Bulk Archive Accounts",
+                            f"Archived {success_count} account(s): {ids}",
+                            current_user.account_id
+                        )
+                except Exception as log_error:
+                    print(f"⚠️ Logging failed but archive succeeded: {log_error}")
+            
+        except Exception as e:
+            db_session.rollback()
+            raise e
+        finally:
+            db_session.close()
+        
+        print(f"📊 Archive summary: {success_count}/{len(ids)} successful")
+        
+        if success_count > 0:
+            return jsonify({"success": True, "archived_count": success_count})
+        else:
+            return jsonify({"success": False, "error": "Failed to archive any accounts"}), 500
+            
     except Exception as e:
-        print(f"Error generating report: {e}")
-        flash("Error generating the report. Please try again later.", "error")
-        return render_template('error_page.html')  # Render an error page
+        print(f"❌ Error in archive_account: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+# ==================== API ROUTES FOR AUDIT TRAILS ====================
+# SIMPLE WORKING API ROUTES
+@server.route('/api/get_users', methods=['GET'])
+@login_required
+@roles_required('admin', 'superadmin')
+def api_get_users():
+    try:
+        print("🔍 Getting users...")
+        db_session = db_conn.SessionLocal()
+        users = db_session.query(db_conn.models.Accounts).filter(
+            db_conn.models.Accounts.acct_status.in_(['approved', 'staff'])
+        ).all()
+        
+        users_list = []
+        for user in users:
+            users_list.append({
+                'user_id': user.account_id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name
+            })
+        
+        print(f"✅ Found {len(users_list)} users")
+        return jsonify(users_list)
+        
+    except Exception as e:
+        print(f"❌ Error getting users: {e}")
+        return jsonify([])
+    finally:
+        db_session.close()
 
+@server.route('/api/get_filtered_logs', methods=['GET'])
+@login_required
+@roles_required('admin', 'superadmin')
+def api_get_filtered_logs():
+    try:
+        user_id = request.args.get('user_id', '')
+        filter_date = request.args.get('date', '')
+        
+        print(f"🔍 Filtering - User: {user_id}, Date: {filter_date}")
+        
+        # Get all logs
+        all_logs = db_conn.GET_audit_logs()
+        print(f"📋 Total logs: {len(all_logs)}")
+        
+        filtered_logs = []
+        
+        for log in all_logs:
+            # Get user ID - try different attribute names
+            log_user_id = getattr(log, 'account_id', None)
+            if log_user_id is None:
+                log_user_id = getattr(log, 'user_id', None)
+            
+            log_timestamp = getattr(log, 'timestamp', None)
+            
+            # Check user filter
+            user_match = not user_id or (log_user_id and str(log_user_id) == user_id)
+            
+            # Check date filter
+            date_match = True
+            if filter_date:
+                if log_timestamp:
+                    if hasattr(log_timestamp, 'strftime'):
+                        log_date = log_timestamp.strftime('%Y-%m-%d')
+                    else:
+                        log_date = str(log_timestamp)[:10]
+                    date_match = (log_date == filter_date)
+                else:
+                    date_match = False
+            
+            if user_match and date_match:
+                # Format timestamp
+                if log_timestamp and hasattr(log_timestamp, 'strftime'):
+                    timestamp_str = log_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                else:
+                    timestamp_str = str(log_timestamp)
+                
+                filtered_logs.append({
+                    'log_id': getattr(log, 'log_id', ''),
+                    'username': getattr(log, 'username', ''),
+                    'user_level': getattr(log, 'user_level', ''),
+                    'action': getattr(log, 'action', ''),
+                    'details': getattr(log, 'details', ''),
+                    'timestamp': timestamp_str,
+                    'ip_address': getattr(log, 'ip_address', '')
+                })
+        
+        print(f"✅ Filtered logs: {len(filtered_logs)}")
+        return jsonify({
+            "success": True, 
+            "logs": filtered_logs,
+            "filters": {"user_id": user_id, "date": filter_date}
+        })
+        
+    except Exception as e:
+        print(f"❌ Error in get_filtered_logs: {e}")
+        return jsonify({
+            "success": False, 
+            "error": str(e),
+            "logs": []
+        }), 500
+    
+    # DEBUG ROUTE - Check if APIs are working
+@server.route('/api/debug_test')
+def debug_test():
+    return jsonify({"message": "API is working!", "status": "success"})
+
+# DEBUG ROUTE - Check audit logs structure
+@server.route('/api/debug_logs_info')
+@login_required
+@roles_required('admin', 'superadmin')
+def debug_logs_info():
+    try:
+        logs = db_conn.GET_audit_logs()
+        if not logs:
+            return jsonify({"message": "No logs found", "count": 0})
+        
+        # Check first log structure
+        first_log = logs[0]
+        log_attrs = {}
+        for attr in dir(first_log):
+            if not attr.startswith('_'):
+                try:
+                    value = getattr(first_log, attr)
+                    log_attrs[attr] = {
+                        "type": str(type(value)),
+                        "value": str(value)[:100] if value else "None"
+                    }
+                except:
+                    pass
+        
+        return jsonify({
+            "total_logs": len(logs),
+            "first_log_attributes": log_attrs,
+            "sample_data": {
+                "log_id": getattr(first_log, 'log_id', 'N/A'),
+                "username": getattr(first_log, 'username', 'N/A'),
+                "account_id": getattr(first_log, 'account_id', 'N/A'),
+                "timestamp": str(getattr(first_log, 'timestamp', 'N/A'))
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
+#? -------------------- NOTIFICATIONS -------------------- ?#
+
+@server.route('/api/notifications', methods=['GET'])
+def get_notifications():
+    try:
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        notifications = []
+        
+        print("🔍 Starting notifications check...")
+        
+        # Get all member records
+        all_records = db_conn.get_member_records()
+        print(f"📊 Found {len(all_records)} records")
+        
+        # 1. Check for birthdays today
+        birthday_count = 0
+        for record in all_records:
+            try:
+                # Get record ID safely
+                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
+                if not record_id:
+                    continue
+                    
+                # Get entries for this record
+                entries = db_conn.get_entries(record_id)
+                
+                for entry in entries:
+                    # Check if entry has birth_date
+                    birth_date = getattr(entry, 'birth_date', None)
+                    if birth_date:
+                        # Convert to date object if string
+                        if isinstance(birth_date, str):
+                            try:
+                                birth_date = datetime.strptime(birth_date, '%Y-%m-%d').date()
+                            except:
+                                continue
+                        elif isinstance(birth_date, datetime):
+                            birth_date = birth_date.date()
+                        
+                        # Check if birthday is today
+                        if birth_date.month == today.month and birth_date.day == today.day:
+                            first_name = getattr(entry, 'first_name', '')
+                            last_name = getattr(entry, 'last_name', '')
+                            email = getattr(entry, 'email', '')
+                            
+                            notifications.append({
+                                'type': 'birthday',
+                                'message': f"🎂 {first_name} {last_name} has birthday today!",
+                                'member_name': f"{first_name} {last_name}",
+                                'member_email': email,
+                                'priority': 'high'
+                            })
+                            birthday_count += 1
+            except Exception as e:
+                print(f"❌ Error processing record: {e}")
+                continue
+        
+        print(f"🎂 Found {birthday_count} birthdays today")
+        
+        # 2. Check for expiring memberships (30 days)
+        expiring_count = 0
+        thirty_days_from_now = today + timedelta(days=30)
+        
+        for record in all_records:
+            try:
+                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
+                if not record_id:
+                    continue
+                    
+                entries = db_conn.get_entries(record_id)
+                
+                for entry in entries:
+                    or_date = getattr(entry, 'OR_date', None)
+                    if or_date:
+                        # Convert to date object if string
+                        if isinstance(or_date, str):
+                            try:
+                                or_date = datetime.strptime(or_date, '%Y-%m-%d').date()
+                            except:
+                                continue
+                        elif isinstance(or_date, datetime):
+                            or_date = or_date.date()
+                        
+                        # Calculate expiration (OR_date + 1 year)
+                        expiration_date = or_date + timedelta(days=365)
+                        days_until_expiry = (expiration_date - today).days
+                        
+                        # Check if expiring within 30 days
+                        if 0 <= days_until_expiry <= 30:
+                            first_name = getattr(entry, 'first_name', '')
+                            last_name = getattr(entry, 'last_name', '')
+                            email = getattr(entry, 'email', '')
+                            
+                            notifications.append({
+                                'type': 'expiring',
+                                'message': f"⏰ {first_name} {last_name} membership expires in {days_until_expiry} days",
+                                'member_name': f"{first_name} {last_name}",
+                                'member_email': email,
+                                'additional_data': {'days_left': days_until_expiry},
+                                'priority': 'medium'
+                            })
+                            expiring_count += 1
+            except Exception as e:
+                print(f"❌ Error processing record for expiring: {e}")
+                continue
+        
+        print(f"⏰ Found {expiring_count} expiring memberships")
+        print(f"📨 Total notifications: {len(notifications)}")
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications,
+            'total_count': len(notifications),
+            'summary': {
+                'birthdays': birthday_count,
+                'expiring': expiring_count
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Major error in get_notifications: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'notifications': [],
+            'total_count': 0
+        }), 500
+
+# TEST ROUTE - OPTIONAL
+@server.route('/api/notifications/test', methods=['GET'])
+def test_notifications_route():
+    return jsonify({"message": "Notifications route is working", "success": True})
 
 #? -------------------- MISC ROUTES -------------------- ?#
 

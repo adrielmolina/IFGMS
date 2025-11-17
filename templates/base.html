@@ -15,18 +15,19 @@
     
     <!-- TODO convert all the icon assets into svg - ++DONE++ -->
 
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/CAVITE.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/prc_logo.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/dashboard.svg') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/members.png') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/declaration.svg') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/inventory.svg') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/claims.svg') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/reports.svg') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/audit.svg') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/accounts.svg') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/settings.svg') }}">
-    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/logout.svg') }}">
+<!-- In your base.html, make sure preload links have proper 'as' attribute -->
+
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/prc_logo.png') }}" as="image">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/dashboard.svg') }}" as="image">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/members.png') }}" as="image" >
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/declaration.svg') }}" as="image">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/inventory.svg') }}" as="image">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/claims.svg') }}" as="image">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/reports.svg') }}" as="image">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/audit.svg') }}" as="image">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/accounts.svg') }}" as="image">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/settings.svg') }}"as="image">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='assets/logout.svg') }}"as="image">
 
 
 
@@ -244,6 +245,16 @@
             document.documentElement.style.setProperty("--app-font-size", savedFontSize);
             document.body.style.fontSize = savedFontSize;
         }
+        
+        // Listen for storage changes from settings page
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'profileImage') {
+                const navProfileImage = document.getElementById("navProfileImage");
+                if (navProfileImage) {
+                    navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+                }
+            }
+        });
     });
 </script>
     
