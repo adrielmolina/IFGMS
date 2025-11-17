@@ -51,6 +51,10 @@
     <i class="fa-solid fa-plus"></i> Add ID Stock
   </button>
 
+  <button class="btn" id="assignIDBtn">
+    <i class="fa-solid fa-user-check"></i> Assign ID to Member
+  </button>
+
 <button class="btn" id="openFormBtn2">
     <i class="fa-solid fa-id-card"></i> ID Descriptions
 </button>
@@ -100,6 +104,91 @@
     </div>
 </div>
 
+<!-- I-replace ang existing na assignIDModal -->
+<div id="assignOverlay" class="overlay" style="display: none;">
+    <div class="overlay-content">
+        <span id="closeAssignBtn" class="close-overlay">&times;</span>
+        <h2>Assign ID to Member</h2>
+        
+        <!-- SIMPLE TABS -->
+        <div class="simple-tabs">
+            <button class="tab-button active" data-tab="singleTab">Assign 1 ID</button>
+            <button class="tab-button" data-tab="bulkTab">Assign Multiple IDs</button>
+        </div>
+
+        <!-- SINGLE ASSIGNMENT TAB -->
+        <div class="tab-content active" id="singleTab">
+            <form id="assignForm">
+                <div class="form-row">
+                    <label for="assignCategory">ID Type:</label>
+                    <select name="assignCategory" id="assignCategory" required>
+                        <option value="">Choose ID Type</option>
+                        <option value="Classic">Classic</option>
+                        <option value="Bronze">Bronze</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Platinum">Platinum</option>
+                        <option value="Enhanced Platinum">Enhanced Platinum</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Senior+">Senior+</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <label for="assignID">MAAB No.:</label>
+                    <input type="text" id="assignID" name="assignID" placeholder="Example: PC0000001" required>
+                </div>
+
+                <div class="form-row">
+                    <label for="memberName">Member Full Name:</label>
+                    <input type="text" id="memberName" name="memberName" placeholder="Enter full name" required>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <i class="fa-solid fa-check"></i> Assign This ID
+                </button>
+            </form>
+        </div>
+
+        <!-- BULK ASSIGNMENT TAB -->
+        <div class="tab-content" id="bulkTab">
+            <div class="form-row">
+                <label>Upload Excel/CSV file from Members:</label>
+                <div class="file-upload-area" id="fileUploadArea">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <p>Click to upload Excel file from Members</p>
+                    <small>Use the export from Members page</small>
+                    <input type="file" id="bulkAssignFile" accept=".xlsx,.xls,.csv" style="display: none;">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label>How to assign IDs:</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="idMethod" value="existing" checked>
+                        <span>Use existing ID numbers from Excel</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="idMethod" value="auto">
+                        <span>Automatically assign available IDs</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="preview-box" id="previewBox" style="display: none;">
+                <h4>Ready to Assign:</h4>
+                <div id="memberPreview"></div>
+                <p class="count-text"><strong>Total: <span id="memberCount">0</span> members</strong></p>
+            </div>
+
+            <button type="button" id="processBulkBtn" class="submit-btn" disabled>
+                <i class="fa-solid fa-play"></i> Assign IDs to All Members
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="entries-select">
     Show
     <select id="entriesPerPage">
@@ -129,7 +218,7 @@
     
 <div id="popupForm2" class="popup-form">
     <div class="form-container2">
-        <span id="closeBtn2" class="close-btn">&times;</span>
+        <span id="closeBtn2" class="close-btn2">&times;</span>
         
         <!-- ===== MAAB ID GALLERY ===== -->
         <section class="gallery-section section-fade">
@@ -589,18 +678,28 @@
           return (v && typeof v === 'string') ? v.toLowerCase() : '';
         }
 
-        function getFilteredData() {
-          return inventoryData.filter(item => {
-            if (currentCategory !== 'all' && item.maab_category !== currentCategory) return false;
-            return (
-              safeLower(item.inv_id).includes(searchQuery) ||
-              safeLower(item.maab_no).includes(searchQuery) ||
-              safeLower(item.maab_category).includes(searchQuery) ||
-              safeLower(item.allocated_to).includes(searchQuery) ||
-              safeLower(item.remarks).includes(searchQuery)
-            );
-          });
-        }
+function getFilteredData() {
+  let filteredData = inventoryData.filter(item => {
+    if (currentCategory !== 'all' && item.maab_category !== currentCategory) return false;
+    return (
+      safeLower(item.inv_id).includes(searchQuery) ||
+      safeLower(item.maab_no).includes(searchQuery) ||
+      safeLower(item.maab_category).includes(searchQuery) ||
+      safeLower(item.allocated_to).includes(searchQuery) ||
+      safeLower(item.remarks).includes(searchQuery)
+    );
+  });
+
+  // DEFAULT SORT: Most recent first
+  // Kung may date_created field, gamitin ito, kung hindi, gamitin ang inv_id
+  return filteredData.sort((a, b) => {
+    if (a.date_created && b.date_created) {
+      return new Date(b.date_created) - new Date(a.date_created);
+    }
+    // Fallback: sort by ID in descending order (highest ID = most recent)
+    return parseInt(b.inv_id) - parseInt(a.inv_id);
+  });
+}
 
         // ============================================================
         // 🔹 SINGLE TABLE APPROACH - isang table lang ang visible
@@ -820,8 +919,556 @@
           searchInput.focus();
         });
 
+
+// ============================================================
+// 🔹 ASSIGN ID OVERLAY - COMPLETE FUNCTIONALITY
+// ============================================================
+
+// Overlay Elements
+const assignIDBtn = document.getElementById('assignIDBtn');
+const assignOverlay = document.getElementById('assignOverlay');
+const closeAssignBtn = document.getElementById('closeAssignBtn');
+
+// Single Assignment Elements
+const assignForm = document.getElementById('assignForm');
+const singleSubmitBtn = assignForm.querySelector('.submit-btn');
+
+// Bulk Assignment Elements
+const bulkAssignFile = document.getElementById('bulkAssignFile');
+const processBulkBtn = document.getElementById('processBulkBtn');
+const fileUploadArea = document.getElementById('fileUploadArea');
+const memberPreview = document.getElementById('memberPreview');
+const memberCount = document.getElementById('memberCount');
+const previewBox = document.getElementById('previewBox');
+
+let currentExcelData = []; // Store parsed Excel data
+
+// ============================================================
+// 🔹 OVERLAY MANAGEMENT
+// ============================================================
+
+// Open Overlay
+assignIDBtn.addEventListener('click', () => {
+    assignOverlay.style.display = 'flex';
+    resetOverlay();
+});
+
+// Close Overlay
+closeAssignBtn.addEventListener('click', () => {
+    assignOverlay.style.display = 'none';
+});
+
+// Close overlay when clicking outside
+window.addEventListener('click', (event) => {
+    if (event.target === assignOverlay) {
+        assignOverlay.style.display = 'none';
+    }
+});
+
+// Close overlay with ESC key
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && assignOverlay.style.display === 'flex') {
+        assignOverlay.style.display = 'none';
+    }
+});
+
+// Reset overlay to default state
+function resetOverlay() {
+    // Reset to single tab
+    switchToTab('singleTab');
+    
+    // Clear forms
+    assignForm.reset();
+    resetBulkSection();
+}
+
+function resetBulkSection() {
+    bulkAssignFile.value = '';
+    fileUploadArea.innerHTML = `
+        <i class="fa-solid fa-file-excel"></i>
+        <p>Click to upload Excel file from Members</p>
+        <small>Use the export from Members page</small>
+    `;
+    previewBox.style.display = 'none';
+    processBulkBtn.disabled = true;
+    currentExcelData = [];
+}
+
+// ============================================================
+// 🔹 TAB MANAGEMENT
+// ============================================================
+
+// Tab Switching
+document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', function() {
+        const tabId = this.getAttribute('data-tab');
+        switchToTab(tabId);
+    });
+});
+
+function switchToTab(tabId) {
+    // Remove active class from all tabs
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Add active class to clicked tab
+    document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+    
+    // Show appropriate toast
+    if (tabId === 'singleTab') {
+    } else {
+    }
+}
+
+// ============================================================
+// 🔹 SINGLE ASSIGNMENT FUNCTIONALITY
+// ============================================================
+
+assignForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const category = document.getElementById('assignCategory').value;
+    const idNumber = document.getElementById('assignID').value.trim();
+    const memberName = document.getElementById('memberName').value.trim();
+
+    if (!category || !idNumber || !memberName) {
+        toastAlert("Missing Information", "Please fill in all fields.");
+        return;
+    }
+
+    // Show loading state
+    singleSubmitBtn.disabled = true;
+    singleSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Assigning...';
+
+    try {
+        const response = await fetch('/api/inventory/assign_id', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                category: category,
+                id_number: idNumber,
+                member_name: memberName
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            toastSuccess("ID Assigned", `ID ${idNumber} successfully assigned to ${memberName}`);
+            
+            // Clear form
+            assignForm.reset();
+            
+            // Close the overlay after delay
+            setTimeout(() => {
+                assignOverlay.style.display = 'none';
+                
+                // Refresh the inventory table
+                location.reload();
+            }, 2000);
+            
+        } else {
+            toastError("Assignment Failed", result.error || "Failed to assign ID. Please check if the ID exists and is available.");
+        }
+    } catch (error) {
+        console.error('Error assigning ID:', error);
+        toastError("Network Error", "Failed to connect to server. Please check your internet connection.");
+    } finally {
+        // Reset button state
+        singleSubmitBtn.disabled = false;
+        singleSubmitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Assign This ID';
+    }
+});
+
+// ============================================================
+// 🔹 BULK ASSIGNMENT FUNCTIONALITY
+// ============================================================
+
+// File upload handling
+fileUploadArea.addEventListener('click', function() {
+    bulkAssignFile.click();
+});
+
+bulkAssignFile.addEventListener('change', async function(e) {
+    if (!e.target.files[0]) return;
+    
+    const file = e.target.files[0];
+    const fileName = file.name;
+    
+    // Show file selected
+    fileUploadArea.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <p>Processing ${fileName}...</p>
+        <small>Reading Excel file...</small>
+    `;
+    
+    processBulkBtn.disabled = true;
+    
+    try {
+        toastInfo("Processing", "Reading Excel file, please wait...");
+        
+        // Process Excel file
+        const entries = await processExcelFile(file);
+        currentExcelData = entries;
+        
+        if (entries.length === 0) {
+            toastError("No Data", "No valid member entries found in the Excel file.");
+            resetBulkSection();
+            return;
+        }
+        
+        // Show success
+        fileUploadArea.innerHTML = `
+            <i class="fa-solid fa-check" style="color: #28a745;"></i>
+            <p>${fileName}</p>
+            <small>✅ Ready to process ${entries.length} members</small>
+        `;
+        
+        // Show preview
+        showMemberPreview(entries);
+        processBulkBtn.disabled = false;
+        
+        toastSuccess("File Ready", `Found ${entries.length} members in the Excel file`);
+        
+    } catch (error) {
+        console.error('Excel processing error:', error);
+        toastError("File Error", "Failed to process Excel file. Please make sure it's the correct format.");
+        resetBulkSection();
+    }
+});
+
+// Process Excel File
+async function processExcelFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                // Load Excel library
+                const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.19.3/package/xlsx.mjs');
+                const workbook = XLSX.read(e.target.result, { type: 'array' });
+                
+                // Get first sheet
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                
+                // Find the header row
+                let headerRowIndex = -1;
+                let headers = [];
+                
+                for (let i = 0; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row && row.includes('Category') && row.includes('MAAB No') && row.includes('First Name')) {
+                        headerRowIndex = i;
+                        headers = row;
+                        break;
+                    }
+                }
+                
+                if (headerRowIndex === -1) {
+                    reject(new Error("Excel format not recognized"));
+                    return;
+                }
+                
+                // Extract data rows
+                const dataRows = jsonData.slice(headerRowIndex + 1);
+                const entries = [];
+                
+                dataRows.forEach(row => {
+                    if (row && row.length >= 5) { // At least have basic info
+                        const entry = {};
+                        headers.forEach((header, index) => {
+                            entry[header] = row[index] || '';
+                        });
+                        
+                        // Only include entries with first name and last name
+                        if (entry['First Name'] && entry['Last Name'] && entry['Category']) {
+                            entries.push({
+                                firstName: entry['First Name'],
+                                lastName: entry['Last Name'],
+                                category: entry['Category'],
+                                maabNo: entry['MAAB No'] || '',
+                                fullName: `${entry['First Name']} ${entry['Last Name']}`.trim()
+                            });
+                        }
+                    }
+                });
+                
+                resolve(entries);
+            } catch (error) {
+                reject(error);
+            }
+        };
+        reader.onerror = () => reject(new Error("File reading failed"));
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+// Show member preview
+function showMemberPreview(entries) {
+    const previewCount = Math.min(entries.length, 8); // Show max 8 entries
+    
+    let html = `<div style="font-size: 13px; line-height: 1.4;">`;
+    
+    entries.slice(0, previewCount).forEach(entry => {
+        const idDisplay = entry.maabNo ? `<span style="color: #28a745;">${entry.maabNo}</span>` : '<span style="color: #ff6b00;">[Auto]</span>';
+        html += `<div>• ${entry.fullName} - ${entry.category} ${idDisplay}</div>`;
+    });
+    
+    if (entries.length > previewCount) {
+        html += `<div style="color: #666; margin-top: 5px;">... and ${entries.length - previewCount} more members</div>`;
+    }
+    
+    html += `</div>`;
+    
+    memberPreview.innerHTML = html;
+    memberCount.textContent = entries.length;
+    previewBox.style.display = 'block';
+}
+
+// Process Bulk Assignment
+processBulkBtn.addEventListener('click', async function() {
+    if (currentExcelData.length === 0) {
+        toastError("No Data", "Please upload an Excel file first.");
+        return;
+    }
+
+    const idMethod = document.querySelector('input[name="idMethod"]:checked').value;
+    
+    // Show loading state
+    processBulkBtn.disabled = true;
+    processBulkBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+    
+    try {
+        let result;
+        
+        if (idMethod === 'existing') {
+            toastInfo("Assigning", "Assigning existing IDs from Excel...");
+            result = await assignExistingIDs(currentExcelData);
+        } else {
+            toastInfo("Auto-Assigning", "Automatically assigning available IDs...");
+            result = await autoAssignIDs(currentExcelData);
+        }
+        
+        showBulkResults(result.success, result.error, currentExcelData.length);
+        
+    } catch (error) {
+        console.error('Bulk assignment error:', error);
+        toastError("Processing Failed", "Failed to process bulk assignment. Please try again.");
+    } finally {
+        processBulkBtn.disabled = false;
+        processBulkBtn.innerHTML = '<i class="fa-solid fa-play"></i> Assign IDs to All Members';
+    }
+});
+
+// Assign Existing IDs from Excel
+async function assignExistingIDs(entries) {
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const [index, entry] of entries.entries()) {
+        if (!entry.maabNo) {
+            errorCount++;
+            continue;
+        }
+
+        try {
+            // Update progress toast for every 10 entries
+            if (index % 10 === 0 && index > 0) {
+                toastInfo("Assigning...", `Processed ${index}/${entries.length} members...`);
+            }
+
+            const response = await fetch('/api/inventory/assign_id', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category: entry.category,
+                    id_number: entry.maabNo,
+                    member_name: entry.fullName
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                successCount++;
+            } else {
+                errorCount++;
+                console.warn(`Failed to assign ${entry.maabNo}:`, result.error);
+            }
+        } catch (error) {
+            errorCount++;
+            console.error(`Error assigning ${entry.maabNo}:`, error);
+        }
+    }
+
+    return { success: successCount, error: errorCount };
+}
+
+// Auto Assign Available IDs
+async function autoAssignIDs(entries) {
+    // Group entries by category
+    const entriesByCategory = {};
+    entries.forEach(entry => {
+        const category = entry.category || 'Classic';
+        if (!entriesByCategory[category]) {
+            entriesByCategory[category] = [];
+        }
+        entriesByCategory[category].push(entry);
+    });
+
+    let totalSuccess = 0;
+    let totalError = 0;
+
+    // Process each category
+    for (const [category, categoryEntries] of Object.entries(entriesByCategory)) {
+        toastInfo("Checking Stock", `Checking available ${category} IDs...`);
+        
+        const { success, error } = await autoAssignCategory(category, categoryEntries);
+        totalSuccess += success;
+        totalError += error;
+    }
+
+    return { success: totalSuccess, error: totalError };
+}
+
+// Auto Assign for specific category
+async function autoAssignCategory(category, entries) {
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+        // Get available IDs for this category
+        const response = await fetch(`/api/inventory/available_ids/${category}?count=${entries.length}`);
+        const result = await response.json();
+        
+        if (!result.success || !result.available_ids || result.available_ids.length < entries.length) {
+            const available = result.available_ids ? result.available_ids.length : 0;
+            toastError("Insufficient Stock", 
+                `Not enough ${category} IDs available. Need: ${entries.length}, Have: ${available}`);
+            return { success: 0, error: entries.length };
+        }
+
+        toastInfo("Assigning", `Assigning ${entries.length} ${category} IDs...`);
+
+        // Assign IDs to each entry
+        for (let i = 0; i < entries.length; i++) {
+            const entry = entries[i];
+            const maabNo = result.available_ids[i];
+
+            try {
+                const assignResponse = await fetch('/api/inventory/assign_id', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        category: category,
+                        id_number: maabNo,
+                        member_name: entry.fullName
+                    })
+                });
+
+                const assignResult = await assignResponse.json();
+                if (assignResult.success) {
+                    successCount++;
+                } else {
+                    errorCount++;
+                    console.warn(`Failed to auto-assign ${maabNo}:`, assignResult.error);
+                }
+            } catch (error) {
+                errorCount++;
+                console.error(`Error auto-assigning ${maabNo}:`, error);
+            }
+        }
+    } catch (error) {
+        errorCount += entries.length;
+        console.error(`Error processing ${category} category:`, error);
+    }
+
+    return { success: successCount, error: errorCount };
+}
+
+// Show bulk assignment results
+function showBulkResults(successCount, errorCount, totalCount) {
+    if (successCount > 0) {
+        toastSuccess("Bulk Assignment Complete", 
+            `Successfully assigned ${successCount} out of ${totalCount} IDs${errorCount > 0 ? ` (${errorCount} failed)` : ''}`);
+        
+        // Close overlay and refresh table after delay
+        setTimeout(() => {
+            assignOverlay.style.display = 'none';
+            location.reload();
+        }, 3000);
+    } else {
+        toastError("Assignment Failed", 
+            `No IDs were successfully assigned. ${errorCount} errors occurred. Please check your data and try again.`);
+    }
+}
+
+// ============================================================
+// 🔹 UTILITY FUNCTIONS
+// ============================================================
+
+// Validate MAAB No format
+function validateMAABNo(maabNo) {
+    const pattern = /^(PC|PB|PS|PG|PP|PEP|S|SP)\d{7}$/;
+    return pattern.test(maabNo);
+}
+
+// Get category from MAAB No prefix
+function getCategoryFromMAABNo(maabNo) {
+    const prefix = maabNo.substring(0, 2);
+    const categoryMap = {
+        'PC': 'Classic',
+        'PB': 'Bronze', 
+        'PS': 'Silver',
+        'PG': 'Gold',
+        'PP': 'Platinum',
+        'PE': 'Enhanced Platinum',
+        'S': 'Senior',
+        'SP': 'Senior+'
+    };
+    return categoryMap[prefix] || 'Classic';
+}
+
+// Auto-suggest MAAB No based on category
+document.getElementById('assignCategory').addEventListener('change', async function() {
+    const category = this.value;
+    const maabNoInput = document.getElementById('assignID');
+    
+    if (category && !maabNoInput.value) {
+        try {
+            const response = await fetch(`/api/inventory/available_ids/${category}?count=1`);
+            const result = await response.json();
+            
+            if (result.success && result.available_ids.length > 0) {
+                maabNoInput.placeholder = `Suggest: ${result.available_ids[0]}`;
+            }
+        } catch (error) {
+            console.error('Error getting available ID:', error);
+        }
+    }
+});
+
+// ============================================================
+// 🔹 INITIALIZATION
+// ============================================================
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Assign ID Overlay initialized');
+    
+    // Add some helpful event listeners
+    document.getElementById('assignID').addEventListener('blur', function() {
+        if (this.value && validateMAABNo(this.value)) {
+            const detectedCategory = getCategoryFromMAABNo(this.value);
+            document.getElementById('assignCategory').value = detectedCategory;
+        }
+    });
+});
+
         // ============================================================
-        // 🔹 Initialize page
+        // 🔹 Upload Image
         // ============================================================
         showCategory('all');
 
