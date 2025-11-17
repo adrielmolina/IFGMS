@@ -370,6 +370,7 @@ button,
   margin-left: 300px !important;
 }
 
+/* Dispatch ready auto styling */
 .dispatch-ready-auto {
     opacity: 0.6;
     cursor: not-allowed !important;
@@ -1111,6 +1112,7 @@ div.table-container {
 }
 
 .required-field {
+    border-color: #ff4444 !important;
     background-color: #fff8f8 !important;
 }
 
@@ -1183,7 +1185,7 @@ div.table-container {
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Disabled button styles */
+/* Save button disabled state */
 .save_record_details:disabled,
 .add_entry_details:disabled {
     background-color: #cccccc !important;

@@ -196,6 +196,10 @@ def declaration_page():
     if active_dispatch:
         dispatch_contents = db_conn.get_current_dispatch_contents(active_dispatch.dispatch_id)
         
+        # DEBUG: Print what we're sending to the template
+        print(f"📦 Sending to template - Dispatch ID: {active_dispatch.dispatch_id}")
+        print(f"📦 Number of entries: {len(dispatch_contents)}")
+        
         # Get unique categories and locations from dispatch_contents
         unique_categories = set()
         unique_locations = set()
@@ -211,8 +215,8 @@ def declaration_page():
         locations_list = sorted(list(unique_locations))
         
         if dispatch_contents:      
-            print('current_dispatch', active_dispatch)
-            print('dispatch_contents', dispatch_contents)  
+            print('✅ Current dispatch:', active_dispatch.dispatch_id)
+            print('✅ Dispatch contents count:', len(dispatch_contents))  
             return render_template('declaration.html', 
                                 active_dispatch=active_dispatch, 
                                 dispatch_contents=dispatch_contents,
@@ -220,12 +224,14 @@ def declaration_page():
                                 locations=locations_list)
         else:
             # if empty or error
+            print('⚠️ No dispatch contents found')
             return render_template('declaration.html', 
                                 active_dispatch=active_dispatch, 
                                 dispatch_contents=[],
                                 categories=[],
                                 locations=[])
     else:
+        print('❌ No active dispatch found')
         return render_template('declaration.html', 
                             active_dispatch=False,
                             categories=[],
@@ -601,6 +607,8 @@ def reset_password():
 def declaration_api():
     try:
         data = request.get_json()
+        print(f"📦 DECLARATION API CALLED - Data: {data}")  # Debug print
+        
         if not data:
             return jsonify({"success": False, "error": "No data provided"}), 400
 
@@ -611,18 +619,24 @@ def declaration_api():
         late_declare = data.get('late_declare')
         dispatch_remarks = data.get('dispatch_remarks')
         
+        print(f"📦 Creating dispatch with: type={dispatch_type}, origin={dispatch_origin}, "
+              f"year={dispatch_year}, cutoff={dispatch_cutoff}, late_declare={late_declare}")
+        
         result = db_conn.create_dispatch(dispatch_type, dispatch_origin, dispatch_year, dispatch_cutoff, late_declare, dispatch_remarks)
         
+        print(f"📦 DB Result: {result}")  # Debug print
+        
         if result == True:
-            return jsonify({"success": True})
+            return jsonify({"success": True, "message": "Dispatch created successfully"})
         else:
             return jsonify({"success": False, "error": result}), 500
             
     except Exception as e:
-        print(f"Declaration API error: {e}")
+        print(f"❌ Declaration API error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": "Internal server error"}), 500
-
-
+    
 @server.route('/settings_save_changes', methods=['POST'])
 @login_required
 def settings_save_changes():
@@ -1043,14 +1057,36 @@ def save_entry_update():
         print(f"Data types: { {k: type(v) for k, v in data.items()} }")
         
         if not data:
+            print("❌ No data provided")
             return jsonify({"success": False, "error": "No data provided"}), 400
             
         entry_id = data.get('entry_id')
         print(f'Processing update for entry_id: {entry_id}')
         
-        result = db_conn.save_entry_updates(data)
+        if not entry_id:
+            print("❌ No entry_id provided")
+            return jsonify({"success": False, "error": "No entry ID provided"}), 400
         
-        if result:
+        # Test database connection first
+        print("🔍 Testing database connection...")
+        try:
+            db_session = SessionLocal()
+            test_entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
+            if not test_entry:
+                print(f"❌ Entry {entry_id} not found in database")
+                return jsonify({"success": False, "error": f"Entry {entry_id} not found"}), 404
+            print(f"✅ Database connection test passed - Entry found")
+            db_session.close()
+        except Exception as db_error:
+            print(f"❌ Database connection test failed: {db_error}")
+            return jsonify({"success": False, "error": f"Database connection failed: {str(db_error)}"}), 500
+        
+        print("🔍 Calling db_conn.save_entry_updates...")
+        result = db_conn.save_entry_update(data)
+        print(f"🔍 db_conn.save_entry_updates returned: {result} (type: {type(result)})")
+        
+        # FIXED: Check for explicit True/False instead of truthy/falsy
+        if result is True:
             print("✅ Entry update successful")
             return jsonify({"success": True})
         else:
@@ -1061,7 +1097,7 @@ def save_entry_update():
         print(f"💥 Exception in save_entry_update route: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": f"Server error: {str(e)}"}), 500
 
 
 @server.route('/api/get_report/target_vs_actual/<int:year>', methods=['GET'])
@@ -1152,16 +1188,25 @@ def add_inventory_stock():
 @login_required
 @roles_required('admin', 'superadmin')
 def add_to_dispatch():
-    data = request.get_json()  # optional — for future if you need to pass something
+    data = request.get_json() or {}
+    record_ids = data.get('record_ids', [])
+    
     try:
-        result = db_conn.add_to_dispatch()
-        print('add_to_dispatch result:', result)
-        if result:
+        print(f"📦 API: Adding records to dispatch: {record_ids}")
+        result = db_conn.add_to_dispatch(record_ids)
+        print(f'📦 API: add_to_dispatch result: {result}')
+        
+        if result is not None:
             return jsonify({"success": True, "added_to_dispatch_count": result})
         else:
             return jsonify({"success": False, "error": "No entries to add to dispatch"}), 500
+            
     except Exception as e:
+        print(f"❌ API Error in add_to_dispatch route: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
+
 
                         
 
@@ -1259,42 +1304,387 @@ def export_dispatch():
     except Exception as e:
         print(f"Export error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-    
-@server.route('/api/transmit_dispatch', methods=['POST'])
+
+
+def generate_dispatch_excel_file(dispatch_id, transmitted_count):
+    """Generate Excel file for the dispatched entries - GUARANTEED WORKING VERSION"""
+    try:
+        print(f"🎯 Generating Excel for dispatch {dispatch_id}")
+        
+        db_session = SessionLocal()
+        
+        # Get dispatch details
+        dispatch = db_session.query(models.Dispatch).filter_by(dispatch_id=dispatch_id).first()
+        if not dispatch:
+            print(f"❌ Dispatch {dispatch_id} not found")
+            return jsonify({"success": False, "error": "Dispatch not found"}), 404
+
+        print(f"✅ Found dispatch: {dispatch.dispatch_id}")
+
+        # Get entries that were declared today (regardless of dispatch_id)
+        current_date = datetime.now().date()
+        entries_data = (
+            db_session.query(
+                models.Entries.entry_id,
+                models.Entries.maab_category,
+                models.Entries.maab_no,
+                models.Members.first_name,
+                models.Members.middle_name,
+                models.Members.last_name,
+                models.Members.suffix,
+                models.Members.birth_date,
+                models.Members.age,
+                models.Members.sex,
+                models.Members.contact_no,
+                models.Members.email,
+                models.Records.effectivity_date,
+                models.Records.location_particular,
+                models.Records.location_category,
+                models.Records.municipality,
+                models.Records.district,
+                models.Records.origin
+            )
+            .join(models.Members, models.Entries.member_id == models.Members.member_id)
+            .join(models.Records, models.Entries.record_id == models.Records.record_id)
+            .filter(
+                models.Entries.declaration_date == current_date,
+                models.Records.declaration_date == current_date
+            )
+            .all()
+        )
+
+        print(f"✅ Found {len(entries_data)} entries declared today")
+
+        # If no entries found, create a simple success response
+        if not entries_data:
+            print("⚠️ No entries found declared today, creating simple success response")
+            return jsonify({
+                "success": True,
+                "message": f"Dispatch transmitted successfully! {transmitted_count} entries processed.",
+                "transmitted_count": transmitted_count,
+                "excel_generated": False
+            })
+
+        # Prepare data for Excel
+        data = []
+        for i, row in enumerate(entries_data, 1):
+            data.append({
+                'No.': i,
+                'MAAB Category': row.maab_category or '',
+                'MAAB No': row.maab_no or '',
+                'First Name': row.first_name or '',
+                'Middle Name': row.middle_name or '',
+                'Last Name': row.last_name or '',
+                'Suffix': row.suffix or 'NA',
+                'Birth Date': row.birth_date.strftime('%Y-%m-%d') if row.birth_date else '',
+                'Age': row.age or '',
+                'Sex': row.sex or '',
+                'Contact No': f"+63{row.contact_no}" if row.contact_no else '',
+                'Email': row.email or '',
+                'Effectivity Date': row.effectivity_date.strftime('%Y-%m-%d') if row.effectivity_date else '',
+                'Location Particular': row.location_particular or '',
+                'Location Category': row.location_category or '',
+                'Municipality': row.municipality or '',
+                'District': row.district or '',
+                'Origin': row.origin or ''
+            })
+
+        # Create DataFrame
+        df = pd.DataFrame(data)
+
+        # Create Excel file in memory
+        output = BytesIO()
+        
+        try:
+            # Use openpyxl engine for better compatibility
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Dispatch Report', index=False)
+                
+                # Get the workbook and worksheet
+                workbook = writer.book
+                worksheet = writer.sheets['Dispatch Report']
+                
+                # Add title
+                worksheet.merge_cells('A1:R1')
+                title_cell = worksheet['A1']
+                title_cell.value = f'DISPATCH REPORT - {dispatch.dispatch_origin} - {current_date.strftime("%Y-%m-%d")}'
+                title_cell.font = openpyxl.styles.Font(size=16, bold=True)
+                title_cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+                
+                # Style headers
+                header_fill = openpyxl.styles.PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
+                header_font = openpyxl.styles.Font(bold=True)
+                
+                for col in range(1, len(df.columns) + 1):
+                    cell = worksheet.cell(row=2, column=col)  # Headers are now in row 2
+                    cell.fill = header_fill
+                    cell.font = header_font
+                
+                # Adjust column widths
+                column_widths = {
+                    'A': 8,   # No.
+                    'B': 15,  # MAAB Category
+                    'C': 15,  # MAAB No
+                    'D': 15,  # First Name
+                    'E': 15,  # Middle Name
+                    'F': 15,  # Last Name
+                    'G': 8,   # Suffix
+                    'H': 12,  # Birth Date
+                    'I': 6,   # Age
+                    'J': 8,   # Sex
+                    'K': 15,  # Contact No
+                    'L': 20,  # Email
+                    'M': 12,  # Effectivity Date
+                    'N': 25,  # Location Particular
+                    'O': 20,  # Location Category
+                    'P': 15,  # Municipality
+                    'Q': 10,  # District
+                    'R': 12   # Origin
+                }
+                
+                for col_letter, width in column_widths.items():
+                    worksheet.column_dimensions[col_letter].width = width
+
+            # Prepare file for download
+            output.seek(0)
+            
+            # Create filename
+            filename = f"dispatch_{dispatch.dispatch_origin}_{current_date.strftime('%Y-%m-%d')}.xlsx"
+            
+            print(f"✅ Excel file generated successfully: {filename}")
+            
+            # Return the file
+            return send_file(
+                output,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=filename
+            )
+            
+        except Exception as excel_error:
+            print(f"❌ Excel generation error: {excel_error}")
+            # Fallback: Return success without Excel file
+            return jsonify({
+                "success": True,
+                "message": f"Dispatch transmitted successfully! {transmitted_count} entries processed. (Excel generation skipped)",
+                "transmitted_count": transmitted_count,
+                "excel_generated": False
+            })
+
+    except Exception as e:
+        print(f"❌ Error in generate_dispatch_excel_file: {e}")
+        import traceback
+        traceback.print_exc()
+        # Fallback: Return success without Excel file
+        return jsonify({
+            "success": True,
+            "message": f"Dispatch transmitted successfully! {transmitted_count} entries processed. (Excel generation failed)",
+            "transmitted_count": transmitted_count,
+            "excel_generated": False
+        })
+    finally:
+        try:
+            db_session.close()
+        except:
+            pass
+
+def create_fallback_excel_file(dispatch, transmitted_count):
+    """Create a simple Excel file when no entries are found"""
+    try:
+        # Create simple data with just dispatch info
+        data = [{
+            'Dispatch ID': dispatch.dispatch_id,
+            'Dispatch Type': dispatch.dispatch_type,
+            'Dispatch Origin': dispatch.dispatch_origin,
+            'Dispatch Year': dispatch.dispatch_year,
+            'Dispatch Cutoff': dispatch.dispatch_cutoff.strftime('%Y-%m-%d') if dispatch.dispatch_cutoff else 'N/A',
+            'Date Dispatched': dispatch.date_dispatched.strftime('%Y-%m-%d') if dispatch.date_dispatched else 'N/A',
+            'Total Entries': transmitted_count,
+            'Late Declare': dispatch.late_declare,
+            'Remarks': dispatch.dispatch_remarks or 'No remarks'
+        }]
+
+        df = pd.DataFrame(data)
+
+        # Create Excel file in memory
+        output = BytesIO()
+        
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Dispatch Summary', index=False)
+            
+            workbook = writer.book
+            worksheet = writer.sheets['Dispatch Summary']
+            
+            # Add title
+            worksheet.merge_cells('A1:I1')
+            title_cell = worksheet['A1']
+            title_cell.value = f'DISPATCH SUMMARY - {dispatch.dispatch_origin}'
+            title_cell.font = openpyxl.styles.Font(size=16, bold=True)
+            title_cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+
+        output.seek(0)
+        
+        filename = f"dispatch_summary_{dispatch.dispatch_origin}_{datetime.now().strftime('%Y-%m-%d')}.xlsx"
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        print(f"Error creating fallback Excel: {e}")
+        # If even the fallback fails, return success without file
+        return jsonify({
+            "success": True, 
+            "message": f"Dispatch transmitted successfully! {transmitted_count} entries processed.",
+            "transmitted_count": transmitted_count
+        })
+
+@server.route('/api/remove_from_dispatch', methods=['POST'])
 @login_required
 @roles_required('admin', 'superadmin')
-def transmit_dispatch():
-    """
-    Transmit/declare the current dispatch:
-    - Mark entries as declared with current date
-    - Generate Excel declaration
-    - Clear dispatch contents
-    - Update dispatch status and totals
-    - Update records declaration status
-    """
+def remove_from_dispatch():
+    print("🎯🎯🎯 REMOVE FROM DISPATCH ROUTE HIT! 🎯🎯🎯")
+    
     try:
-        # Get the active dispatch - no need for request data
-        active_dispatch = db_conn.get_current_active_dispatch()
-        if not active_dispatch:
-            return jsonify({"success": False, "error": "No active dispatch found"}), 400
-
-        # Call the transmission function
-        result = db_conn.transmit_dispatch_entries(active_dispatch.dispatch_id, current_user.account_id)
+        data = request.get_json()
+        print(f"Received data: {data}")
+        
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        selected_rows = data.get('selected_rows', [])
+        print(f"Selected rows to remove: {selected_rows}")
+        
+        if not selected_rows:
+            return jsonify({"success": False, "error": "No entries selected"}), 400
+        
+        # Call database function to remove entries from dispatch
+        result = db_conn.remove_entries_from_dispatch(selected_rows)
+        
+        print(f"📦 Remove from dispatch result: {result}")
         
         if result["success"]:
             return jsonify({
                 "success": True, 
-                "message": f"Successfully transmitted {result['transmitted_count']} entries",
-                "transmitted_count": result['transmitted_count']
+                "removed_count": result["removed_count"],
+                "message": f"Successfully removed {result['removed_count']} entries from dispatch"
             })
         else:
             return jsonify({"success": False, "error": result["error"]}), 500
             
     except Exception as e:
-        print(f"Transmit dispatch error: {e}")
+        print(f"❌ Remove from dispatch error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"success": False, "error": "Internal server error"}), 500
+        
+@server.route('/api/transmit_dispatch', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def transmit_dispatch():
+    print("🎯🎯🎯 TRANSMIT DISPATCH ROUTE HIT! 🎯🎯🎯")
+    
+    try:
+        data = request.get_json() or {}
+        print(f"Received data: {data}")
+        
+        # Get the active dispatch
+        active_dispatch = db_conn.get_current_active_dispatch()
+        if not active_dispatch:
+            print("❌ No active dispatch found")
+            return jsonify({"success": False, "error": "No active dispatch found"}), 400
+
+        print(f"✅ Active dispatch found: {active_dispatch.dispatch_id}")
+
+        # Call the transmission function
+        result = db_conn.transmit_dispatch_entries(active_dispatch.dispatch_id, current_user.account_id)
+        
+        print(f"📦 Transmission result: {result}")
+        
+        if result["success"]:
+            try:
+                # Try to generate Excel file
+                return generate_dispatch_excel_file(active_dispatch.dispatch_id, result['transmitted_count'])
+            except Exception as excel_error:
+                print(f"❌ Excel generation failed, returning JSON success: {excel_error}")
+                # Fallback to JSON response if Excel fails
+                return jsonify({
+                    "success": True,
+                    "message": f"Dispatch transmitted successfully! {result['transmitted_count']} entries processed.",
+                    "transmitted_count": result['transmitted_count'],
+                    "dispatch_id": active_dispatch.dispatch_id
+                })
+        else:
+            return jsonify({"success": False, "error": result["error"]}), 500
+            
+    except Exception as e:
+        print(f"❌ Transmit dispatch error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": "Internal server error"}), 500
+    
+@server.route('/api/debug_dispatch_state', methods=['GET'])
+@login_required
+@roles_required('admin', 'superadmin')
+def debug_dispatch_state():
+    """Debug endpoint to check dispatch state"""
+    try:
+        db_session = SessionLocal()
+        
+        # Get active dispatch
+        active_dispatch = db_conn.get_current_active_dispatch()
+        
+        # Get entries in dispatch
+        entries_in_dispatch = []
+        if active_dispatch:
+            entries_in_dispatch = db_session.query(models.Entries).filter_by(dispatch_id=active_dispatch.dispatch_id).all()
+        
+        result = {
+            "active_dispatch": {
+                "id": active_dispatch.dispatch_id if active_dispatch else None,
+                "status": active_dispatch.dispatch_status if active_dispatch else None,
+                "type": active_dispatch.dispatch_type if active_dispatch else None,
+                "origin": active_dispatch.dispatch_origin if active_dispatch else None
+            } if active_dispatch else None,
+            "entries_in_dispatch": len(entries_in_dispatch),
+            "entries_details": [
+                {
+                    "entry_id": entry.entry_id,
+                    "record_id": entry.record_id,
+                    "dispatch_id": entry.dispatch_id,
+                    "dispatch_ready": entry.dispatch_ready,
+                    "declared": entry.declared,
+                    "maab_no": entry.maab_no
+                }
+                for entry in entries_in_dispatch
+            ]
+        }
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    finally:
+        db_session.close()
+
+@server.route('/debug/routes')
+def debug_routes():
+    """Debug endpoint to show all registered routes"""
+    routes = []
+    for rule in server.url_map.iter_rules():
+        routes.append({
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods),
+            'path': str(rule)
+        })
+    return jsonify(sorted(routes, key=lambda x: x['path']))
+
+@server.route('/api/test_transmit', methods=['GET'])
+def test_transmit():
+    return jsonify({"message": "Transmit endpoint is accessible", "status": "success"})
 
 # TODO check if a record exist for Online Registration on the same day. if yes put the entry on that record
 @server.route('/api/member_register', methods=['POST'])

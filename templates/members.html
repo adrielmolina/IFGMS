@@ -10,12 +10,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.min.css" />
 
+    <!-- Load Toastify FIRST -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
+    <!-- Load your custom toast files SECOND -->
     <link rel="stylesheet" href="/static/styles/toast.css">
     <script src="/static/js/toast.js"></script>
-
 {% endblock %}
 
 {% block content %}
@@ -324,8 +325,8 @@
 
                                     <td>
                                         <div class="input-container">
-                                            <label for="maab_no">MAAB No.</label>
-                                            <input type="text" id="maab_no" name="maab_no" autocomplete="off" placeholder=" ">
+                                            <label for="maab_no">MAAB No.<span class="required-star">*</span></label>
+                                            <input type="text" id="maab_no" name="maab_no" required autocomplete="off" placeholder=" ">
                                         </div>
                                     </td>
                         
@@ -423,7 +424,7 @@
                                         <div class="input-container">
                                             <label for="blood_type">Blood Type</label>
                                             <select name="blood_type" id="blood_type">
-                                                <option value=""></option>
+                                                <option value="">-- Select Blood Type --</option> <!-- This allows null -->
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
                                                 <option value="B+">B+</option>
@@ -434,7 +435,7 @@
                                                 <option value="O-">O-</option>
                                             </select>
                                         </div>
-                                    </td>                              
+                                    </td>                            
                                 </tr>
 
                                 <tr>
@@ -475,10 +476,10 @@
                                         </div>
                                     </td>
                                     
-                                    <td>
+                                   <td>
                                         <div class="input-container">
                                             <label for="entry_or_date">OR Date</label>
-                                            <input type="text" id="entry_or_date" name="entry_or_date" autocomplete="off" placeholder=" ">
+                                            <input type="date" id="entry_or_date" name="entry_or_date" autocomplete="off">
                                         </div>
                                     </td>
                                 </tr>
@@ -572,6 +573,10 @@ let originalRecordData = {};
 let isEditingEntry = false;
 let currentEditingEntryId = null;
 
+// Auto-save tracking
+let autoSaveTimeout = null;
+let isAutoSaving = false;
+
 // ===== REQUIRED FIELD VALIDATION FUNCTIONS =====
 function validateRequiredFields() {
     const requiredFields = {
@@ -599,16 +604,6 @@ function validateRequiredFields() {
                     errorElement.textContent = `Please enter ${fieldName.toLowerCase()}`;
                     errorElement.classList.add('show');
                 }
-                
-                // Remove error on input
-                field.addEventListener('input', function() {
-                    if (this.value.trim()) {
-                        this.classList.remove('required-field');
-                        if (errorElement) {
-                            errorElement.classList.remove('show');
-                        }
-                    }
-                });
             } else {
                 field.classList.remove('required-field');
                 if (errorElement) {
@@ -625,7 +620,8 @@ function validateEntryRequiredFields() {
     const requiredEntryFields = {
         'fname': 'First Name',
         'lname': 'Last Name', 
-        'bdate': 'Birthdate'
+        'bdate': 'Birthdate',
+        'maab_no': 'MAAB No.'  // Add this line
     };
     
     let isValid = true;
@@ -646,16 +642,6 @@ function validateEntryRequiredFields() {
                     errorElement.textContent = `Please enter ${fieldName.toLowerCase()}`;
                     errorElement.classList.add('show');
                 }
-                
-                // Remove error on input
-                field.addEventListener('input', function() {
-                    if (this.value.trim()) {
-                        this.classList.remove('required-field');
-                        if (errorElement) {
-                            errorElement.classList.remove('show');
-                        }
-                    }
-                });
             } else {
                 field.classList.remove('required-field');
                 if (errorElement) {
@@ -692,7 +678,8 @@ function highlightRequiredFields() {
     const requiredEntryFields = [
         { id: 'fname', name: 'First Name' },
         { id: 'lname', name: 'Last Name' },
-        { id: 'bdate', name: 'Birthdate' }
+        { id: 'bdate', name: 'Birthdate' },
+        { id: 'maab_no', name: 'MAAB No' }  // Add this line
     ];
     
     // Add required indicators to record fields
@@ -753,7 +740,7 @@ function clearAllValidationErrors() {
     });
     
     // Clear entry field errors
-    const entryFields = ['fname', 'lname', 'bdate'];
+    const entryFields = ['fname', 'lname', 'bdate', 'maab_no'];  // Add 'maab_no' here
     entryFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         const errorElement = document.getElementById(fieldId + '_error');
@@ -761,6 +748,97 @@ function clearAllValidationErrors() {
         if (field) field.classList.remove('required-field');
         if (errorElement) errorElement.classList.remove('show');
     });
+}
+
+// ===== AUTO-SAVE FUNCTIONALITY =====
+function setupAutoSave() {
+    const entriesTable = window.entriesHotInstance;
+    if (!entriesTable) return;
+
+    // Monitor for changes in entries table
+    entriesTable.addHook('afterChange', function(changes, source) {
+        if (source === 'edit') {
+            console.log('Entries table changed, scheduling auto-save...');
+            scheduleAutoSave();
+        }
+    });
+
+    // Monitor for changes in record form fields
+    const recordFields = ['eff_date', 'loc_par', 'loc_cat', 'municipality', 'district', 'origin', 'remarks', 'tags'];
+    recordFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', scheduleAutoSave);
+            field.addEventListener('change', scheduleAutoSave);
+        }
+    });
+
+    console.log('Auto-save monitoring setup complete');
+}
+
+function scheduleAutoSave() {
+    // Clear existing timeout
+    if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+    }
+
+    // Set new timeout for auto-save (2 seconds delay)
+    autoSaveTimeout = setTimeout(() => {
+        performAutoSave();
+    }, 2000);
+}
+
+async function performAutoSave() {
+    if (isAutoSaving) return;
+    
+    const recordId = document.getElementById('record_id').value;
+    if (!recordId || recordId === '0') {
+        console.log('No record to auto-save');
+        return;
+    }
+
+    isAutoSaving = true;
+    console.log('Performing auto-save...');
+
+    try {
+        // Save record details first
+        await saveRecordDetails(false); // false = don't show toast
+        
+        // Update dispatch ready status
+        updateDispatchReadyFromEntries();
+        
+        console.log('Auto-save completed successfully');
+        
+    } catch (error) {
+        console.error('Auto-save failed:', error);
+    } finally {
+        isAutoSaving = false;
+    }
+}
+
+function updateSaveButtonState(hasChanges) {
+    const saveRecordBtn = document.getElementById('save_record_details');
+    const saveEntryBtn = document.getElementById('add_entry_details');
+    
+    // Always enable the Add Entry button - it should never be grayed out
+    if (saveEntryBtn) {
+        saveEntryBtn.disabled = false;
+        saveEntryBtn.style.opacity = '1';
+        saveEntryBtn.style.cursor = 'pointer';
+    }
+    
+    // Only manage save record button state based on changes
+    if (saveRecordBtn) {
+        if (hasChanges) {
+            saveRecordBtn.disabled = false;
+            saveRecordBtn.style.opacity = '1';
+            saveRecordBtn.style.cursor = 'pointer';
+        } else {
+            saveRecordBtn.disabled = true;
+            saveRecordBtn.style.opacity = '0.6';
+            saveRecordBtn.style.cursor = 'not-allowed';
+        }
+    }
 }
 
 // ===== MISSING FUNCTION - ADD THIS =====
@@ -788,14 +866,6 @@ function fetchActiveRecords() {
                     row.effectivity_date = date.toLocaleDateString('en-US');
                 }
             });
-
-            // DEBUG: Check first record's municipality data
-            if (data.length > 0) {
-                console.log('=== FIRST RECORD DATA FOR DEBUG ===');
-                console.log('First record municipality:', data[0].municipality);
-                console.log('First record district:', data[0].district);
-                console.log('First record full data:', data[0]);
-            }
 
             // Initialize or update the table
             if (!hotInstance) {
@@ -827,47 +897,8 @@ function setupEntryTableClickHandlers() {
             clearInterval(checkTable);
             console.log('Entries table instance found:', entriesTable);
             
-            // Add click handler to the table container as backup
-            const tableContainer = document.getElementById('entries_table');
-            if (tableContainer) {
-                tableContainer.addEventListener('click', function(event) {
-                    console.log('Entry table container clicked');
-                    
-                    // Use Handsontable's method to get the clicked row
-                    const coords = entriesTable.getCoords(event.target);
-                    if (coords && coords.row >= 0) {
-                        const rowData = entriesTable.getSourceDataAtRow(coords.row);
-                        console.log('Row data from click:', rowData);
-                        
-                        if (rowData && rowData.entry_id) {
-                            console.log('Populating form with clicked row data');
-                            populateEntryForm(rowData);
-                        }
-                    }
-                });
-            }
-            
-            // Also use Handsontable's built-in cell click handler
-            entriesTable.updateSettings({
-                afterOnCellMouseDown: function(event, coords, TD) {
-                    console.log('Handsontable cell clicked at:', coords);
-                    
-                    if (coords.row >= 0) {
-                        const rowData = this.getSourceDataAtRow(coords.row);
-                        console.log('Row data from Handsontable:', rowData);
-                        
-                        if (rowData && rowData.entry_id) {
-                            console.log('✅ SUCCESS: Populating form with entry ID:', rowData.entry_id);
-                            populateEntryForm(rowData);
-                            
-                            // Visual feedback - highlight the row
-                            this.selectCell(coords.row, coords.col);
-                        } else {
-                            console.warn('No entry_id found in row data');
-                        }
-                    }
-                }
-            });
+            // Setup auto-save monitoring
+            setupAutoSave();
             
             console.log('Entry table click handlers setup complete');
         }
@@ -1299,7 +1330,29 @@ function populateYearPicker() {
     populateFilterDropdowns();
 }
 
-// Function to check if all entries are paid and update Dispatch Ready
+// Function to automatically set entry dispatch ready when paid
+function updateEntryDispatchReady() {
+    const entryPaidCheckbox = document.getElementById('entry_paid');
+    const entryDeclaredCheckbox = document.getElementById('entry_declared');
+    
+    if (!entryPaidCheckbox || !entryDeclaredCheckbox) {
+        console.log('Entry paid or declared checkbox not found');
+        return;
+    }
+    
+    const isPaid = entryPaidCheckbox.checked;
+    const isDeclared = entryDeclaredCheckbox.checked;
+    
+    console.log(`Entry dispatch ready check - Paid: ${isPaid}, Declared: ${isDeclared}`);
+    
+    // Entry is dispatch ready if it's paid AND not declared
+    const isDispatchReady = isPaid && !isDeclared;
+    
+    // Update the visual state (we don't have an entry dispatch ready checkbox anymore)
+    // But we can update the record-level dispatch ready based on all entries
+    updateDispatchReadyFromEntries();
+}
+
 function updateDispatchReadyFromEntries() {
     const entriesTable = window.entriesHotInstance;
     const dispatchReadyCheckbox = document.getElementById('record_dispatch_ready');
@@ -1320,31 +1373,36 @@ function updateDispatchReadyFromEntries() {
         return;
     }
     
-    // Check if ALL entries are paid
-    const allEntriesPaid = entriesData.every(entry => {
+    // Check if ALL entries are paid AND not declared
+    const allEntriesPaidAndUndeclared = entriesData.every(entry => {
         // Handle both boolean and numeric values for paid status
         const isPaid = entry.paid === true || entry.paid === 1 || entry.paid === '1';
-        console.log(`Entry ${entry.entry_id}: paid = ${entry.paid}, isPaid = ${isPaid}`);
-        return isPaid;
+        const isNotDeclared = entry.declared === false || entry.declared === 0 || entry.declared === '0' || entry.declared === null;
+        
+        console.log(`Entry ${entry.entry_id}: paid = ${entry.paid}, declared = ${entry.declared}, isPaid = ${isPaid}, isNotDeclared = ${isNotDeclared}`);
+        return isPaid && isNotDeclared;
     });
     
-    console.log(`All entries paid: ${allEntriesPaid}, Total entries: ${entriesData.length}`);
+    console.log(`All entries paid and undeclared: ${allEntriesPaidAndUndeclared}, Total entries: ${entriesData.length}`);
     
-    // Update the checkbox based on paid status
-    if (allEntriesPaid) {
-        // All entries are paid - check and gray out
+    // Update the checkbox based on paid and declared status
+    if (allEntriesPaidAndUndeclared) {
+        // All entries are paid AND not declared - check and gray out
         dispatchReadyCheckbox.checked = true;
         dispatchReadyCheckbox.classList.add('dispatch-ready-auto');
         dispatchReadyCheckbox.disabled = true;
+        
+        // Auto-save the record since dispatch ready changed
+        scheduleAutoSave();
         
         // Show success message
         const smallText = dispatchReadyCheckbox.parentElement.querySelector('small');
         if (smallText) {
             smallText.style.color = '#28a745';
-            smallText.textContent = '✓ All entries are paid - Ready for dispatch';
+            smallText.textContent = '✓ All entries are paid and undeclared - Ready for dispatch';
         }
     } else {
-        // Not all entries are paid - uncheck and gray out
+        // Not all entries meet criteria - uncheck and gray out
         dispatchReadyCheckbox.checked = false;
         dispatchReadyCheckbox.classList.add('dispatch-ready-auto');
         dispatchReadyCheckbox.disabled = true;
@@ -1353,7 +1411,7 @@ function updateDispatchReadyFromEntries() {
         const smallText = dispatchReadyCheckbox.parentElement.querySelector('small');
         if (smallText) {
             smallText.style.color = '#666';
-            smallText.textContent = 'Auto-set when all entries are paid';
+            smallText.textContent = 'Auto-set when all entries are paid and not declared';
         }
     }
     
@@ -1369,13 +1427,22 @@ function setupEntriesTableMonitoring() {
         return;
     }
     
-    // Monitor for data changes
+    // Monitor for data changes in paid and declared columns
     entriesTable.addHook('afterChange', function(changes, source) {
         if (source === 'edit' || source === 'loadData') {
             console.log('Entries table changed, updating Dispatch Ready...');
-            setTimeout(() => {
-                updateDispatchReadyFromEntries();
-            }, 100);
+            
+            // Check if the change affects paid or declared columns
+            const paidOrDeclaredChanged = changes && changes.some(change => {
+                const columnProp = entriesTable.getColHeader(change[1]);
+                return columnProp && (columnProp.includes('Paid') || columnProp.includes('Declared'));
+            });
+            
+            if (paidOrDeclaredChanged || source === 'loadData') {
+                setTimeout(() => {
+                    updateDispatchReadyFromEntries();
+                }, 100);
+            }
         }
     });
     
@@ -1453,6 +1520,10 @@ function populateEntryForm(entryData) {
         document.getElementById('entry_declared').checked = Boolean(entryData.declared);
         document.getElementById('entry_paid').checked = Boolean(entryData.paid);
         
+        setTimeout(() => {
+        updateEntryDispatchReady();
+    }, 100);
+
         console.log('All form fields populated successfully!');
         
         // Switch to edit mode and show back button
@@ -1541,12 +1612,13 @@ function switchToEditMode() {
     const addButton = document.getElementById('add_entry_details');
     if (addButton) {
         addButton.innerHTML = '<img src="/static/assets/save.png" alt="save" class="btn-icon"> Save Changes';
+        addButton.disabled = false; // Enable the button
     }
     
     // Show back button
     const backButton = document.getElementById('back_to_add');
     if (backButton) {
-        backButton.style.display = 'inline-block';
+        backButton.classList.add('show');
     }
     
     console.log('Switched to edit mode for entry:', currentEditingEntryId);
@@ -1563,12 +1635,13 @@ function switchToAddMode() {
     const addButton = document.getElementById('add_entry_details');
     if (addButton) {
         addButton.innerHTML = '<img src="/static/assets/add.png" alt="add" class="btn-icon"> Add Entry';
+        addButton.disabled = false; // Enable the button
     }
     
     // Hide back button
     const backButton = document.getElementById('back_to_add');
     if (backButton) {
-        backButton.style.display = 'none';
+        backButton.classList.remove('show');
     }
     
     console.log('Switched back to add mode');
@@ -1611,107 +1684,6 @@ function clearEntryForm() {
     console.log('Entry form cleared');
 }
 
-// Fixed function to handle entry table clicks
-function handleEntryTableClick(event) {
-    console.log('Entry table clicked:', event.target);
-    
-    const target = event.target;
-    
-    // Check if click is on a table cell
-    if (target.tagName === 'TD' || target.closest('td')) {
-        const cell = target.tagName === 'TD' ? target : target.closest('td');
-        const row = cell.parentElement;
-        
-        console.log('Clicked row:', row);
-        
-        // Get the row index using Handsontable's method
-        const entriesTable = window.entriesHotInstance;
-        if (entriesTable) {
-            try {
-                // Method 1: Try to get coordinates from the cell
-                const coords = entriesTable.getCoords(cell);
-                console.log('Cell coordinates:', coords);
-                
-                if (coords && coords.row >= 0) {
-                    const rowData = entriesTable.getSourceDataAtRow(coords.row);
-                    console.log('Row data from coordinates:', rowData);
-                    
-                    if (rowData && rowData.entry_id) {
-                        console.log('Entry row clicked with data:', rowData);
-                        populateEntryForm(rowData);
-                        return;
-                    }
-                }
-                
-                // Method 2: If coordinates don't work, try finding row index manually
-                console.log('Trying manual row detection...');
-                
-                // Get all data rows (skip header row)
-                const table = entriesTable.rootElement;
-                const allRows = table.querySelectorAll('tr');
-                let rowIndex = -1;
-                
-                for (let i = 0; i < allRows.length; i++) {
-                    if (allRows[i] === row) {
-                        // Subtract 1 because Handsontable data starts from row 0 (header is not in data)
-                        rowIndex = i - 1;
-                        break;
-                    }
-                }
-                
-                console.log('Manual row index found:', rowIndex);
-                
-                if (rowIndex >= 0) {
-                    const rowData = entriesTable.getSourceDataAtRow(rowIndex);
-                    console.log('Row data from manual index:', rowData);
-                    
-                    if (rowData && rowData.entry_id) {
-                        console.log('Entry row clicked with data:', rowData);
-                        populateEntryForm(rowData);
-                        return;
-                    }
-                }
-                
-                // Method 3: Last resort - log all data to see what's available
-                console.log('All table data:', entriesTable.getSourceData());
-                
-            } catch (error) {
-                console.error('Error getting row data:', error);
-                
-                // Method 4: Try using the event target directly
-                console.log('Trying event-based approach...');
-                const allData = entriesTable.getSourceData();
-                console.log('All available data:', allData);
-                
-                if (allData && allData.length > 0) {
-                    // Just use the first row for testing
-                    console.log('First row data for testing:', allData[0]);
-                    populateEntryForm(allData[0]);
-                }
-            }
-        } else {
-            console.error('Entries table instance not found');
-        }
-    }
-}
-
-// Update the entries table renderer to make rows clickable
-function updateEntriesTableRenderer() {
-    if (window.entriesHotInstance) {
-        // Make all cells clickable by adding a CSS class
-        window.entriesHotInstance.updateSettings({
-            cells: function(row, col) {
-                const cellProperties = {};
-                cellProperties.className = 'clickable-entry-row';
-                return cellProperties;
-            }
-        });
-        
-        window.entriesHotInstance.render();
-        console.log('Entries table renderer updated with clickable rows');
-    }
-}
-
 // Initialize change tracking
 function initializeChangeTracking() {
     // Store original data when overlay opens
@@ -1731,6 +1703,7 @@ function initializeChangeTracking() {
     
     // Reset the flag when overlay opens
     hasUnsavedChanges = false;
+    updateSaveButtonState(false);
     console.log('Change tracking initialized');
 }
 
@@ -1758,6 +1731,7 @@ function storeOriginalData() {
 function handleFormChange() {
     if (!hasUnsavedChanges) {
         hasUnsavedChanges = true;
+        updateSaveButtonState(true);
         console.log('Unsaved changes detected - form changed');
     }
 }
@@ -1884,6 +1858,7 @@ function closeOverlayWithoutSaving() {
         overlay.style.display = 'none';
     }
     hasUnsavedChanges = false;
+    updateSaveButtonState(false);
 }
 
 function saveAndCloseOverlay() {
@@ -1898,6 +1873,7 @@ function saveAndCloseOverlay() {
                 overlay.style.display = 'none';
             }
             hasUnsavedChanges = false;
+            updateSaveButtonState(false);
             console.log('Saved and closed successfully');
             toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
         })
@@ -1934,6 +1910,7 @@ function openEmptyRecordOverlay() {
         setLocationParticularToUppercase();
         highlightRequiredFields();
         switchToAddMode();
+        setupMaabNumberHandling(); 
         
         // Clear entries table for new record
         if (window.entriesHotInstance) {
@@ -1968,7 +1945,7 @@ function clearRecordForm() {
 }
 
 // Modified saveRecordDetails function - removes automatic overlay closing
-function saveRecordDetails() {
+function saveRecordDetails(showToast = true) {
     return new Promise((resolve, reject) => {
         // Clear previous errors
         clearAllValidationErrors();
@@ -2032,7 +2009,12 @@ function saveRecordDetails() {
             
             hasUnsavedChanges = false;
             storeOriginalData();
+            updateSaveButtonState(false);
             console.log('Record saved successfully');
+            
+            if (showToast) {
+                toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
+            }
             
             // Refresh the table data based on current view
             return refreshTableData();
@@ -2042,6 +2024,9 @@ function saveRecordDetails() {
         })
         .catch(error => {
             console.error('Fetch error:', error);
+            if (showToast) {
+                toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
+            }
             reject(error);
         });
     });
@@ -2185,6 +2170,10 @@ function updateEntry(entryId, recordId) {
         return value === '' ? null : value;
     }
     
+    // Handle sex field specifically - convert empty string to null
+    const sexField = document.getElementById('sex');
+    const sexValue = sexField.value === '' ? null : sexField.value;
+    
     const payload = {
         entry_id: entryId,
         record_id: recordId,
@@ -2196,7 +2185,7 @@ function updateEntry(entryId, recordId) {
         suffix: document.getElementById('suffix').value,
         birth_date: document.getElementById('bdate').value,
         age: document.getElementById('age').value ? parseInt(document.getElementById('age').value) : null,
-        sex: emptyToNull(document.getElementById('sex').value),
+        sex: sexValue,  // Use the properly handled sex value
         contact_no: emptyToNull(document.getElementById('contact').value),
         email: emptyToNull(document.getElementById('email').value),
         address: emptyToNull(document.getElementById('address').value),
@@ -2213,7 +2202,7 @@ function updateEntry(entryId, recordId) {
         dispatch_id: null
     };
 
-    console.log('Updating entry with payload:', payload);
+    console.log('🔄 UPDATE ENTRY PAYLOAD:', payload);
 
     fetch('/api/save_entry_update', {
         method: 'POST',
@@ -2289,6 +2278,7 @@ function refreshEntriesTable() {
             setTimeout(() => {
                 console.log('Setting up entry table click handlers...');
                 setupEntryTableClickHandlers();
+                setupEntriesTableMonitoring();
                 
                 // Debug: Check if table instance is available
                 const entriesTable = window.entriesHotInstance;
@@ -2429,9 +2419,11 @@ function openRecordInOverlay(recordData) {
             // Setup click handlers for entries table after it's rendered
             setTimeout(() => {
                 setupEntryTableClickHandlers();
-                updateEntriesTableRenderer();
                 setupEntriesTableMonitoring();
             }, 1000);
+            setTimeout(() => {
+                setupMaabNumberHandling();
+            }, 200);
         });
 }
 
@@ -2614,7 +2606,18 @@ columns: [
     { data: 'id_received', type: 'checkbox' },
     { data: 'declared', type: 'checkbox' },
     { data: 'dispatch_ready', type: 'checkbox' },
-    { data: 'dispatch_id', readOnly: true }, // Add this new column
+    { 
+        data: 'dispatch_id', 
+        readOnly: true,
+        // Add visual styling for dispatch ID
+        renderer: function(instance, td, row, col, prop, value, cellProperties) {
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            if (value && value !== null && value !== '') {
+                td.style.backgroundColor = '#e8f5e8'; // Light green background
+                td.style.fontWeight = 'bold';
+            }
+        }
+    },
     { 
         data: 'declaration_date',
         type: 'date',
@@ -2724,11 +2727,11 @@ columns: [
         saveRecordBtn.addEventListener('click', function () {
             saveRecordDetails()
                 .then(() => {
-                    toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
+                    // Success handled in saveRecordDetails
                 })
                 .catch(error => {
                     console.error("Save Error:", error);
-                    toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
+                    // Error handled in saveRecordDetails
                 });
         });
     }
@@ -2902,19 +2905,69 @@ function checkActiveDispatch() {
         });
 }
 
-// Add to Dispatch button functionality
+
+// NEW FUNCTION: Get all records with dispatch_ready = true
+function getDispatchReadyRecords() {
+    const dispatchReadyRecords = [];
+    
+    // Use the appropriate data source based on current view
+    const dataSource = isArchiveView ? archiveFilteredData : filteredData;
+    
+    dataSource.forEach(record => {
+        // Check if record is dispatch-ready (dispatch_ready = true)
+        if (record.dispatch_ready === true || record.dispatch_ready === 1 || record.dispatch_ready === '1') {
+            dispatchReadyRecords.push(record.record_id);
+            console.log(`Found dispatch-ready record: ${record.record_id} - ${record.location_particular}`);
+        }
+    });
+    
+    console.log(`Total dispatch-ready records found: ${dispatchReadyRecords.length}`);
+    return dispatchReadyRecords;
+}
+
+// Optional: Add a function to show which records will be added (for user confirmation)
+function confirmDispatchReadyRecords() {
+    const dispatchReadyRecords = getDispatchReadyRecords();
+    
+    if (dispatchReadyRecords.length === 0) {
+        return false; // No records to add
+    }
+    
+    // Get the record details for the confirmation message
+    const dataSource = isArchiveView ? archiveFilteredData : filteredData;
+    const recordDetails = dataSource
+        .filter(record => dispatchReadyRecords.includes(record.record_id))
+        .map(record => `• ${record.location_particular} (ID: ${record.record_id})`)
+        .join('\n');
+    
+    return confirm(`The following ${dispatchReadyRecords.length} dispatch-ready records will be added to dispatch:\n\n${recordDetails}\n\nContinue?`);
+}
+
+// Enhanced Add to Dispatch with detailed debugging
 document.getElementById('add_to_dispatch').addEventListener('click', function() {
     if (this.disabled) {
         toastAlert("No Active Dispatch", "Please create an active dispatch first before adding records.");
         return;
     }
 
-    // Get selected records from the table
-    const selectedRecords = getSelectedRecords();
+    // Get ALL records with dispatch_ready = true AND declared = false
+    const dispatchReadyRecords = getDispatchReadyUndeclaredRecords();
     
-    if (selectedRecords.length === 0) {
-        toastAlert("No Records Selected", "Please select records to add to dispatch.");
+    console.log("🔍 DEBUG - Records found for dispatch:", {
+        totalRecords: dispatchReadyRecords.length,
+        recordIDs: dispatchReadyRecords
+    });
+    
+    if (dispatchReadyRecords.length === 0) {
+        toastAlert("No Dispatch-Ready Records", 
+            "No records are marked as dispatch-ready and undeclared. " +
+            "Please ensure records have all entries paid, are marked as dispatch-ready, and are not yet declared.");
         return;
+    }
+
+    // Show detailed confirmation with record info
+    if (!confirmDispatchReadyRecords()) {
+        return; // User cancelled
     }
 
     // Show loading state
@@ -2922,21 +2975,38 @@ document.getElementById('add_to_dispatch').addEventListener('click', function() 
     this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding to Dispatch...';
     this.disabled = true;
 
+    console.log(`🚀 Sending ${dispatchReadyRecords.length} records to API:`, dispatchReadyRecords);
+
     // Call the API to add records to dispatch
     fetch('/api/add_to_dispatch', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ record_ids: selectedRecords })
+        body: JSON.stringify({ 
+            record_ids: dispatchReadyRecords,
+            action: 'add_entries_to_dispatch',
+            debug: true // Add debug flag
+        })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log("📡 API Response status:", response.status);
+        return response.json();
+    })
     .then(result => {
+        console.log("📡 API Response data:", result);
+        
         // Restore button state
         this.innerHTML = originalText;
         this.disabled = false;
         
         if (result.success) {
-            toastSuccess("Records Added to Dispatch", 
-                `Successfully added ${result.added_to_dispatch_count} records to the current dispatch.`);
+            if (result.added_to_dispatch_count > 0) {
+                toastSuccess("Records Added to Dispatch", 
+                    `Successfully added ${result.added_to_dispatch_count} dispatch-ready records to the current dispatch.`);
+            } else {
+                toastAlert("No Records Added", 
+                    `Found ${dispatchReadyRecords.length} dispatch-ready records, but none were added. ` +
+                    `They may already be in the dispatch or have issues. Check console for details.`);
+            }
             // Refresh the table to show updated dispatch status
             refreshTableData();
         } else {
@@ -2944,13 +3014,67 @@ document.getElementById('add_to_dispatch').addEventListener('click', function() 
         }
     })
     .catch(error => {
-        console.error('Error adding to dispatch:', error);
+        console.error('❌ Error adding to dispatch:', error);
         // Restore button state
         this.innerHTML = originalText;
         this.disabled = false;
-        toastError("Error", "An error occurred while adding records to dispatch.");
+        toastError("Error", "An error occurred while adding records to dispatch: " + error.message);
     });
 });
+
+// Enhanced debug function - clarify it's checking RECORD level
+function getDispatchReadyUndeclaredRecords() {
+    const dispatchReadyRecords = [];
+    
+    // Use the appropriate data source based on current view
+    const dataSource = isArchiveView ? archiveFilteredData : filteredData;
+    
+    console.log("🔍 Scanning data source for RECORD-LEVEL dispatch-ready records:", {
+        totalRecords: dataSource.length,
+        isArchiveView: isArchiveView
+    });
+    
+    dataSource.forEach(record => {
+        // Check RECORD-LEVEL status: dispatch-ready AND not declared
+        const isDispatchReady = record.dispatch_ready === true || record.dispatch_ready === 1 || record.dispatch_ready === '1';
+        const isNotDeclared = record.declared === false || record.declared === 0 || record.declared === '0' || record.declared === null;
+        
+        console.log(`📋 RECORD ${record.record_id}:`, {
+            location: record.location_particular,
+            record_dispatch_ready: record.dispatch_ready,
+            record_declared: record.declared,
+            isDispatchReady: isDispatchReady,
+            isNotDeclared: isNotDeclared,
+            eligible: isDispatchReady && isNotDeclared
+        });
+        
+        if (isDispatchReady && isNotDeclared) {
+            dispatchReadyRecords.push(record.record_id);
+            console.log(`✅ Found eligible RECORD: ${record.record_id} - ${record.location_particular}`);
+        }
+    });
+    
+    console.log(`🎯 Total RECORD-LEVEL dispatch-ready, undeclared records found: ${dispatchReadyRecords.length}`);
+    return dispatchReadyRecords;
+}
+
+// Optional: Enhanced confirmation dialog
+function confirmDispatchReadyRecords() {
+    const dispatchReadyRecords = getDispatchReadyUndeclaredRecords();
+    
+    if (dispatchReadyRecords.length === 0) {
+        return false; // No records to add
+    }
+    
+    // Get the record details for the confirmation message
+    const dataSource = isArchiveView ? archiveFilteredData : filteredData;
+    const recordDetails = dataSource
+        .filter(record => dispatchReadyRecords.includes(record.record_id))
+        .map(record => `• ${record.location_particular} (ID: ${record.record_id}) - Ready: ${record.dispatch_ready}, Declared: ${record.declared}`)
+        .join('\n');
+    
+    return confirm(`The following ${dispatchReadyRecords.length} dispatch-ready, undeclared records will be added to dispatch:\n\n${recordDetails}\n\nContinue?`);
+}
 
 // Function to get selected records from the table
 function getSelectedRecords() {
@@ -3106,6 +3230,30 @@ document.addEventListener('DOMContentLoaded', function() {
             showActiveView();
         }
     });
+
+    // Add event listener for entry paid checkbox
+const entryPaidCheckbox = document.getElementById('entry_paid');
+if (entryPaidCheckbox) {
+    entryPaidCheckbox.addEventListener('change', function() {
+        console.log('Entry paid status changed:', this.checked);
+        updateEntryDispatchReady();
+        
+        // Also trigger auto-save since this affects dispatch ready status
+        scheduleAutoSave();
+    });
+}
+
+// Add event listener for entry declared checkbox
+const entryDeclaredCheckbox = document.getElementById('entry_declared');
+if (entryDeclaredCheckbox) {
+    entryDeclaredCheckbox.addEventListener('change', function() {
+        console.log('Entry declared status changed:', this.checked);
+        updateEntryDispatchReady();
+        
+        // Also trigger auto-save since this affects dispatch ready status
+        scheduleAutoSave();
+    });
+}
     
     // ===== CRITICAL FIX: Ensure age calculation is always triggered =====
     // Add event listener for birthdate changes
@@ -3136,6 +3284,84 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load initial data (active records)
     fetchActiveRecords();
 });
+
+// ===== MAAB NUMBER PREFIX HANDLING =====
+function initializeMaabNumberHandling() {
+    const maabNoInput = document.getElementById('maab_no');
+    const maabCatSelect = document.getElementById('maab_cat');
+    
+    if (!maabNoInput || !maabCatSelect) return;
+    
+    const prefixMap = {
+        'Classic': 'PC',
+        'Bronze': 'PB', 
+        'Silver': 'PS',
+        'Gold': 'PG',
+        'Platinum': 'PP',
+        'Safe Card': 'PEP',
+        'Senior': 'S',
+        'Senior+': 'SP'
+    };
+    
+    function updateMaabPrefix() {
+        const category = maabCatSelect.value;
+        const prefix = prefixMap[category] || '';
+        
+        // Update placeholder to show expected format
+        maabNoInput.placeholder = `Enter 7 digits (will become ${prefix} + numbers)`;
+        
+        // If there's existing value with numbers, update it with new prefix
+        const currentValue = maabNoInput.value;
+        const numbersOnly = currentValue.replace(/\D/g, '');
+        if (numbersOnly && numbersOnly.length <= 7) {
+            maabNoInput.value = prefix + numbersOnly.padStart(7, '0');
+        }
+    }
+    
+    // Initialize on load
+    updateMaabPrefix();
+    
+    // Update when category changes
+    maabCatSelect.addEventListener('change', updateMaabPrefix);
+    
+    // Handle input to ensure only digits and limit to 7
+    maabNoInput.addEventListener('input', function() {
+        // Remove any non-digit characters
+        this.value = this.value.replace(/\D/g, '');
+        
+        // Limit to 7 digits
+        if (this.value.length > 7) {
+            this.value = this.value.slice(0, 7);
+        }
+    });
+    
+    // Handle focus - remove prefix for editing
+    maabNoInput.addEventListener('focus', function() {
+        const currentValue = this.value;
+        Object.values(prefixMap).forEach(prefix => {
+            if (currentValue.startsWith(prefix)) {
+                this.value = currentValue.replace(prefix, '');
+                return;
+            }
+        });
+    });
+    
+    // Handle blur - add prefix back
+    maabNoInput.addEventListener('blur', function() {
+        const category = maabCatSelect.value;
+        const prefix = prefixMap[category] || '';
+        const numbersOnly = this.value.replace(/\D/g, '');
+        
+        if (numbersOnly && prefix) {
+            this.value = prefix + numbersOnly.padStart(7, '0');
+        }
+    });
+}
+
+// Call this when the overlay opens
+function setupMaabNumberHandling() {
+    setTimeout(initializeMaabNumberHandling, 100);
+}
 
 window.populateEntryForm = populateEntryForm;
 </script>

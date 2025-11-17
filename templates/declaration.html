@@ -329,15 +329,15 @@
 
 <!-- ✅ Main JavaScript Code -->
 <script>
-// ✅ Main table data for JS
+// ✅ Fixed Main table data for JS - Ensure proper field mapping
 const mainTableData = [
     {% for row in dispatch_contents %}
     {
-      dispatchContentID: "{{ active_dispatch.dispatch_id }}",
+      dispatchContentID: "{{ active_dispatch.dispatch_id if active_dispatch else '' }}",
       entryID: "{{ row.entry_id }}",
       category: "{{ row.maab_category }}",
       maabNo: "{{ row.maab_no }}",
-      memberName: "{{ row.first_name }} {{ row.middle_name }} {{ row.last_name }} {{ '' if row.suffix == 'NA' else row.suffix }}",
+      memberName: "{{ row.first_name }} {{ row.middle_name }} {{ row.last_name }} {{ '' if row.suffix == 'NA' else row.suffix }}".trim(),
       birthDate: "{{ row.birth_date.strftime('%m/%d/%Y') if row.birth_date else '' }}",
       effectivityDate: "{{ row.effectivity_date.strftime('%m/%d/%Y') if row.effectivity_date else '' }}",
       location: "{{ row.location_particular }}",
@@ -345,6 +345,8 @@ const mainTableData = [
     }{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
+
+console.log("🔄 Initialized mainTableData with", mainTableData.length, "entries");
 
 let filteredData = [...mainTableData];
 let currentPage = 1;
@@ -455,8 +457,6 @@ function setupOverlayListeners() {
   });
 }
 
-
-
 function initializeCheckboxListeners() {
   const rowChecks = document.querySelectorAll(".row-check");
   const selectAllCheckbox = document.getElementById("selectAll");
@@ -535,7 +535,7 @@ async function removeFromDispatch() {
     const selectedRows = getSelectedRows();
     
     if (selectedRows.length === 0) {
-        showToast('warning', 'Please select at least one entry to remove');
+        toastAlert('Warning', 'Please select at least one entry to remove');
         return;
     }
     
@@ -567,7 +567,7 @@ async function removeFromDispatch() {
         const result = await response.json();
         
         if (result.success) {
-            showToast('success', `Successfully removed ${selectedRows.length} entries from dispatch`);
+            toastSuccess('Success', `Successfully removed ${selectedRows.length} entries from dispatch`);
             // Refresh the page or update UI
             setTimeout(() => {
                 location.reload();
@@ -578,7 +578,7 @@ async function removeFromDispatch() {
         
     } catch (error) {
         console.error('Error removing from dispatch:', error);
-        showToast('error', 'Failed to remove entries from dispatch. Please try again.');
+        toastError('Error', 'Failed to remove entries from dispatch. Please try again.');
     } finally {
         // Restore button state
         const removeBtn = document.getElementById('btn_remove_dispatch');
@@ -711,7 +711,7 @@ function openEditOverlay() {
     
   } catch (error) {
     console.error('❌ Error opening overlay:', error);
-    showToast('error', 'Cannot open edit form. Please try again.');
+    toastError('Error', 'Cannot open edit form. Please try again.');
   }
 }
 
@@ -770,7 +770,7 @@ function validateDispatchForm() {
   }
   
   if (!isValid && errorMessages.length > 0) {
-    showToast('error', 'Please check the following:<br>' + errorMessages.join('<br>• '));
+    toastError('Validation Error', 'Please check the following:<br>' + errorMessages.join('<br>• '));
   }
   
   return isValid;
@@ -838,7 +838,7 @@ async function saveDispatchDetails() {
     const result = await response.json();
     
     if (result.success) {
-      showToast('success', 'Dispatch details updated successfully!');
+      toastSuccess('Success', 'Dispatch details updated successfully!');
       closeEditOverlay();
       
       // Optional: Refresh the page or update UI
@@ -865,7 +865,7 @@ async function saveDispatchDetails() {
       userMessage = 'Please check your entries and try again.';
     }
     
-    showToast('error', userMessage);
+    toastError('Error', userMessage);
     
   } finally {
     // Restore button state
@@ -877,32 +877,48 @@ async function saveDispatchDetails() {
   }
 }
 
-// 📦 Dispatch Create with Validation
+// 📦 Dispatch Create with Validation - FIXED DATE FORMAT
 document.getElementById('btn_create_dispatch').addEventListener('click', async function() {
   try {
+    console.log("🎯 Create Dispatch button clicked");
+    
+    // Get current year for proper date formatting
+    const currentYear = new Date().getFullYear();
+    
     // Validate inputs with user-friendly prompts
     const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):");
     if (!dispatch_cutoff) {
-      showToast('info', 'Dispatch creation was cancelled');
+      toastInfo('Info', 'Dispatch creation was cancelled');
       return;
     }
     
     // Validate cutoff format
     if (!/^\d{2}-\d{2}$/.test(dispatch_cutoff)) {
-      showToast('error', 'Please use MM-DD format (e.g., 12-25)');
+      toastError('Error', 'Please use MM-DD format (e.g., 12-25)');
+      return;
+    }
+    
+    // Convert MM-DD to YYYY-MM-DD format for database
+    const [month, day] = dispatch_cutoff.split('-');
+    const properDate = `${currentYear}-${month}-${day}`;
+    
+    // Validate it's a real date
+    const dateObj = new Date(properDate);
+    if (isNaN(dateObj.getTime())) {
+      toastError('Error', 'Invalid date. Please check the month and day.');
       return;
     }
     
     const late_declare = prompt("Include Late Declarations? (Please type 'yes' or 'no'):");
     if (late_declare === null) {
-      showToast('info', 'Dispatch creation was cancelled');
+      toastInfo('Info', 'Dispatch creation was cancelled');
       return;
     }
     
     // Validate late_declare input
     const lateDeclareLower = late_declare.toLowerCase();
     if (lateDeclareLower !== 'yes' && lateDeclareLower !== 'no') {
-      showToast('error', "Please type exactly 'yes' or 'no'");
+      toastError('Error', "Please type exactly 'yes' or 'no'");
       return;
     }
     
@@ -910,9 +926,15 @@ document.getElementById('btn_create_dispatch').addEventListener('click', async f
     
     // Validate remarks length
     if (dispatch_remarks.length > 500) {
-      showToast('error', 'Remarks cannot exceed 500 characters');
+      toastError('Error', 'Remarks cannot exceed 500 characters');
       return;
     }
+    
+    console.log("📦 Sending dispatch data:", {
+      dispatch_cutoff: properDate,
+      late_declare: lateDeclareLower === 'yes',
+      dispatch_remarks
+    });
     
     // Show loading state
     const createBtn = document.getElementById('btn_create_dispatch');
@@ -920,25 +942,31 @@ document.getElementById('btn_create_dispatch').addEventListener('click', async f
     createBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
     createBtn.disabled = true;
     
+    // Send the properly formatted date to the server
     const response = await fetch('/api/declaration', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ 
-        dispatch_cutoff, 
+        dispatch_cutoff: properDate,  // Now sending YYYY-MM-DD format
         late_declare: lateDeclareLower === 'yes',
         dispatch_remarks 
       })
     });
     
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Server error: ${response.status}`);
-    }
+    console.log("📦 Response status:", response.status);
     
     const result = await response.json();
+    console.log("📦 Response data:", result);
+    
+    if (!response.ok) {
+      throw new Error(result.error || `Server error: ${response.status}`);
+    }
     
     if (result.success) {
-      showToast('success', 'New dispatch created successfully!');
+      toastSuccess('Success', 'New dispatch created successfully!');
+      console.log("✅ Dispatch created, reloading page...");
+      
+      // Force page reload after a short delay
       setTimeout(() => {
         location.reload();
       }, 1500);
@@ -958,10 +986,10 @@ document.getElementById('btn_create_dispatch').addEventListener('click', async f
     } else if (error.message.includes('permission') || error.message.includes('unauthorized')) {
       userMessage = 'You do not have permission to create dispatches.';
     } else {
-      userMessage = 'Please try again with different details.';
+      userMessage = error.message || 'Please try again with different details.';
     }
     
-    showToast('error', userMessage);
+    toastError('Error', userMessage);
     
   } finally {
     // Restore button state
@@ -972,40 +1000,6 @@ document.getElementById('btn_create_dispatch').addEventListener('click', async f
     }
   }
 });
-
-// Simple toast function compatible with your setup
-function showToast(type, message) {
-  if (typeof Toastify === 'undefined') {
-    // Fallback to alert if Toastify not available
-    alert(`${type.toUpperCase()}: ${message}`);
-    return;
-  }
-  
-  const config = {
-    text: message,
-    duration: 4000,
-    gravity: "top",
-    position: "right",
-    stopOnFocus: true,
-    escapeMarkup: false
-  };
-  
-  switch(type) {
-    case 'success':
-      config.backgroundColor = "#10b981";
-      break;
-    case 'error':
-      config.backgroundColor = "#ef4444";
-      break;
-    case 'info':
-      config.backgroundColor = "#3b82f6";
-      break;
-    default:
-      config.backgroundColor = "#6b7280";
-  }
-  
-  Toastify(config).showToast();
-}
 
 // Add CSS for error states
 const errorStyles = `
@@ -1155,32 +1149,16 @@ function renderTable() {
   const end = start + entriesPerPage;
   const paginatedData = filteredData.slice(start, end);
 
-  if (filteredData[0]?.dispatch_id) {
-    // Dispatch table (history view)
-    tableBody.innerHTML = paginatedData.map(item => `
-      <tr>
-        <td>${item.dispatch_id || ''}</td>
-        <td>${item.dispatch_type || ''}</td>
-        <td>${item.dispatch_origin || ''}</td>
-        <td>${item.dispatch_year || ''}</td>
-        <td>${item.dispatch_cutoff || ''}</td>
-        <td>${item.date_dispatched || ''}</td>
-        <td>${item.dispatch_total || ''}</td>
-        <td>${item.late_declare || ''}</td>
-        <td>${item.dispatch_remarks || ''}</td>
-      </tr>
-    `).join('');
-    
-    // ✅ Disable selection buttons in history view
-    const selectAllBtn = document.querySelector(".btn.select-all");
-    const transmitBtn = document.querySelector(".btn.transmit");
-    const removeBtn = document.getElementById("btn_remove_dispatch");
-    
-    if (selectAllBtn) selectAllBtn.disabled = true;
-    if (transmitBtn) transmitBtn.disabled = true;
-    if (removeBtn) removeBtn.disabled = true;
-  } else {
-    // Main table (Dispatch Contents)
+  console.log("🔄 Rendering table with data:", {
+    totalFiltered: filteredData.length,
+    paginated: paginatedData.length,
+    isDispatchContent: filteredData[0]?.dispatchContentID !== undefined
+  });
+
+  // Check if we're showing dispatch contents (main view) or dispatch history
+  if (filteredData.length > 0 && filteredData[0].dispatchContentID !== undefined) {
+    // Dispatch Contents View (main table)
+    console.log("📋 Rendering Dispatch Contents");
     tableBody.innerHTML = paginatedData.map(item => `
       <tr>
         <td><input type="checkbox" class="row-check"></td>
@@ -1196,17 +1174,50 @@ function renderTable() {
       </tr>
     `).join('');
     
-    // ✅ RE-ENABLE SELECT ALL BUTTON IN MAIN VIEW
+    // ✅ RE-ENABLE SELECTION BUTTONS IN MAIN VIEW
     const selectAllBtn = document.querySelector(".btn.select-all");
-    if (selectAllBtn) {
-      selectAllBtn.disabled = false;
-    }
+    const transmitBtn = document.querySelector(".btn.transmit");
+    const removeBtn = document.getElementById("btn_remove_dispatch");
     
-    // REINITIALIZE CHECKBOX LISTENERS AFTER RENDERING
-    setTimeout(() => {
-      initializeCheckboxListeners();
-    }, 0);
+    if (selectAllBtn) selectAllBtn.disabled = false;
+    if (transmitBtn) transmitBtn.disabled = false;
+    if (removeBtn) removeBtn.disabled = false;
+    
+  } else if (filteredData.length > 0 && filteredData[0].dispatch_id !== undefined) {
+    // Dispatch History View
+    console.log("📜 Rendering Dispatch History");
+    tableBody.innerHTML = paginatedData.map(item => `
+      <tr>
+        <td>${item.dispatch_id || ''}</td>
+        <td>${item.dispatch_type || ''}</td>
+        <td>${item.dispatch_origin || ''}</td>
+        <td>${item.dispatch_year || ''}</td>
+        <td>${item.dispatch_cutoff || ''}</td>
+        <td>${item.date_dispatched || ''}</td>
+        <td>${item.dispatch_total || ''}</td>
+        <td>${item.late_declare || ''}</td>
+        <td>${item.dispatch_remarks || ''}</td>
+      </tr>
+    `).join('');
+    
+    // ✅ DISABLE SELECTION BUTTONS IN HISTORY VIEW
+    const selectAllBtn = document.querySelector(".btn.select-all");
+    const transmitBtn = document.querySelector(".btn.transmit");
+    const removeBtn = document.getElementById("btn_remove_dispatch");
+    
+    if (selectAllBtn) selectAllBtn.disabled = true;
+    if (transmitBtn) transmitBtn.disabled = true;
+    if (removeBtn) removeBtn.disabled = true;
+  } else {
+    // Empty state
+    console.log("📭 No data to display");
+    tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px;">No dispatch contents found</td></tr>';
   }
+
+  // REINITIALIZE CHECKBOX LISTENERS AFTER RENDERING
+  setTimeout(() => {
+    initializeCheckboxListeners();
+  }, 0);
 
   updatePagination();
   updateSummary();
@@ -1308,23 +1319,60 @@ function updateSummary() {
   summaryText.textContent = `Showing ${start} to ${end} of ${total} entries • ${checkedCount} selected`;
 }
 
-// 📤 Transmit Dispatch Function - MARKS ENTRIES AS DECLARED AND CLEARS DISPATCH
 async function transmitDispatch() {
     console.log("Starting transmission process for entire dispatch...");
     
-    // Get ALL entry IDs from the current dispatch
-    const allEntryIds = mainTableData.map(item => item.entryID).filter(id => id);
-    
-    if (allEntryIds.length === 0) {
-        showToast('error', 'No entries found in dispatch to transmit.');
+    // Debug current state
+    console.log("=== DISPATCH DEBUG ===");
+    console.log("Active Dispatch ID:", "{{ active_dispatch.dispatch_id if active_dispatch else 'None' }}");
+    console.log("Main Table Data:", mainTableData);
+    console.log("Entries with dispatch IDs:", mainTableData.filter(item => item.dispatchContentID).length);
+
+    // First test if the endpoint is accessible
+    try {
+        const testResponse = await fetch('/api/test_transmit');
+        if (!testResponse.ok) {
+            throw new Error(`Test endpoint failed with status: ${testResponse.status}`);
+        }
+        const testData = await testResponse.json();
+        console.log("✅ Test endpoint response:", testData);
+    } catch (error) {
+        console.error("❌ Test endpoint failed:", error);
+        toastError('Error', 'Server connection failed: ' + error.message);
         return;
     }
 
-    if (!confirm(`Are you sure you want to transmit ${allEntryIds.length} entries? This will mark them as declared and clear the dispatch.`)) {
+    // Check if there's an active dispatch first
+    let activeDispatchId;
+    try {
+        const dispatchCheckResponse = await fetch('/api/debug_dispatch_state');
+        const dispatchState = await dispatchCheckResponse.json();
+        
+        console.log("🔍 Fresh dispatch state from server:", dispatchState);
+        
+        if (!dispatchState.active_dispatch || !dispatchState.active_dispatch.id) {
+            toastError('Error', 'No active dispatch found. Please create a dispatch first.');
+            return;
+        }
+        
+        activeDispatchId = dispatchState.active_dispatch.id;
+        
+        if (dispatchState.entries_in_dispatch === 0) {
+            toastError('Error', 'No entries in dispatch. Please add entries to dispatch first.');
+            return;
+        }
+        
+        console.log(`📦 Transmitting dispatch ID: ${activeDispatchId} with ${dispatchState.entries_in_dispatch} entries`);
+        
+    } catch (error) {
+        console.error("❌ Error checking dispatch state:", error);
+        toastError('Error', 'Failed to check dispatch status: ' + error.message);
         return;
     }
 
-    console.log(`Transmitting entire dispatch with ${allEntryIds.length} entries`);
+    if (!confirm(`Are you sure you want to transmit this dispatch? This will mark ${mainTableData.length} entries as declared.`)) {
+        return;
+    }
 
     // Show loading state
     const transmitBtn = document.querySelector(".btn.transmit");
@@ -1333,98 +1381,138 @@ async function transmitDispatch() {
     transmitBtn.disabled = true;
 
     try {
-        // First, transmit the entries (mark as declared, update dispatch, etc.)
+        console.log("📦 Sending transmit request to /api/transmit_dispatch");
+        
         const transmitResponse = await fetch('/api/transmit_dispatch', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                // Send minimal data to satisfy the JSON requirement
-                action: 'transmit',
-                timestamp: new Date().toISOString()
+                dispatch_id: activeDispatchId,
+                action: 'transmit'
             })
         });
+
+        console.log("📦 Response status:", transmitResponse.status);
+        console.log("📦 Response headers:", Object.fromEntries(transmitResponse.headers.entries()));
 
         if (!transmitResponse.ok) {
-            const errorData = await transmitResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || `Server error: ${transmitResponse.status}`);
+            let errorMessage = `Server error: ${transmitResponse.status}`;
+            try {
+                const errorData = await transmitResponse.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                const text = await transmitResponse.text();
+                if (text) errorMessage = text;
+            }
+            throw new Error(errorMessage);
         }
 
-        const transmitResult = await transmitResponse.json();
-        
-        if (!transmitResult.success) {
-            throw new Error(transmitResult.error || "Transmission failed");
+        // Check if response is a file download or JSON
+        const contentType = transmitResponse.headers.get('content-type');
+        console.log("📦 Content-Type:", contentType);
+
+        if (contentType && contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+            // Handle file download
+            const blob = await transmitResponse.blob();
+            console.log("📦 Blob size:", blob.size);
+            
+            if (blob.size === 0) {
+                throw new Error("Empty file received from server");
+            }
+            
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // Get filename from response headers or use default
+            const contentDisposition = transmitResponse.headers.get('content-disposition');
+            let filename = `dispatch_${new Date().toISOString().split('T')[0]}.xlsx`;
+            
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            toastSuccess('Success', 'Dispatch transmitted successfully! Excel file download started.');
+            
+        } else {
+            // Handle JSON response
+            const result = await transmitResponse.json();
+            if (result.success) {
+                toastSuccess('Success', result.message || `Dispatch transmitted successfully! ${result.transmitted_count} entries processed.`);
+            } else {
+                throw new Error(result.error || 'Transmission failed');
+            }
         }
-
-        console.log("Transmission successful:", transmitResult);
-
-        // After successful transmission, generate and download the Excel file
-        const exportResponse = await fetch('/api/export_dispatch', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                selected_rows: allEntryIds.map(entryId => ({
-                    entry_id: entryId,
-                    category: '',
-                    maab_no: '',
-                    member_name: '',
-                    birthdate: '',
-                    effectivity_date: '',
-                    location: ''
-                }))
-            })
-        });
-
-        if (!exportResponse.ok) {
-            throw new Error("Failed to generate Excel file after transmission");
-        }
-
-        const blob = await exportResponse.blob();
         
-        if (blob.size === 0) {
-            throw new Error("Empty file received from server");
-        }
-        
-        // Create download link and trigger download
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        
-        // Get current date for filename
-        const today = new Date();
-        const dateString = today.toISOString().split('T')[0];
-        
-        // Create filename with dispatch cutoff date
-        const activeDispatchElement = document.querySelector('.dispatch-item:nth-child(5) .dispatch-value');
-        const cutoffDate = activeDispatchElement ? activeDispatchElement.textContent.trim() : dateString;
-        
-        a.href = url;
-        a.download = `dispatch_transmitted_${cutoffDate.replace(/\//g, '-').replace(/\\/g, '-').replace(/\s/g, '_')}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        
-        // Clean up
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        showToast('success', `Successfully transmitted ${transmitResult.transmitted_count} entries and generated declaration file!`);
-        
-        // Refresh the page to show updated state
+        // Refresh the page to show updated state (for both cases)
         setTimeout(() => {
             location.reload();
         }, 2000);
         
     } catch (error) {
         console.error('Transmit error:', error);
-        showToast('error', "Failed to transmit dispatch: " + error.message);
+        toastError('Error', "Failed to transmit dispatch: " + error.message);
         
         // Restore button state on error
         transmitBtn.innerHTML = originalText;
         transmitBtn.disabled = false;
     }
 }
+
+// Fix the debugDispatchState call - remove the await
+function debugDispatchState() {
+    console.log("=== DISPATCH DEBUG ===");
+    console.log("Active Dispatch ID:", "{{ active_dispatch.dispatch_id if active_dispatch else 'None' }}");
+    console.log("Main Table Data:", mainTableData);
+    
+    // Check if entries have dispatch IDs
+    const entriesWithDispatch = mainTableData.filter(item => item.dispatchContentID);
+    console.log("Entries with dispatch IDs:", entriesWithDispatch.length);
+    
+    // Check the actual database state
+    fetch('/api/debug_dispatch_state')
+        .then(response => response.json())
+        .then(data => console.log("Database State:", data))
+        .catch(err => console.error("Debug error:", err));
+}
+
+// Call this before transmitting - no await needed
+debugDispatchState();
+
+  // Add this function to monitor dispatch contents updates
+function monitorDispatchContents() {
+  console.log("=== DISPATCH CONTENTS MONITOR ===");
+  console.log("Main Table Data:", mainTableData);
+  console.log("Filtered Data:", filteredData);
+  console.log("Active Dispatch:", {
+    id: "{{ active_dispatch.dispatch_id if active_dispatch else 'None' }}",
+    status: "{{ active_dispatch.dispatch_status if active_dispatch else 'None' }}"
+  });
+  
+  // Check if we have the right data structure
+  if (mainTableData.length > 0) {
+    console.log("First item structure:", Object.keys(mainTableData[0]));
+  }
+}
+
+// Call this after page load and after adding to dispatch
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(monitorDispatchContents, 1000);
+});
 </script>
 
 

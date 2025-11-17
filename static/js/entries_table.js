@@ -76,7 +76,7 @@ function renderEntriesTable(data) {
             { 
                 data: 'OR_date',
                 type: 'date',
-                dateFormat: 'YYYY-MM-DD', // Change this
+                dateFormat: 'YYYY-MM-DD',
                 correctFormat: true,
                 allowInvalid: false
             },
@@ -192,6 +192,13 @@ async function updateEntryInBackend(entryData) {
 
         const result = await response.json();
         console.log('Update successful:', result);
+        
+        // Update dispatch ready status after saving
+        setTimeout(() => {
+            if (window.updateDispatchReadyFromEntries) {
+                window.updateDispatchReadyFromEntries();
+            }
+        }, 500);
     } catch (error) {
         console.error('Error updating entry:', error);
     }
