@@ -170,6 +170,11 @@ body {
   background-color: #16a34a;
 }
 
+#save_claim_record:disabled {
+    opacity: 0.5;       /* make it look grayed out */
+    cursor: not-allowed; /* show the disabled cursor */
+}
+
 .btn-delete {
   background-color: #ef4444;
 }
@@ -598,7 +603,7 @@ body {
 
 /* TODO DO NOT DELETE. COMMENT OUT WHEN DONE TESTING */
 #overlay {
-  display: flex;
+  /* display: flex; */
 }
 
 .overlay {
