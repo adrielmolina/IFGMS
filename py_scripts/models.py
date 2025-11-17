@@ -182,7 +182,7 @@ class Inventory(Base):
     maab_no = Column(String(255))
     used = Column(SmallInteger)
     remarks = Column(Text)
-    allocated_to = Column(Enum('Chapter', 'Dasmarinas', 'Silang'))
+    allocated_to = Column(String(255))
     
 
 class Claims(Base):
