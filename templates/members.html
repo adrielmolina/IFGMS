@@ -323,12 +323,16 @@
                                         </div>
                                     </td>
 
-                                    <td>
-                                        <div class="input-container">
-                                            <label for="maab_no">MAAB No.<span class="required-star">*</span></label>
-                                            <input type="text" id="maab_no" name="maab_no" required autocomplete="off" placeholder=" ">
+                                <td>
+                                    <div class="input-container">
+                                        <label for="maab_no">MAAB No.<span class="required-star">*</span></label>
+                                            <select name="maab_no" id="maab_no" required>
+                                            <option value="">Select MAAB No.</option>
+                                            <!-- Dynamic options will be loaded here by JavaScript -->
+                                            </select>
+                                            <small style="font-size: 0.8em; color: #666;">Available IDs from inventory</small>
                                         </div>
-                                    </td>
+                                </td>
                         
                                     <td>
                                         <div class="input-container">
@@ -2020,7 +2024,7 @@ function openEmptyRecordOverlay() {
         setLocationParticularToUppercase();
         highlightRequiredFields();
         switchToAddMode();
-        setupMaabNumberHandling(); 
+        setupDropdownHandling(); 
         
         // Clear entries table for new record
         if (window.entriesHotInstance) {
@@ -3380,6 +3384,7 @@ if (entryDeclaredCheckbox) {
 });
 
 // ===== MAAB NUMBER PREFIX HANDLING =====
+/*
 function initializeMaabNumberHandling() {
     const maabNoInput = document.getElementById('maab_no');
     const maabCatSelect = document.getElementById('maab_cat');
@@ -3458,5 +3463,166 @@ function setupMaabNumberHandling() {
 }
 
 window.populateEntryForm = populateEntryForm;
+*/
+
+// ===== DROPDOWN-SPECIFIC HANDLING =====
+function initializeDropdownHandling() {
+    const maabNoDropdown = document.getElementById('maab_no');
+    const maabCatSelect = document.getElementById('maab_cat');
+    
+    if (!maabNoDropdown || !maabCatSelect) return;
+    
+    console.log('✅ Initializing dropdown handling');
+    
+    // Simple placeholder update based on category
+    maabCatSelect.addEventListener('change', function() {
+        const category = this.value;
+        maabNoDropdown.title = `Select available ${category} ID from inventory`;
+    });
+    
+    // Visual feedback when selection is made
+    maabNoDropdown.addEventListener('change', function() {
+        if (this.value) {
+            console.log('✅ MAAB No selected:', this.value);
+        }
+    });
+}
+
+// Call this when overlay opens
+function setupDropdownHandling() {
+    setTimeout(initializeDropdownHandling, 100);
+}
+
+// ============== SELECT MAAB NO. FROM INVENTORY ==============
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🆔 MAAB No Dropdown System Initializing...');
+
+    let availableIDs = {};
+
+    async function fetchAvailableIDs(category = null) {
+        try {
+            let url = '/api/inventory/available_ids';
+            if (category) {
+                url = `/api/inventory/available_ids?category=${encodeURIComponent(category)}`;
+            }
+            
+            console.log(`🆔 Fetching available IDs from: ${url}`);
+            const response = await fetch(url);
+            const result = await response.json();
+            
+            if (result.success) {
+                availableIDs = result.available_ids || {};
+                console.log('✅ Available IDs loaded:', availableIDs);
+                return availableIDs;
+            } else {
+                console.error('❌ Failed to fetch available IDs:', result.error);
+                toastError("Load Error", "Failed to load available IDs from inventory");
+                return {};
+            }
+        } catch (error) {
+            console.error('❌ Error fetching available IDs:', error);
+            toastError("Network Error", "Failed to connect to inventory");
+            return {};
+        }
+    }
+
+    // Populate MAAB No dropdown based on selected category
+    function populateMAABNoDropdown(category = null) {
+        const maabNoDropdown = document.getElementById('maab_no');
+        if (!maabNoDropdown) {
+            console.log('❌ MAAB No dropdown not found');
+            return;
+        }
+        
+        // Clear existing options except the first one
+        while (maabNoDropdown.options.length > 1) {
+            maabNoDropdown.remove(1);
+        }
+        
+        let availableIDsForCategory = [];
+        
+        if (category && availableIDs[category]) {
+            // Show IDs for specific category
+            availableIDsForCategory = availableIDs[category];
+        } else if (!category) {
+            // Show all available IDs from all categories
+            Object.values(availableIDs).forEach(ids => {
+                availableIDsForCategory.push(...ids);
+            });
+        }
+        
+        // Add available IDs to dropdown
+        availableIDsForCategory.forEach(id => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = id;
+            maabNoDropdown.appendChild(option);
+        });
+        
+        // If no IDs available, show message
+        if (availableIDsForCategory.length === 0) {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = "No available IDs in inventory";
+            option.disabled = true;
+            maabNoDropdown.appendChild(option);
+        }
+        
+        // ✅ CRITICAL: CALL THE FIX FUNCTION HERE
+        fixDropdownVisibility();
+        
+        console.log(`✅ Populated ${availableIDsForCategory.length} IDs for category: ${category || 'all'}`);
+    }
+
+    // Update dropdown when category changes
+    const categorySelect = document.getElementById('maab_cat');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const selectedCategory = this.value;
+            console.log(`🔄 Category changed to: ${selectedCategory}`);
+            populateMAABNoDropdown(selectedCategory);
+        });
+    }
+
+    // Refresh available IDs when overlay opens
+    function setupOverlayMAABNo() {
+        const overlay = document.getElementById('overlay');
+        if (!overlay) {
+            console.log('❌ Overlay not found');
+            return;
+        }
+        
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const isVisible = overlay.style.display === 'flex';
+                    console.log(`👀 Overlay visibility changed: ${isVisible}`);
+                    if (isVisible) {
+                        // Refresh available IDs when overlay opens
+                        console.log('🔄 Overlay opened, refreshing available IDs...');
+                        fetchAvailableIDs().then(() => {
+                            const currentCategory = document.getElementById('maab_cat')?.value;
+                            populateMAABNoDropdown(currentCategory);
+                        });
+                    }
+                }
+            });
+        });
+        
+        observer.observe(overlay, { attributes: true });
+        console.log('✅ Overlay observer setup complete');
+    }
+
+    // Initialize MAAB No dropdown system
+    setupOverlayMAABNo();
+
+    // Pre-load available IDs on page load
+    fetchAvailableIDs().then(() => {
+        console.log('✅ Available IDs pre-loaded on page load');
+    });
+
+    console.log('✅ MAAB No Dropdown system initialized successfully');
+});
+
 </script>
 {% endblock %}

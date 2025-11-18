@@ -1262,6 +1262,7 @@ def add_inventory_stock():
             "success": False,
             "error": "Internal server error"
         }), 500
+    
 # ============================================================
 # 🔹 ASSIGN ID TO MEMBER - USING allocated_to FOR MEMBER NAMES
 # ============================================================
@@ -1419,7 +1420,7 @@ def get_available_ids(category):
             'error': 'Internal server error'
         }), 500
     
-    # ============================================================
+# ============================================================
 # 🔹 GET ASSIGNED IDs (For Verification)
 # ============================================================
 
@@ -1467,7 +1468,75 @@ def get_assigned_ids():
             'error': 'Internal server error'
         }), 500
     
-    # ============================================================
+# ============================================================
+# 🔹 GET ALL AVAILABLE IDs (For MAAB No Dropdown)
+# ============================================================
+
+@server.route('/api/inventory/available_ids', methods=['GET'])
+@login_required
+def get_all_available_ids():
+    try:
+        category = request.args.get('category')
+        
+        print(f"🔍 Getting available IDs for category: {category}")
+        
+        db_session = SessionLocal()
+        
+        try:
+            if category:
+                # Get available IDs for specific category - used = 0 means available
+                available_ids = db_session.query(models.Inventory).filter(
+                    models.Inventory.maab_category == category,
+                    models.Inventory.used == 0  # 0 = available, 1 = used
+                ).order_by(models.Inventory.maab_no).all()
+                
+                ids_list = [item.maab_no for item in available_ids]
+                
+                result = {
+                    category: ids_list
+                }
+                
+            else:
+                # Get all available IDs grouped by category
+                available_ids = db_session.query(models.Inventory).filter(
+                    models.Inventory.used == 0
+                ).order_by(models.Inventory.maab_category, models.Inventory.maab_no).all()
+                
+                result = {}
+                for item in available_ids:
+                    if item.maab_category not in result:
+                        result[item.maab_category] = []
+                    result[item.maab_category].append(item.maab_no)
+            
+            print(f"✅ Found available IDs: { {k: len(v) for k, v in result.items()} }")
+            
+            return jsonify({
+                'success': True,
+                'available_ids': result
+            })
+            
+        except Exception as e:
+            print(f"❌ Database error in get_all_available_ids: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in get_all_available_ids route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+    
+# ============================================================
 # 🔹 TEST INVENTORY ASSIGNMENT
 # ============================================================
 

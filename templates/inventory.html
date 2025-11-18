@@ -690,8 +690,7 @@ function getFilteredData() {
     );
   });
 
-  // DEFAULT SORT: Most recent first
-  // Kung may date_created field, gamitin ito, kung hindi, gamitin ang inv_id
+
   return filteredData.sort((a, b) => {
     if (a.date_created && b.date_created) {
       return new Date(b.date_created) - new Date(a.date_created);
