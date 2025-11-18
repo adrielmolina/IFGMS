@@ -2180,6 +2180,9 @@ function closeOverlayWithoutSaving() {
     }
     hasUnsavedChanges = false;
     updateSaveButtonState(false);
+
+    // ===== NEW: RESET ENTRY DETAILS STATE =====
+    enableEntryDetails(); 
 }
 
 function saveAndCloseOverlay() {
@@ -2250,7 +2253,6 @@ function refreshNextRecordId() {
     return initializeNextRecordId();
 }
 
-// Update your openEmptyRecordOverlay function
 async function openEmptyRecordOverlay() {
     try {
         // Get next available record ID first
@@ -2287,6 +2289,9 @@ async function openEmptyRecordOverlay() {
             switchToAddMode();
             setupMaabNumberHandling(); 
             setBirthdayMaxDate();
+            
+            // ===== NEW: DISABLE ENTRY DETAILS FOR NEW RECORD =====
+            disableEntryDetails();
             
             // Clear entries table for new record
             if (window.entriesHotInstance) {
@@ -2394,6 +2399,9 @@ function saveRecordDetails(showToast = true) {
             if (isNewRecord && result.record_id) {
                 document.getElementById('record_id').value = result.record_id;
                 console.log('New record created with ID:', result.record_id);
+
+                // ===== NEW: ENABLE ENTRY DETAILS AFTER SUCCESSFUL SAVE =====
+                enableEntryDetails();
                 
                 // Refresh the next available ID since we just used one
                 getNextRecordId().then(() => {
@@ -2527,6 +2535,51 @@ function addNewEntry(recordId) {
         console.error('Error:', error);
         toastError("Error", "An error occurred during entry adding: " + error.message);
     });
+}
+
+// ===== ENTRY DETAILS STATE MANAGEMENT =====
+function disableEntryDetails() {
+    const entryDetails = document.getElementById('entry_details');
+    const entryRadioControls = document.querySelector('.entry-radio-controls');
+    const entriesTable = document.getElementById('entries_table');
+    
+    if (entryDetails) {
+        entryDetails.classList.add('disabled');
+    }
+    
+    if (entryRadioControls) {
+        entryRadioControls.style.display = 'none';
+    }
+    
+    // Show empty state in entries table
+    if (window.entriesHotInstance) {
+        window.entriesHotInstance.loadData([]);
+        // You could also show a message in the table
+    }
+    
+    console.log('Entry details disabled - record not saved yet');
+}
+
+function enableEntryDetails() {
+    const entryDetails = document.getElementById('entry_details');
+    const entryRadioControls = document.querySelector('.entry-radio-controls');
+    
+    if (entryDetails) {
+        entryDetails.classList.remove('disabled');
+    }
+    
+    if (entryRadioControls) {
+        entryRadioControls.style.display = 'flex';
+    }
+    
+    console.log('Entry details enabled - record is saved');
+}
+
+// Function to check if entry details should be enabled
+function shouldEnableEntryDetails() {
+    const recordId = document.getElementById('record_id').value;
+    const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+    return !isNewRecord;
 }
 
 // Function to set maximum date for birthday field to today
@@ -2816,6 +2869,9 @@ function openRecordInOverlay(recordData) {
         // Highlight required fields and setup error containers
         highlightRequiredFields();
         setBirthdayMaxDate();
+
+        // ===== NEW: ENABLE ENTRY DETAILS FOR EXISTING RECORD =====
+        enableEntryDetails();
         
         // Make sure we're in add mode initially (hide back button)
         switchToAddMode();

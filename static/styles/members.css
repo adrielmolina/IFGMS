@@ -456,6 +456,34 @@ button,
   background-image: url("/static/assets/cells.png");
 }
 
+/* Entry details disabled state */
+.entry_details.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.entry_details.disabled::after {
+    content: "Save record first to add entries";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: #666;
+    text-align: center;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Hide radio controls when disabled */
+.entry_details.disabled + .entry-radio-controls {
+    display: none !important;
+}
+
 
 .record_details,
 .entry_details,
