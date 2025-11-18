@@ -200,11 +200,7 @@ def declaration_page():
     if active_dispatch:
         dispatch_contents = db_conn.get_current_dispatch_contents(active_dispatch.dispatch_id)
         
-        # DEBUG: Print what we're sending to the template
-        print(f"📦 Sending to template - Dispatch ID: {active_dispatch.dispatch_id}")
-        print(f"📦 Number of entries: {len(dispatch_contents)}")
-        
-        # Get unique categories and locations from dispatch_contents
+        # Get unique categories and locations FROM THE CURRENT DISPATCH CONTENTS only
         unique_categories = set()
         unique_locations = set()
         
@@ -220,7 +216,9 @@ def declaration_page():
         
         if dispatch_contents:      
             print('✅ Current dispatch:', active_dispatch.dispatch_id)
-            print('✅ Dispatch contents count:', len(dispatch_contents))  
+            print('✅ Dispatch contents count:', len(dispatch_contents))
+            print('✅ Categories in dispatch:', categories_list)
+            print('✅ Locations in dispatch:', locations_list)
             return render_template('declaration.html', 
                                 active_dispatch=active_dispatch, 
                                 dispatch_contents=dispatch_contents,
@@ -1821,6 +1819,105 @@ def add_to_dispatch():
         import traceback
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
+    
+@server.route('/api/cancel_dispatch', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def cancel_dispatch():
+    """Cancel the current active dispatch by setting status to 'disregard'"""
+    db_session = SessionLocal()
+    try:
+        print("🎯 Starting cancel dispatch process...")
+        
+        # Get the active dispatch using THE SAME session
+        active_dispatch = db_session.query(models.Dispatch).filter(
+            models.Dispatch.dispatch_status == 'current'
+        ).order_by(models.Dispatch.dispatch_id.desc()).first()
+        
+        if not active_dispatch:
+            print("❌ No active dispatch found")
+            return jsonify({"success": False, "error": "No active dispatch found"}), 400
+
+        dispatch_id = active_dispatch.dispatch_id
+        original_status = active_dispatch.dispatch_status
+        
+        print(f"🎯 Canceling dispatch: {dispatch_id}")
+        print(f"📊 Current status: {original_status}")
+
+        entries_updated = 0
+        records_updated = 0
+
+        # 1. Remove dispatch_id from all entries in this dispatch
+        try:
+            entries_result = db_session.query(models.Entries).filter(
+                models.Entries.dispatch_id == dispatch_id
+            ).update({
+                models.Entries.dispatch_id: None
+            }, synchronize_session=False)
+            entries_updated = entries_result if entries_result else 0
+            print(f"✅ Entries updated: {entries_updated}")
+        except Exception as e:
+            print(f"⚠️ No entries to update or error updating entries: {e}")
+            entries_updated = 0
+
+        # 2. Remove dispatch_id from all records in this dispatch
+        try:
+            records_result = db_session.query(models.Records).filter(
+                models.Records.dispatch_id == dispatch_id
+            ).update({
+                models.Records.dispatch_id: None
+            }, synchronize_session=False)
+            records_updated = records_result if records_result else 0
+            print(f"✅ Records updated: {records_updated}")
+        except Exception as e:
+            print(f"⚠️ No records to update or error updating records: {e}")
+            records_updated = 0
+
+        # 3. Update dispatch status to 'disregard'
+        active_dispatch.dispatch_status = 'disregard'
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M')
+        if active_dispatch.dispatch_remarks:
+            active_dispatch.dispatch_remarks = f"{active_dispatch.dispatch_remarks} - Cancelled by {current_user.username} on {current_time}"
+        else:
+            active_dispatch.dispatch_remarks = f"Cancelled by {current_user.username} on {current_time}"
+
+        print(f"🔍 Before commit - Status: {active_dispatch.dispatch_status}")
+        
+        # COMMIT THE CHANGES
+        db_session.commit()
+        
+        # Get the final status BEFORE closing the session
+        final_status = active_dispatch.dispatch_status
+        
+        print(f"🔍 After commit - Status: {final_status}")
+        print(f"✅ Dispatch {dispatch_id} cancelled successfully")
+
+        # Log the action
+        db_conn.POST_action_log(
+            current_user.username, 
+            current_user.user_level, 
+            'Cancel Dispatch', 
+            f'Cancelled dispatch {dispatch_id} (entries: {entries_updated}, records: {records_updated})', 
+            current_user.account_id
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Dispatch cancelled successfully",
+            "entries_updated": entries_updated,
+            "records_updated": records_updated,
+            "new_status": final_status,
+            "dispatch_id": dispatch_id
+        })
+
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Error cancelling dispatch: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db_session.close()
 
 @server.route('/api/members/get_next_record_id')
 @login_required
