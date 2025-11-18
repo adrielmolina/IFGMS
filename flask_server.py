@@ -874,6 +874,93 @@ def get_members():
 
     return jsonify(members_list)
     '''
+# ============================================================
+# 🔹 DEBUG ROUTES FOR MAAB NUMBER ISSUES
+# ============================================================
+
+@server.route('/api/debug/maab_formats', methods=['POST'])
+@login_required
+def debug_maab_formats():
+    """Debug route to check MAAB number formats"""
+    try:
+        data = request.get_json()
+        maab_numbers = data.get('maab_numbers', [])
+        
+        import re
+        results = {}
+        
+        for maab_no in maab_numbers:
+            # Current strict validation (7 digits)
+            strict_match = re.match(r'^(PC|PB|PS|PG|PP|PEP|S|SP)\d{7}$', maab_no)
+            
+            # Flexible validation (any digits)
+            flexible_match = re.match(r'^(PC|PB|PS|PG|PP|PEP|S|SP)\d+$', maab_no)
+            
+            results[maab_no] = {
+                'strict_validation': bool(strict_match),
+                'flexible_validation': bool(flexible_match),
+                'length': len(maab_no),
+                'prefix': maab_no[:2] if len(maab_no) >= 2 else 'N/A',
+                'numbers': maab_no[2:] if len(maab_no) > 2 else 'N/A'
+            }
+        
+        return jsonify({
+            'success': True,
+            'validation_results': results,
+            'note': 'Your MAAB numbers should pass flexible_validation to work with the fixed route'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# ============================================================
+# 🔹 GET USED MAAB NUMBERS FROM ENTRIES
+# ============================================================
+
+@server.route('/api/members/used_maab_numbers', methods=['GET'])
+@login_required
+def get_used_maab_numbers():
+    """Get all MAAB numbers that are already used in entries"""
+    try:
+        db_session = SessionLocal()
+        
+        try:
+            # Query all used MAAB numbers from entries table
+            cursor = db_session.execute(text("""
+                SELECT DISTINCT maab_no 
+                FROM entry_contents 
+                WHERE maab_no IS NOT NULL AND maab_no != ''
+            """))
+            used_numbers = [row[0] for row in cursor.fetchall()]
+            
+            print(f"🔍 Found {len(used_numbers)} used MAAB numbers in entries")
+            
+            return jsonify({
+                'success': True,
+                'used_numbers': used_numbers,
+                'count': len(used_numbers)
+            })
+            
+        except Exception as e:
+            print(f"❌ Database error in get_used_maab_numbers: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in get_used_maab_numbers route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
 
 @server.route('/api/archive_record', methods=['PATCH'])
 @login_required
@@ -1292,13 +1379,14 @@ def assign_id_to_member():
         
         print(f"🔍 Processing assignment: {id_number} to {member_name} in category {category}")
         
-        # Validate MAAB number format
+        # ✅ FIXED: More flexible MAAB number format validation
         import re
-        if not re.match(r'^(PC|PB|PS|PG|PP|PEP|S|SP)\d{7}$', id_number):
+        # Allow formats like: PC1206077, PC0004323, etc.
+        if not re.match(r'^(PC|PB|PS|PG|PP|PEP|S|SP)\d+$', id_number):
             print(f"❌ Invalid MAAB format: {id_number}")
             return jsonify({
                 'success': False,
-                'error': 'Invalid MAAB number format'
+                'error': f'Invalid MAAB number format: {id_number}. Expected format: Prefix + Numbers (e.g., PC1206077)'
             }), 400
         
         # Check if ID exists and is available
@@ -1312,6 +1400,8 @@ def assign_id_to_member():
             ).first()
             
             print(f"🔍 Found inventory item: {inventory_item}")
+            if inventory_item:
+                print(f"🔍 Inventory item details - used: {inventory_item.used}, allocated_to: {inventory_item.allocated_to}")
             
             if not inventory_item:
                 return jsonify({
@@ -1329,6 +1419,7 @@ def assign_id_to_member():
             # Update the inventory item - use allocated_to for member name
             inventory_item.used = 1  # Set to used
             inventory_item.allocated_to = member_name  # Store member name here
+            inventory_item.updated_at = datetime.now()
             
             db_session.commit()
             
@@ -1537,6 +1628,72 @@ def get_all_available_ids():
             'success': False,
             'error': 'Internal server error'
         }), 500
+
+# ============================================================
+# 🔹 REPAIR INVENTORY SYNC
+# ============================================================
+
+@server.route('/api/inventory/repair_sync', methods=['POST'])
+@login_required
+def repair_inventory_sync():
+    """Repair inventory sync by marking MAAB numbers as used if they exist in entries"""
+    try:
+        db_session = SessionLocal()
+        
+        try:
+            # Get all MAAB numbers that are actually used in entries
+            cursor = db_session.execute(text("""
+                SELECT DISTINCT maab_no 
+                FROM entry_contents 
+                WHERE maab_no IS NOT NULL AND maab_no != ''
+            """))
+            used_maab_numbers = [row[0] for row in cursor.fetchall()]
+            
+            print(f"🔍 Found {len(used_maab_numbers)} used MAAB numbers in entries")
+            
+            # Mark these as used in inventory
+            updated_count = 0
+            for maab_no in used_maab_numbers:
+                inventory_item = db_session.query(models.Inventory).filter(
+                    models.Inventory.maab_no == maab_no
+                ).first()
+                
+                if inventory_item and inventory_item.used == 0:
+                    inventory_item.used = 1
+                    inventory_item.updated_at = datetime.now()
+                    updated_count += 1
+                    print(f"✅ Fixed: {maab_no} marked as used in inventory")
+            
+            db_session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Repaired {updated_count} inventory items. Now in sync with entries.',
+                'updated_count': updated_count,
+                'total_used_in_entries': len(used_maab_numbers)
+            })
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Database error in repair_sync: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in repair_sync route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
     
 # ============================================================
 # 🔹 TEST INVENTORY ASSIGNMENT
@@ -1573,6 +1730,72 @@ def test_assignment():
         return jsonify({'success': False, 'error': str(e)})
     finally:
         db_session.close()
+
+# ============================================================
+# 🔹 MARK MAAB NUMBER AS USED IN INVENTORY
+# ============================================================
+
+@server.route('/api/inventory/mark_as_used', methods=['POST'])
+@login_required
+def mark_maab_as_used():
+    """Mark a MAAB number as used in inventory"""
+    try:
+        data = request.get_json()
+        maab_no = data.get('maab_no')
+        
+        if not maab_no:
+            return jsonify({'success': False, 'error': 'MAAB number is required'})
+        
+        print(f"🔍 Marking MAAB number as used: {maab_no}")
+        
+        db_session = SessionLocal()
+        
+        try:
+            # Find the inventory item
+            inventory_item = db_session.query(models.Inventory).filter(
+                models.Inventory.maab_no == maab_no
+            ).first()
+            
+            if not inventory_item:
+                return jsonify({'success': False, 'error': f'MAAB number {maab_no} not found in inventory'})
+            
+            if inventory_item.used == 1:
+                return jsonify({'success': False, 'error': f'MAAB number {maab_no} is already marked as used'})
+            
+            # Mark as used
+            inventory_item.used = 1
+            inventory_item.updated_at = datetime.now()
+            
+            db_session.commit()
+            
+            print(f"✅ Successfully marked {maab_no} as used in inventory")
+            
+            return jsonify({
+                'success': True,
+                'message': f'MAAB number {maab_no} marked as used'
+            })
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Database error in mark_maab_as_used: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in mark_maab_as_used route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
     
 @server.route('/api/add_to_dispatch', methods=['PATCH'])
 @login_required

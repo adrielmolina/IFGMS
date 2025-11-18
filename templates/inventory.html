@@ -162,20 +162,6 @@
                 </div>
             </div>
 
-            <div class="form-row">
-                <label>How to assign IDs:</label>
-                <div class="radio-group">
-                    <label class="radio-option">
-                        <input type="radio" name="idMethod" value="existing" checked>
-                        <span>Use existing ID numbers from Excel</span>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="idMethod" value="auto">
-                        <span>Automatically assign available IDs</span>
-                    </label>
-                </div>
-            </div>
-
             <div class="preview-box" id="previewBox" style="display: none;">
                 <h4>Ready to Assign:</h4>
                 <div id="memberPreview"></div>
@@ -946,8 +932,9 @@ let currentExcelData = []; // Store parsed Excel data
 // 🔹 OVERLAY MANAGEMENT
 // ============================================================
 
-// Open Overlay
+// Open Overlay - DAPAT GUMAGANA ITO
 assignIDBtn.addEventListener('click', () => {
+    console.log('Assign ID button clicked'); // Debug line
     assignOverlay.style.display = 'flex';
     resetOverlay();
 });
@@ -1013,11 +1000,6 @@ function switchToTab(tabId) {
     // Add active class to clicked tab
     document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
     document.getElementById(tabId).classList.add('active');
-    
-    // Show appropriate toast
-    if (tabId === 'singleTab') {
-    } else {
-    }
 }
 
 // ============================================================
@@ -1212,7 +1194,7 @@ function showMemberPreview(entries) {
     let html = `<div style="font-size: 13px; line-height: 1.4;">`;
     
     entries.slice(0, previewCount).forEach(entry => {
-        const idDisplay = entry.maabNo ? `<span style="color: #28a745;">${entry.maabNo}</span>` : '<span style="color: #ff6b00;">[Auto]</span>';
+        const idDisplay = entry.maabNo ? `<span style="color: #28a745;">${entry.maabNo}</span>` : '<span style="color: #dc3545;">[No ID]</span>';
         html += `<div>• ${entry.fullName} - ${entry.category} ${idDisplay}</div>`;
     });
     
@@ -1227,29 +1209,21 @@ function showMemberPreview(entries) {
     previewBox.style.display = 'block';
 }
 
-// Process Bulk Assignment
+// Process Bulk Assignment - WALANG RADIO BUTTON
 processBulkBtn.addEventListener('click', async function() {
     if (currentExcelData.length === 0) {
         toastError("No Data", "Please upload an Excel file first.");
         return;
     }
 
-    const idMethod = document.querySelector('input[name="idMethod"]:checked').value;
-    
     // Show loading state
     processBulkBtn.disabled = true;
     processBulkBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
     
     try {
-        let result;
-        
-        if (idMethod === 'existing') {
-            toastInfo("Assigning", "Assigning existing IDs from Excel...");
-            result = await assignExistingIDs(currentExcelData);
-        } else {
-            toastInfo("Auto-Assigning", "Automatically assigning available IDs...");
-            result = await autoAssignIDs(currentExcelData);
-        }
+        // GUMAMIT NA LANG PALAGI NG EXISTING IDs
+        toastInfo("Assigning", "Assigning existing IDs from Excel...");
+        const result = await assignExistingIDs(currentExcelData);
         
         showBulkResults(result.success, result.error, currentExcelData.length);
         
@@ -1300,88 +1274,6 @@ async function assignExistingIDs(entries) {
             errorCount++;
             console.error(`Error assigning ${entry.maabNo}:`, error);
         }
-    }
-
-    return { success: successCount, error: errorCount };
-}
-
-// Auto Assign Available IDs
-async function autoAssignIDs(entries) {
-    // Group entries by category
-    const entriesByCategory = {};
-    entries.forEach(entry => {
-        const category = entry.category || 'Classic';
-        if (!entriesByCategory[category]) {
-            entriesByCategory[category] = [];
-        }
-        entriesByCategory[category].push(entry);
-    });
-
-    let totalSuccess = 0;
-    let totalError = 0;
-
-    // Process each category
-    for (const [category, categoryEntries] of Object.entries(entriesByCategory)) {
-        toastInfo("Checking Stock", `Checking available ${category} IDs...`);
-        
-        const { success, error } = await autoAssignCategory(category, categoryEntries);
-        totalSuccess += success;
-        totalError += error;
-    }
-
-    return { success: totalSuccess, error: totalError };
-}
-
-// Auto Assign for specific category
-async function autoAssignCategory(category, entries) {
-    let successCount = 0;
-    let errorCount = 0;
-
-    try {
-        // Get available IDs for this category
-        const response = await fetch(`/api/inventory/available_ids/${category}?count=${entries.length}`);
-        const result = await response.json();
-        
-        if (!result.success || !result.available_ids || result.available_ids.length < entries.length) {
-            const available = result.available_ids ? result.available_ids.length : 0;
-            toastError("Insufficient Stock", 
-                `Not enough ${category} IDs available. Need: ${entries.length}, Have: ${available}`);
-            return { success: 0, error: entries.length };
-        }
-
-        toastInfo("Assigning", `Assigning ${entries.length} ${category} IDs...`);
-
-        // Assign IDs to each entry
-        for (let i = 0; i < entries.length; i++) {
-            const entry = entries[i];
-            const maabNo = result.available_ids[i];
-
-            try {
-                const assignResponse = await fetch('/api/inventory/assign_id', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        category: category,
-                        id_number: maabNo,
-                        member_name: entry.fullName
-                    })
-                });
-
-                const assignResult = await assignResponse.json();
-                if (assignResult.success) {
-                    successCount++;
-                } else {
-                    errorCount++;
-                    console.warn(`Failed to auto-assign ${maabNo}:`, assignResult.error);
-                }
-            } catch (error) {
-                errorCount++;
-                console.error(`Error auto-assigning ${maabNo}:`, error);
-            }
-        }
-    } catch (error) {
-        errorCount += entries.length;
-        console.error(`Error processing ${category} category:`, error);
     }
 
     return { success: successCount, error: errorCount };
