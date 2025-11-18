@@ -389,6 +389,17 @@ button,
     cursor: not-allowed !important;
 }
 
+/* ID Received auto styling */
+.id-rcv-auto {
+    cursor: not-allowed !important;
+    background-color: #f5f5f5;
+}
+
+.id-rcv-auto + label {
+    color: #666 !important;
+    cursor: not-allowed !important;
+}
+
 
 /* ---------- CARDS STYLE ---------- */
 .record_details, .entry_details, #entries_table {
@@ -1209,6 +1220,23 @@ div.table-container {
     color: #666666 !important;
     transform: none !important;
     box-shadow: none !important;
+}
+
+/* Style for update button state */
+.save_record_details.update-mode {
+    background-color: #ffa500 !important;
+    border-color: #ff8c00 !important;
+    color: #000 !important;
+}
+
+.save_record_details.update-mode:hover {
+    background-color: #ff8c00 !important;
+    border-color: #ff7f00 !important;
+}
+
+/* Optional: Add a subtle animation for the text change */
+.save_record_details {
+    transition: all 0.3s ease;
 }
 
 /* Show back button only when editing */

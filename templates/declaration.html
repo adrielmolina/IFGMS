@@ -52,7 +52,8 @@
 </div>
 
   <div class="action-buttons">
-    <button id="btn_create_dispatch" type="button" class="btn_create_dispatch">
+    <button id="btn_create_dispatch" type="button" class="btn_create_dispatch" 
+            {% if active_dispatch %}disabled{% endif %}>
         <i class="fa-solid fa-plus"></i> Create Dispatch
     </button>
 
@@ -148,7 +149,94 @@
         <button type="button" class="btn-edit" onclick="openEditOverlay()">
             <i class="fa-solid fa-pen-to-square"></i> Edit Details
         </button>
+
+        <button type="button" class="btn-cancel-dispatch" id="cancelDispatchBtn" onclick="cancelDispatch()" 
+            {% if not active_dispatch %}style="display: none;"{% endif %}>
+            <i class="fa-solid fa-ban"></i> Cancel Dispatch
+        </button>
     </div>
+</div>
+
+<!-- Create Dispatch Modal Overlay -->
+<div class="dispatch-overlay" id="createDispatchOverlay" style="display: none;">
+  <div class="dispatch-modal">
+    <div class="dispatch-header">
+      <h3>Create New Dispatch</h3>
+      <button class="close-btn" onclick="closeCreateOverlay()">&times;</button>
+    </div>
+    
+    <div class="dispatch-content">
+      <form id="createDispatchForm">
+        <div class="details-grid">
+          <!-- Cutoff Date with 3 separate inputs -->
+          <div class="detail-item full-width">
+            <label for="dispatch_cutoff_modal"><strong>Cut-off Date:</strong></label>
+            <div class="date-input-group">
+              <!-- Month Dropdown -->
+              <select id="cutoff_month" name="cutoff_month" class="date-select" required>
+                <option value="">Select Month</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+              
+              <!-- Day Dropdown (10th or 25th) -->
+              <select id="cutoff_day" name="cutoff_day" class="date-select" required>
+                <option value="">Select Day</option>
+                <option value="10">10th</option>
+                <option value="25">25th</option>
+              </select>
+              
+              <!-- Year Datepicker/Input -->
+              <input type="number" id="cutoff_year" name="cutoff_year" 
+                     class="date-input" placeholder="Year" 
+                     min="2000" max="2030" required>
+            </div>
+            <small style="color: #666; font-size: 0.8rem; display: block; margin-top: 5px;">
+              Select month, choose 10th or 25th, and enter year
+            </small>
+          </div>
+          
+          <!-- Late Declare -->
+          <div class="detail-item">
+            <label><strong>Late Declare:</strong></label>
+            <div class="radio-group">
+              <label>
+                <input type="radio" name="late_declare_modal" value="yes" required>
+                Yes
+              </label>
+              <label>
+                <input type="radio" name="late_declare_modal" value="no" required>
+                No
+              </label>
+            </div>
+          </div>
+          
+          <!-- Remarks -->
+          <div class="detail-item full-width">
+            <label for="dispatch_remarks_modal"><strong>Remarks:</strong></label>
+            <textarea id="dispatch_remarks_modal" name="dispatch_remarks_modal" 
+                     rows="3" placeholder="Enter remarks here... (optional)"></textarea>
+            <small style="color: #666; font-size: 0.8rem;">Maximum 500 characters</small>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="dispatch-footer">
+      <button type="button" class="btn btn-primary" onclick="submitDispatchForm()">Create Dispatch</button>
+      <button type="button" class="btn btn-secondary" onclick="closeCreateOverlay()">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <!-- Edit Dispatch Details Overlay -->
@@ -344,7 +432,7 @@ const mainTableData = [
       lateDeclare: "{{ active_dispatch.late_declare if active_dispatch else '' }}"
     }{% if not loop.last %},{% endif %}
     {% endfor %}
-  ];
+];
 
 console.log("🔄 Initialized mainTableData with", mainTableData.length, "entries");
 
@@ -353,51 +441,17 @@ let currentPage = 1;
 let entriesPerPage = 10;
 const dispatchData = [];
 
-// ✅ DEBUG: Check if functions are available
-console.log("🔄 JavaScript loading...");
-console.log("showHistory:", typeof showHistory);
-console.log("openEditOverlay:", typeof openEditOverlay);
-
-// Filter functionality
-function initializeFilters() {
-    const categoryFilter = document.getElementById('filterCategory');
-    const locationFilter = document.getElementById('filterLocation');
-    
-    if (categoryFilter) {
-        categoryFilter.addEventListener('change', applyFilters);
-    }
-    
-    if (locationFilter) {
-        locationFilter.addEventListener('change', applyFilters);
-    }
-}
-
-function applyFilters() {
-    const categoryValue = document.getElementById('filterCategory').value;
-    const locationValue = document.getElementById('filterLocation').value;
-    
-    // Filter the data based on selections
-    filteredData = mainTableData.filter(item => {
-        const categoryMatch = categoryValue === 'all' || item.category === categoryValue;
-        const locationMatch = locationValue === 'all' || item.location === locationValue;
-        
-        return categoryMatch && locationMatch;
-    });
-    
-    // Reset to first page and re-render
-    currentPage = 1;
-    renderTable();
-}
-
-// ✅ Fixed Selection Logic
+// ✅ Initialize everything when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ DOM Content Loaded");
     initializeCheckboxListeners();
     initializePagination();
     setupEventListeners();
     setupOverlayListeners();
-    initializeFilters(); // Add this line
+    initializeFilters();
     updateTransmitButtonText();
+    updateCreateDispatchButton();
+    updateCancelButtonVisibility();
     
     // Add event listener for remove button
     const removeBtn = document.getElementById('btn_remove_dispatch');
@@ -406,23 +460,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-function updateTransmitButtonText() {
-    const transmitBtn = document.querySelector('.btn.transmit');
-    if (transmitBtn) {
-        const userLocation = '{{ current_user.office_location }}'; // This comes from Flask
-        if (userLocation === 'Chapter') {
-            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Declare';
-        } else if (['Dasmarinas', 'Silang'].includes(userLocation)) {
-            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Transmit';
+// ✅ Update Create Dispatch Button State
+function updateCreateDispatchButton() {
+    const createBtn = document.getElementById('btn_create_dispatch');
+    const hasActiveDispatch = {{ 'true' if active_dispatch else 'false' }};
+    
+    if (createBtn) {
+        createBtn.disabled = hasActiveDispatch;
+        
+        // Update tooltip for better UX
+        if (hasActiveDispatch) {
+            createBtn.title = "Cannot create new dispatch while there is an active dispatch. Please complete or cancel the current dispatch first.";
         } else {
-            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Action';
+            createBtn.title = "Create new dispatch";
         }
+        
+        console.log("🔄 Create Dispatch button state:", hasActiveDispatch ? "DISABLED (active dispatch)" : "ENABLED");
     }
 }
 
-// Update the event listener to use the new transmit function
+// ✅ Prevent clicks on disabled create button
 function setupEventListeners() {
-    // Transmit button event listener - UPDATED
+    // Create Dispatch button event listener with disabled state handling
+    const createBtn = document.getElementById('btn_create_dispatch');
+    if (createBtn) {
+        createBtn.addEventListener('click', function(e) {
+            if (this.disabled) {
+                e.preventDefault();
+                e.stopPropagation();
+                toastInfo('Information', 'There is already an active dispatch. Please complete or cancel the current dispatch before creating a new one.');
+                return false;
+            }
+            openCreateOverlay();
+        });
+    }
+    
+    // Transmit button event listener
     const transmitBtn = document.querySelector('.btn.transmit');
     if (transmitBtn) {
         transmitBtn.addEventListener('click', transmitDispatch);
@@ -435,70 +508,342 @@ function setupEventListeners() {
     }
 }
 
-// ✅ ADD THIS FUNCTION - Setup overlay event listeners
-function setupOverlayListeners() {
-  console.log("🔧 Setting up overlay listeners");
-  
-  // Close overlay when clicking outside content
-  const editOverlay = document.getElementById('editDispatchOverlay');
-  if (editOverlay) {
-    editOverlay.addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeEditOverlay();
-      }
-    });
-  }
-
-  // Close with Escape key
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeEditOverlay();
+function updateTransmitButtonText() {
+    const transmitBtn = document.querySelector('.btn.transmit');
+    if (transmitBtn) {
+        const userLocation = '{{ current_user.office_location }}';
+        if (userLocation === 'Chapter') {
+            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Declare';
+        } else if (['Dasmarinas', 'Silang'].includes(userLocation)) {
+            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Transmit';
+        } else {
+            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Action';
+        }
     }
-  });
+}
+
+// ✅ Reset form when opening overlay
+function openCreateOverlay() {
+    console.log("🎯 Opening create dispatch overlay");
+    
+    // Check if button is disabled (active dispatch exists)
+    const createBtn = document.getElementById('btn_create_dispatch');
+    if (createBtn.disabled) {
+        toastInfo('Information', 'There is already an active dispatch. Please complete or cancel the current dispatch before creating a new one.');
+        return;
+    }
+    
+    try {
+        const overlay = document.getElementById('createDispatchOverlay');
+        if (!overlay) {
+            throw new Error('Create overlay not found');
+        }
+        
+        // Reset form
+        document.getElementById('createDispatchForm').reset();
+        
+        // Set default year
+        setDefaultYear();
+        
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        console.log("✅ Create overlay opened successfully");
+        
+    } catch (error) {
+        console.error('❌ Error opening create overlay:', error);
+        toastError('Error', 'Cannot open create form. Please try again.');
+    }
+}
+
+function closeCreateOverlay() {
+    console.log("🎯 Closing create overlay");
+    try {
+        const overlay = document.getElementById('createDispatchOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    } catch (error) {
+        console.error('Error closing create overlay:', error);
+    }
+}
+
+// ✅ Updated validation for new date inputs
+function validateDispatchForm() {
+    const cutoffMonth = document.getElementById('cutoff_month').value;
+    const cutoffDay = document.getElementById('cutoff_day').value;
+    const cutoffYear = document.getElementById('cutoff_year').value;
+    const lateDeclare = document.querySelector('input[name="late_declare_modal"]:checked')?.value;
+    const dispatchRemarks = document.getElementById('dispatch_remarks_modal').value;
+    
+    // Clear previous error styles
+    document.querySelectorAll('.error-field').forEach(el => {
+        el.classList.remove('error-field');
+    });
+    document.querySelectorAll('.error-message').forEach(el => el.remove());
+    
+    let isValid = true;
+    let errorMessages = [];
+    
+    // Validate Month
+    if (!cutoffMonth) {
+        const monthField = document.getElementById('cutoff_month');
+        monthField.classList.add('error-field');
+        showFieldError(monthField, 'Please select a month');
+        isValid = false;
+        errorMessages.push('Month selection is required');
+    }
+    
+    // Validate Day
+    if (!cutoffDay) {
+        const dayField = document.getElementById('cutoff_day');
+        dayField.classList.add('error-field');
+        showFieldError(dayField, 'Please select 10th or 25th');
+        isValid = false;
+        errorMessages.push('Day selection is required');
+    }
+    
+    // Validate Year
+    if (!cutoffYear) {
+        const yearField = document.getElementById('cutoff_year');
+        yearField.classList.add('error-field');
+        showFieldError(yearField, 'Please enter a year');
+        isValid = false;
+        errorMessages.push('Year is required');
+    } else if (cutoffYear < 2000 || cutoffYear > new Date().getFullYear() + 5) {
+        const yearField = document.getElementById('cutoff_year');
+        yearField.classList.add('error-field');
+        showFieldError(yearField, 'Please enter a valid year (2000-' + (new Date().getFullYear() + 5) + ')');
+        isValid = false;
+        errorMessages.push('Invalid year');
+    }
+    
+    // Validate Late Declare
+    if (!lateDeclare) {
+        const radioGroup = document.querySelector('.radio-group');
+        radioGroup.classList.add('error-field');
+        showFieldError(radioGroup, 'Please select Yes or No for late declare');
+        isValid = false;
+        errorMessages.push('Late declare selection is required');
+    }
+    
+    // Validate Remarks length
+    if (dispatchRemarks.length > 500) {
+        const remarksField = document.getElementById('dispatch_remarks_modal');
+        remarksField.classList.add('error-field');
+        showFieldError(remarksField, 'Remarks cannot exceed 500 characters');
+        isValid = false;
+        errorMessages.push('Remarks too long (max 500 characters)');
+    }
+    
+    if (!isValid && errorMessages.length > 0) {
+        toastError('Validation Error', 'Please check the following:<br>' + errorMessages.join('<br>• '));
+    }
+    
+    return isValid;
+}
+
+// ✅ Set current year as default in the year field
+function setDefaultYear() {
+    const currentYear = new Date().getFullYear();
+    const yearField = document.getElementById('cutoff_year');
+    if (yearField) {
+        yearField.value = currentYear;
+    }
+}
+
+// ✅ Submit dispatch form with new date inputs
+async function submitDispatchForm() {
+    console.log("🎯 Submitting dispatch form");
+    
+    try {
+        // Validate form first
+        if (!validateDispatchForm()) {
+            return; // Stop if validation fails
+        }
+        
+        // Get values from the three date inputs
+        const cutoffMonth = document.getElementById('cutoff_month').value;
+        const cutoffDay = document.getElementById('cutoff_day').value;
+        const cutoffYear = document.getElementById('cutoff_year').value;
+        const lateDeclare = document.querySelector('input[name="late_declare_modal"]:checked').value;
+        const dispatchRemarks = document.getElementById('dispatch_remarks_modal').value;
+        
+        // Validate all date components are selected
+        if (!cutoffMonth || !cutoffDay || !cutoffYear) {
+            toastError('Error', 'Please complete all date fields (month, day, and year)');
+            return;
+        }
+        
+        // Validate year is reasonable
+        const currentYear = new Date().getFullYear();
+        if (cutoffYear < 2000 || cutoffYear > currentYear + 5) {
+            toastError('Error', 'Please enter a valid year (between 2000 and ' + (currentYear + 5) + ')');
+            return;
+        }
+        
+        // Combine into proper date format for database (YYYY-MM-DD)
+        const properDate = `${cutoffYear}-${cutoffMonth}-${cutoffDay.padStart(2, '0')}`;
+        
+        // Validate it's a real date
+        const dateObj = new Date(properDate);
+        if (isNaN(dateObj.getTime())) {
+            toastError('Error', 'Invalid date combination. Please check the month, day, and year.');
+            return;
+        }
+        
+        console.log("📦 Sending dispatch data:", {
+            dispatch_cutoff: properDate,
+            late_declare: lateDeclare === 'yes',
+            dispatch_remarks: dispatchRemarks
+        });
+        
+        // Show loading state
+        const submitBtn = document.querySelector('#createDispatchOverlay .btn-primary');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+        submitBtn.disabled = true;
+        
+        // Send the properly formatted date to the server
+        const response = await fetch('/api/declaration', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                dispatch_cutoff: properDate,
+                late_declare: lateDeclare === 'yes',
+                dispatch_remarks: dispatchRemarks
+            })
+        });
+        
+        console.log("📦 Response status:", response.status);
+        
+        const result = await response.json();
+        console.log("📦 Response data:", result);
+        
+        if (!response.ok) {
+            throw new Error(result.error || `Server error: ${response.status}`);
+        }
+        
+        if (result.success) {
+            toastSuccess('Success', 'New dispatch created successfully!');
+            console.log("✅ Dispatch created, closing modal...");
+            
+            // Close modal
+            closeCreateOverlay();
+            
+            // Update button state immediately
+            updateCreateDispatchButton();
+            updateCancelButtonVisibility();
+            
+            // Force page reload after a short delay
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            throw new Error(result.error || 'Failed to create dispatch');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error creating dispatch:', error);
+        
+        let userMessage = 'Failed to create dispatch. ';
+        
+        if (error.message.includes('Network') || error.message.includes('Fetch')) {
+            userMessage = 'Please check your internet connection.';
+        } else if (error.message.includes('already exists')) {
+            userMessage = 'A dispatch with these details already exists.';
+        } else if (error.message.includes('permission') || error.message.includes('unauthorized')) {
+            userMessage = 'You do not have permission to create dispatches.';
+        } else {
+            userMessage = error.message || 'Please try again with different details.';
+        }
+        
+        toastError('Error', userMessage);
+        
+    } finally {
+        // Restore button state
+        const submitBtn = document.querySelector('#createDispatchOverlay .btn-primary');
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Create Dispatch';
+            submitBtn.disabled = false;
+        }
+    }
+}
+
+
+// Update setupOverlayListeners to include create overlay
+function setupOverlayListeners() {
+    console.log("🔧 Setting up overlay listeners");
+    
+    // Close overlays when clicking outside content
+    const editOverlay = document.getElementById('editDispatchOverlay');
+    const createOverlay = document.getElementById('createDispatchOverlay');
+    
+    if (editOverlay) {
+        editOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditOverlay();
+            }
+        });
+    }
+    
+    if (createOverlay) {
+        createOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCreateOverlay();
+            }
+        });
+    }
+
+    // Close with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeEditOverlay();
+            closeCreateOverlay();
+        }
+    });
 }
 
 function initializeCheckboxListeners() {
-  const rowChecks = document.querySelectorAll(".row-check");
-  const selectAllCheckbox = document.getElementById("selectAll");
-  
-  // Remove existing listeners to prevent duplicates
-  rowChecks.forEach(cb => {
-    cb.replaceWith(cb.cloneNode(true));
-  });
+    const rowChecks = document.querySelectorAll(".row-check");
+    const selectAllCheckbox = document.getElementById("selectAll");
+    
+    // Remove existing listeners to prevent duplicates
+    rowChecks.forEach(cb => {
+        cb.replaceWith(cb.cloneNode(true));
+    });
 
-  // Get fresh references after clone
-  const freshRowChecks = document.querySelectorAll(".row-check");
-  
-  freshRowChecks.forEach(cb => {
-    cb.addEventListener("change", updateSelection);
-  });
+    // Get fresh references after clone
+    const freshRowChecks = document.querySelectorAll(".row-check");
+    
+    freshRowChecks.forEach(cb => {
+        cb.addEventListener("change", updateSelection);
+    });
 
-  if (selectAllCheckbox) {
-    selectAllCheckbox.removeEventListener("change", handleSelectAll);
-    selectAllCheckbox.addEventListener("change", handleSelectAll);
-  }
+    if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+        selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
 
-  // Initial selection update
-  updateSelection();
+    // Initial selection update
+    updateSelection();
 }
 
 function handleSelectAll() {
-  const isChecked = this.checked;
-  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
-  
-  visibleRows.forEach(row => {
-    const checkbox = row.querySelector(".row-check");
-    if (checkbox) {
-      checkbox.checked = isChecked;
-    }
-  });
-  
-  updateSelection();
+    const isChecked = this.checked;
+    const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+    
+    visibleRows.forEach(row => {
+        const checkbox = row.querySelector(".row-check");
+        if (checkbox) {
+            checkbox.checked = isChecked;
+        }
+    });
+    
+    updateSelection();
 }
 
-// Add to your existing JavaScript code
-
-// Select All functionality
+// ✅ Select All functionality
 function selectAllRows() {
     const selectAllCheckbox = document.getElementById("selectAll");
     const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
@@ -530,7 +875,7 @@ function selectAllRows() {
     updateSelection();
 }
 
-// Remove from Dispatch functionality
+// ✅ Remove from Dispatch functionality
 async function removeFromDispatch() {
     const selectedRows = getSelectedRows();
     
@@ -589,7 +934,7 @@ async function removeFromDispatch() {
     }
 }
 
-// Helper function to get selected rows
+// ✅ Helper function to get selected rows
 function getSelectedRows() {
     const selectedRows = [];
     const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
@@ -602,7 +947,7 @@ function getSelectedRows() {
                 selectedRows.push({
                     entry_id: cells[2]?.textContent?.trim() || '',
                     dispatch_id: cells[1]?.textContent?.trim() || '',
-                    member_name: cells[5]?.textContent?.trim() || '',  // Now using the combined name
+                    member_name: cells[5]?.textContent?.trim() || '',
                     maab_no: cells[4]?.textContent?.trim() || ''
                 });
             }
@@ -613,456 +958,362 @@ function getSelectedRows() {
 }
 
 function updateSelection() {
-  const summaryText = document.getElementById("summaryText");
-  const selectAllCheckbox = document.getElementById("selectAll");
-  const removeBtn = document.getElementById("btn_remove_dispatch");
-  
-  // Count checked checkboxes from VISIBLE rows only
-  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
-  let checkedCount = 0;
-  
-  visibleRows.forEach(row => {
-    const checkbox = row.querySelector(".row-check");
-    if (checkbox && checkbox.checked) {
-      checkedCount++;
+    const summaryText = document.getElementById("summaryText");
+    const selectAllCheckbox = document.getElementById("selectAll");
+    const removeBtn = document.getElementById("btn_remove_dispatch");
+    
+    // Count checked checkboxes from VISIBLE rows only
+    const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+    let checkedCount = 0;
+    
+    visibleRows.forEach(row => {
+        const checkbox = row.querySelector(".row-check");
+        if (checkbox && checkbox.checked) {
+            checkedCount++;
+        }
+    });
+
+    const totalVisible = visibleRows.length;
+    
+    // Update summary text
+    if (summaryText) {
+        const start = (currentPage - 1) * entriesPerPage + 1;
+        const end = Math.min(currentPage * entriesPerPage, totalVisible);
+        summaryText.textContent = `Showing ${start} to ${end} of ${filteredData.length} entries • ${checkedCount} selected for removal`;
     }
-  });
 
-  const totalVisible = visibleRows.length;
-  
-  // Update summary text
-  if (summaryText) {
-    const start = (currentPage - 1) * entriesPerPage + 1;
-    const end = Math.min(currentPage * entriesPerPage, totalVisible);
-    summaryText.textContent = `Showing ${start} to ${end} of ${filteredData.length} entries • ${checkedCount} selected for removal`;
-  }
+    // Transmit button is ALWAYS enabled (no count displayed)
+    const transmitBtn = document.querySelector(".btn.transmit");
+    if (transmitBtn) {
+        transmitBtn.disabled = false;
+        transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
+    }
+    
+    // Update remove button state - only enabled when items are selected
+    if (removeBtn) {
+        removeBtn.disabled = checkedCount === 0;
+        removeBtn.innerHTML = checkedCount === 0
+            ? `<i class="fa-solid fa-trash"></i> Remove from Dispatch`
+            : `<i class="fa-solid fa-trash"></i> Remove from Dispatch (${checkedCount})`;
+    }
 
-  // Transmit button is ALWAYS enabled (no count displayed)
-  const transmitBtn = document.querySelector(".btn.transmit");
-  if (transmitBtn) {
-    transmitBtn.disabled = false;
-    transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
-  }
-  
-  // Update remove button state - only enabled when items are selected
-  if (removeBtn) {
-    removeBtn.disabled = checkedCount === 0;
-    removeBtn.innerHTML = checkedCount === 0
-      ? `<i class="fa-solid fa-trash"></i> Remove from Dispatch`
-      : `<i class="fa-solid fa-trash"></i> Remove from Dispatch (${checkedCount})`;
-  }
+    // Update select all checkbox state
+    if (selectAllCheckbox && totalVisible > 0) {
+        selectAllCheckbox.checked = checkedCount === totalVisible;
+        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalVisible;
+    }
+}
 
-  // Update select all checkbox state
-  if (selectAllCheckbox && totalVisible > 0) {
-    selectAllCheckbox.checked = checkedCount === totalVisible;
-    selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalVisible;
-  }
+// ✅ Filter functionality
+function initializeFilters() {
+    const categoryFilter = document.getElementById('filterCategory');
+    const locationFilter = document.getElementById('filterLocation');
+    
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', applyFilters);
+    }
+    
+    if (locationFilter) {
+        locationFilter.addEventListener('change', applyFilters);
+    }
+}
+
+function applyFilters() {
+    const categoryValue = document.getElementById('filterCategory').value;
+    const locationValue = document.getElementById('filterLocation').value;
+    
+    // Filter the data based on selections
+    filteredData = mainTableData.filter(item => {
+        const categoryMatch = categoryValue === 'all' || item.category === categoryValue;
+        const locationMatch = locationValue === 'all' || item.location === locationValue;
+        
+        return categoryMatch && locationMatch;
+    });
+    
+    // Reset to first page and re-render
+    currentPage = 1;
+    renderTable();
 }
 
 // 🔎 Search Function
 document.getElementById('search_input').addEventListener('keyup', function () {
-  const filter = this.value.toLowerCase();
+    const filter = this.value.toLowerCase();
 
-  // Filter the ENTIRE dataset, not just visible rows
-  filteredData = mainTableData.filter(item =>
-    Object.values(item).some(value =>
-      String(value).toLowerCase().includes(filter)
-    )
-  );
+    // Filter the ENTIRE dataset, not just visible rows
+    filteredData = mainTableData.filter(item =>
+        Object.values(item).some(value =>
+            String(value).toLowerCase().includes(filter)
+        )
+    );
 
-  // Reset to first page after searching
-  currentPage = 1;
+    // Reset to first page after searching
+    currentPage = 1;
 
-  // Re-render the table with filtered data
-  renderTable();
+    // Re-render the table with filtered data
+    renderTable();
 });
 
 // Clear search
 document.getElementById('search_clear').addEventListener('click', function() {
-  document.getElementById('search_input').value = '';
-  filteredData = [...mainTableData];
-  currentPage = 1;
-  renderTable();
-  this.classList.remove('visible');
+    document.getElementById('search_input').value = '';
+    filteredData = [...mainTableData];
+    currentPage = 1;
+    renderTable();
+    this.classList.remove('visible');
 });
 
 // Show/hide clear button based on search input
 document.getElementById('search_input').addEventListener('input', function(e) {
-  const clearBtn = document.getElementById('search_clear');
-  if (e.target.value.trim() !== "") {
-    clearBtn.classList.add('visible');
-  } else {
-    clearBtn.classList.remove('visible');
-  }
+    const clearBtn = document.getElementById('search_clear');
+    if (e.target.value.trim() !== "") {
+        clearBtn.classList.add('visible');
+    } else {
+        clearBtn.classList.remove('visible');
+    }
 });
 
 // ====================== DISPATCH DETAILS OVERLAY FUNCTIONS ======================
 function openEditOverlay() {
-  console.log("🎯 Opening edit overlay");
-  try {
-    const overlay = document.getElementById('editDispatchOverlay');
-    if (!overlay) {
-      throw new Error('Edit overlay not found');
+    console.log("🎯 Opening edit overlay");
+    try {
+        const overlay = document.getElementById('editDispatchOverlay');
+        if (!overlay) {
+            throw new Error('Edit overlay not found');
+        }
+        
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        console.log("✅ Overlay opened successfully");
+        
+    } catch (error) {
+        console.error('❌ Error opening overlay:', error);
+        toastError('Error', 'Cannot open edit form. Please try again.');
     }
-    
-    overlay.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    console.log("✅ Overlay opened successfully");
-    
-  } catch (error) {
-    console.error('❌ Error opening overlay:', error);
-    toastError('Error', 'Cannot open edit form. Please try again.');
-  }
 }
 
 function closeEditOverlay() {
-  console.log("🎯 Closing edit overlay");
-  try {
-    const overlay = document.getElementById('editDispatchOverlay');
-    if (overlay) {
-      overlay.style.display = 'none';
-      document.body.style.overflow = '';
+    console.log("🎯 Closing edit overlay");
+    try {
+        const overlay = document.getElementById('editDispatchOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    } catch (error) {
+        console.error('Error closing overlay:', error);
     }
-  } catch (error) {
-    console.error('Error closing overlay:', error);
-  }
-}
-
-function validateDispatchForm() {
-  const dispatchCutoff = document.getElementById('dispatch_cutoff').value;
-  const lateDeclare = document.querySelector('input[name="late_declare"]:checked')?.value;
-  
-  // Clear previous error styles
-  document.querySelectorAll('.error-field').forEach(el => {
-    el.classList.remove('error-field');
-  });
-  document.querySelectorAll('.error-message').forEach(el => el.remove());
-  
-  let isValid = true;
-  let errorMessages = [];
-  
-  // Validate Cutoff Date
-  if (!dispatchCutoff) {
-    const cutoffField = document.getElementById('dispatch_cutoff');
-    cutoffField.classList.add('error-field');
-    showFieldError(cutoffField, 'Please select a cutoff date');
-    isValid = false;
-    errorMessages.push('Cutoff date is required');
-  }
-  
-  // Validate Late Declare
-  if (!lateDeclare) {
-    const radioGroup = document.querySelector('.radio-group');
-    radioGroup.classList.add('error-field');
-    showFieldError(radioGroup, 'Please select Yes or No for late declare');
-    isValid = false;
-    errorMessages.push('Late declare selection is required');
-  }
-  
-  // Validate Remarks length (optional but with limit)
-  const dispatchRemarks = document.getElementById('dispatch_remarks').value;
-  if (dispatchRemarks.length > 500) {
-    const remarksField = document.getElementById('dispatch_remarks');
-    remarksField.classList.add('error-field');
-    showFieldError(remarksField, 'Remarks cannot exceed 500 characters');
-    isValid = false;
-    errorMessages.push('Remarks too long (max 500 characters)');
-  }
-  
-  if (!isValid && errorMessages.length > 0) {
-    toastError('Validation Error', 'Please check the following:<br>' + errorMessages.join('<br>• '));
-  }
-  
-  return isValid;
 }
 
 function showFieldError(field, message) {
-  // Remove existing error message for this field
-  const existingError = field.parentNode.querySelector('.error-message');
-  if (existingError) {
-    existingError.remove();
-  }
-  
-  // Create and append error message
-  const errorElement = document.createElement('div');
-  errorElement.className = 'error-message';
-  errorElement.textContent = message;
-  errorElement.style.cssText = 'color: #dc2626; font-size: 0.75rem; margin-top: 4px;';
-  
-  field.parentNode.appendChild(errorElement);
+    // Remove existing error message for this field
+    const existingError = field.parentNode.querySelector('.error-message');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Create and append error message
+    const errorElement = document.createElement('div');
+    errorElement.className = 'error-message';
+    errorElement.textContent = message;
+    errorElement.style.cssText = 'color: #dc2626; font-size: 0.75rem; margin-top: 4px;';
+    
+    field.parentNode.appendChild(errorElement);
+}
+
+// ✅ Cancel Dispatch Functionality
+async function cancelDispatch() {
+    if (!confirm('Are you sure you want to cancel this dispatch? This will set the status to "disregard" and remove all entries from dispatch.')) {
+        return;
+    }
+
+    try {
+        // Show loading state
+        const cancelBtn = document.getElementById('cancelDispatchBtn');
+        const originalText = cancelBtn.innerHTML;
+        cancelBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Canceling...';
+        cancelBtn.disabled = true;
+
+        const response = await fetch('/api/cancel_dispatch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to cancel dispatch');
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            toastSuccess('Success', 'Dispatch cancelled successfully!');
+            
+            // Force a complete page reload to refresh all data
+            setTimeout(() => {
+                location.reload(true); // true forces reload from server, not cache
+            }, 1000);
+        } else {
+            throw new Error(result.error || 'Failed to cancel dispatch');
+        }
+
+    } catch (error) {
+        console.error('Error canceling dispatch:', error);
+        toastError('Error', 'Failed to cancel dispatch. Please try again.');
+        
+        // Restore button state
+        const cancelBtn = document.getElementById('cancelDispatchBtn');
+        if (cancelBtn) {
+            cancelBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Cancel Dispatch';
+            cancelBtn.disabled = false;
+        }
+    }
+}
+
+// ✅ Update cancel button visibility based on active dispatch
+function updateCancelButtonVisibility() {
+    const cancelBtn = document.getElementById('cancelDispatchBtn');
+    const activeDispatchPanel = document.querySelector('.dispatch-details-panel');
+    
+    if (cancelBtn && activeDispatchPanel) {
+        // Check if there's an active dispatch by looking at the dispatch status badge
+        const statusBadge = activeDispatchPanel.querySelector('.dispatch-status-badge');
+        const hasActiveDispatch = statusBadge && 
+                                statusBadge.textContent.trim() !== 'No Active Dispatch' &&
+                                !statusBadge.textContent.includes('N/A');
+        
+        if (hasActiveDispatch) {
+            cancelBtn.style.display = 'flex';
+        } else {
+            cancelBtn.style.display = 'none';
+        }
+        
+        console.log("🔄 Cancel button visibility:", hasActiveDispatch ? "VISIBLE" : "HIDDEN");
+    }
 }
 
 async function saveDispatchDetails() {
-  console.log("🎯 Saving dispatch details");
-  
-  try {
-    // Validate form first
-    if (!validateDispatchForm()) {
-      return; // Stop if validation fails
+    console.log("🎯 Saving dispatch details");
+    
+    try {
+        // Validate form first
+        if (!validateDispatchForm()) {
+            return; // Stop if validation fails
+        }
+        
+        const dispatchCutoff = document.getElementById('dispatch_cutoff').value;
+        const lateDeclare = document.querySelector('input[name="late_declare"]:checked').value;
+        const dispatchRemarks = document.getElementById('dispatch_remarks').value;
+        
+        console.log('Saving dispatch details:', {
+            dispatchCutoff,
+            lateDeclare,
+            dispatchRemarks
+        });
+        
+        // Show loading state
+        const saveBtn = document.querySelector('.dispatch-footer .btn-primary');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        saveBtn.disabled = true;
+        
+        // API call to save changes
+        const response = await fetch('/api/update_dispatch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                dispatch_cutoff: dispatchCutoff,
+                late_declare: lateDeclare,
+                dispatch_remarks: dispatchRemarks
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Server error: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            toastSuccess('Success', 'Dispatch details updated successfully!');
+            closeEditOverlay();
+            
+            // Optional: Refresh the page or update UI
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+            
+        } else {
+            throw new Error(result.error || 'Failed to save changes');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error saving dispatch details:', error);
+        
+        let userMessage = 'Failed to save changes. ';
+        
+        if (error.message.includes('Network') || error.message.includes('Fetch')) {
+            userMessage = 'Please check your internet connection and try again.';
+        } else if (error.message.includes('Server error')) {
+            userMessage = 'Server is temporarily unavailable. Please try again later.';
+        } else if (error.message.includes('unauthorized') || error.message.includes('permission')) {
+            userMessage = 'You do not have permission to make these changes.';
+        } else {
+            userMessage = 'Please check your entries and try again.';
+        }
+        
+        toastError('Error', userMessage);
+        
+    } finally {
+        // Restore button state
+        const saveBtn = document.querySelector('.dispatch-footer .btn-primary');
+        if (saveBtn) {
+            saveBtn.innerHTML = 'Save Changes';
+            saveBtn.disabled = false;
+        }
     }
-    
-    const dispatchCutoff = document.getElementById('dispatch_cutoff').value;
-    const lateDeclare = document.querySelector('input[name="late_declare"]:checked').value;
-    const dispatchRemarks = document.getElementById('dispatch_remarks').value;
-    
-    console.log('Saving dispatch details:', {
-      dispatchCutoff,
-      lateDeclare,
-      dispatchRemarks
-    });
-    
-    // Show loading state
-    const saveBtn = document.querySelector('.dispatch-footer .btn-primary');
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-    saveBtn.disabled = true;
-    
-    // API call to save changes
-    const response = await fetch('/api/update_dispatch', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        dispatch_cutoff: dispatchCutoff,
-        late_declare: lateDeclare,
-        dispatch_remarks: dispatchRemarks
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Server error: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      toastSuccess('Success', 'Dispatch details updated successfully!');
-      closeEditOverlay();
-      
-      // Optional: Refresh the page or update UI
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
-      
-    } else {
-      throw new Error(result.error || 'Failed to save changes');
-    }
-    
-  } catch (error) {
-    console.error('❌ Error saving dispatch details:', error);
-    
-    let userMessage = 'Failed to save changes. ';
-    
-    if (error.message.includes('Network') || error.message.includes('Fetch')) {
-      userMessage = 'Please check your internet connection and try again.';
-    } else if (error.message.includes('Server error')) {
-      userMessage = 'Server is temporarily unavailable. Please try again later.';
-    } else if (error.message.includes('unauthorized') || error.message.includes('permission')) {
-      userMessage = 'You do not have permission to make these changes.';
-    } else {
-      userMessage = 'Please check your entries and try again.';
-    }
-    
-    toastError('Error', userMessage);
-    
-  } finally {
-    // Restore button state
-    const saveBtn = document.querySelector('.dispatch-footer .btn-primary');
-    if (saveBtn) {
-      saveBtn.innerHTML = 'Save Changes';
-      saveBtn.disabled = false;
-    }
-  }
 }
-
-// 📦 Dispatch Create with Validation - FIXED DATE FORMAT
-document.getElementById('btn_create_dispatch').addEventListener('click', async function() {
-  try {
-    console.log("🎯 Create Dispatch button clicked");
-    
-    // Get current year for proper date formatting
-    const currentYear = new Date().getFullYear();
-    
-    // Validate inputs with user-friendly prompts
-    const dispatch_cutoff = prompt("Enter Cut-off Date (MM-DD):");
-    if (!dispatch_cutoff) {
-      toastInfo('Info', 'Dispatch creation was cancelled');
-      return;
-    }
-    
-    // Validate cutoff format
-    if (!/^\d{2}-\d{2}$/.test(dispatch_cutoff)) {
-      toastError('Error', 'Please use MM-DD format (e.g., 12-25)');
-      return;
-    }
-    
-    // Convert MM-DD to YYYY-MM-DD format for database
-    const [month, day] = dispatch_cutoff.split('-');
-    const properDate = `${currentYear}-${month}-${day}`;
-    
-    // Validate it's a real date
-    const dateObj = new Date(properDate);
-    if (isNaN(dateObj.getTime())) {
-      toastError('Error', 'Invalid date. Please check the month and day.');
-      return;
-    }
-    
-    const late_declare = prompt("Include Late Declarations? (Please type 'yes' or 'no'):");
-    if (late_declare === null) {
-      toastInfo('Info', 'Dispatch creation was cancelled');
-      return;
-    }
-    
-    // Validate late_declare input
-    const lateDeclareLower = late_declare.toLowerCase();
-    if (lateDeclareLower !== 'yes' && lateDeclareLower !== 'no') {
-      toastError('Error', "Please type exactly 'yes' or 'no'");
-      return;
-    }
-    
-    const dispatch_remarks = prompt("Enter Remarks (optional):") || '';
-    
-    // Validate remarks length
-    if (dispatch_remarks.length > 500) {
-      toastError('Error', 'Remarks cannot exceed 500 characters');
-      return;
-    }
-    
-    console.log("📦 Sending dispatch data:", {
-      dispatch_cutoff: properDate,
-      late_declare: lateDeclareLower === 'yes',
-      dispatch_remarks
-    });
-    
-    // Show loading state
-    const createBtn = document.getElementById('btn_create_dispatch');
-    const originalText = createBtn.innerHTML;
-    createBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
-    createBtn.disabled = true;
-    
-    // Send the properly formatted date to the server
-    const response = await fetch('/api/declaration', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ 
-        dispatch_cutoff: properDate,  // Now sending YYYY-MM-DD format
-        late_declare: lateDeclareLower === 'yes',
-        dispatch_remarks 
-      })
-    });
-    
-    console.log("📦 Response status:", response.status);
-    
-    const result = await response.json();
-    console.log("📦 Response data:", result);
-    
-    if (!response.ok) {
-      throw new Error(result.error || `Server error: ${response.status}`);
-    }
-    
-    if (result.success) {
-      toastSuccess('Success', 'New dispatch created successfully!');
-      console.log("✅ Dispatch created, reloading page...");
-      
-      // Force page reload after a short delay
-      setTimeout(() => {
-        location.reload();
-      }, 1500);
-    } else {
-      throw new Error(result.error || 'Failed to create dispatch');
-    }
-    
-  } catch (error) {
-    console.error('❌ Error creating dispatch:', error);
-    
-    let userMessage = 'Failed to create dispatch. ';
-    
-    if (error.message.includes('Network') || error.message.includes('Fetch')) {
-      userMessage = 'Please check your internet connection.';
-    } else if (error.message.includes('already exists')) {
-      userMessage = 'A dispatch with these details already exists.';
-    } else if (error.message.includes('permission') || error.message.includes('unauthorized')) {
-      userMessage = 'You do not have permission to create dispatches.';
-    } else {
-      userMessage = error.message || 'Please try again with different details.';
-    }
-    
-    toastError('Error', userMessage);
-    
-  } finally {
-    // Restore button state
-    const createBtn = document.getElementById('btn_create_dispatch');
-    if (createBtn) {
-      createBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Create Dispatch';
-      createBtn.disabled = false;
-    }
-  }
-});
-
-// Add CSS for error states
-const errorStyles = `
-.error-field {
-    border-color: #dc2626 !important;
-    background-color: #fef2f2 !important;
-}
-
-.error-field:focus {
-    border-color: #dc2626 !important;
-    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1) !important;
-}
-
-.radio-group.error-field {
-    border: 1px solid #dc2626 !important;
-    padding: 8px 12px !important;
-    border-radius: 6px !important;
-    background-color: #fef2f2 !important;
-}
-`;
-
-// Inject error styles
-const styleSheet = document.createElement('style');
-styleSheet.textContent = errorStyles;
-document.head.appendChild(styleSheet);
 
 // 📜 History Toggle
 function showHistory() {
-  console.log("🎯 Show History clicked");
-  fetch('/api/get_all_dispatch')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok ' + response.statusText);
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Fetched dispatch data:', data);
-      dispatchData.length = 0;
-      dispatchData.push(...data);
-      showDispatchTable();
-    })
-    .catch(error => {
-      console.error('Fetch error:', error);
-      toastError('Error', 'Error loading dispatch history');
-    });
+    console.log("🎯 Show History clicked");
+    fetch('/api/get_all_dispatch')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Fetched dispatch data:', data);
+            dispatchData.length = 0;
+            dispatchData.push(...data);
+            showDispatchTable();
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            toastError('Error', 'Error loading dispatch history');
+        });
 
-  document.querySelector(".action-buttons").classList.add("hidden");
-  document.getElementById("historyButtons").classList.remove("hidden");
-  document.getElementById("backButton").classList.remove("hidden");
-  document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Dispatch History';
+    document.querySelector(".action-buttons").classList.add("hidden");
+    document.getElementById("historyButtons").classList.remove("hidden");
+    document.getElementById("backButton").classList.remove("hidden");
+    document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Dispatch History';
 }
 
 function backToMain() {
-  document.querySelector(".action-buttons").classList.remove("hidden");
-  document.getElementById("historyButtons").classList.add("hidden");
-  document.getElementById("backButton").classList.add("hidden");
-  document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-file-lines"></i> Dispatch Contents';
+    document.querySelector(".action-buttons").classList.remove("hidden");
+    document.getElementById("historyButtons").classList.add("hidden");
+    document.getElementById("backButton").classList.add("hidden");
+    document.getElementById("tableTitle").innerHTML = '<i class="fa-solid fa-file-lines"></i> Dispatch Contents';
 
-  const tableHead = document.querySelector("#dataTable thead tr");
+    const tableHead = document.querySelector("#dataTable thead tr");
 
-  // ✅ Restore original headers
-  tableHead.innerHTML = `
+    // ✅ Restore original headers
+    tableHead.innerHTML = `
     <th><input type="checkbox" id="selectAll"></th>
     <th>Dispatch ID</th>
     <th>Entry ID</th>
@@ -1073,30 +1324,32 @@ function backToMain() {
     <th>Effectivity Date</th>
     <th>Location Particular</th>
     <th>Late Declare</th>
-  `;
+    `;
 
-  // ✅ Reset filteredData to full declaration dataset
-  filteredData = [...mainTableData];
+    // ✅ Reset filteredData to full declaration dataset
+    filteredData = [...mainTableData];
 
-  // ✅ Reset page and re-render
-  currentPage = 1;
-  renderTable();
+    // ✅ Reset page and re-render
+    currentPage = 1;
+    renderTable();
 
-  // ✅ Restore checkbox functionality
-  initializeCheckboxListeners();
+    // ✅ Restore checkbox functionality
+    initializeCheckboxListeners();
 
-  // ✅ RE-ENABLE THE SELECT ALL BUTTON (ADD THIS)
-  const selectAllBtn = document.querySelector(".btn.select-all");
-  if (selectAllBtn) {
-    selectAllBtn.disabled = false;
-  }
+    // ✅ RE-ENABLE THE SELECT ALL BUTTON
+    const selectAllBtn = document.querySelector(".btn.select-all");
+    if (selectAllBtn) {
+        selectAllBtn.disabled = false;
+    }
+
+    updateCancelButtonVisibility();
 }
 
 function showDispatchTable() {
-  const tableHead = document.querySelector("#dataTable thead tr");
+    const tableHead = document.querySelector("#dataTable thead tr");
 
-  // ✅ Replace table header for history view
-  tableHead.innerHTML = `
+    // ✅ Replace table header for history view
+    tableHead.innerHTML = `
     <th>Dispatch ID</th>
     <th>Type</th>
     <th>Origin</th>
@@ -1106,101 +1359,19 @@ function showDispatchTable() {
     <th>Dispatch Total</th>
     <th>Late Declare</th>
     <th>Remarks</th>
-  `;
+    `;
 
-  // ✅ Set the filtered data to the dispatch data
-  filteredData = [...dispatchData];
+    // ✅ Set the filtered data to the dispatch data
+    filteredData = [...dispatchData];
 
-  // ✅ Reuse the same renderTable() for pagination
-  currentPage = 1;
-  renderTable();
-
-  // ✅ Update summary text
-  document.getElementById("summaryText").textContent = `Showing ${dispatchData.length} dispatch history records`;
-
-  // ✅ Disable selection buttons during history view (BE SPECIFIC)
-  const selectAllBtn = document.querySelector(".btn.select-all");
-  const transmitBtn = document.querySelector(".btn.transmit");
-  const removeBtn = document.getElementById("btn_remove_dispatch");
-  
-  if (selectAllBtn) selectAllBtn.disabled = true;
-  if (transmitBtn) transmitBtn.disabled = true;
-  if (removeBtn) removeBtn.disabled = true;
-}
-
-// ✅ FULL Pagination + Show Entries
-function initializePagination() {
-  const entriesSelect = document.getElementById("showEntries"); // FIXED: Changed from entriesPerPage to showEntries
-
-  entriesPerPage = parseInt(entriesSelect.value);
-
-  entriesSelect.addEventListener("change", () => {
-    entriesPerPage = parseInt(entriesSelect.value);
+    // ✅ Reuse the same renderTable() for pagination
     currentPage = 1;
     renderTable();
-  });
 
-  renderTable();
-}
+    // ✅ Update summary text
+    document.getElementById("summaryText").textContent = `Showing ${dispatchData.length} dispatch history records`;
 
-function renderTable() {
-  const tableBody = document.querySelector("#dataTable tbody");
-  const start = (currentPage - 1) * entriesPerPage;
-  const end = start + entriesPerPage;
-  const paginatedData = filteredData.slice(start, end);
-
-  console.log("🔄 Rendering table with data:", {
-    totalFiltered: filteredData.length,
-    paginated: paginatedData.length,
-    isDispatchContent: filteredData[0]?.dispatchContentID !== undefined
-  });
-
-  // Check if we're showing dispatch contents (main view) or dispatch history
-  if (filteredData.length > 0 && filteredData[0].dispatchContentID !== undefined) {
-    // Dispatch Contents View (main table)
-    console.log("📋 Rendering Dispatch Contents");
-    tableBody.innerHTML = paginatedData.map(item => `
-      <tr>
-        <td><input type="checkbox" class="row-check"></td>
-        <td>${item.dispatchContentID || ''}</td>
-        <td>${item.entryID || ''}</td>
-        <td>${item.category || ''}</td>
-        <td>${item.maabNo || ''}</td>
-        <td>${item.memberName || ''}</td>
-        <td>${item.birthDate || ''}</td>
-        <td>${item.effectivityDate || ''}</td>
-        <td>${item.location || ''}</td>
-        <td>${item.lateDeclare || ''}</td>
-      </tr>
-    `).join('');
-    
-    // ✅ RE-ENABLE SELECTION BUTTONS IN MAIN VIEW
-    const selectAllBtn = document.querySelector(".btn.select-all");
-    const transmitBtn = document.querySelector(".btn.transmit");
-    const removeBtn = document.getElementById("btn_remove_dispatch");
-    
-    if (selectAllBtn) selectAllBtn.disabled = false;
-    if (transmitBtn) transmitBtn.disabled = false;
-    if (removeBtn) removeBtn.disabled = false;
-    
-  } else if (filteredData.length > 0 && filteredData[0].dispatch_id !== undefined) {
-    // Dispatch History View
-    console.log("📜 Rendering Dispatch History");
-    tableBody.innerHTML = paginatedData.map(item => `
-      <tr>
-        <td>${item.dispatch_id || ''}</td>
-        <td>${item.dispatch_type || ''}</td>
-        <td>${item.dispatch_origin || ''}</td>
-        <td>${item.dispatch_year || ''}</td>
-        <td>${item.dispatch_cutoff || ''}</td>
-        <td>${item.date_dispatched || ''}</td>
-        <td>${item.dispatch_total || ''}</td>
-        <td>${item.late_declare || ''}</td>
-        <td>${item.dispatch_remarks || ''}</td>
-      </tr>
-    `).join('');
-    
-    // ✅ DISABLE SELECTION BUTTONS IN HISTORY VIEW
+    // ✅ Disable selection buttons during history view
     const selectAllBtn = document.querySelector(".btn.select-all");
     const transmitBtn = document.querySelector(".btn.transmit");
     const removeBtn = document.getElementById("btn_remove_dispatch");
@@ -1208,115 +1379,197 @@ function renderTable() {
     if (selectAllBtn) selectAllBtn.disabled = true;
     if (transmitBtn) transmitBtn.disabled = true;
     if (removeBtn) removeBtn.disabled = true;
-  } else {
-    // Empty state
-    console.log("📭 No data to display");
-    tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px;">No dispatch contents found</td></tr>';
-  }
+}
 
-  // REINITIALIZE CHECKBOX LISTENERS AFTER RENDERING
-  setTimeout(() => {
-    initializeCheckboxListeners();
-  }, 0);
+// ✅ FULL Pagination + Show Entries
+function initializePagination() {
+    const entriesSelect = document.getElementById("showEntries");
 
-  updatePagination();
-  updateSummary();
-  updateSelection();
+    entriesPerPage = parseInt(entriesSelect.value);
+
+    entriesSelect.addEventListener("change", () => {
+        entriesPerPage = parseInt(entriesSelect.value);
+        currentPage = 1;
+        renderTable();
+    });
+
+    renderTable();
+}
+
+function renderTable() {
+    const tableBody = document.querySelector("#dataTable tbody");
+    const start = (currentPage - 1) * entriesPerPage;
+    const end = start + entriesPerPage;
+    const paginatedData = filteredData.slice(start, end);
+
+    console.log("🔄 Rendering table with data:", {
+        totalFiltered: filteredData.length,
+        paginated: paginatedData.length,
+        isDispatchContent: filteredData[0]?.dispatchContentID !== undefined
+    });
+
+    // Check if we're showing dispatch contents (main view) or dispatch history
+    if (filteredData.length > 0 && filteredData[0].dispatchContentID !== undefined) {
+        // Dispatch Contents View (main table)
+        console.log("📋 Rendering Dispatch Contents");
+        tableBody.innerHTML = paginatedData.map(item => `
+        <tr>
+            <td><input type="checkbox" class="row-check"></td>
+            <td>${item.dispatchContentID || ''}</td>
+            <td>${item.entryID || ''}</td>
+            <td>${item.category || ''}</td>
+            <td>${item.maabNo || ''}</td>
+            <td>${item.memberName || ''}</td>
+            <td>${item.birthDate || ''}</td>
+            <td>${item.effectivityDate || ''}</td>
+            <td>${item.location || ''}</td>
+            <td>${item.lateDeclare || ''}</td>
+        </tr>
+        `).join('');
+        
+        // ✅ RE-ENABLE SELECTION BUTTONS IN MAIN VIEW
+        const selectAllBtn = document.querySelector(".btn.select-all");
+        const transmitBtn = document.querySelector(".btn.transmit");
+        const removeBtn = document.getElementById("btn_remove_dispatch");
+        
+        if (selectAllBtn) selectAllBtn.disabled = false;
+        if (transmitBtn) transmitBtn.disabled = false;
+        if (removeBtn) removeBtn.disabled = false;
+        
+    } else if (filteredData.length > 0 && filteredData[0].dispatch_id !== undefined) {
+        // Dispatch History View
+        console.log("📜 Rendering Dispatch History");
+        tableBody.innerHTML = paginatedData.map(item => `
+        <tr>
+            <td>${item.dispatch_id || ''}</td>
+            <td>${item.dispatch_type || ''}</td>
+            <td>${item.dispatch_origin || ''}</td>
+            <td>${item.dispatch_year || ''}</td>
+            <td>${item.dispatch_cutoff || ''}</td>
+            <td>${item.date_dispatched || ''}</td>
+            <td>${item.dispatch_total || ''}</td>
+            <td>${item.late_declare || ''}</td>
+            <td>${item.dispatch_remarks || ''}</td>
+        </tr>
+        `).join('');
+        
+        // ✅ DISABLE SELECTION BUTTONS IN HISTORY VIEW
+        const selectAllBtn = document.querySelector(".btn.select-all");
+        const transmitBtn = document.querySelector(".btn.transmit");
+        const removeBtn = document.getElementById("btn_remove_dispatch");
+        
+        if (selectAllBtn) selectAllBtn.disabled = true;
+        if (transmitBtn) transmitBtn.disabled = true;
+        if (removeBtn) removeBtn.disabled = true;
+    } else {
+        // Empty state
+        console.log("📭 No data to display");
+        tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px;">No dispatch contents found</td></tr>';
+    }
+
+    // REINITIALIZE CHECKBOX LISTENERS AFTER RENDERING
+    setTimeout(() => {
+        initializeCheckboxListeners();
+    }, 0);
+
+    updatePagination();
+    updateSummary();
+    updateSelection();
 }
 
 function updatePagination() {
-  const paginationControls = document.getElementById("paginationControls");
-  if (!paginationControls) return;
-  
-  const totalPages = Math.ceil(filteredData.length / entriesPerPage);
-  paginationControls.innerHTML = "";
+    const paginationControls = document.getElementById("paginationControls");
+    if (!paginationControls) return;
+    
+    const totalPages = Math.ceil(filteredData.length / entriesPerPage);
+    paginationControls.innerHTML = "";
 
-  if (totalPages <= 1) return;
+    if (totalPages <= 1) return;
 
-  // Previous button
-  const prev = document.createElement("button");
-  prev.textContent = "Previous";
-  prev.disabled = currentPage === 1;
-  prev.onclick = () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderTable();
-    }
-  };
-  paginationControls.appendChild(prev);
-
-  // Page buttons
-  function createPageButton(page) {
-    const btn = document.createElement("button");
-    btn.textContent = page;
-    if (page === currentPage) btn.classList.add("active");
-    btn.onclick = () => {
-      currentPage = page;
-      renderTable();
+    // Previous button
+    const prev = document.createElement("button");
+    prev.textContent = "Previous";
+    prev.disabled = currentPage === 1;
+    prev.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+        }
     };
-    paginationControls.appendChild(btn);
-  }
+    paginationControls.appendChild(prev);
 
-  function addEllipsis() {
-    const ellipsis = document.createElement("span");
-    ellipsis.textContent = "...";
-    ellipsis.classList.add("ellipsis");
-    paginationControls.appendChild(ellipsis);
-  }
+    // Page buttons
+    function createPageButton(page) {
+        const btn = document.createElement("button");
+        btn.textContent = page;
+        if (page === currentPage) btn.classList.add("active");
+        btn.onclick = () => {
+            currentPage = page;
+            renderTable();
+        };
+        paginationControls.appendChild(btn);
+    }
 
-  // Pagination logic
-  if (totalPages <= 10) {
-    for (let i = 1; i <= totalPages; i++) createPageButton(i);
-  } else {
-    const visiblePages = 5;
+    function addEllipsis() {
+        const ellipsis = document.createElement("span");
+        ellipsis.textContent = "...";
+        ellipsis.classList.add("ellipsis");
+        paginationControls.appendChild(ellipsis);
+    }
 
-    if (currentPage <= visiblePages) {
-      for (let i = 1; i <= visiblePages; i++) createPageButton(i);
-      addEllipsis();
-      createPageButton(totalPages);
-    } else if (currentPage >= totalPages - visiblePages + 1) {
-      createPageButton(1);
-      addEllipsis();
-      for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
+    // Pagination logic
+    if (totalPages <= 10) {
+        for (let i = 1; i <= totalPages; i++) createPageButton(i);
     } else {
-      createPageButton(1);
-      addEllipsis();
-      for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
-      addEllipsis();
-      createPageButton(totalPages);
-    }
-  }
+        const visiblePages = 5;
 
-  // Next button
-  const next = document.createElement("button");
-  next.textContent = "Next";
-  next.disabled = currentPage === totalPages;
-  next.onclick = () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderTable();
+        if (currentPage <= visiblePages) {
+            for (let i = 1; i <= visiblePages; i++) createPageButton(i);
+            addEllipsis();
+            createPageButton(totalPages);
+        } else if (currentPage >= totalPages - visiblePages + 1) {
+            createPageButton(1);
+            addEllipsis();
+            for (let i = totalPages - visiblePages + 1; i <= totalPages; i++) createPageButton(i);
+        } else {
+            createPageButton(1);
+            addEllipsis();
+            for (let i = currentPage - 2; i <= currentPage + 2; i++) createPageButton(i);
+            addEllipsis();
+            createPageButton(totalPages);
+        }
     }
-  };
-  paginationControls.appendChild(next);
+
+    // Next button
+    const next = document.createElement("button");
+    next.textContent = "Next";
+    next.disabled = currentPage === totalPages;
+    next.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderTable();
+        }
+    };
+    paginationControls.appendChild(next);
 }
 
 function updateSummary() {
-  const summaryText = document.getElementById("summaryText");
-  if (!summaryText) return;
-  
-  const total = filteredData.length;
-  const start = total === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
-  const end = Math.min(currentPage * entriesPerPage, total);
-  
-  // Count checked items
-  const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
-  let checkedCount = 0;
-  visibleRows.forEach(row => {
-    const checkbox = row.querySelector(".row-check");
-    if (checkbox && checkbox.checked) checkedCount++;
-  });
-  
-  summaryText.textContent = `Showing ${start} to ${end} of ${total} entries • ${checkedCount} selected`;
+    const summaryText = document.getElementById("summaryText");
+    if (!summaryText) return;
+    
+    const total = filteredData.length;
+    const start = total === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
+    const end = Math.min(currentPage * entriesPerPage, total);
+    
+    // Count checked items
+    const visibleRows = Array.from(document.querySelectorAll("#dataTable tbody tr")).filter(r => r.style.display !== "none");
+    let checkedCount = 0;
+    visibleRows.forEach(row => {
+        const checkbox = row.querySelector(".row-check");
+        if (checkbox && checkbox.checked) checkedCount++;
+    });
+    
+    summaryText.textContent = `Showing ${start} to ${end} of ${total} entries • ${checkedCount} selected`;
 }
 
 async function transmitDispatch() {
@@ -1458,6 +1711,10 @@ async function transmitDispatch() {
             }
         }
         
+        // Enable create button after successful transmission
+        updateCreateDispatchButton();
+        updateCancelButtonVisibility();
+        
         // Refresh the page to show updated state (for both cases)
         setTimeout(() => {
             location.reload();
@@ -1473,7 +1730,7 @@ async function transmitDispatch() {
     }
 }
 
-// Fix the debugDispatchState call - remove the await
+// Debug function to check dispatch state
 function debugDispatchState() {
     console.log("=== DISPATCH DEBUG ===");
     console.log("Active Dispatch ID:", "{{ active_dispatch.dispatch_id if active_dispatch else 'None' }}");
@@ -1490,28 +1747,28 @@ function debugDispatchState() {
         .catch(err => console.error("Debug error:", err));
 }
 
-// Call this before transmitting - no await needed
-debugDispatchState();
-
-  // Add this function to monitor dispatch contents updates
+// Monitor dispatch contents updates
 function monitorDispatchContents() {
-  console.log("=== DISPATCH CONTENTS MONITOR ===");
-  console.log("Main Table Data:", mainTableData);
-  console.log("Filtered Data:", filteredData);
-  console.log("Active Dispatch:", {
-    id: "{{ active_dispatch.dispatch_id if active_dispatch else 'None' }}",
-    status: "{{ active_dispatch.dispatch_status if active_dispatch else 'None' }}"
-  });
-  
-  // Check if we have the right data structure
-  if (mainTableData.length > 0) {
-    console.log("First item structure:", Object.keys(mainTableData[0]));
-  }
+    console.log("=== DISPATCH CONTENTS MONITOR ===");
+    console.log("Main Table Data:", mainTableData);
+    console.log("Filtered Data:", filteredData);
+    console.log("Active Dispatch:", {
+        id: "{{ active_dispatch.dispatch_id if active_dispatch else 'None' }}",
+        status: "{{ active_dispatch.dispatch_status if active_dispatch else 'None' }}"
+    });
+    
+    // Check if we have the right data structure
+    if (mainTableData.length > 0) {
+        console.log("First item structure:", Object.keys(mainTableData[0]));
+    }
 }
 
-// Call this after page load and after adding to dispatch
+// Call debug and monitor functions after page load
 document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(monitorDispatchContents, 1000);
+    setTimeout(() => {
+        debugDispatchState();
+        monitorDispatchContents();
+    }, 1000);
 });
 </script>
 
