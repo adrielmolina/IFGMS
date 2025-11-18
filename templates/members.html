@@ -581,6 +581,8 @@ let currentEditingEntryId = null;
 let autoSaveTimeout = null;
 let isAutoSaving = false;
 
+let nextRecordId = 0;
+
 // ===== REQUIRED FIELD VALIDATION FUNCTIONS =====
 function validateRequiredFields() {
     const requiredFields = {
@@ -1444,7 +1446,7 @@ function populateYearPicker() {
     populateFilterDropdowns();
 }
 
-// Function to automatically set entry dispatch ready when paid
+// Update the updateEntryDispatchReady function to also update record paid status
 function updateEntryDispatchReady() {
     const entryPaidCheckbox = document.getElementById('entry_paid');
     const entryDeclaredCheckbox = document.getElementById('entry_declared');
@@ -1465,6 +1467,7 @@ function updateEntryDispatchReady() {
     // Update the visual state (we don't have an entry dispatch ready checkbox anymore)
     // But we can update the record-level dispatch ready based on all entries
     updateDispatchReadyFromEntries();
+    updateRecordPaidFromEntries(); // Add this line
 }
 
 function updateDispatchReadyFromEntries() {
@@ -1533,7 +1536,69 @@ function updateDispatchReadyFromEntries() {
     dispatchReadyCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-// Monitor entries table for changes and update Dispatch Ready
+// Function to update record paid status based on entries
+function updateRecordPaidFromEntries() {
+    const entriesTable = window.entriesHotInstance;
+    const recordPaidCheckbox = document.getElementById('paid');
+    
+    if (!entriesTable || !recordPaidCheckbox) {
+        console.log('Entries table or record paid checkbox not found');
+        return;
+    }
+    
+    const entriesData = entriesTable.getSourceData();
+    
+    if (!entriesData || entriesData.length === 0) {
+        // No entries - uncheck and gray out
+        recordPaidCheckbox.checked = false;
+        recordPaidCheckbox.classList.add('paid-auto');
+        recordPaidCheckbox.disabled = true;
+        console.log('No entries found, record paid unchecked');
+        return;
+    }
+    
+    // Check if ALL entries are paid
+    const allEntriesPaid = entriesData.every(entry => {
+        // Handle both boolean and numeric values for paid status
+        const isPaid = entry.paid === true || entry.paid === 1 || entry.paid === '1';
+        console.log(`Entry ${entry.entry_id}: paid = ${entry.paid}, isPaid = ${isPaid}`);
+        return isPaid;
+    });
+    
+    console.log(`All entries paid: ${allEntriesPaid}, Total entries: ${entriesData.length}`);
+    
+    // Update the checkbox based on paid status
+    if (allEntriesPaid) {
+        // All entries are paid - check and gray out
+        recordPaidCheckbox.checked = true;
+        recordPaidCheckbox.classList.add('paid-auto');
+        recordPaidCheckbox.disabled = true;
+        
+        // Show success message
+        const smallText = recordPaidCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#28a745';
+            smallText.textContent = '✓ All entries are paid';
+        }
+    } else {
+        // Not all entries are paid - uncheck and gray out
+        recordPaidCheckbox.checked = false;
+        recordPaidCheckbox.classList.add('paid-auto');
+        recordPaidCheckbox.disabled = true;
+        
+        // Show info message
+        const smallText = recordPaidCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#666';
+            smallText.textContent = 'Auto-set when all entries are paid';
+        }
+    }
+    
+    // Trigger form change for unsaved changes tracking
+    recordPaidCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+// Update the entries table monitoring to also track paid status
 function setupEntriesTableMonitoring() {
     const entriesTable = window.entriesHotInstance;
     if (!entriesTable) {
@@ -1544,7 +1609,7 @@ function setupEntriesTableMonitoring() {
     // Monitor for data changes in paid and declared columns
     entriesTable.addHook('afterChange', function(changes, source) {
         if (source === 'edit' || source === 'loadData') {
-            console.log('Entries table changed, updating Dispatch Ready...');
+            console.log('Entries table changed, updating Dispatch Ready and Paid status...');
             
             // Check if the change affects paid or declared columns
             const paidOrDeclaredChanged = changes && changes.some(change => {
@@ -1555,6 +1620,7 @@ function setupEntriesTableMonitoring() {
             if (paidOrDeclaredChanged || source === 'loadData') {
                 setTimeout(() => {
                     updateDispatchReadyFromEntries();
+                    updateRecordPaidFromEntries(); // Add this line
                 }, 100);
             }
         }
@@ -1999,44 +2065,105 @@ function saveAndCloseOverlay() {
 
 // ===== OPTIMIZED ADD RECORD FUNCTIONALITY =====
 
-function openEmptyRecordOverlay() {
-    // Clear all form fields
-    clearRecordForm();
-    
-    // Set default values for new record
-    document.getElementById('record_id').value = '0'; // Temporary value
-    document.getElementById('year').value = new Date().getFullYear();
-    
-    // Show the overlay
-    document.getElementById('overlay').style.display = 'flex';
-    
-    // Scroll to top of overlay
-    const overlayContent = document.getElementById('overlay-content');
-    if (overlayContent) {
-        overlayContent.scrollTop = 0;
-    }
-    
-    // Initialize change tracking and auto-fill functions
-    setTimeout(() => {
-        initializeChangeTracking();
-        setDistrictFromMunicipality();
-        setOriginBasedOnUser();
-        setLocationParticularToUppercase();
-        highlightRequiredFields();
-        switchToAddMode();
-        setupDropdownHandling(); 
+// Add this function to your JavaScript
+async function getNextRecordId() {
+    try {
+        const response = await fetch('/api/members/get_next_record_id');
+        const data = await response.json();
         
-        // Clear entries table for new record
-        if (window.entriesHotInstance) {
-            window.entriesHotInstance.loadData([]);
+        if (data.next_record_id) {
+            nextRecordId = data.next_record_id;
+            console.log('Next available record ID:', nextRecordId);
+            return nextRecordId;
+        } else {
+            console.error('Failed to get next record ID');
+            return 0;
         }
-    }, 100);
+    } catch (error) {
+        console.error('Error fetching next record ID:', error);
+        return 0;
+    }
 }
 
+// Function to initialize and pre-fetch the next record ID
+async function initializeNextRecordId() {
+    try {
+        console.log('🔄 Initializing next record ID...');
+        const nextId = await getNextRecordId();
+        nextRecordId = nextId;
+        console.log('✅ Next record ID initialized:', nextRecordId);
+        
+        // Update any UI elements that might show the next available ID
+        updateNextRecordIdDisplay();
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize next record ID:', error);
+        // Set a fallback - this will be refreshed when user tries to create a record
+        nextRecordId = 0;
+    }
+}
+
+// Function to refresh the next ID when needed
+function refreshNextRecordId() {
+    console.log('🔄 Refreshing next record ID...');
+    return initializeNextRecordId();
+}
+
+// Update your openEmptyRecordOverlay function
+async function openEmptyRecordOverlay() {
+    try {
+        // Get next available record ID first
+        const nextId = await getNextRecordId();
+        
+        if (nextId === 0) {
+            toastError("Error", "Could not get next record ID. Please try again.");
+            return;
+        }
+        
+        // Clear all form fields
+        clearRecordForm();
+        
+        // Set the next available ID (this is just for display, not saved yet)
+        document.getElementById('record_id').value = nextId;
+        document.getElementById('year').value = new Date().getFullYear();
+        
+        // Show the overlay
+        document.getElementById('overlay').style.display = 'flex';
+        
+        // Scroll to top of overlay
+        const overlayContent = document.getElementById('overlay-content');
+        if (overlayContent) {
+            overlayContent.scrollTop = 0;
+        }
+        
+        // Initialize change tracking and auto-fill functions
+        setTimeout(() => {
+            initializeChangeTracking();
+            setDistrictFromMunicipality();
+            setOriginBasedOnUser();
+            setLocationParticularToUppercase();
+            highlightRequiredFields();
+            switchToAddMode();
+            setupMaabNumberHandling(); 
+            setBirthdayMaxDate();
+            
+            // Clear entries table for new record
+            if (window.entriesHotInstance) {
+                window.entriesHotInstance.loadData([]);
+            }
+        }, 100);
+        
+    } catch (error) {
+        console.error('Error opening empty record overlay:', error);
+        toastError("Error", "Failed to initialize new record. Please try again.");
+    }
+}
+
+// Update your clearRecordForm function to handle the preview ID properly
 function clearRecordForm() {
-    // Clear all record form fields except year
+    // Don't clear the record_id field here - let openEmptyRecordOverlay handle it
     const fieldsToClear = [
-        'record_id', 'id_rcv', 'paid', 'declared', 'record_dispatch_ready',
+        'id_rcv', 'paid', 'declared', 'record_dispatch_ready',
         'dec_date', 'eff_date', 'loc_par', 'loc_cat', 'municipality',
         'district', 'origin', 'remarks', 'tags'
     ];
@@ -2058,7 +2185,7 @@ function clearRecordForm() {
     clearAllValidationErrors();
 }
 
-// Modified saveRecordDetails function - removes automatic overlay closing
+// Update your saveRecordDetails function
 function saveRecordDetails(showToast = true) {
     return new Promise((resolve, reject) => {
         // Clear previous errors
@@ -2070,16 +2197,16 @@ function saveRecordDetails(showToast = true) {
             return;
         }
         
+        const recordId = document.getElementById('record_id').value;
+        const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+        
         // Helper function to convert empty strings to null
         function emptyToNull(value) {
             return value === '' ? null : value;
         }
         
-        const recordId = document.getElementById('record_id').value;
-        const isNewRecord = recordId === '0' || recordId === '';
-        
         const payload = {
-            record_id: isNewRecord ? null : recordId,
+            record_id: isNewRecord ? null : recordId, // Send null for new records
             year: document.getElementById('year').value,
             id_received: document.getElementById('id_rcv').checked ? 1 : 0,
             paid: document.getElementById('paid').checked ? 1 : 0,
@@ -2097,6 +2224,7 @@ function saveRecordDetails(showToast = true) {
         };
 
         console.log('Saving record details:', payload);
+        console.log('Is new record:', isNewRecord);
 
         // Use POST for new records, PATCH for updates
         const method = isNewRecord ? 'POST' : 'PATCH';
@@ -2115,10 +2243,17 @@ function saveRecordDetails(showToast = true) {
                 return;
             }
             
-            // If this was a new record, update the record_id field
+            // In your saveRecordDetails function, update the new record handling:
             if (isNewRecord && result.record_id) {
                 document.getElementById('record_id').value = result.record_id;
                 console.log('New record created with ID:', result.record_id);
+                
+                // Refresh the next available ID since we just used one
+                getNextRecordId().then(() => {
+                    console.log('Next record ID refreshed after save');
+                }).catch(error => {
+                    console.error('Failed to refresh next record ID:', error);
+                });
             }
             
             hasUnsavedChanges = false;
@@ -2233,6 +2368,7 @@ function addNewEntry(recordId) {
             // Update Dispatch Ready status after a short delay
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
+                updateRecordPaidFromEntries();
             }, 500);
         } else {
             toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
@@ -2244,6 +2380,29 @@ function addNewEntry(recordId) {
     });
 }
 
+// Function to set maximum date for birthday field to today
+function setBirthdayMaxDate() {
+    const bdateInput = document.getElementById('bdate');
+    if (bdateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        bdateInput.setAttribute('max', today);
+        
+        // Also add validation on change
+        bdateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const today = new Date();
+            
+            if (selectedDate > today) {
+                // If future date is selected, reset to today and show warning
+                this.value = today.toISOString().split('T')[0];
+                toastAlert("Invalid Date", "Birthdate cannot be in the future. Set to today's date.");
+                calculateAgeFromBirthdate(); // Recalculate age
+            }
+        });
+    }
+}
+
+// Update your existing calculateAgeFromBirthdate function to add extra validation
 function calculateAgeFromBirthdate() {
     const birthdateInput = document.getElementById('bdate');
     const ageInput = document.getElementById('age');
@@ -2251,6 +2410,14 @@ function calculateAgeFromBirthdate() {
     if (birthdateInput.value) {
         const birthDate = new Date(birthdateInput.value);
         const today = new Date();
+        
+        // Additional validation to ensure birthdate is not in future
+        if (birthDate > today) {
+            birthdateInput.value = today.toISOString().split('T')[0];
+            birthDate.setTime(today.getTime()); // Reset to today
+            toastAlert("Invalid Date", "Birthdate cannot be in the future. Set to today's date.");
+        }
+        
         let age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
         
@@ -2343,6 +2510,7 @@ function updateEntry(entryId, recordId) {
             // Update Dispatch Ready status after a short delay
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
+                updateRecordPaidFromEntries();
             }, 500);
         } else {
             toastError("Update Failed", "Entry update failed: " + (data.error || "Unknown error"));
@@ -2354,7 +2522,7 @@ function updateEntry(entryId, recordId) {
     });
 }
 
-// FIXED: Function to refresh entries table
+// Update the refreshEntriesTable function to also update paid status
 function refreshEntriesTable() {
     const recordId = document.getElementById('record_id').value;
     console.log('Fetching entries for record:', recordId);
@@ -2383,9 +2551,10 @@ function refreshEntriesTable() {
             // Render the table
             window.renderEntriesTable(entriesData);
             
-            // Update Dispatch Ready status based on entries
+            // Update Dispatch Ready and Paid status based on entries
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
+                updateRecordPaidFromEntries(); // Add this line
             }, 100);
             
             // Setup click handlers after table is rendered
@@ -2496,6 +2665,7 @@ function openRecordInOverlay(recordData) {
         
         // Highlight required fields and setup error containers
         highlightRequiredFields();
+        setBirthdayMaxDate();
         
         // Make sure we're in add mode initially (hide back button)
         switchToAddMode();
@@ -2528,6 +2698,7 @@ function openRecordInOverlay(recordData) {
             // Update Dispatch Ready status
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
+                updateRecordPaidFromEntries();
             }, 200);
             
             // Setup click handlers for entries table after it's rendered
@@ -3307,6 +3478,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize search functionality
     setupSearchFunctionality();
+
+    // Set birthday max date
+    setBirthdayMaxDate();
     
     // Load filter dropdowns
     populateFilterDropdowns();
@@ -3330,28 +3504,38 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Add event listener for entry paid checkbox
-const entryPaidCheckbox = document.getElementById('entry_paid');
-if (entryPaidCheckbox) {
-    entryPaidCheckbox.addEventListener('change', function() {
-        console.log('Entry paid status changed:', this.checked);
-        updateEntryDispatchReady();
-        
-        // Also trigger auto-save since this affects dispatch ready status
-        scheduleAutoSave();
-    });
-}
+    const entryPaidCheckbox = document.getElementById('entry_paid');
+    if (entryPaidCheckbox) {
+        entryPaidCheckbox.addEventListener('change', function() {
+            console.log('Entry paid status changed:', this.checked);
+            updateEntryDispatchReady();
+            
+            // Also update record paid status
+            setTimeout(() => {
+                updateRecordPaidFromEntries();
+            }, 100);
+            
+            // Also trigger auto-save since this affects paid status
+            scheduleAutoSave();
+        });
+    }
 
-// Add event listener for entry declared checkbox
-const entryDeclaredCheckbox = document.getElementById('entry_declared');
-if (entryDeclaredCheckbox) {
-    entryDeclaredCheckbox.addEventListener('change', function() {
-        console.log('Entry declared status changed:', this.checked);
-        updateEntryDispatchReady();
-        
-        // Also trigger auto-save since this affects dispatch ready status
-        scheduleAutoSave();
-    });
-}
+    // Add event listener for entry declared checkbox
+    const entryDeclaredCheckbox = document.getElementById('entry_declared');
+    if (entryDeclaredCheckbox) {
+        entryDeclaredCheckbox.addEventListener('change', function() {
+            console.log('Entry declared status changed:', this.checked);
+            updateEntryDispatchReady();
+            
+            // Also update record paid status
+            setTimeout(() => {
+                updateRecordPaidFromEntries();
+            }, 100);
+            
+            // Also trigger auto-save since this affects dispatch ready status
+            scheduleAutoSave();
+        });
+    }
     
     // ===== CRITICAL FIX: Ensure age calculation is always triggered =====
     // Add event listener for birthdate changes
@@ -3381,6 +3565,9 @@ if (entryDeclaredCheckbox) {
     
     // Load initial data (active records)
     fetchActiveRecords();
+
+    // Pre-fetch the next record ID when page loads
+initializeNextRecordId();
 });
 
 // ===== MAAB NUMBER PREFIX HANDLING =====
