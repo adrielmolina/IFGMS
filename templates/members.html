@@ -323,12 +323,16 @@
                                         </div>
                                     </td>
 
-                                    <td>
-                                        <div class="input-container">
-                                            <label for="maab_no">MAAB No.<span class="required-star">*</span></label>
-                                            <input type="text" id="maab_no" name="maab_no" required autocomplete="off" placeholder=" ">
+                                <td>
+                                    <div class="input-container">
+                                        <label for="maab_no">MAAB No.<span class="required-star">*</span></label>
+                                            <select name="maab_no" id="maab_no" required>
+                                            <option value="">Select MAAB No.</option>
+                                            <!-- Dynamic options will be loaded here by JavaScript -->
+                                            </select>
+                                            <small style="font-size: 0.8em; color: #666;">Available IDs from inventory</small>
                                         </div>
-                                    </td>
+                                </td>
                         
                                     <td>
                                         <div class="input-container">
@@ -2514,23 +2518,65 @@ function addNewEntry(recordId) {
         }
         return response.json();
     })
-    .then(data => {
-        if (data.success === true) {
-            toastSuccess("Entry Added", "Entry added successfully!");
-            // Refresh entries table
-            refreshEntriesTable();
-            // Clear form and stay in add mode
-            clearEntryForm();
-            
-            // Update Dispatch Ready status after a short delay
-            setTimeout(() => {
-                updateDispatchReadyFromEntries();
-                updateRecordPaidFromEntries();
-            }, 500);
+// In addNewEntry function, after successful save:
+.then(data => {
+    if (data.success === true) {
+        toastSuccess("Entry Added", "Entry added successfully!");
+        
+        // ✅ CRITICAL: MARK MAAB NUMBER AS USED IN INVENTORY
+        const maabNo = document.getElementById('maab_no').value;
+        console.log(`🔄 Attempting to mark MAAB number as used: ${maabNo}`);
+        
+        if (maabNo && maabNo.trim() !== '') {
+            fetch('/api/inventory/mark_as_used', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ maab_no: maabNo })
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log('🔍 mark_as_used API response:', result);
+                if (result.success) {
+                    console.log(`✅ MAAB number ${maabNo} marked as used in inventory`);
+                    // Refresh dropdown after marking as used
+                    setTimeout(() => {
+                        if (window.refreshMAABDropdown) {
+                            window.refreshMAABDropdown();
+                        }
+                    }, 1000);
+                } else {
+                    console.warn(`⚠️ Failed to mark MAAB number as used: ${result.error}`);
+                    toastAlert("Inventory Warning", `MAAB number saved but inventory not updated: ${result.error}`);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error marking MAAB number as used:', error);
+            });
         } else {
-            toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
+            console.warn('⚠️ No MAAB number to mark as used');
         }
-    })
+        
+        // Refresh entries table
+        refreshEntriesTable();
+        // Clear form and stay in add mode
+        clearEntryForm();
+        
+        // ✅ Refresh MAAB dropdown to exclude the newly used number
+        if (window.refreshMAABDropdown) {
+            setTimeout(() => {
+                window.refreshMAABDropdown();
+            }, 500);
+        }
+        
+        // Update Dispatch Ready status after a short delay
+        setTimeout(() => {
+            updateDispatchReadyFromEntries();
+            updateRecordPaidFromEntries();
+        }, 500);
+    } else {
+        toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
+    }
+})
     .catch(error => {
         console.error('Error:', error);
         toastError("Error", "An error occurred during entry adding: " + error.message);
@@ -2704,10 +2750,20 @@ function updateEntry(entryId, recordId) {
     .then(data => {
         if (data.success === true) {
             toastSuccess("Entry Updated", "Entry updated successfully!");
-            // Refresh entries table
-            refreshEntriesTable();
-            // Switch back to add mode and clear form
-            switchToAddMode();
+        //TODO: For updates, you might need to handle MAAB number changes
+        // If the MAAB number was changed, mark the new one as used and old one as available
+        
+        // Refresh entries table
+        refreshEntriesTable();
+        // Switch back to add mode and clear form
+        switchToAddMode();
+        
+        // ✅ Refresh MAAB dropdown
+        if (window.refreshMAABDropdown) {
+            setTimeout(() => {
+                window.refreshMAABDropdown();
+            }, 500);
+        }
             
             // Update Dispatch Ready status after a short delay
             setTimeout(() => {
@@ -3793,6 +3849,7 @@ initializeNextRecordId();
 });
 
 // ===== MAAB NUMBER PREFIX HANDLING =====
+/*
 function initializeMaabNumberHandling() {
     const maabNoInput = document.getElementById('maab_no');
     const maabCatSelect = document.getElementById('maab_cat');
@@ -3871,5 +3928,222 @@ function setupMaabNumberHandling() {
 }
 
 window.populateEntryForm = populateEntryForm;
+*/
+
+// ===== DROPDOWN-SPECIFIC HANDLING =====
+function initializeDropdownHandling() {
+    const maabNoDropdown = document.getElementById('maab_no');
+    const maabCatSelect = document.getElementById('maab_cat');
+    
+    if (!maabNoDropdown || !maabCatSelect) return;
+    
+    console.log('✅ Initializing dropdown handling');
+    
+    // Simple placeholder update based on category
+    maabCatSelect.addEventListener('change', function() {
+        const category = this.value;
+        maabNoDropdown.title = `Select available ${category} ID from inventory`;
+    });
+    
+    // Visual feedback when selection is made
+    maabNoDropdown.addEventListener('change', function() {
+        if (this.value) {
+            console.log('✅ MAAB No selected:', this.value);
+        }
+    });
+}
+
+// Call this when overlay opens
+function setupDropdownHandling() {
+    setTimeout(initializeDropdownHandling, 100);
+}
+
+// ============== SELECT MAAB NO. FROM INVENTORY (WITH DUPLICATE PROTECTION) ==============
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🆔 MAAB No Dropdown System Initializing...');
+
+    let availableIDs = {};
+    let usedMAABNumbers = new Set();
+
+    // Fetch both available IDs and used MAAB numbers
+    async function fetchAllMAABData(category = null) {
+        try {
+            console.log('🔄 Fetching all MAAB data...');
+            
+            // Fetch available IDs from inventory
+            let url = '/api/inventory/available_ids';
+            if (category) {
+                url = `/api/inventory/available_ids?category=${encodeURIComponent(category)}`;
+            }
+            
+            const [availableResponse, usedResponse] = await Promise.all([
+                fetch(url),
+                fetch('/api/members/used_maab_numbers') // This is the new endpoint
+            ]);
+            
+            const availableResult = await availableResponse.json();
+            const usedResult = await usedResponse.json();
+            
+            console.log('🔍 Available IDs result:', availableResult);
+            console.log('🔍 Used MAAB numbers result:', usedResult);
+            
+            if (availableResult.success) {
+                availableIDs = availableResult.available_ids || {};
+            }
+            
+            if (usedResult.success) {
+                usedMAABNumbers = new Set(usedResult.used_numbers || []);
+                console.log(`✅ Loaded ${usedMAABNumbers.size} used MAAB numbers`);
+            } else {
+                console.warn('⚠️ Failed to load used MAAB numbers, using empty set');
+                usedMAABNumbers = new Set();
+            }
+            
+            return { availableIDs, usedMAABNumbers };
+            
+        } catch (error) {
+            console.error('❌ Error fetching MAAB data:', error);
+            return { availableIDs: {}, usedMAABNumbers: new Set() };
+        }
+    }
+
+    // Filter out used MAAB numbers from available IDs
+    function getTrulyAvailableIDs(category = null) {
+        const trulyAvailable = {};
+        
+        if (category && availableIDs[category]) {
+            // Show IDs for specific category (excluding used ones)
+            trulyAvailable[category] = availableIDs[category].filter(id => !usedMAABNumbers.has(id));
+        } else if (!category) {
+            // Show all available IDs from all categories (excluding used ones)
+            Object.keys(availableIDs).forEach(cat => {
+                trulyAvailable[cat] = availableIDs[cat].filter(id => !usedMAABNumbers.has(id));
+            });
+        }
+        
+        console.log(`✅ Filtered out used numbers. Remaining available:`, trulyAvailable);
+        return trulyAvailable;
+    }
+
+    // Populate MAAB No dropdown based on selected category
+    function populateMAABNoDropdown(category = null) {
+        const maabNoDropdown = document.getElementById('maab_no');
+        if (!maabNoDropdown) {
+            console.log('❌ MAAB No dropdown not found');
+            return;
+        }
+        
+        console.log(`🔄 Populating dropdown for category: ${category}`);
+        
+        // Clear existing options except the first one
+        while (maabNoDropdown.options.length > 1) {
+            maabNoDropdown.remove(1);
+        }
+        
+        let availableIDsForCategory = [];
+        const trulyAvailableIDs = getTrulyAvailableIDs(category);
+        
+        if (category && trulyAvailableIDs[category]) {
+            availableIDsForCategory = trulyAvailableIDs[category];
+            console.log(`📋 Using category-specific IDs for ${category}:`, availableIDsForCategory);
+        } else if (!category) {
+            Object.values(trulyAvailableIDs).forEach(ids => {
+                availableIDsForCategory.push(...ids);
+            });
+            console.log(`📋 Using all categories IDs:`, availableIDsForCategory);
+        }
+        
+        // Sort the IDs for better user experience
+        availableIDsForCategory.sort();
+        
+        // Add available IDs to dropdown
+        availableIDsForCategory.forEach(id => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = id;
+            maabNoDropdown.appendChild(option);
+        });
+        
+        console.log(`✅ Added ${availableIDsForCategory.length} options to dropdown`);
+        
+        // If no IDs available, show message
+        if (availableIDsForCategory.length === 0) {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = category ? `No available ${category} IDs` : "No available IDs in inventory";
+            option.disabled = true;
+            maabNoDropdown.appendChild(option);
+            console.warn(`⚠️ No available IDs for category: ${category}`);
+            
+            // Show warning toast if no IDs available
+            if (category) {
+                toastAlert("No IDs Available", `No available ${category} IDs in inventory. Please check inventory or select different category.`);
+            }
+        }
+    }
+
+    // Update dropdown when category changes
+    const categorySelect = document.getElementById('maab_cat');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const selectedCategory = this.value;
+            console.log(`🔄 Category changed to: ${selectedCategory}`);
+            populateMAABNoDropdown(selectedCategory);
+        });
+    }
+
+    // Refresh available IDs when overlay opens
+    function setupOverlayMAABNo() {
+        const overlay = document.getElementById('overlay');
+        if (!overlay) {
+            console.log('❌ Overlay not found');
+            return;
+        }
+        
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const isVisible = overlay.style.display === 'flex';
+                    console.log(`👀 Overlay visibility changed: ${isVisible}`);
+                    if (isVisible) {
+                        // Refresh both used numbers and available IDs when overlay opens
+                        console.log('🔄 Overlay opened, refreshing all MAAB data...');
+                        fetchAllMAABData().then(() => {
+                            const currentCategory = document.getElementById('maab_cat')?.value;
+                            populateMAABNoDropdown(currentCategory);
+                        });
+                    }
+                }
+            });
+        });
+        
+        observer.observe(overlay, { attributes: true });
+        console.log('✅ Overlay observer setup complete');
+    }
+
+    // Also refresh when entries table changes (after adding/editing entries)
+    function setupEntriesTableMonitoring() {
+        // This will be called when entries table is updated
+        window.refreshMAABDropdown = function() {
+            console.log('🔄 Entries table updated, refreshing all MAAB data...');
+            fetchAllMAABData().then(() => {
+                const currentCategory = document.getElementById('maab_cat')?.value;
+                populateMAABNoDropdown(currentCategory);
+            });
+        };
+    }
+
+    // Initialize MAAB No dropdown system
+    setupOverlayMAABNo();
+    setupEntriesTableMonitoring();
+
+    // Pre-load all MAAB data on page load
+    fetchAllMAABData().then(() => {
+        console.log('✅ All MAAB data pre-loaded on page load');
+    });
+
+    console.log('✅ MAAB No Dropdown system initialized successfully');
+});
+
 </script>
 {% endblock %}
