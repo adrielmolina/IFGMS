@@ -4,6 +4,7 @@ from livereload import Server
 from py_scripts import db_conn, tools, models
 from py_scripts.db_conn import SessionLocal
 from datetime import date, datetime
+from sqlalchemy import create_engine, text, func, extract
 import os
 import pandas as pd
 import openpyxl
@@ -907,6 +908,7 @@ def add_new_record():
     new_record_id = db_conn.add_new_record()
     return jsonify({"success": True, "record_id": new_record_id})
 
+# Verify your existing save_record_details route has this structure:
 @server.route('/api/save_record_details', methods=['POST', 'PATCH'])
 def save_record_details():
     data = request.get_json()
@@ -916,7 +918,7 @@ def save_record_details():
     db_session = SessionLocal()
     try:
         if request.method == 'POST':
-            # Create new record
+            # Create new record - record_id should be None/Null for auto-increment
             new_record = models.Records(
                 year=data.get('year', datetime.now().year),
                 id_received=data.get('id_received', 0),
@@ -939,11 +941,11 @@ def save_record_details():
             
             return jsonify({
                 "success": True, 
-                "record_id": new_record.record_id,
+                "record_id": new_record.record_id,  # This returns the actual auto-generated ID
                 "message": "Record created successfully"
             })
             
-        else:  # PATCH method
+        else:  # PATCH method for updates
             record_id = data.get('record_id')
             if not record_id:
                 return jsonify({"success": False, "error": "No record ID provided"}), 400
@@ -1528,7 +1530,25 @@ def add_to_dispatch():
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
-
+@server.route('/api/members/get_next_record_id')
+@login_required
+def get_next_record_id():
+    """Get the next available record ID without reserving it"""
+    db_session = SessionLocal()
+    try:
+        # Get the maximum record_id currently in use
+        max_id = db_session.query(func.max(models.Records.record_id)).scalar()
+        next_id = (max_id or 0) + 1
+        print(f"Next available record ID: {next_id}")
+        
+        return jsonify({"next_record_id": next_id})
+    except Exception as e:
+        print(f"Error getting next record ID: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"next_record_id": 0, "error": str(e)}), 500
+    finally:
+        db_session.close()
                         
 
 # FIXED EXPORT DISPATCH ROUTE - ONLY ONE VERSION
