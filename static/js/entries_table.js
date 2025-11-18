@@ -44,7 +44,7 @@ function renderEntriesTable(data) {
                 correctFormat: true,
                 allowInvalid: false
             },
-            { data: 'age', readOnly: true },
+            { data: 'age', readOnly: true }, // Age is read-only
             { 
                 data: 'sex',
                 type: 'dropdown',
@@ -99,6 +99,29 @@ function renderEntriesTable(data) {
         viewportRowRenderingOffset: 10,
         viewportColumnRenderingOffset: 10,
 
+        // ✅ ADD AGE CALCULATION WHEN BIRTHDATE CHANGES
+        afterChange: function(changes, source) {
+            if (source === 'loadData') return;
+            
+            clearTimeout(debounceTimer);
+            
+            debounceTimer = setTimeout(() => {
+                if (changes) {
+                    changes.forEach(([row, prop, oldValue, newValue]) => {
+                        console.log(`Changed: row ${row}, prop ${prop}, from "${oldValue}" to "${newValue}"`);
+                        
+                        // If birthdate column changed, calculate age
+                        if (prop === 'birth_date' && newValue) {
+                            calculateAgeForTableRow(row, newValue);
+                        }
+                        
+                        const rowData = this.getSourceDataAtRow(row);
+                        updateEntryInBackend(rowData);
+                    });
+                }
+            }, 1000);
+        },
+
         // ✅ ADD CLICK HANDLER DIRECTLY IN THE TABLE
         afterOnCellMouseDown: function(event, coords, TD) {
             console.log('🖱️ Handsontable cell clicked at row:', coords.row, 'col:', coords.col);
@@ -122,23 +145,6 @@ function renderEntriesTable(data) {
             }
         },
 
-        afterChange: function(changes, source) {
-            if (source === 'loadData') return;
-            
-            clearTimeout(debounceTimer);
-            
-            debounceTimer = setTimeout(() => {
-                if (changes) {
-                    changes.forEach(([row, prop, oldValue, newValue]) => {
-                        console.log(`Changed: row ${row}, prop ${prop}, from "${oldValue}" to "${newValue}"`);
-                        
-                        const rowData = this.getSourceDataAtRow(row);
-                        updateEntryInBackend(rowData);
-                    });
-                }
-            }, 1000);
-        },
-
         // Custom dropdown styling
         cells: function(row, col, prop) {
             const cellProperties = {};
@@ -159,9 +165,56 @@ function renderEntriesTable(data) {
 
     console.log('✅ Entries table instance created and stored globally:', window.entriesHotInstance);
 
+    // Calculate ages for existing rows with birthdates when table loads
     setTimeout(() => {
+        const entriesTable = window.entriesHotInstance;
+        if (entriesTable && entriesTable.getData) {
+            const data = entriesTable.getData();
+            data.forEach((row, index) => {
+                if (row.birth_date) {
+                    calculateAgeForTableRow(index, row.birth_date);
+                }
+            });
+        }
+        
         ensureEntriesTableScroll();
-    }, 100);
+    }, 500);
+}
+
+// ✅ ADD THIS FUNCTION TO CALCULATE AGE FOR TABLE ROWS
+function calculateAgeForTableRow(rowIndex, birthdate) {
+    const entriesTable = window.entriesHotInstance;
+    if (!entriesTable) {
+        console.error('Entries table instance not found');
+        return;
+    }
+    
+    console.log(`🔄 Calculating age for row ${rowIndex} with birthdate: ${birthdate}`);
+    
+    try {
+        const birthDate = new Date(birthdate);
+        const today = new Date();
+        
+        // Validate date is not in future
+        if (birthDate > today) {
+            console.warn('Birthdate cannot be in the future');
+            return;
+        }
+        
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        
+        // Update the age column in the table
+        entriesTable.setDataAtRowProp(rowIndex, 'age', age);
+        console.log(`✅ Age calculated: ${age} for row ${rowIndex}`);
+        
+    } catch (error) {
+        console.error('Error calculating age:', error);
+    }
 }
 
 function ensureEntriesTableScroll() {

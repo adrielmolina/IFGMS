@@ -1442,6 +1442,79 @@ function populateYearPicker() {
     populateFilterDropdowns();
 }
 
+// Function to update save button text based on whether it's a new or existing record
+function updateSaveButtonText() {
+    const saveRecordBtn = document.getElementById('save_record_details');
+    const recordId = document.getElementById('record_id').value;
+    
+    if (saveRecordBtn) {
+        // Check if it's an existing record (record_id is not 0 and not the next available ID)
+        const isExistingRecord = recordId && recordId !== '0' && recordId != nextRecordId;
+        
+        if (isExistingRecord && hasUnsavedChanges) {
+            saveRecordBtn.innerHTML = '<img src="/static/assets/save.png" alt="update" class="btn-icon"> Update';
+            saveRecordBtn.classList.add('update-mode');
+        } else {
+            saveRecordBtn.innerHTML = '<img src="/static/assets/save.png" alt="save" class="btn-icon"> Save';
+            saveRecordBtn.classList.remove('update-mode');
+        }
+    }
+}
+
+// Function to check if record is existing (not new)
+function isExistingRecord() {
+    const recordId = document.getElementById('record_id').value;
+    return recordId && recordId !== '0' && recordId != nextRecordId;
+}
+
+function handleFormChange() {
+    const recordId = document.getElementById('record_id').value;
+    const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+    
+    // For new records, always enable save button
+    if (isNewRecord) {
+        if (!hasUnsavedChanges) {
+            hasUnsavedChanges = true;
+            updateSaveButtonState(true);
+            console.log('New record - enabling save button');
+        }
+        return;
+    }
+    
+    // For existing records, check if data actually changed
+    const currentRecordData = {
+        year: document.getElementById('year').value,
+        id_rcv: document.getElementById('id_rcv').checked,
+        paid: document.getElementById('paid').checked,
+        declared: document.getElementById('declared').checked,
+        record_dispatch_ready: document.getElementById('record_dispatch_ready').checked,
+        dec_date: document.getElementById('dec_date').value,
+        eff_date: document.getElementById('eff_date').value,
+        loc_par: document.getElementById('loc_par').value,
+        loc_cat: document.getElementById('loc_cat').value,
+        municipality: document.getElementById('municipality').value,
+        district: document.getElementById('district').value,
+        origin: document.getElementById('origin').value,
+        remarks: document.getElementById('remarks').value,
+        tags: document.getElementById('tags').value
+    };
+    
+    const hasActualChanges = JSON.stringify(originalRecordData) !== JSON.stringify(currentRecordData);
+    
+    if (hasActualChanges && !hasUnsavedChanges) {
+        hasUnsavedChanges = true;
+        updateSaveButtonState(true);
+        console.log('Changes detected in existing record - enabling save button');
+    } else if (!hasActualChanges && hasUnsavedChanges) {
+        hasUnsavedChanges = false;
+        updateSaveButtonState(false);
+        console.log('Changes reverted - disabling save button');
+    }
+    
+    // Always update button text when form changes
+    updateSaveButtonText();
+}
+
 // Update the updateEntryDispatchReady function to also update record paid status
 function updateEntryDispatchReady() {
     const entryPaidCheckbox = document.getElementById('entry_paid');
@@ -1463,7 +1536,8 @@ function updateEntryDispatchReady() {
     // Update the visual state (we don't have an entry dispatch ready checkbox anymore)
     // But we can update the record-level dispatch ready based on all entries
     updateDispatchReadyFromEntries();
-    updateRecordPaidFromEntries(); // Add this line
+    updateRecordPaidFromEntries(); 
+    updateRecordIdReceivedFromEntries(); 
 }
 
 function updateDispatchReadyFromEntries() {
@@ -1532,6 +1606,68 @@ function updateDispatchReadyFromEntries() {
     dispatchReadyCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+// Function to update record ID Received status based on entries
+function updateRecordIdReceivedFromEntries() {
+    const entriesTable = window.entriesHotInstance;
+    const recordIdRcvCheckbox = document.getElementById('id_rcv');
+    
+    if (!entriesTable || !recordIdRcvCheckbox) {
+        console.log('Entries table or record ID Received checkbox not found');
+        return;
+    }
+    
+    const entriesData = entriesTable.getSourceData();
+    
+    if (!entriesData || entriesData.length === 0) {
+        // No entries - uncheck and gray out
+        recordIdRcvCheckbox.checked = false;
+        recordIdRcvCheckbox.classList.add('id-rcv-auto');
+        recordIdRcvCheckbox.disabled = true;
+        console.log('No entries found, record ID Received unchecked');
+        return;
+    }
+    
+    // Check if ALL entries have ID Received = true
+    const allEntriesIdReceived = entriesData.every(entry => {
+        // Handle both boolean and numeric values for ID received status
+        const isIdReceived = entry.id_received === true || entry.id_received === 1 || entry.id_received === '1';
+        console.log(`Entry ${entry.entry_id}: id_received = ${entry.id_received}, isIdReceived = ${isIdReceived}`);
+        return isIdReceived;
+    });
+    
+    console.log(`All entries ID Received: ${allEntriesIdReceived}, Total entries: ${entriesData.length}`);
+    
+    // Update the checkbox based on ID received status
+    if (allEntriesIdReceived) {
+        // All entries have ID received - check and gray out
+        recordIdRcvCheckbox.checked = true;
+        recordIdRcvCheckbox.classList.add('id-rcv-auto');
+        recordIdRcvCheckbox.disabled = true;
+        
+        // Show success message
+        const smallText = recordIdRcvCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#28a745';
+            smallText.textContent = '✓ All entries have ID received';
+        }
+    } else {
+        // Not all entries have ID received - uncheck and gray out
+        recordIdRcvCheckbox.checked = false;
+        recordIdRcvCheckbox.classList.add('id-rcv-auto');
+        recordIdRcvCheckbox.disabled = true;
+        
+        // Show info message
+        const smallText = recordIdRcvCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#666';
+            smallText.textContent = 'Auto-set when all entries have ID received';
+        }
+    }
+    
+    // Trigger form change for unsaved changes tracking
+    recordIdRcvCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
 // Function to update record paid status based on entries
 function updateRecordPaidFromEntries() {
     const entriesTable = window.entriesHotInstance;
@@ -1594,7 +1730,7 @@ function updateRecordPaidFromEntries() {
     recordPaidCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-// Update the entries table monitoring to also track paid status
+// Update the entries table monitoring to track all statuses
 function setupEntriesTableMonitoring() {
     const entriesTable = window.entriesHotInstance;
     if (!entriesTable) {
@@ -1602,21 +1738,22 @@ function setupEntriesTableMonitoring() {
         return;
     }
     
-    // Monitor for data changes in paid and declared columns
+    // Monitor for data changes in paid, declared, and id_received columns
     entriesTable.addHook('afterChange', function(changes, source) {
         if (source === 'edit' || source === 'loadData') {
-            console.log('Entries table changed, updating Dispatch Ready and Paid status...');
+            console.log('Entries table changed, updating Dispatch Ready, Paid, and ID Received status...');
             
-            // Check if the change affects paid or declared columns
-            const paidOrDeclaredChanged = changes && changes.some(change => {
+            // Check if the change affects paid, declared, or id_received columns
+            const statusChanged = changes && changes.some(change => {
                 const columnProp = entriesTable.getColHeader(change[1]);
-                return columnProp && (columnProp.includes('Paid') || columnProp.includes('Declared'));
+                return columnProp && (columnProp.includes('Paid') || columnProp.includes('Declared') || columnProp.includes('ID Received'));
             });
             
-            if (paidOrDeclaredChanged || source === 'loadData') {
+            if (statusChanged || source === 'loadData') {
                 setTimeout(() => {
                     updateDispatchReadyFromEntries();
-                    updateRecordPaidFromEntries(); // Add this line
+                    updateRecordPaidFromEntries();
+                    updateRecordIdReceivedFromEntries(); // Add this line
                 }, 100);
             }
         }
@@ -1691,14 +1828,14 @@ function populateEntryForm(entryData) {
             orDateInput.value = '';
         }
         
-        // 4. Checkboxes (convert 1/0 to true/false)
-        document.getElementById('id_received').checked = Boolean(entryData.id_received);
+        // 4. Checkboxes - SET ID RECEIVED TO FALSE REGARDLESS OF DATABASE VALUE
+        document.getElementById('id_received').checked = false; // Always set to false
         document.getElementById('entry_declared').checked = Boolean(entryData.declared);
         document.getElementById('entry_paid').checked = Boolean(entryData.paid);
         
         setTimeout(() => {
-        updateEntryDispatchReady();
-    }, 100);
+            updateEntryDispatchReady();
+        }, 100);
 
         console.log('All form fields populated successfully!');
         
@@ -1860,10 +1997,13 @@ function clearEntryForm() {
     console.log('Entry form cleared');
 }
 
-// Initialize change tracking
+// Update your initializeChangeTracking function
 function initializeChangeTracking() {
     // Store original data when overlay opens
     storeOriginalData();
+    
+    // Reset the flag when overlay opens
+    hasUnsavedChanges = false;
     
     // Add event listeners to all form inputs
     const formInputs = document.querySelectorAll('#overlay input, #overlay select, #overlay textarea');
@@ -1877,13 +2017,18 @@ function initializeChangeTracking() {
         input.addEventListener('change', handleFormChange);
     });
     
-    // Reset the flag when overlay opens
-    hasUnsavedChanges = false;
-    updateSaveButtonState(false);
-    console.log('Change tracking initialized');
+    // Update button state based on whether it's a new or existing record
+    updateSaveButtonState(false); // Start with disabled for existing records
+    updateSaveButtonText();
+    
+    console.log('Change tracking initialized - hasUnsavedChanges:', hasUnsavedChanges);
 }
 
+// Update your storeOriginalData function
 function storeOriginalData() {
+    const recordId = document.getElementById('record_id').value;
+    const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+    
     // Store original record data
     originalRecordData = {
         year: document.getElementById('year').value,
@@ -1901,15 +2046,15 @@ function storeOriginalData() {
         remarks: document.getElementById('remarks').value,
         tags: document.getElementById('tags').value
     };
-    console.log('Original data stored:', originalRecordData);
-}
-
-function handleFormChange() {
-    if (!hasUnsavedChanges) {
-        hasUnsavedChanges = true;
-        updateSaveButtonState(true);
-        console.log('Unsaved changes detected - form changed');
-    }
+    
+    console.log('Original data stored for record:', recordId, 'Is new:', isNewRecord);
+    console.log('Original data:', originalRecordData);
+    
+    // For new records, start with save button enabled
+    // For existing records, start with save button disabled
+    hasUnsavedChanges = isNewRecord;
+    updateSaveButtonState(isNewRecord);
+    updateSaveButtonText();
 }
 
 function checkForChanges() {
@@ -2035,6 +2180,9 @@ function closeOverlayWithoutSaving() {
     }
     hasUnsavedChanges = false;
     updateSaveButtonState(false);
+
+    // ===== NEW: RESET ENTRY DETAILS STATE =====
+    enableEntryDetails(); 
 }
 
 function saveAndCloseOverlay() {
@@ -2105,7 +2253,6 @@ function refreshNextRecordId() {
     return initializeNextRecordId();
 }
 
-// Update your openEmptyRecordOverlay function
 async function openEmptyRecordOverlay() {
     try {
         // Get next available record ID first
@@ -2143,10 +2290,16 @@ async function openEmptyRecordOverlay() {
             setupMaabNumberHandling(); 
             setBirthdayMaxDate();
             
+            // ===== NEW: DISABLE ENTRY DETAILS FOR NEW RECORD =====
+            disableEntryDetails();
+            
             // Clear entries table for new record
             if (window.entriesHotInstance) {
                 window.entriesHotInstance.loadData([]);
             }
+            
+            // Ensure button shows "Save" for new record
+            updateSaveButtonText();
         }, 100);
         
     } catch (error) {
@@ -2155,7 +2308,7 @@ async function openEmptyRecordOverlay() {
     }
 }
 
-// Update your clearRecordForm function to handle the preview ID properly
+// Update your clearRecordForm function
 function clearRecordForm() {
     // Don't clear the record_id field here - let openEmptyRecordOverlay handle it
     const fieldsToClear = [
@@ -2179,9 +2332,12 @@ function clearRecordForm() {
     
     // Clear any validation errors
     clearAllValidationErrors();
+    
+    // Reset button text to "Save" for new records
+    updateSaveButtonText();
 }
 
-// Update your saveRecordDetails function
+// Update your saveRecordDetails function to reset button after save
 function saveRecordDetails(showToast = true) {
     return new Promise((resolve, reject) => {
         // Clear previous errors
@@ -2243,6 +2399,9 @@ function saveRecordDetails(showToast = true) {
             if (isNewRecord && result.record_id) {
                 document.getElementById('record_id').value = result.record_id;
                 console.log('New record created with ID:', result.record_id);
+
+                // ===== NEW: ENABLE ENTRY DETAILS AFTER SUCCESSFUL SAVE =====
+                enableEntryDetails();
                 
                 // Refresh the next available ID since we just used one
                 getNextRecordId().then(() => {
@@ -2255,10 +2414,12 @@ function saveRecordDetails(showToast = true) {
             hasUnsavedChanges = false;
             storeOriginalData();
             updateSaveButtonState(false);
+            updateSaveButtonText(); // Reset button text after save
             console.log('Record saved successfully');
             
             if (showToast) {
-                toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
+                const message = isNewRecord ? "Record Created Successfully!" : "Record Updated Successfully!";
+                toastSuccess(message, "The record was successfully saved.");
             }
             
             // Refresh the table data based on current view
@@ -2374,6 +2535,51 @@ function addNewEntry(recordId) {
         console.error('Error:', error);
         toastError("Error", "An error occurred during entry adding: " + error.message);
     });
+}
+
+// ===== ENTRY DETAILS STATE MANAGEMENT =====
+function disableEntryDetails() {
+    const entryDetails = document.getElementById('entry_details');
+    const entryRadioControls = document.querySelector('.entry-radio-controls');
+    const entriesTable = document.getElementById('entries_table');
+    
+    if (entryDetails) {
+        entryDetails.classList.add('disabled');
+    }
+    
+    if (entryRadioControls) {
+        entryRadioControls.style.display = 'none';
+    }
+    
+    // Show empty state in entries table
+    if (window.entriesHotInstance) {
+        window.entriesHotInstance.loadData([]);
+        // You could also show a message in the table
+    }
+    
+    console.log('Entry details disabled - record not saved yet');
+}
+
+function enableEntryDetails() {
+    const entryDetails = document.getElementById('entry_details');
+    const entryRadioControls = document.querySelector('.entry-radio-controls');
+    
+    if (entryDetails) {
+        entryDetails.classList.remove('disabled');
+    }
+    
+    if (entryRadioControls) {
+        entryRadioControls.style.display = 'flex';
+    }
+    
+    console.log('Entry details enabled - record is saved');
+}
+
+// Function to check if entry details should be enabled
+function shouldEnableEntryDetails() {
+    const recordId = document.getElementById('record_id').value;
+    const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+    return !isNewRecord;
 }
 
 // Function to set maximum date for birthday field to today
@@ -2547,10 +2753,11 @@ function refreshEntriesTable() {
             // Render the table
             window.renderEntriesTable(entriesData);
             
-            // Update Dispatch Ready and Paid status based on entries
+            // Update all statuses based on entries
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
-                updateRecordPaidFromEntries(); // Add this line
+                updateRecordPaidFromEntries();
+                updateRecordIdReceivedFromEntries(); // Add this line
             }, 100);
             
             // Setup click handlers after table is rendered
@@ -2582,12 +2789,12 @@ document.getElementById('back_to_add').addEventListener('click', function() {
     switchToAddMode();
 });
 
-// Update the openRecordInOverlay function to setup entry table clicks
 function openRecordInOverlay(recordData) {
     console.log('=== OPEN RECORD IN OVERLAY ===');
     console.log('Full record data:', recordData);
     
     function convertToYYYYMMDD(dateStr) {
+        if (!dateStr) return '';
         const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
         if (parts.length === 3) {
             let [month, day, year] = parts;
@@ -2598,6 +2805,7 @@ function openRecordInOverlay(recordData) {
         return '';
     }
 
+    // Convert dates to YYYY-MM-DD format for form inputs
     if (recordData.declaration_date) {
         recordData.declaration_date = convertToYYYYMMDD(recordData.declaration_date);
     }
@@ -2608,14 +2816,14 @@ function openRecordInOverlay(recordData) {
     // Populate the form fields
     document.getElementById('record_id').value = recordData.record_id;
     document.getElementById('year').value = recordData.year;
-    document.getElementById('id_rcv').checked = recordData.id_received;
-    document.getElementById('paid').checked = recordData.paid;
-    document.getElementById('declared').checked = recordData.declared;
-    document.getElementById('record_dispatch_ready').checked = recordData.dispatch_ready;
-    document.getElementById('dec_date').value = recordData.declaration_date;
-    document.getElementById('eff_date').value = recordData.effectivity_date;
-    document.getElementById('loc_par').value = recordData.location_particular;
-    document.getElementById('loc_cat').value = recordData.location_category;
+    document.getElementById('id_rcv').checked = Boolean(recordData.id_received);
+    document.getElementById('paid').checked = Boolean(recordData.paid);
+    document.getElementById('declared').checked = Boolean(recordData.declared);
+    document.getElementById('record_dispatch_ready').checked = Boolean(recordData.dispatch_ready);
+    document.getElementById('dec_date').value = recordData.declaration_date || '';
+    document.getElementById('eff_date').value = recordData.effectivity_date || '';
+    document.getElementById('loc_par').value = recordData.location_particular || '';
+    document.getElementById('loc_cat').value = recordData.location_category || '';
     
     // DEBUG: Municipality field
     const municipalityField = document.getElementById('municipality');
@@ -2631,9 +2839,9 @@ function openRecordInOverlay(recordData) {
     districtField.value = recordData.district || '';
     console.log('District field after setting:', districtField.value);
     
-    document.getElementById('origin').value = recordData.origin;
-    document.getElementById('remarks').value = recordData.remarks;
-    document.getElementById('tags').value = recordData.tags;
+    document.getElementById('origin').value = recordData.origin || '';
+    document.getElementById('remarks').value = recordData.remarks || '';
+    document.getElementById('tags').value = recordData.tags || '';
 
     // Show the overlay
     document.getElementById('overlay').style.display = 'flex';
@@ -2644,10 +2852,9 @@ function openRecordInOverlay(recordData) {
         overlayContent.scrollTop = 0;
     }
 
-    // Initialize change tracking AFTER a short delay to ensure form is populated
+    // Initialize change tracking AFTER a longer delay to ensure form is fully populated
     setTimeout(() => {
-        console.log('=== INITIALIZING CHANGE TRACKING ===');
-        initializeChangeTracking();
+        console.log('=== INITIALIZING CHANGE TRACKING (DELAYED) ===');
         
         // DEBUG: Check municipality and district after form is populated
         console.log('Municipality after form populated:', document.getElementById('municipality').value);
@@ -2662,19 +2869,31 @@ function openRecordInOverlay(recordData) {
         // Highlight required fields and setup error containers
         highlightRequiredFields();
         setBirthdayMaxDate();
+
+        // ===== NEW: ENABLE ENTRY DETAILS FOR EXISTING RECORD =====
+        enableEntryDetails();
         
         // Make sure we're in add mode initially (hide back button)
         switchToAddMode();
         
+        // Initialize change tracking LAST after everything is set up
+        initializeChangeTracking();
+        
+        // Update button text for existing record
+        updateSaveButtonText();
+        
         // DEBUG: Final check
         console.log('Municipality final:', document.getElementById('municipality').value);
         console.log('District final:', document.getElementById('district').value);
-    }, 100);
+        console.log('Save button state after initialization:');
+        debugSaveButtonState();
+    }, 500); // Increased to 500ms to ensure everything is loaded
 
     // Fetch entries for this record
     fetch(`/api/members/${recordData.record_id}/entries`)
         .then(response => response.json())
         .then(data => {
+            // Format dates for display in table
             data.forEach(row => {
                 if (row.birth_date) {
                     const date = new Date(row.birth_date);
@@ -2689,9 +2908,11 @@ function openRecordInOverlay(recordData) {
                     row.OR_date = date.toLocaleDateString('en-US');
                 }
             });
+            
+            // Render entries table
             window.renderEntriesTable(data);
             
-            // Update Dispatch Ready status
+            // Update Dispatch Ready status after entries are loaded
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
                 updateRecordPaidFromEntries();
@@ -2702,9 +2923,14 @@ function openRecordInOverlay(recordData) {
                 setupEntryTableClickHandlers();
                 setupEntriesTableMonitoring();
             }, 1000);
+            
+            // Setup MAAB number handling
             setTimeout(() => {
                 setupMaabNumberHandling();
             }, 200);
+        })
+        .catch(error => {
+            console.error('Error fetching entries:', error);
         });
 }
 
