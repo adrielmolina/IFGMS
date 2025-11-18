@@ -63,7 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== 3️⃣ MAAB NUMBER FIELDS (digits only, with auto-prefix) =====
-  const maabNoFields = ["maab_no"];
+  
+  //TODO remove later
+  //const maabNoFields = ["maab_no"];
 
   maabNoFields.forEach(id => {
     const input = document.getElementById(id);
