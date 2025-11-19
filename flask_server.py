@@ -92,21 +92,27 @@ def login():
     user = db_conn.sign_in(username, password)
 
     if user:
-        # print('\nCurrent User:\n')
-        # print({c.name: getattr(user, c.name) for c in user.__table__.columns})# Debugging line. remove after testing
-        if user.acct_status == 'approved':
-            login_user(user)
-            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Login Attempt', 'Success', current_user.account_id)
-            return redirect(url_for('dashboard'))
+        # Refresh the user object with a new session for Flask-Login
+        db_session = db_conn.SessionLocal()
+        try:
+            refreshed_user = db_session.query(db_conn.models.Accounts).get(user.account_id)
+            
+            print(f'🔍 DEBUG: User found: {refreshed_user.username}, Status: {refreshed_user.acct_status}')
+            if refreshed_user.acct_status == 'approved':
+                login_user(refreshed_user)
+                db_conn.POST_action_log(refreshed_user.username, refreshed_user.user_level, 'Login Attempt', 'Success', refreshed_user.account_id)
+                return redirect(url_for('dashboard'))
 
-        elif user.acct_status == 'pending':
-            flash({
-                "title": "Login Error!",
-                "text": "Account not approved yet. Contact admin.",
-                "redirect_url": url_for('landing_page')
-            },"error")
-            db_conn.POST_action_log(username, None, 'Login Attempt', 'Fail. Account status pending', None)
-            return render_template('index.html')
+            elif refreshed_user.acct_status == 'pending':
+                flash({
+                    "title": "Login Error!",
+                    "text": "Account not approved yet. Contact admin.",
+                    "redirect_url": url_for('landing_page')
+                },"error")
+                db_conn.POST_action_log(username, None, 'Login Attempt', 'Fail. Account status pending', None)
+                return render_template('index.html')
+        finally:
+            db_session.close()
     else:
         flash({
             "title": "Login Error!",
@@ -460,104 +466,250 @@ def export_record_entries(record_id):
 # ========================== FORGOT PASSWORD ==========================
 @server.route("/forgot_password_otp", methods=["GET", "POST"])
 def forgot_password_otp():
+    if request.method == "GET":
+        return render_template("forgot_password.html")
+    
     if request.method == "POST":
-        email = request.form.get("email")
+        try:
+            # Get email from form
+            email = request.form.get("email", "").strip()
+            print(f"🔍 DEBUG: Starting forgot password process for: '{email}'")
+            
+            # Validate email format
+            if not email:
+                flash({
+                    "title": "Email Required",
+                    "text": "Please enter your email address.",
+                    "redirect_url": url_for('forgot_password_otp')
+                }, "error")
+                return render_template("forgot_password.html")
+            
+            if not tools.validate_email_format(email):
+                flash({
+                    "title": "Invalid Email",
+                    "text": "Please enter a valid email address.",
+                    "redirect_url": url_for('forgot_password_otp')
+                }, "error")
+                return render_template("forgot_password.html")
 
-        otp = tools.generate_otp()  # Generate OTP
-        save_otp = db_conn.save_otp(email, otp)  # Save OTP in otp_verifications table
-        
-        if save_otp:
-            db_conn.send_otp_email(email, otp)  # Send OTP to user's
-        # TODO add error handling if email sending fails
-        session["email"] = email
-        flash({
-            "title": "OTP Sent!",
-            "text": "OTP has been sent to your email.",
-            "redirect_url": url_for('verify_otp')
-        }, "info")
+            # Check if email exists in accounts table and user is authorized
+            user_exists = db_conn.check_user_exists(email)
+            print(f"🔍 DEBUG: User exists: {user_exists}")
+            
+            if not user_exists:
+                flash({
+                    "title": "Email Not Found",
+                    "text": "This email is not registered in our system.",
+                    "redirect_url": url_for('forgot_password_otp')
+                }, "error")
+                return render_template("forgot_password.html")
+            
+            # Check if user is authorized (staff or allowed for OTP)
+            user_authorized = db_conn.check_user_authorized(email)
+            print(f"🔍 DEBUG: User authorized: {user_authorized}")
+            
+            if not user_authorized:
+                flash({
+                    "title": "Not Authorized",
+                    "text": "Your account is not authorized for password reset via OTP. Please contact support.",
+                    "redirect_url": url_for('forgot_password_otp')
+                }, "error")
+                return render_template("forgot_password.html")
 
-    return render_template("forgot_password.html")
+            # Generate OTP
+            otp = tools.generate_otp()
+            print(f"🔍 DEBUG: Generated OTP: {otp}")
+            
+            # Save OTP in database
+            save_otp = db_conn.save_otp(email, otp)
+            print(f"🔍 DEBUG: Save OTP result: {save_otp}")
+            
+            if not save_otp:
+                flash({
+                    "title": "OTP Error",
+                    "text": "Failed to generate OTP. Please try again.",
+                    "redirect_url": url_for('forgot_password_otp')
+                }, "error")
+                return render_template("forgot_password.html")
+
+            # Send OTP email
+            print(f"🔍 DEBUG: Attempting to send OTP email to: {email}")
+            email_sent = db_conn.send_otp_email(email, otp)
+            print(f"🔍 DEBUG: Email sent result: {email_sent}")
+            
+            if not email_sent:
+                print(f"❌ DEBUG: Email sending failed for: {email}")
+                flash({
+                    "title": "Email Error",
+                    "text": "Failed to send OTP email. Please try again later.",
+                    "redirect_url": url_for('forgot_password_otp')
+                }, "error")
+                return render_template("forgot_password.html")
+
+            # Store email in session for verification
+            session["email"] = email
+            session["otp_verified"] = False
+
+            print(f"✅ DEBUG: SUCCESS! OTP process completed for: {email}")
+            print(f"✅ DEBUG: Redirecting to verify_otp page")
+            
+            # Success
+            flash({
+                "title": "OTP Sent!",
+                "text": "OTP has been sent to your email.",
+                "redirect_url": url_for('verify_otp')
+            }, "info")
+            return redirect(url_for('verify_otp'))
+
+        except Exception as e:
+            print(f"❌ ERROR in forgot_password_otp: {e}")
+            import traceback
+            traceback.print_exc()
+            flash({
+                "title": "System Error",
+                "text": "An error occurred. Please try again.",
+                "redirect_url": url_for('forgot_password_otp')
+            }, "error")
+            return render_template("forgot_password.html")
 
 
 # ========================== VERIFY OTP ==========================
 @server.route('/verify_otp', methods=['GET', 'POST'])
-def verify_otp(): 
-    if request.method == 'POST':
-        email = request.form.get('email')  # Get email from form
-        otp_input = request.form.get('otp')  # Get OTP from form
-
-        # Call the database function to verify OTP
-        result = db_conn.verifying_otp(email, otp_input)
-
-        if result == "success":
-            flash({
-                "title": "OTP Verified Successfully!",
-                "text": "You can now proceed to reset your password.",
-                "redirect_url": url_for('reset_password')
-            }, "success")  # Redirect to reset password page
-
-        elif result == "expired":
-            flash({
-                "title": "OTP Error",
-                "text": "OTP has expired. Please try again.",
-                "redirect_url": url_for('forgot_password')
-            }, "error")
-
-        elif result == "already_used":
-            flash({
-                "title": "OTP has already been used",
-                "text": " Please try again.",
-                "redirect_url": url_for('forgot_password')
-            }, "error")
-        
-        # TODO fix this check the email should be checked at the first page. this should be just a check if the otp matches or not
-        elif result == "email_not_found":
-            flash({
-                "title": "Email is not registered",
-                "text": " Please check your email or create an account.",
-                "redirect_url": url_for('forgot_password')
-            }, "error")
-
-        else:
-            flash({
-                "title": "Invalid OTP",
-                "text": "Please try again.",
-                "redirect_url": url_for('verify_otp')
-            }, "error")
-
-    email = session.get("email")
-    return render_template('verify_otp.html', email=email)  # Render OTP verification page
-
-
-# ========================== RESET PASSWORD ==========================
-# TODO continue the ORM syntax update from here
-@server.route("/reset_password", methods=["GET", "POST"])
-def reset_password():
+def verify_otp():
+    # Check if user came from forgot password flow
     email = session.get("email")
     if not email:
         flash({
-            "title": "Session expired",
-            "text": "Please try again.",
+            "title": "Session Expired",
+            "text": "Please start the password reset process again.",
             "redirect_url": url_for('forgot_password_otp')
         }, "error")
+        return redirect(url_for('forgot_password_otp'))
+
+    if request.method == 'GET':
+        return render_template('verify_otp.html', email=email)
+
+    if request.method == 'POST':
+        try:
+            otp_input = request.form.get("otp", "").strip()
+
+            if not otp_input:
+                flash({
+                    "title": "OTP Required",
+                    "text": "Please enter the OTP sent to your email.",
+                    "redirect_url": url_for('verify_otp')
+                }, "error")
+                return render_template('verify_otp.html', email=email)
+
+            # Verify OTP
+            result = db_conn.verifying_otp(email, otp_input)
+
+            if result == "success":
+                session["otp_verified"] = True
+                flash({
+                    "title": "OTP Verified Successfully!",
+                    "text": "You can now proceed to reset your password.",
+                    "redirect_url": url_for('reset_password')
+                }, "success")
+                return redirect(url_for('reset_password'))
+
+            elif result == "expired":
+                flash({
+                    "title": "OTP Expired",
+                    "text": "OTP has expired. Please request a new one.",
+                    "redirect_url": url_for('forgot_password_otp')
+                }, "error")
+            elif result == "already_used":
+                flash({
+                    "title": "OTP Used",
+                    "text": "OTP has already been used. Please request a new one.",
+                    "redirect_url": url_for('forgot_password_otp')
+                }, "error")
+            elif result == "email_not_found":
+                flash({
+                    "title": "Email Error",
+                    "text": "Email verification failed. Please start over.",
+                    "redirect_url": url_for('forgot_password_otp')
+                }, "error")
+            else:
+                flash({
+                    "title": "Invalid OTP",
+                    "text": "The OTP you entered is incorrect. Please try again.",
+                    "redirect_url": url_for('verify_otp')
+                }, "error")
+
+            return render_template('verify_otp.html', email=email)
+
+        except Exception as e:
+            print(f"Error in verify_otp: {e}")
+            flash({
+                "title": "System Error",
+                "text": "An error occurred. Please try again.",
+                "redirect_url": url_for('verify_otp')
+            }, "error")
+            return render_template('verify_otp.html', email=email)
+
+
+# ========================== RESET PASSWORD ==========================
+@server.route("/reset_password", methods=["GET", "POST"])
+def reset_password():
+    # Check if OTP was verified
+    email = session.get("email")
+    otp_verified = session.get("otp_verified")
+    
+    if not email or not otp_verified:
+        flash({
+            "title": "Session Expired",
+            "text": "Please complete OTP verification first.",
+            "redirect_url": url_for('forgot_password_otp')
+        }, "error")
+        print("🔍 DEBUG: Flashed session expired message")
+        return redirect(url_for('forgot_password_otp'))
+
+    if request.method == "GET":
+        return render_template("reset_password.html")
 
     if request.method == "POST":
-        new_password = request.form["new_password"]
-        confirm_password = request.form["confirm_password"]
+        try:
+            new_password = request.form.get("new_password", "").strip()
+            confirm_password = request.form.get("confirm_password", "").strip()
 
-        if new_password != confirm_password:
-            flash("Passwords do not match. Please try again.", "error")
-        else:
-            db_conn.update_password(email, new_password)  
-            session.pop("email", None) 
-            flash({
-                "title": "Password Reset Successfully!",
-                "text": "You can now log in with your new password.",
-                "redirect_url": url_for('landing_page')
-            }, "success")
-        
-    return render_template("reset_password.html")
+            # Validate passwords
+            if not new_password or not confirm_password:
+                flash("Please fill in all password fields.", "error")
+                print("🔍 DEBUG: Flashed empty fields error")
+                return render_template("reset_password.html")
 
+            if new_password != confirm_password:
+                flash("Passwords do not match. Please try again.", "error")
+                print("🔍 DEBUG: Flashed password mismatch error")
+                return render_template("reset_password.html")
+
+            # Update password
+            success = db_conn.update_password(email, new_password)
+            
+            if success:
+                # Clear session
+                session.pop("email", None)
+                session.pop("otp_verified", None)
+                
+                flash({
+                    "title": "Password Reset Successfully!",
+                    "text": "You can now log in with your new password.",
+                    "redirect_url": url_for('landing_page')
+                }, "success")
+                print("🔍 DEBUG: Flashed success message")
+                return redirect(url_for('landing_page'))
+            else:
+                flash("Failed to reset password. Please try again.", "error")
+                print("🔍 DEBUG: Flashed reset failed error")
+                return render_template("reset_password.html")
+                
+        except Exception as e:
+            print(f"Error in reset_password: {e}")
+            flash("An error occurred while resetting password. Please try again.", "error")
+            print("🔍 DEBUG: Flashed exception error")
+            return render_template("reset_password.html")
 
 # KEEP ONLY THIS VERSION OF THE ROUTE - REMOVE THE DUPLICATE LATER IN THE FILE
 @server.route('/api/declaration', methods=['POST'])
@@ -3055,6 +3207,165 @@ def debug_logs_info():
         
     except Exception as e:
         return jsonify({"error": str(e)})
+    
+# =============================================
+# TARGET VS ACTUAL API ROUTES
+# =============================================
+
+@server.route('/api/get_targets/<int:year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_targets(year):
+    """Get targets for a specific year"""
+    db_session = SessionLocal()
+    try:
+        # Query your targets table - adjust the model name as needed
+        targets_row = db_session.query(models.Report_TvA).filter(models.Report_TvA.year == year).first()
+        
+        if targets_row:
+            return jsonify({
+                "Classic": targets_row.classic or 0,
+                "Bronze": targets_row.bronze or 0,
+                "Silver": targets_row.silver or 0,
+                "Gold": targets_row.gold or 0,
+                "Platinum": targets_row.platinum or 0,
+                "Safe Card": targets_row.safe_card or 0,
+                "Senior": targets_row.senior or 0,
+                "Senior+": targets_row.senior_plus or 0
+            })
+        else:
+            # Return zeros if no targets set
+            return jsonify({
+                "Classic": 0, "Bronze": 0, "Silver": 0, "Gold": 0,
+                "Platinum": 0, "Safe Card": 0, "Senior": 0, "Senior+": 0
+            })
+    except Exception as e:
+        print(f"Error getting targets: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/save_targets', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def save_targets():
+    """Save targets for a specific year"""
+    data = request.get_json()
+    year = data.get('year')
+    targets = data.get('targets', {})
+    
+    print(f"💾 Saving targets for year {year}: {targets}")
+    
+    db_session = SessionLocal()
+    try:
+        # Check if targets exist for this year
+        existing = db_session.query(models.Report_TvA).filter(models.Report_TvA.year == year).first()
+        
+        if existing:
+            # Update existing
+            existing.classic = targets.get('Classic', 0)
+            existing.bronze = targets.get('Bronze', 0)
+            existing.silver = targets.get('Silver', 0)
+            existing.gold = targets.get('Gold', 0)
+            existing.platinum = targets.get('Platinum', 0)
+            existing.safe_card = targets.get('Safe Card', 0)
+            existing.senior = targets.get('Senior', 0)
+            existing.senior_plus = targets.get('Senior+', 0)
+            print(f"✅ Updated existing targets for year {year}")
+        else:
+            # Create new
+            new_targets = models.Report_TvA(
+                year=year,
+                classic=targets.get('Classic', 0),
+                bronze=targets.get('Bronze', 0),
+                silver=targets.get('Silver', 0),
+                gold=targets.get('Gold', 0),
+                platinum=targets.get('Platinum', 0),
+                safe_card=targets.get('Safe Card', 0),
+                senior=targets.get('Senior', 0),
+                senior_plus=targets.get('Senior+', 0)
+            )
+            db_session.add(new_targets)
+            print(f"✅ Created new targets for year {year}")
+        
+        db_session.commit()
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Save Targets', f'Saved targets for year {year}', current_user.account_id)
+        return jsonify({"success": True})
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Error saving targets: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db_session.close()
+
+# =============================================
+# BUDGET VS EXPENSES API ROUTES
+# =============================================
+
+@server.route('/api/get_budget/<int:year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_budget(year):
+    """Get budget data for a specific year"""
+    try:
+        # For now, return sample data - you can replace this with actual database queries
+        sample_budget_data = [
+            {
+                "id": 1,
+                "account_code": "5020401",
+                "account_name": "Gasoline & Oil",
+                "budget": 100800,
+                "jan": 1400, "feb": 4100, "mar": 3400, "apr": 3700, "may": 2000, "jun": 2100,
+                "jul": 1400, "aug": 0, "sep": 0, "oct": 0, "nov": 0, "dec": 0,
+                "total_expense": 18100,
+                "balance": 82700,
+            },
+            {
+                "id": 2,
+                "account_code": "5020511",
+                "account_name": "Travel Local",
+                "budget": 20000,
+                "jan": 0, "feb": 0, "mar": 0, "apr": 0, "may": 60, "jun": 20,
+                "jul": 0, "aug": 0, "sep": 0, "oct": 0, "nov": 0, "dec": 0,
+                "total_expense": 80,
+                "balance": 19920,
+            },
+            {
+                "id": 3,
+                "account_code": "5020601",
+                "account_name": "Meals and Snacks",
+                "budget": 20000,
+                "jan": 405, "feb": 1905, "mar": 1520, "apr": 2209, "may": 1639, "jun": 1372,
+                "jul": 400, "aug": 0, "sep": 0, "oct": 0, "nov": 0, "dec": 0,
+                "total_expense": 9450,
+                "balance": 10550,
+            }
+        ]
+        return jsonify(sample_budget_data)
+    except Exception as e:
+        print(f"Error getting budget: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@server.route('/api/save_budget', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def save_budget():
+    """Save budget data"""
+    data = request.get_json()
+    year = data.get('year')
+    budget_data = data.get('budget', [])
+    
+    print(f"💾 Saving budget for year {year}")
+    print(f"📊 Budget data: {budget_data}")
+    
+    try:
+        # For now, just log the data - you can implement actual database saving later
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Save Budget', f'Saved budget for year {year} with {len(budget_data)} items', current_user.account_id)
+        return jsonify({"success": True, "message": "Budget data received (not yet saved to database)"})
+    except Exception as e:
+        print(f"❌ Error saving budget: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    
 #? -------------------- NOTIFICATIONS -------------------- ?#
 
 @server.route('/api/notifications', methods=['GET'])

@@ -90,15 +90,30 @@ def shutdown_session():
 
 def sign_in(username=None, password=None):    
     db_session = SessionLocal()
+    
+    try:
+        user = db_session.query(models.Accounts).filter(
+            models.Accounts.username == username,
+            models.Accounts.acct_status.in_(["approved", "pending"])
+        ).first()
 
-    user = db_session.query(models.Accounts).filter(
-        models.Accounts.username == username,
-        models.Accounts.acct_status.in_(["approved", "pending"])
-    ).first()
+        print(f"🔍 DEBUG sign_in: username='{username}', user_found={user is not None}")
 
-    if user and tools.check_password(password, user.password):
-        return user  # return full user object instead of "success/pending/fail"
-    return None
+        if user and tools.check_password(password, user.password):
+            print(f"🔍 DEBUG: Password correct for user {username}")
+            # Expunge the user from the session so it becomes detached but usable
+            db_session.expunge(user)
+            db_session.close()
+            return user
+        else:
+            print(f"🔍 DEBUG: Invalid credentials for user {username}")
+            db_session.close()
+            return None
+            
+    except Exception as e:
+        print(f"❌ Error in sign_in: {e}")
+        db_session.close()
+        return None
     
     
 # TODO make the generated id current year + 0000 + last inserted id
@@ -288,11 +303,19 @@ def save_otp(email, otp):
     
 # TODO update email icon
 def send_otp_email(email, otp):
-    """Send OTP to the user's email."""
-    subject = "Your OTP Code"
-    body = f"Your OTP code for FGMS is: {otp}. This will expire in 5 minutes."
+    """Send OTP to the user's email. Returns True if successful, False otherwise."""
+    subject = "Your OTP Code for Password Reset"
+    body = f"""
+    Your OTP code for FGMS password reset is: {otp}
+    
+    This OTP will expire in 5 minutes.
+    
+    If you didn't request this password reset, please ignore this email.
+    
+    Thank you,
+    FGMS Team
+    """
 
-    # TODO change the from with name of the organization
     message = MIMEMultipart()
     message['From'] = SENDER_EMAIL
     message['To'] = email
@@ -304,10 +327,11 @@ def send_otp_email(email, otp):
             server.starttls()
             server.login(SENDER_EMAIL, SENDER_PASSWORD)
             server.sendmail(SENDER_EMAIL, email, message.as_string())
-        print("OTP sent successfully!")
+        print("✅ OTP sent successfully!")
+        return True  # ✅ CRITICAL: Return True on success
     except Exception as e:
-        print(f"Failed to send OTP: {e}")
-
+        print(f"❌ Failed to send OTP: {e}")
+        return False  # Return False on failure
 
 def verifying_otp(email, otp_input):
     """Verify OTP against the database (original version with added debug prints)"""
@@ -402,17 +426,31 @@ def verifying_otp(email, otp_input):
     
 # TODO continue the ORM syntax update from here    
 def update_password(email, new_password):
-    """Update the password in the database."""
-    conn = conn_init()
-    Session = sessionmaker(bind=conn)
+    """Update the password in the database. Returns True if successful, False otherwise."""
+    db_session = SessionLocal()
+    try:
+        salted_pass = tools.hash_password(new_password)
 
-    salted_pass = tools.hash_password(new_password)
-
-    with Session() as session:
-        query = text("UPDATE accounts SET password = :new_password WHERE email = :email")
-        session.execute(query, {"new_password": salted_pass, "email": email})
-        session.commit()
-
+        # Update using SQLAlchemy ORM
+        user = db_session.query(models.Accounts).filter(
+            models.Accounts.email == email
+        ).first()
+        
+        if user:
+            user.password = salted_pass
+            db_session.commit()
+            print(f"✅ Password updated successfully for {email}")
+            return True
+        else:
+            print(f"❌ User with email {email} not found")
+            return False
+            
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Error updating password: {e}")
+        return False
+    finally:
+        db_session.close()
 # ? RESET PASS END    
     
 
@@ -2060,6 +2098,56 @@ def add_inventory_ids(category, prefix, start_num, count, username=None, user_le
             "duplicate_count": 0,
             "error_count": count
         }
+    finally:
+        db_session.close()
+
+def check_user_exists(email):
+    """
+    Check if email exists in accounts table
+    """
+    try:
+        db_session = SessionLocal()
+        # FIXED: Using the correct table name and column names
+        user = db_session.query(models.Accounts).filter(
+            models.Accounts.email == email,
+            models.Accounts.acct_status.in_(["approved", "pending"])
+        ).first()
+        
+        exists = user is not None
+        print(f"🔍 DEBUG check_user_exists: email='{email}', exists={exists}")
+        return exists
+        
+    except Exception as e:
+        print(f"Error checking user existence: {e}")
+        return False
+    finally:
+        db_session.close()
+
+def check_user_authorized(email):
+    """
+    Check if user is authorized for OTP (staff or specific roles)
+    """
+    try:
+        db_session = SessionLocal()
+        # FIXED: Using the correct table name and column names
+        user = db_session.query(models.Accounts).filter(
+            models.Accounts.email == email,
+            models.Accounts.acct_status.in_(["approved", "pending"])
+        ).first()
+        
+        if user:
+            # Define which roles are allowed to use OTP
+            allowed_roles = ['staff', 'admin', 'superadmin']  # Adjust as needed
+            authorized = user.user_level in allowed_roles
+            print(f"🔍 DEBUG check_user_authorized: email='{email}', user_level='{user.user_level}', authorized={authorized}")
+            return authorized
+        
+        print(f"🔍 DEBUG check_user_authorized: User not found for email '{email}'")
+        return False
+        
+    except Exception as e:
+        print(f"Error checking user authorization: {e}")
+        return False
     finally:
         db_session.close()
 
