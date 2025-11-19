@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/claims.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/claims_v2.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
@@ -50,14 +50,14 @@
             <!-- <div class="controls_box"> -->
                 <!-- <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button> -->
             <!-- </div> -->
+
+            <input id="search_input" type="text" placeholder="Search...">
         </div>
 
-        <input id="search_input" type="text" placeholder="Search...">
+        <!-- <input id="search_input" type="text" placeholder="Search..."> -->
     
 
-    <div class="controls_box">
-        <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
-    </div>
+    
 
 <div class="entries-select">
     Show
@@ -68,6 +68,10 @@
       <option value="100">100</option>
     </select>
     entries
+
+     <div class="controls_box">
+        <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
+    </div>
   </div>
 
     <div class="table-container">
@@ -76,12 +80,12 @@
     </div>
 
     <div class="pagination-container">
-  <div class="summary">
-    <p id="summaryText">Showing 1 to 10 of 0 entries</p>
-  </div>
+        <div class="summary">
+            <p id="summaryText">Showing 1 to 10 of 0 entries</p>
+        </div>
 
-  <div id="paginationControls" class="pagination-controls"></div>
-</div>
+        <div id="paginationControls" class="pagination-controls"></div>
+    </div>
 
     <div id="overlay" class="overlay">
         <div id="overlay-content" class="overlay-content">
@@ -90,7 +94,7 @@
                 <!-- Dynamic content goes here -->
 
                 <div class="module_name">
-                    <h2>Claims Details</h2>
+                    <h1>Claim Details</h1>
                 </div>
 
                 <div class="controls_box">
@@ -122,10 +126,9 @@
 
                     <div class="input_set">
                         <label for="date_filed">Date Filed</label>
-                        <input type="date" id="date_filed" name="date_filed" autocomplete="off" placeholder=" ">
-                        <button type="button" onclick="document.getElementById('date_filed').value = new Date().toISOString().slice(0, 10);">
+                        <!-- <button type="button" onclick="document.getElementById('date_filed').value = new Date().toISOString().slice(0, 10);">
                             Today
-                        </button>
+                        </button> -->
                     </div>
 
                     <div class="input_set">

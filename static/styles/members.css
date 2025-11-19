@@ -18,7 +18,6 @@ label {
     justify-content: center;
     align-items: center;
     z-index: 1000;        
-    pointer-events: none;   
     white-space: nowrap;
     margin-left: 20px !important;
 }
@@ -372,13 +371,32 @@ button,
 
 /* Dispatch ready auto styling */
 .dispatch-ready-auto {
-    opacity: 0.6;
     cursor: not-allowed !important;
     background-color: #f5f5f5;
 }
 
 .dispatch-ready-auto + label {
-    opacity: 0.6;
+    color: #666 !important;
+    cursor: not-allowed !important;
+}
+.paid-auto {
+    background-color: #f5f5f5;
+    cursor: not-allowed !important;
+}
+    
+.paid-auto + label {
+    color: #666 !important;
+    cursor: not-allowed !important;
+}
+
+/* ID Received auto styling */
+.id-rcv-auto {
+    cursor: not-allowed !important;
+    background-color: #f5f5f5;
+}
+
+.id-rcv-auto + label {
+    color: #666 !important;
     cursor: not-allowed !important;
 }
 
@@ -436,6 +454,34 @@ button,
 #entries_table::before {
   content: "MEMBER RECORDS";
   background-image: url("/static/assets/cells.png");
+}
+
+/* Entry details disabled state */
+.entry_details.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.entry_details.disabled::after {
+    content: "Save record first to add entries";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: #666;
+    text-align: center;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Hide radio controls when disabled */
+.entry_details.disabled + .entry-radio-controls {
+    display: none !important;
 }
 
 
@@ -1202,6 +1248,23 @@ div.table-container {
     color: #666666 !important;
     transform: none !important;
     box-shadow: none !important;
+}
+
+/* Style for update button state */
+.save_record_details.update-mode {
+    background-color: #ffa500 !important;
+    border-color: #ff8c00 !important;
+    color: #000 !important;
+}
+
+.save_record_details.update-mode:hover {
+    background-color: #ff8c00 !important;
+    border-color: #ff7f00 !important;
+}
+
+/* Optional: Add a subtle animation for the text change */
+.save_record_details {
+    transition: all 0.3s ease;
 }
 
 /* Show back button only when editing */

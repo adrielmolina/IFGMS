@@ -1539,12 +1539,18 @@ def get_report_target_vs_actual(year):
         return []
 
 
-def get_current_active_dispatch():
-    db_session = SessionLocal()
+def get_current_active_dispatch(db_session=None):
+    """Get current active dispatch with optional session parameter"""
+    if db_session is None:
+        db_session = SessionLocal()
+        close_session = True
+    else:
+        close_session = False
+        
     try:
         last_dispatch = (
             db_session.query(models.Dispatch)
-            .filter(models.Dispatch.dispatch_status == 'current')  # This is correct
+            .filter(models.Dispatch.dispatch_status == 'current')
             .order_by(models.Dispatch.dispatch_id.desc())
             .first()
         )
@@ -1554,7 +1560,8 @@ def get_current_active_dispatch():
         print(f"Error fetching current active dispatch: {e}")
         return None
     finally:
-        db_session.close()
+        if close_session:
+            db_session.close()
 
 def add_to_dispatch(record_ids=None):
     db_session = SessionLocal()

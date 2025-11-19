@@ -63,12 +63,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== 3️⃣ MAAB NUMBER FIELDS (digits only, with auto-prefix) =====
-  const maabNoFields = ["maab_no"];
-
-  maabNoFields.forEach(id => {
-    const input = document.getElementById(id);
-    if (!input) return;
-
+  
+  // Only apply restrictions to TEXT inputs, not SELECT dropdowns
+  const maabNoField = document.getElementById('maab_no');
+  
+  if (maabNoField && maabNoField.tagName === 'INPUT') {
     // Store the current prefix for this field
     let currentPrefix = '';
 
@@ -83,14 +82,14 @@ document.addEventListener("DOMContentLoaded", () => {
           'Silver': 'PS',
           'Gold': 'PG',
           'Platinum': 'PP',
-          'Safe Card': 'PEP', // Assuming Safe Card uses PEP prefix
+          'Safe Card': 'PEP',
           'Senior': 'S',
           'Senior+': 'SP'
         };
         currentPrefix = prefixMap[category] || '';
         
         // Update placeholder to show the format
-        input.placeholder = `Enter 7 digits (${currentPrefix} + numbers)`;
+        maabNoField.placeholder = `Enter 7 digits (${currentPrefix} + numbers)`;
       }
     }
 
@@ -100,12 +99,12 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('maab_cat').addEventListener('change', updateMaabPrefix);
     }
 
-    input.addEventListener("keydown", event => {
+    maabNoField.addEventListener("keydown", event => {
       if (allowedKeys.includes(event.key)) return;
       if (!/^\d$/.test(event.key)) event.preventDefault();
     });
 
-    input.addEventListener("input", function() {
+    maabNoField.addEventListener("input", function() {
       // Remove any non-digit characters
       this.value = this.value.replace(/\D/g, '');
       
@@ -115,29 +114,36 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    input.addEventListener("paste", event => {
+    maabNoField.addEventListener("paste", event => {
       const pasted = (event.clipboardData || window.clipboardData).getData("text");
       const digitsOnly = pasted.replace(/\D/g, '').slice(0, 7);
       event.preventDefault();
-      input.value = digitsOnly;
+      maabNoField.value = digitsOnly;
     });
 
     // Add focus/blur handlers to show full MAAB number with prefix
-    input.addEventListener("focus", function() {
+    maabNoField.addEventListener("focus", function() {
       // Remove prefix when focused for editing
       if (currentPrefix && this.value.startsWith(currentPrefix)) {
         this.value = this.value.replace(currentPrefix, '');
       }
     });
 
-    input.addEventListener("blur", function() {
+    maabNoField.addEventListener("blur", function() {
       // Add prefix back when blurred (if we have numbers)
       if (currentPrefix && this.value && /^\d+$/.test(this.value)) {
         this.value = currentPrefix + this.value.padStart(7, '0');
       }
     });
-  });
-
+    
+    console.log('✅ MAAB No restrictions applied to text input');
+  } else if (maabNoField && maabNoField.tagName === 'SELECT') {
+    console.log('✅ MAAB No is a dropdown - no restrictions needed');
+    // No restrictions needed for dropdown
+  } else {
+    console.log('❌ MAAB No field not found or not applicable');
+  }
+  
   // ===== 4️⃣ AMOUNT FIELDS (digits + decimal point) =====
   const amountFields = [
     "chinabank_amount",

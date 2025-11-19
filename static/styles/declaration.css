@@ -52,9 +52,19 @@ label {
 }
 
 .btn.remove-dispatch:disabled {
-    background: #ef4444 !important;
-    opacity: 0.6;
+    background-color: #cccccc;
     cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn_create_dispatch:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn_create_dispatch:disabled:hover {
+    background-color: #cccccc;
     transform: none;
     box-shadow: none;
 }
@@ -570,6 +580,32 @@ label {
     background: #2563eb;
 }
 
+.btn-cancel-dispatch {
+    background: #3b82f6 !important;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-cancel-dispatch:hover {
+    background: #2563eb !important;
+}
+
+.btn-cancel-dispatch:disabled {
+    background: #ef4444 !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* ========================================================= */
 /* DISPATCH OVERLAY STYLES                                   */
 /* ========================================================= */
@@ -728,4 +764,255 @@ label {
     border-color: #3b82f6;
     outline: none;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* ========================================================= */
+/* CREATE DISPATCH MODAL SPECIFIC STYLES                    */
+/* ========================================================= */
+
+.dispatch-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.dispatch-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.dispatch-modal .dispatch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e1e5e9;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.dispatch-modal .dispatch-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.25rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #64748b;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    color: #374151;
+    background: #f1f5f9;
+}
+
+.dispatch-content {
+    padding: 20px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-item label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.detail-item input,
+.detail-item select,
+.detail-item textarea {
+    padding: 10px 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.detail-item input:focus,
+.detail-item select:focus,
+.detail-item textarea:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.detail-item textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 4px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    flex: 1;
+    justify-content: center;
+}
+
+.radio-group label:hover {
+    border-color: #3b82f6;
+    background: #f0f7ff;
+}
+
+.radio-group input[type="radio"] {
+    margin: 0;
+    transform: scale(1.1);
+}
+
+.radio-group input[type="radio"]:checked + span {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.radio-group label:has(input[type="radio"]:checked) {
+    border-color: #3b82f6;
+    background: #f0f7ff;
+}
+
+.readonly-field {
+    background-color: #f8f9fa !important;
+    color: #6b7280 !important;
+    border: 2px solid #e9ecef !important;
+    cursor: not-allowed !important;
+}
+
+.dispatch-footer {
+    padding: 20px;
+    border-top: 1px solid #e1e5e9;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* Error states */
+.error-field {
+    border-color: #dc2626 !important;
+    background-color: #fef2f2 !important;
+}
+
+.error-message {
+    color: #dc2626;
+    font-size: 0.75rem;
+    margin-top: 4px;
+}
+
+/* Character counter */
+small {
+    color: #6b7280;
+    font-size: 0.75rem;
+}
+
+#remarksCounter {
+    font-weight: 600;
+    color: #374151;
+}
+
+/* Date Input Group Styling */
+.date-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.date-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+}
+
+.date-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.date-select:focus,
+.date-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .date-input-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .date-select,
+  .date-input {
+    width: 100%;
+  }
 }

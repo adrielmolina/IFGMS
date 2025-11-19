@@ -4,6 +4,7 @@ from livereload import Server
 from py_scripts import db_conn, tools, models
 from py_scripts.db_conn import SessionLocal
 from datetime import date, datetime
+from sqlalchemy import create_engine, text, func, extract
 import os
 import pandas as pd
 import openpyxl
@@ -199,11 +200,7 @@ def declaration_page():
     if active_dispatch:
         dispatch_contents = db_conn.get_current_dispatch_contents(active_dispatch.dispatch_id)
         
-        # DEBUG: Print what we're sending to the template
-        print(f"📦 Sending to template - Dispatch ID: {active_dispatch.dispatch_id}")
-        print(f"📦 Number of entries: {len(dispatch_contents)}")
-        
-        # Get unique categories and locations from dispatch_contents
+        # Get unique categories and locations FROM THE CURRENT DISPATCH CONTENTS only
         unique_categories = set()
         unique_locations = set()
         
@@ -219,7 +216,9 @@ def declaration_page():
         
         if dispatch_contents:      
             print('✅ Current dispatch:', active_dispatch.dispatch_id)
-            print('✅ Dispatch contents count:', len(dispatch_contents))  
+            print('✅ Dispatch contents count:', len(dispatch_contents))
+            print('✅ Categories in dispatch:', categories_list)
+            print('✅ Locations in dispatch:', locations_list)
             return render_template('declaration.html', 
                                 active_dispatch=active_dispatch, 
                                 dispatch_contents=dispatch_contents,
@@ -873,6 +872,93 @@ def get_members():
 
     return jsonify(members_list)
     '''
+# ============================================================
+# 🔹 DEBUG ROUTES FOR MAAB NUMBER ISSUES
+# ============================================================
+
+@server.route('/api/debug/maab_formats', methods=['POST'])
+@login_required
+def debug_maab_formats():
+    """Debug route to check MAAB number formats"""
+    try:
+        data = request.get_json()
+        maab_numbers = data.get('maab_numbers', [])
+        
+        import re
+        results = {}
+        
+        for maab_no in maab_numbers:
+            # Current strict validation (7 digits)
+            strict_match = re.match(r'^(PC|PB|PS|PG|PP|PEP|S|SP)\d{7}$', maab_no)
+            
+            # Flexible validation (any digits)
+            flexible_match = re.match(r'^(PC|PB|PS|PG|PP|PEP|S|SP)\d+$', maab_no)
+            
+            results[maab_no] = {
+                'strict_validation': bool(strict_match),
+                'flexible_validation': bool(flexible_match),
+                'length': len(maab_no),
+                'prefix': maab_no[:2] if len(maab_no) >= 2 else 'N/A',
+                'numbers': maab_no[2:] if len(maab_no) > 2 else 'N/A'
+            }
+        
+        return jsonify({
+            'success': True,
+            'validation_results': results,
+            'note': 'Your MAAB numbers should pass flexible_validation to work with the fixed route'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# ============================================================
+# 🔹 GET USED MAAB NUMBERS FROM ENTRIES
+# ============================================================
+
+@server.route('/api/members/used_maab_numbers', methods=['GET'])
+@login_required
+def get_used_maab_numbers():
+    """Get all MAAB numbers that are already used in entries"""
+    try:
+        db_session = SessionLocal()
+        
+        try:
+            # Query all used MAAB numbers from entries table
+            cursor = db_session.execute(text("""
+                SELECT DISTINCT maab_no 
+                FROM entry_contents 
+                WHERE maab_no IS NOT NULL AND maab_no != ''
+            """))
+            used_numbers = [row[0] for row in cursor.fetchall()]
+            
+            print(f"🔍 Found {len(used_numbers)} used MAAB numbers in entries")
+            
+            return jsonify({
+                'success': True,
+                'used_numbers': used_numbers,
+                'count': len(used_numbers)
+            })
+            
+        except Exception as e:
+            print(f"❌ Database error in get_used_maab_numbers: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in get_used_maab_numbers route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
 
 @server.route('/api/archive_record', methods=['PATCH'])
 @login_required
@@ -907,6 +993,7 @@ def add_new_record():
     new_record_id = db_conn.add_new_record()
     return jsonify({"success": True, "record_id": new_record_id})
 
+# Verify your existing save_record_details route has this structure:
 @server.route('/api/save_record_details', methods=['POST', 'PATCH'])
 def save_record_details():
     data = request.get_json()
@@ -916,7 +1003,7 @@ def save_record_details():
     db_session = SessionLocal()
     try:
         if request.method == 'POST':
-            # Create new record
+            # Create new record - record_id should be None/Null for auto-increment
             new_record = models.Records(
                 year=data.get('year', datetime.now().year),
                 id_received=data.get('id_received', 0),
@@ -939,11 +1026,11 @@ def save_record_details():
             
             return jsonify({
                 "success": True, 
-                "record_id": new_record.record_id,
+                "record_id": new_record.record_id,  # This returns the actual auto-generated ID
                 "message": "Record created successfully"
             })
             
-        else:  # PATCH method
+        else:  # PATCH method for updates
             record_id = data.get('record_id')
             if not record_id:
                 return jsonify({"success": False, "error": "No record ID provided"}), 400
@@ -1262,6 +1349,7 @@ def add_inventory_stock():
             "success": False,
             "error": "Internal server error"
         }), 500
+    
 # ============================================================
 # 🔹 ASSIGN ID TO MEMBER - USING allocated_to FOR MEMBER NAMES
 # ============================================================
@@ -1289,13 +1377,14 @@ def assign_id_to_member():
         
         print(f"🔍 Processing assignment: {id_number} to {member_name} in category {category}")
         
-        # Validate MAAB number format
+        # ✅ FIXED: More flexible MAAB number format validation
         import re
-        if not re.match(r'^(PC|PB|PS|PG|PP|PEP|S|SP)\d{7}$', id_number):
+        # Allow formats like: PC1206077, PC0004323, etc.
+        if not re.match(r'^(PC|PB|PS|PG|PP|PEP|S|SP)\d+$', id_number):
             print(f"❌ Invalid MAAB format: {id_number}")
             return jsonify({
                 'success': False,
-                'error': 'Invalid MAAB number format'
+                'error': f'Invalid MAAB number format: {id_number}. Expected format: Prefix + Numbers (e.g., PC1206077)'
             }), 400
         
         # Check if ID exists and is available
@@ -1309,6 +1398,8 @@ def assign_id_to_member():
             ).first()
             
             print(f"🔍 Found inventory item: {inventory_item}")
+            if inventory_item:
+                print(f"🔍 Inventory item details - used: {inventory_item.used}, allocated_to: {inventory_item.allocated_to}")
             
             if not inventory_item:
                 return jsonify({
@@ -1326,6 +1417,7 @@ def assign_id_to_member():
             # Update the inventory item - use allocated_to for member name
             inventory_item.used = 1  # Set to used
             inventory_item.allocated_to = member_name  # Store member name here
+            inventory_item.updated_at = datetime.now()
             
             db_session.commit()
             
@@ -1419,7 +1511,7 @@ def get_available_ids(category):
             'error': 'Internal server error'
         }), 500
     
-    # ============================================================
+# ============================================================
 # 🔹 GET ASSIGNED IDs (For Verification)
 # ============================================================
 
@@ -1467,7 +1559,141 @@ def get_assigned_ids():
             'error': 'Internal server error'
         }), 500
     
-    # ============================================================
+# ============================================================
+# 🔹 GET ALL AVAILABLE IDs (For MAAB No Dropdown)
+# ============================================================
+
+@server.route('/api/inventory/available_ids', methods=['GET'])
+@login_required
+def get_all_available_ids():
+    try:
+        category = request.args.get('category')
+        
+        print(f"🔍 Getting available IDs for category: {category}")
+        
+        db_session = SessionLocal()
+        
+        try:
+            if category:
+                # Get available IDs for specific category - used = 0 means available
+                available_ids = db_session.query(models.Inventory).filter(
+                    models.Inventory.maab_category == category,
+                    models.Inventory.used == 0  # 0 = available, 1 = used
+                ).order_by(models.Inventory.maab_no).all()
+                
+                ids_list = [item.maab_no for item in available_ids]
+                
+                result = {
+                    category: ids_list
+                }
+                
+            else:
+                # Get all available IDs grouped by category
+                available_ids = db_session.query(models.Inventory).filter(
+                    models.Inventory.used == 0
+                ).order_by(models.Inventory.maab_category, models.Inventory.maab_no).all()
+                
+                result = {}
+                for item in available_ids:
+                    if item.maab_category not in result:
+                        result[item.maab_category] = []
+                    result[item.maab_category].append(item.maab_no)
+            
+            print(f"✅ Found available IDs: { {k: len(v) for k, v in result.items()} }")
+            
+            return jsonify({
+                'success': True,
+                'available_ids': result
+            })
+            
+        except Exception as e:
+            print(f"❌ Database error in get_all_available_ids: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in get_all_available_ids route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+
+# ============================================================
+# 🔹 REPAIR INVENTORY SYNC
+# ============================================================
+
+@server.route('/api/inventory/repair_sync', methods=['POST'])
+@login_required
+def repair_inventory_sync():
+    """Repair inventory sync by marking MAAB numbers as used if they exist in entries"""
+    try:
+        db_session = SessionLocal()
+        
+        try:
+            # Get all MAAB numbers that are actually used in entries
+            cursor = db_session.execute(text("""
+                SELECT DISTINCT maab_no 
+                FROM entry_contents 
+                WHERE maab_no IS NOT NULL AND maab_no != ''
+            """))
+            used_maab_numbers = [row[0] for row in cursor.fetchall()]
+            
+            print(f"🔍 Found {len(used_maab_numbers)} used MAAB numbers in entries")
+            
+            # Mark these as used in inventory
+            updated_count = 0
+            for maab_no in used_maab_numbers:
+                inventory_item = db_session.query(models.Inventory).filter(
+                    models.Inventory.maab_no == maab_no
+                ).first()
+                
+                if inventory_item and inventory_item.used == 0:
+                    inventory_item.used = 1
+                    inventory_item.updated_at = datetime.now()
+                    updated_count += 1
+                    print(f"✅ Fixed: {maab_no} marked as used in inventory")
+            
+            db_session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Repaired {updated_count} inventory items. Now in sync with entries.',
+                'updated_count': updated_count,
+                'total_used_in_entries': len(used_maab_numbers)
+            })
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Database error in repair_sync: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in repair_sync route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+    
+# ============================================================
 # 🔹 TEST INVENTORY ASSIGNMENT
 # ============================================================
 
@@ -1502,6 +1728,72 @@ def test_assignment():
         return jsonify({'success': False, 'error': str(e)})
     finally:
         db_session.close()
+
+# ============================================================
+# 🔹 MARK MAAB NUMBER AS USED IN INVENTORY
+# ============================================================
+
+@server.route('/api/inventory/mark_as_used', methods=['POST'])
+@login_required
+def mark_maab_as_used():
+    """Mark a MAAB number as used in inventory"""
+    try:
+        data = request.get_json()
+        maab_no = data.get('maab_no')
+        
+        if not maab_no:
+            return jsonify({'success': False, 'error': 'MAAB number is required'})
+        
+        print(f"🔍 Marking MAAB number as used: {maab_no}")
+        
+        db_session = SessionLocal()
+        
+        try:
+            # Find the inventory item
+            inventory_item = db_session.query(models.Inventory).filter(
+                models.Inventory.maab_no == maab_no
+            ).first()
+            
+            if not inventory_item:
+                return jsonify({'success': False, 'error': f'MAAB number {maab_no} not found in inventory'})
+            
+            if inventory_item.used == 1:
+                return jsonify({'success': False, 'error': f'MAAB number {maab_no} is already marked as used'})
+            
+            # Mark as used
+            inventory_item.used = 1
+            inventory_item.updated_at = datetime.now()
+            
+            db_session.commit()
+            
+            print(f"✅ Successfully marked {maab_no} as used in inventory")
+            
+            return jsonify({
+                'success': True,
+                'message': f'MAAB number {maab_no} marked as used'
+            })
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Database error in mark_maab_as_used: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': 'Database error occurred'
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in mark_maab_as_used route: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
     
 @server.route('/api/add_to_dispatch', methods=['PATCH'])
 @login_required
@@ -1527,8 +1819,125 @@ def add_to_dispatch():
         import traceback
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
+    
+@server.route('/api/cancel_dispatch', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def cancel_dispatch():
+    """Cancel the current active dispatch by setting status to 'disregard'"""
+    db_session = SessionLocal()
+    try:
+        print("🎯 Starting cancel dispatch process...")
+        
+        # Get the active dispatch using THE SAME session
+        active_dispatch = db_session.query(models.Dispatch).filter(
+            models.Dispatch.dispatch_status == 'current'
+        ).order_by(models.Dispatch.dispatch_id.desc()).first()
+        
+        if not active_dispatch:
+            print("❌ No active dispatch found")
+            return jsonify({"success": False, "error": "No active dispatch found"}), 400
 
+        dispatch_id = active_dispatch.dispatch_id
+        original_status = active_dispatch.dispatch_status
+        
+        print(f"🎯 Canceling dispatch: {dispatch_id}")
+        print(f"📊 Current status: {original_status}")
 
+        entries_updated = 0
+        records_updated = 0
+
+        # 1. Remove dispatch_id from all entries in this dispatch
+        try:
+            entries_result = db_session.query(models.Entries).filter(
+                models.Entries.dispatch_id == dispatch_id
+            ).update({
+                models.Entries.dispatch_id: None
+            }, synchronize_session=False)
+            entries_updated = entries_result if entries_result else 0
+            print(f"✅ Entries updated: {entries_updated}")
+        except Exception as e:
+            print(f"⚠️ No entries to update or error updating entries: {e}")
+            entries_updated = 0
+
+        # 2. Remove dispatch_id from all records in this dispatch
+        try:
+            records_result = db_session.query(models.Records).filter(
+                models.Records.dispatch_id == dispatch_id
+            ).update({
+                models.Records.dispatch_id: None
+            }, synchronize_session=False)
+            records_updated = records_result if records_result else 0
+            print(f"✅ Records updated: {records_updated}")
+        except Exception as e:
+            print(f"⚠️ No records to update or error updating records: {e}")
+            records_updated = 0
+
+        # 3. Update dispatch status to 'disregard'
+        active_dispatch.dispatch_status = 'disregard'
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M')
+        if active_dispatch.dispatch_remarks:
+            active_dispatch.dispatch_remarks = f"{active_dispatch.dispatch_remarks} - Cancelled by {current_user.username} on {current_time}"
+        else:
+            active_dispatch.dispatch_remarks = f"Cancelled by {current_user.username} on {current_time}"
+
+        print(f"🔍 Before commit - Status: {active_dispatch.dispatch_status}")
+        
+        # COMMIT THE CHANGES
+        db_session.commit()
+        
+        # Get the final status BEFORE closing the session
+        final_status = active_dispatch.dispatch_status
+        
+        print(f"🔍 After commit - Status: {final_status}")
+        print(f"✅ Dispatch {dispatch_id} cancelled successfully")
+
+        # Log the action
+        db_conn.POST_action_log(
+            current_user.username, 
+            current_user.user_level, 
+            'Cancel Dispatch', 
+            f'Cancelled dispatch {dispatch_id} (entries: {entries_updated}, records: {records_updated})', 
+            current_user.account_id
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Dispatch cancelled successfully",
+            "entries_updated": entries_updated,
+            "records_updated": records_updated,
+            "new_status": final_status,
+            "dispatch_id": dispatch_id
+        })
+
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Error cancelling dispatch: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/members/get_next_record_id')
+@login_required
+def get_next_record_id():
+    """Get the next available record ID without reserving it"""
+    db_session = SessionLocal()
+    try:
+        # Get the maximum record_id currently in use
+        max_id = db_session.query(func.max(models.Records.record_id)).scalar()
+        next_id = (max_id or 0) + 1
+        print(f"Next available record ID: {next_id}")
+        
+        return jsonify({"next_record_id": next_id})
+    except Exception as e:
+        print(f"Error getting next record ID: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"next_record_id": 0, "error": str(e)}), 500
+    finally:
+        db_session.close()
                         
 
 # FIXED EXPORT DISPATCH ROUTE - ONLY ONE VERSION

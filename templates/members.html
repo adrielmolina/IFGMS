@@ -323,12 +323,16 @@
                                         </div>
                                     </td>
 
-                                    <td>
-                                        <div class="input-container">
-                                            <label for="maab_no">MAAB No.<span class="required-star">*</span></label>
-                                            <input type="text" id="maab_no" name="maab_no" required autocomplete="off" placeholder=" ">
+                                <td>
+                                    <div class="input-container">
+                                        <label for="maab_no">MAAB No.<span class="required-star">*</span></label>
+                                            <select name="maab_no" id="maab_no" required>
+                                            <option value="">Select MAAB No.</option>
+                                            <!-- Dynamic options will be loaded here by JavaScript -->
+                                            </select>
+                                            <small style="font-size: 0.8em; color: #666;">Available IDs from inventory</small>
                                         </div>
-                                    </td>
+                                </td>
                         
                                     <td>
                                         <div class="input-container">
@@ -576,6 +580,8 @@ let currentEditingEntryId = null;
 // Auto-save tracking
 let autoSaveTimeout = null;
 let isAutoSaving = false;
+
+let nextRecordId = 0;
 
 // ===== REQUIRED FIELD VALIDATION FUNCTIONS =====
 function validateRequiredFields() {
@@ -905,7 +911,6 @@ function setupEntryTableClickHandlers() {
     }, 100);
 }
 
-// Archive state management functions
 function showArchiveView() {
     isArchiveView = true;
     
@@ -925,6 +930,16 @@ function showArchiveView() {
     const moduleTitle = document.querySelector('.module_name h1');
     if (moduleTitle) {
         moduleTitle.textContent = 'Archived Members';
+    }
+    
+    // Reset search when switching views
+    const searchInput = document.getElementById('search_input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    const searchClear = document.getElementById('search_clear');
+    if (searchClear) {
+        searchClear.classList.remove('visible');
     }
     
     // Reset archive pagination
@@ -955,6 +970,16 @@ function showActiveView() {
     const moduleTitle = document.querySelector('.module_name h1');
     if (moduleTitle) {
         moduleTitle.textContent = 'Members';
+    }
+    
+    // Reset search when switching views
+    const searchInput = document.getElementById('search_input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    const searchClear = document.getElementById('search_clear');
+    if (searchClear) {
+        searchClear.classList.remove('visible');
     }
     
     // Reset active pagination
@@ -1211,19 +1236,37 @@ function applyFilters() {
     }
 }
 
-// Search functionality for both views
+// Enhanced search functionality for both views
 function performSearch(query) {
     const searchQuery = query.toLowerCase().trim();
+    console.log(`🔍 Performing search: "${searchQuery}" - Archive view: ${isArchiveView}`);
     
     if (isArchiveView) {
         if (searchQuery === '') {
             archiveFilteredData = [...archiveAllData];
+            console.log('📊 Archive search cleared, showing all records:', archiveFilteredData.length);
         } else {
-            archiveFilteredData = archiveAllData.filter(row =>
-                Object.values(row).some(val =>
-                    String(val || "").toLowerCase().includes(searchQuery)
-                )
-            );
+            archiveFilteredData = archiveAllData.filter(row => {
+                // Search through all relevant fields
+                const searchableFields = [
+                    String(row.record_id || ''),
+                    String(row.year || ''),
+                    String(row.location_particular || ''),
+                    String(row.location_category || ''),
+                    String(row.municipality || ''),
+                    String(row.district || ''),
+                    String(row.origin || ''),
+                    String(row.remarks || ''),
+                    String(row.tags || '')
+                ];
+                
+                const matches = searchableFields.some(field => 
+                    field.toLowerCase().includes(searchQuery)
+                );
+                
+                return matches;
+            });
+            console.log('📊 Archive search results:', archiveFilteredData.length);
         }
         
         archiveCurrentPage = 1;
@@ -1231,22 +1274,95 @@ function performSearch(query) {
     } else {
         if (searchQuery === '') {
             filteredData = [...allData];
+            console.log('📊 Active search cleared, showing all records:', filteredData.length);
         } else {
-            filteredData = allData.filter(row =>
-                Object.values(row).some(val =>
-                    String(val || "").toLowerCase().includes(searchQuery)
-                )
-            );
+            filteredData = allData.filter(row => {
+                // Search through all relevant fields
+                const searchableFields = [
+                    String(row.record_id || ''),
+                    String(row.year || ''),
+                    String(row.location_particular || ''),
+                    String(row.location_category || ''),
+                    String(row.municipality || ''),
+                    String(row.district || ''),
+                    String(row.origin || ''),
+                    String(row.remarks || ''),
+                    String(row.tags || '')
+                ];
+                
+                const matches = searchableFields.some(field => 
+                    field.toLowerCase().includes(searchQuery)
+                );
+                
+                return matches;
+            });
+            console.log('📊 Active search results:', filteredData.length);
         }
         
         currentPage = 1;
         renderTable();
     }
     
+    // Update Handsontable search plugin if available
     if (hotInstance) {
-        const searchPlugin = hotInstance.getPlugin('search');
-        searchQuery ? searchPlugin.query(searchQuery) : searchPlugin.query('');
-        hotInstance.render();
+        try {
+            const searchPlugin = hotInstance.getPlugin('search');
+            if (searchPlugin) {
+                searchQuery ? searchPlugin.query(searchQuery) : searchPlugin.query('');
+                hotInstance.render();
+            }
+        } catch (error) {
+            console.log('Search plugin not available, continuing without it');
+        }
+    }
+}
+
+// ===== SEARCH FUNCTIONALITY FUNCTIONS =====
+function setupSearchFunctionality() {
+    const searchInput = document.getElementById('search_input');
+    const searchClear = document.getElementById('search_clear');
+
+    if (searchInput) {
+        // Remove any existing event listeners first
+        searchInput.removeEventListener('input', handleSearchInput);
+        searchInput.addEventListener('input', handleSearchInput);
+        
+        // Also add keyup for better responsiveness
+        searchInput.addEventListener('keyup', handleSearchInput);
+    }
+
+    if (searchClear) {
+        searchClear.removeEventListener('click', handleSearchClear);
+        searchClear.addEventListener('click', handleSearchClear);
+    }
+}
+
+function handleSearchInput(e) {
+    const query = e.target.value;
+    performSearch(query);
+    
+    const searchClear = document.getElementById('search_clear');
+    if (searchClear) {
+        if (query.trim() !== "") {
+            searchClear.classList.add('visible');
+        } else {
+            searchClear.classList.remove('visible');
+        }
+    }
+}
+
+function handleSearchClear() {
+    const searchInput = document.getElementById('search_input');
+    const searchClear = document.getElementById('search_clear');
+    
+    if (searchInput) {
+        searchInput.value = "";
+        performSearch("");
+        searchInput.focus();
+    }
+    
+    if (searchClear) {
+        searchClear.classList.remove('visible');
     }
 }
 
@@ -1330,7 +1446,80 @@ function populateYearPicker() {
     populateFilterDropdowns();
 }
 
-// Function to automatically set entry dispatch ready when paid
+// Function to update save button text based on whether it's a new or existing record
+function updateSaveButtonText() {
+    const saveRecordBtn = document.getElementById('save_record_details');
+    const recordId = document.getElementById('record_id').value;
+    
+    if (saveRecordBtn) {
+        // Check if it's an existing record (record_id is not 0 and not the next available ID)
+        const isExistingRecord = recordId && recordId !== '0' && recordId != nextRecordId;
+        
+        if (isExistingRecord && hasUnsavedChanges) {
+            saveRecordBtn.innerHTML = '<img src="/static/assets/save.png" alt="update" class="btn-icon"> Update';
+            saveRecordBtn.classList.add('update-mode');
+        } else {
+            saveRecordBtn.innerHTML = '<img src="/static/assets/save.png" alt="save" class="btn-icon"> Save';
+            saveRecordBtn.classList.remove('update-mode');
+        }
+    }
+}
+
+// Function to check if record is existing (not new)
+function isExistingRecord() {
+    const recordId = document.getElementById('record_id').value;
+    return recordId && recordId !== '0' && recordId != nextRecordId;
+}
+
+function handleFormChange() {
+    const recordId = document.getElementById('record_id').value;
+    const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+    
+    // For new records, always enable save button
+    if (isNewRecord) {
+        if (!hasUnsavedChanges) {
+            hasUnsavedChanges = true;
+            updateSaveButtonState(true);
+            console.log('New record - enabling save button');
+        }
+        return;
+    }
+    
+    // For existing records, check if data actually changed
+    const currentRecordData = {
+        year: document.getElementById('year').value,
+        id_rcv: document.getElementById('id_rcv').checked,
+        paid: document.getElementById('paid').checked,
+        declared: document.getElementById('declared').checked,
+        record_dispatch_ready: document.getElementById('record_dispatch_ready').checked,
+        dec_date: document.getElementById('dec_date').value,
+        eff_date: document.getElementById('eff_date').value,
+        loc_par: document.getElementById('loc_par').value,
+        loc_cat: document.getElementById('loc_cat').value,
+        municipality: document.getElementById('municipality').value,
+        district: document.getElementById('district').value,
+        origin: document.getElementById('origin').value,
+        remarks: document.getElementById('remarks').value,
+        tags: document.getElementById('tags').value
+    };
+    
+    const hasActualChanges = JSON.stringify(originalRecordData) !== JSON.stringify(currentRecordData);
+    
+    if (hasActualChanges && !hasUnsavedChanges) {
+        hasUnsavedChanges = true;
+        updateSaveButtonState(true);
+        console.log('Changes detected in existing record - enabling save button');
+    } else if (!hasActualChanges && hasUnsavedChanges) {
+        hasUnsavedChanges = false;
+        updateSaveButtonState(false);
+        console.log('Changes reverted - disabling save button');
+    }
+    
+    // Always update button text when form changes
+    updateSaveButtonText();
+}
+
+// Update the updateEntryDispatchReady function to also update record paid status
 function updateEntryDispatchReady() {
     const entryPaidCheckbox = document.getElementById('entry_paid');
     const entryDeclaredCheckbox = document.getElementById('entry_declared');
@@ -1351,6 +1540,8 @@ function updateEntryDispatchReady() {
     // Update the visual state (we don't have an entry dispatch ready checkbox anymore)
     // But we can update the record-level dispatch ready based on all entries
     updateDispatchReadyFromEntries();
+    updateRecordPaidFromEntries(); 
+    updateRecordIdReceivedFromEntries(); 
 }
 
 function updateDispatchReadyFromEntries() {
@@ -1419,7 +1610,131 @@ function updateDispatchReadyFromEntries() {
     dispatchReadyCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-// Monitor entries table for changes and update Dispatch Ready
+// Function to update record ID Received status based on entries
+function updateRecordIdReceivedFromEntries() {
+    const entriesTable = window.entriesHotInstance;
+    const recordIdRcvCheckbox = document.getElementById('id_rcv');
+    
+    if (!entriesTable || !recordIdRcvCheckbox) {
+        console.log('Entries table or record ID Received checkbox not found');
+        return;
+    }
+    
+    const entriesData = entriesTable.getSourceData();
+    
+    if (!entriesData || entriesData.length === 0) {
+        // No entries - uncheck and gray out
+        recordIdRcvCheckbox.checked = false;
+        recordIdRcvCheckbox.classList.add('id-rcv-auto');
+        recordIdRcvCheckbox.disabled = true;
+        console.log('No entries found, record ID Received unchecked');
+        return;
+    }
+    
+    // Check if ALL entries have ID Received = true
+    const allEntriesIdReceived = entriesData.every(entry => {
+        // Handle both boolean and numeric values for ID received status
+        const isIdReceived = entry.id_received === true || entry.id_received === 1 || entry.id_received === '1';
+        console.log(`Entry ${entry.entry_id}: id_received = ${entry.id_received}, isIdReceived = ${isIdReceived}`);
+        return isIdReceived;
+    });
+    
+    console.log(`All entries ID Received: ${allEntriesIdReceived}, Total entries: ${entriesData.length}`);
+    
+    // Update the checkbox based on ID received status
+    if (allEntriesIdReceived) {
+        // All entries have ID received - check and gray out
+        recordIdRcvCheckbox.checked = true;
+        recordIdRcvCheckbox.classList.add('id-rcv-auto');
+        recordIdRcvCheckbox.disabled = true;
+        
+        // Show success message
+        const smallText = recordIdRcvCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#28a745';
+            smallText.textContent = '✓ All entries have ID received';
+        }
+    } else {
+        // Not all entries have ID received - uncheck and gray out
+        recordIdRcvCheckbox.checked = false;
+        recordIdRcvCheckbox.classList.add('id-rcv-auto');
+        recordIdRcvCheckbox.disabled = true;
+        
+        // Show info message
+        const smallText = recordIdRcvCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#666';
+            smallText.textContent = 'Auto-set when all entries have ID received';
+        }
+    }
+    
+    // Trigger form change for unsaved changes tracking
+    recordIdRcvCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+// Function to update record paid status based on entries
+function updateRecordPaidFromEntries() {
+    const entriesTable = window.entriesHotInstance;
+    const recordPaidCheckbox = document.getElementById('paid');
+    
+    if (!entriesTable || !recordPaidCheckbox) {
+        console.log('Entries table or record paid checkbox not found');
+        return;
+    }
+    
+    const entriesData = entriesTable.getSourceData();
+    
+    if (!entriesData || entriesData.length === 0) {
+        // No entries - uncheck and gray out
+        recordPaidCheckbox.checked = false;
+        recordPaidCheckbox.classList.add('paid-auto');
+        recordPaidCheckbox.disabled = true;
+        console.log('No entries found, record paid unchecked');
+        return;
+    }
+    
+    // Check if ALL entries are paid
+    const allEntriesPaid = entriesData.every(entry => {
+        // Handle both boolean and numeric values for paid status
+        const isPaid = entry.paid === true || entry.paid === 1 || entry.paid === '1';
+        console.log(`Entry ${entry.entry_id}: paid = ${entry.paid}, isPaid = ${isPaid}`);
+        return isPaid;
+    });
+    
+    console.log(`All entries paid: ${allEntriesPaid}, Total entries: ${entriesData.length}`);
+    
+    // Update the checkbox based on paid status
+    if (allEntriesPaid) {
+        // All entries are paid - check and gray out
+        recordPaidCheckbox.checked = true;
+        recordPaidCheckbox.classList.add('paid-auto');
+        recordPaidCheckbox.disabled = true;
+        
+        // Show success message
+        const smallText = recordPaidCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#28a745';
+            smallText.textContent = '✓ All entries are paid';
+        }
+    } else {
+        // Not all entries are paid - uncheck and gray out
+        recordPaidCheckbox.checked = false;
+        recordPaidCheckbox.classList.add('paid-auto');
+        recordPaidCheckbox.disabled = true;
+        
+        // Show info message
+        const smallText = recordPaidCheckbox.parentElement.querySelector('small');
+        if (smallText) {
+            smallText.style.color = '#666';
+            smallText.textContent = 'Auto-set when all entries are paid';
+        }
+    }
+    
+    // Trigger form change for unsaved changes tracking
+    recordPaidCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+// Update the entries table monitoring to track all statuses
 function setupEntriesTableMonitoring() {
     const entriesTable = window.entriesHotInstance;
     if (!entriesTable) {
@@ -1427,20 +1742,22 @@ function setupEntriesTableMonitoring() {
         return;
     }
     
-    // Monitor for data changes in paid and declared columns
+    // Monitor for data changes in paid, declared, and id_received columns
     entriesTable.addHook('afterChange', function(changes, source) {
         if (source === 'edit' || source === 'loadData') {
-            console.log('Entries table changed, updating Dispatch Ready...');
+            console.log('Entries table changed, updating Dispatch Ready, Paid, and ID Received status...');
             
-            // Check if the change affects paid or declared columns
-            const paidOrDeclaredChanged = changes && changes.some(change => {
+            // Check if the change affects paid, declared, or id_received columns
+            const statusChanged = changes && changes.some(change => {
                 const columnProp = entriesTable.getColHeader(change[1]);
-                return columnProp && (columnProp.includes('Paid') || columnProp.includes('Declared'));
+                return columnProp && (columnProp.includes('Paid') || columnProp.includes('Declared') || columnProp.includes('ID Received'));
             });
             
-            if (paidOrDeclaredChanged || source === 'loadData') {
+            if (statusChanged || source === 'loadData') {
                 setTimeout(() => {
                     updateDispatchReadyFromEntries();
+                    updateRecordPaidFromEntries();
+                    updateRecordIdReceivedFromEntries(); // Add this line
                 }, 100);
             }
         }
@@ -1515,14 +1832,14 @@ function populateEntryForm(entryData) {
             orDateInput.value = '';
         }
         
-        // 4. Checkboxes (convert 1/0 to true/false)
-        document.getElementById('id_received').checked = Boolean(entryData.id_received);
+        // 4. Checkboxes - SET ID RECEIVED TO FALSE REGARDLESS OF DATABASE VALUE
+        document.getElementById('id_received').checked = false; // Always set to false
         document.getElementById('entry_declared').checked = Boolean(entryData.declared);
         document.getElementById('entry_paid').checked = Boolean(entryData.paid);
         
         setTimeout(() => {
-        updateEntryDispatchReady();
-    }, 100);
+            updateEntryDispatchReady();
+        }, 100);
 
         console.log('All form fields populated successfully!');
         
@@ -1684,10 +2001,13 @@ function clearEntryForm() {
     console.log('Entry form cleared');
 }
 
-// Initialize change tracking
+// Update your initializeChangeTracking function
 function initializeChangeTracking() {
     // Store original data when overlay opens
     storeOriginalData();
+    
+    // Reset the flag when overlay opens
+    hasUnsavedChanges = false;
     
     // Add event listeners to all form inputs
     const formInputs = document.querySelectorAll('#overlay input, #overlay select, #overlay textarea');
@@ -1701,13 +2021,18 @@ function initializeChangeTracking() {
         input.addEventListener('change', handleFormChange);
     });
     
-    // Reset the flag when overlay opens
-    hasUnsavedChanges = false;
-    updateSaveButtonState(false);
-    console.log('Change tracking initialized');
+    // Update button state based on whether it's a new or existing record
+    updateSaveButtonState(false); // Start with disabled for existing records
+    updateSaveButtonText();
+    
+    console.log('Change tracking initialized - hasUnsavedChanges:', hasUnsavedChanges);
 }
 
+// Update your storeOriginalData function
 function storeOriginalData() {
+    const recordId = document.getElementById('record_id').value;
+    const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+    
     // Store original record data
     originalRecordData = {
         year: document.getElementById('year').value,
@@ -1725,15 +2050,15 @@ function storeOriginalData() {
         remarks: document.getElementById('remarks').value,
         tags: document.getElementById('tags').value
     };
-    console.log('Original data stored:', originalRecordData);
-}
-
-function handleFormChange() {
-    if (!hasUnsavedChanges) {
-        hasUnsavedChanges = true;
-        updateSaveButtonState(true);
-        console.log('Unsaved changes detected - form changed');
-    }
+    
+    console.log('Original data stored for record:', recordId, 'Is new:', isNewRecord);
+    console.log('Original data:', originalRecordData);
+    
+    // For new records, start with save button enabled
+    // For existing records, start with save button disabled
+    hasUnsavedChanges = isNewRecord;
+    updateSaveButtonState(isNewRecord);
+    updateSaveButtonText();
 }
 
 function checkForChanges() {
@@ -1859,6 +2184,9 @@ function closeOverlayWithoutSaving() {
     }
     hasUnsavedChanges = false;
     updateSaveButtonState(false);
+
+    // ===== NEW: RESET ENTRY DETAILS STATE =====
+    enableEntryDetails(); 
 }
 
 function saveAndCloseOverlay() {
@@ -1885,44 +2213,110 @@ function saveAndCloseOverlay() {
 
 // ===== OPTIMIZED ADD RECORD FUNCTIONALITY =====
 
-function openEmptyRecordOverlay() {
-    // Clear all form fields
-    clearRecordForm();
-    
-    // Set default values for new record
-    document.getElementById('record_id').value = '0'; // Temporary value
-    document.getElementById('year').value = new Date().getFullYear();
-    
-    // Show the overlay
-    document.getElementById('overlay').style.display = 'flex';
-    
-    // Scroll to top of overlay
-    const overlayContent = document.getElementById('overlay-content');
-    if (overlayContent) {
-        overlayContent.scrollTop = 0;
-    }
-    
-    // Initialize change tracking and auto-fill functions
-    setTimeout(() => {
-        initializeChangeTracking();
-        setDistrictFromMunicipality();
-        setOriginBasedOnUser();
-        setLocationParticularToUppercase();
-        highlightRequiredFields();
-        switchToAddMode();
-        setupMaabNumberHandling(); 
+// Add this function to your JavaScript
+async function getNextRecordId() {
+    try {
+        const response = await fetch('/api/members/get_next_record_id');
+        const data = await response.json();
         
-        // Clear entries table for new record
-        if (window.entriesHotInstance) {
-            window.entriesHotInstance.loadData([]);
+        if (data.next_record_id) {
+            nextRecordId = data.next_record_id;
+            console.log('Next available record ID:', nextRecordId);
+            return nextRecordId;
+        } else {
+            console.error('Failed to get next record ID');
+            return 0;
         }
-    }, 100);
+    } catch (error) {
+        console.error('Error fetching next record ID:', error);
+        return 0;
+    }
 }
 
+// Function to initialize and pre-fetch the next record ID
+async function initializeNextRecordId() {
+    try {
+        console.log('🔄 Initializing next record ID...');
+        const nextId = await getNextRecordId();
+        nextRecordId = nextId;
+        console.log('✅ Next record ID initialized:', nextRecordId);
+        
+        // Update any UI elements that might show the next available ID
+        updateNextRecordIdDisplay();
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize next record ID:', error);
+        // Set a fallback - this will be refreshed when user tries to create a record
+        nextRecordId = 0;
+    }
+}
+
+// Function to refresh the next ID when needed
+function refreshNextRecordId() {
+    console.log('🔄 Refreshing next record ID...');
+    return initializeNextRecordId();
+}
+
+async function openEmptyRecordOverlay() {
+    try {
+        // Get next available record ID first
+        const nextId = await getNextRecordId();
+        
+        if (nextId === 0) {
+            toastError("Error", "Could not get next record ID. Please try again.");
+            return;
+        }
+        
+        // Clear all form fields
+        clearRecordForm();
+        
+        // Set the next available ID (this is just for display, not saved yet)
+        document.getElementById('record_id').value = nextId;
+        document.getElementById('year').value = new Date().getFullYear();
+        
+        // Show the overlay
+        document.getElementById('overlay').style.display = 'flex';
+        
+        // Scroll to top of overlay
+        const overlayContent = document.getElementById('overlay-content');
+        if (overlayContent) {
+            overlayContent.scrollTop = 0;
+        }
+        
+        // Initialize change tracking and auto-fill functions
+        setTimeout(() => {
+            initializeChangeTracking();
+            setDistrictFromMunicipality();
+            setOriginBasedOnUser();
+            setLocationParticularToUppercase();
+            highlightRequiredFields();
+            switchToAddMode();
+            setupMaabNumberHandling(); 
+            setBirthdayMaxDate();
+            
+            // ===== NEW: DISABLE ENTRY DETAILS FOR NEW RECORD =====
+            disableEntryDetails();
+            
+            // Clear entries table for new record
+            if (window.entriesHotInstance) {
+                window.entriesHotInstance.loadData([]);
+            }
+            
+            // Ensure button shows "Save" for new record
+            updateSaveButtonText();
+        }, 100);
+        
+    } catch (error) {
+        console.error('Error opening empty record overlay:', error);
+        toastError("Error", "Failed to initialize new record. Please try again.");
+    }
+}
+
+// Update your clearRecordForm function
 function clearRecordForm() {
-    // Clear all record form fields except year
+    // Don't clear the record_id field here - let openEmptyRecordOverlay handle it
     const fieldsToClear = [
-        'record_id', 'id_rcv', 'paid', 'declared', 'record_dispatch_ready',
+        'id_rcv', 'paid', 'declared', 'record_dispatch_ready',
         'dec_date', 'eff_date', 'loc_par', 'loc_cat', 'municipality',
         'district', 'origin', 'remarks', 'tags'
     ];
@@ -1942,9 +2336,12 @@ function clearRecordForm() {
     
     // Clear any validation errors
     clearAllValidationErrors();
+    
+    // Reset button text to "Save" for new records
+    updateSaveButtonText();
 }
 
-// Modified saveRecordDetails function - removes automatic overlay closing
+// Update your saveRecordDetails function to reset button after save
 function saveRecordDetails(showToast = true) {
     return new Promise((resolve, reject) => {
         // Clear previous errors
@@ -1956,16 +2353,16 @@ function saveRecordDetails(showToast = true) {
             return;
         }
         
+        const recordId = document.getElementById('record_id').value;
+        const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+        
         // Helper function to convert empty strings to null
         function emptyToNull(value) {
             return value === '' ? null : value;
         }
         
-        const recordId = document.getElementById('record_id').value;
-        const isNewRecord = recordId === '0' || recordId === '';
-        
         const payload = {
-            record_id: isNewRecord ? null : recordId,
+            record_id: isNewRecord ? null : recordId, // Send null for new records
             year: document.getElementById('year').value,
             id_received: document.getElementById('id_rcv').checked ? 1 : 0,
             paid: document.getElementById('paid').checked ? 1 : 0,
@@ -1983,6 +2380,7 @@ function saveRecordDetails(showToast = true) {
         };
 
         console.log('Saving record details:', payload);
+        console.log('Is new record:', isNewRecord);
 
         // Use POST for new records, PATCH for updates
         const method = isNewRecord ? 'POST' : 'PATCH';
@@ -2001,19 +2399,31 @@ function saveRecordDetails(showToast = true) {
                 return;
             }
             
-            // If this was a new record, update the record_id field
+            // In your saveRecordDetails function, update the new record handling:
             if (isNewRecord && result.record_id) {
                 document.getElementById('record_id').value = result.record_id;
                 console.log('New record created with ID:', result.record_id);
+
+                // ===== NEW: ENABLE ENTRY DETAILS AFTER SUCCESSFUL SAVE =====
+                enableEntryDetails();
+                
+                // Refresh the next available ID since we just used one
+                getNextRecordId().then(() => {
+                    console.log('Next record ID refreshed after save');
+                }).catch(error => {
+                    console.error('Failed to refresh next record ID:', error);
+                });
             }
             
             hasUnsavedChanges = false;
             storeOriginalData();
             updateSaveButtonState(false);
+            updateSaveButtonText(); // Reset button text after save
             console.log('Record saved successfully');
             
             if (showToast) {
-                toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
+                const message = isNewRecord ? "Record Created Successfully!" : "Record Updated Successfully!";
+                toastSuccess(message, "The record was successfully saved.");
             }
             
             // Refresh the table data based on current view
@@ -2108,28 +2518,139 @@ function addNewEntry(recordId) {
         }
         return response.json();
     })
-    .then(data => {
-        if (data.success === true) {
-            toastSuccess("Entry Added", "Entry added successfully!");
-            // Refresh entries table
-            refreshEntriesTable();
-            // Clear form and stay in add mode
-            clearEntryForm();
-            
-            // Update Dispatch Ready status after a short delay
-            setTimeout(() => {
-                updateDispatchReadyFromEntries();
-            }, 500);
+// In addNewEntry function, after successful save:
+.then(data => {
+    if (data.success === true) {
+        toastSuccess("Entry Added", "Entry added successfully!");
+        
+        // ✅ CRITICAL: MARK MAAB NUMBER AS USED IN INVENTORY
+        const maabNo = document.getElementById('maab_no').value;
+        console.log(`🔄 Attempting to mark MAAB number as used: ${maabNo}`);
+        
+        if (maabNo && maabNo.trim() !== '') {
+            fetch('/api/inventory/mark_as_used', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ maab_no: maabNo })
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log('🔍 mark_as_used API response:', result);
+                if (result.success) {
+                    console.log(`✅ MAAB number ${maabNo} marked as used in inventory`);
+                    // Refresh dropdown after marking as used
+                    setTimeout(() => {
+                        if (window.refreshMAABDropdown) {
+                            window.refreshMAABDropdown();
+                        }
+                    }, 1000);
+                } else {
+                    console.warn(`⚠️ Failed to mark MAAB number as used: ${result.error}`);
+                    toastAlert("Inventory Warning", `MAAB number saved but inventory not updated: ${result.error}`);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error marking MAAB number as used:', error);
+            });
         } else {
-            toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
+            console.warn('⚠️ No MAAB number to mark as used');
         }
-    })
+        
+        // Refresh entries table
+        refreshEntriesTable();
+        // Clear form and stay in add mode
+        clearEntryForm();
+        
+        // ✅ Refresh MAAB dropdown to exclude the newly used number
+        if (window.refreshMAABDropdown) {
+            setTimeout(() => {
+                window.refreshMAABDropdown();
+            }, 500);
+        }
+        
+        // Update Dispatch Ready status after a short delay
+        setTimeout(() => {
+            updateDispatchReadyFromEntries();
+            updateRecordPaidFromEntries();
+        }, 500);
+    } else {
+        toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
+    }
+})
     .catch(error => {
         console.error('Error:', error);
         toastError("Error", "An error occurred during entry adding: " + error.message);
     });
 }
 
+// ===== ENTRY DETAILS STATE MANAGEMENT =====
+function disableEntryDetails() {
+    const entryDetails = document.getElementById('entry_details');
+    const entryRadioControls = document.querySelector('.entry-radio-controls');
+    const entriesTable = document.getElementById('entries_table');
+    
+    if (entryDetails) {
+        entryDetails.classList.add('disabled');
+    }
+    
+    if (entryRadioControls) {
+        entryRadioControls.style.display = 'none';
+    }
+    
+    // Show empty state in entries table
+    if (window.entriesHotInstance) {
+        window.entriesHotInstance.loadData([]);
+        // You could also show a message in the table
+    }
+    
+    console.log('Entry details disabled - record not saved yet');
+}
+
+function enableEntryDetails() {
+    const entryDetails = document.getElementById('entry_details');
+    const entryRadioControls = document.querySelector('.entry-radio-controls');
+    
+    if (entryDetails) {
+        entryDetails.classList.remove('disabled');
+    }
+    
+    if (entryRadioControls) {
+        entryRadioControls.style.display = 'flex';
+    }
+    
+    console.log('Entry details enabled - record is saved');
+}
+
+// Function to check if entry details should be enabled
+function shouldEnableEntryDetails() {
+    const recordId = document.getElementById('record_id').value;
+    const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+    return !isNewRecord;
+}
+
+// Function to set maximum date for birthday field to today
+function setBirthdayMaxDate() {
+    const bdateInput = document.getElementById('bdate');
+    if (bdateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        bdateInput.setAttribute('max', today);
+        
+        // Also add validation on change
+        bdateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const today = new Date();
+            
+            if (selectedDate > today) {
+                // If future date is selected, reset to today and show warning
+                this.value = today.toISOString().split('T')[0];
+                toastAlert("Invalid Date", "Birthdate cannot be in the future. Set to today's date.");
+                calculateAgeFromBirthdate(); // Recalculate age
+            }
+        });
+    }
+}
+
+// Update your existing calculateAgeFromBirthdate function to add extra validation
 function calculateAgeFromBirthdate() {
     const birthdateInput = document.getElementById('bdate');
     const ageInput = document.getElementById('age');
@@ -2137,6 +2658,14 @@ function calculateAgeFromBirthdate() {
     if (birthdateInput.value) {
         const birthDate = new Date(birthdateInput.value);
         const today = new Date();
+        
+        // Additional validation to ensure birthdate is not in future
+        if (birthDate > today) {
+            birthdateInput.value = today.toISOString().split('T')[0];
+            birthDate.setTime(today.getTime()); // Reset to today
+            toastAlert("Invalid Date", "Birthdate cannot be in the future. Set to today's date.");
+        }
+        
         let age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
         
@@ -2221,14 +2750,25 @@ function updateEntry(entryId, recordId) {
     .then(data => {
         if (data.success === true) {
             toastSuccess("Entry Updated", "Entry updated successfully!");
-            // Refresh entries table
-            refreshEntriesTable();
-            // Switch back to add mode and clear form
-            switchToAddMode();
+        //TODO: For updates, you might need to handle MAAB number changes
+        // If the MAAB number was changed, mark the new one as used and old one as available
+        
+        // Refresh entries table
+        refreshEntriesTable();
+        // Switch back to add mode and clear form
+        switchToAddMode();
+        
+        // ✅ Refresh MAAB dropdown
+        if (window.refreshMAABDropdown) {
+            setTimeout(() => {
+                window.refreshMAABDropdown();
+            }, 500);
+        }
             
             // Update Dispatch Ready status after a short delay
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
+                updateRecordPaidFromEntries();
             }, 500);
         } else {
             toastError("Update Failed", "Entry update failed: " + (data.error || "Unknown error"));
@@ -2240,7 +2780,7 @@ function updateEntry(entryId, recordId) {
     });
 }
 
-// FIXED: Function to refresh entries table
+// Update the refreshEntriesTable function to also update paid status
 function refreshEntriesTable() {
     const recordId = document.getElementById('record_id').value;
     console.log('Fetching entries for record:', recordId);
@@ -2269,9 +2809,11 @@ function refreshEntriesTable() {
             // Render the table
             window.renderEntriesTable(entriesData);
             
-            // Update Dispatch Ready status based on entries
+            // Update all statuses based on entries
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
+                updateRecordPaidFromEntries();
+                updateRecordIdReceivedFromEntries(); // Add this line
             }, 100);
             
             // Setup click handlers after table is rendered
@@ -2303,12 +2845,12 @@ document.getElementById('back_to_add').addEventListener('click', function() {
     switchToAddMode();
 });
 
-// Update the openRecordInOverlay function to setup entry table clicks
 function openRecordInOverlay(recordData) {
     console.log('=== OPEN RECORD IN OVERLAY ===');
     console.log('Full record data:', recordData);
     
     function convertToYYYYMMDD(dateStr) {
+        if (!dateStr) return '';
         const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
         if (parts.length === 3) {
             let [month, day, year] = parts;
@@ -2319,6 +2861,7 @@ function openRecordInOverlay(recordData) {
         return '';
     }
 
+    // Convert dates to YYYY-MM-DD format for form inputs
     if (recordData.declaration_date) {
         recordData.declaration_date = convertToYYYYMMDD(recordData.declaration_date);
     }
@@ -2329,14 +2872,14 @@ function openRecordInOverlay(recordData) {
     // Populate the form fields
     document.getElementById('record_id').value = recordData.record_id;
     document.getElementById('year').value = recordData.year;
-    document.getElementById('id_rcv').checked = recordData.id_received;
-    document.getElementById('paid').checked = recordData.paid;
-    document.getElementById('declared').checked = recordData.declared;
-    document.getElementById('record_dispatch_ready').checked = recordData.dispatch_ready;
-    document.getElementById('dec_date').value = recordData.declaration_date;
-    document.getElementById('eff_date').value = recordData.effectivity_date;
-    document.getElementById('loc_par').value = recordData.location_particular;
-    document.getElementById('loc_cat').value = recordData.location_category;
+    document.getElementById('id_rcv').checked = Boolean(recordData.id_received);
+    document.getElementById('paid').checked = Boolean(recordData.paid);
+    document.getElementById('declared').checked = Boolean(recordData.declared);
+    document.getElementById('record_dispatch_ready').checked = Boolean(recordData.dispatch_ready);
+    document.getElementById('dec_date').value = recordData.declaration_date || '';
+    document.getElementById('eff_date').value = recordData.effectivity_date || '';
+    document.getElementById('loc_par').value = recordData.location_particular || '';
+    document.getElementById('loc_cat').value = recordData.location_category || '';
     
     // DEBUG: Municipality field
     const municipalityField = document.getElementById('municipality');
@@ -2352,9 +2895,9 @@ function openRecordInOverlay(recordData) {
     districtField.value = recordData.district || '';
     console.log('District field after setting:', districtField.value);
     
-    document.getElementById('origin').value = recordData.origin;
-    document.getElementById('remarks').value = recordData.remarks;
-    document.getElementById('tags').value = recordData.tags;
+    document.getElementById('origin').value = recordData.origin || '';
+    document.getElementById('remarks').value = recordData.remarks || '';
+    document.getElementById('tags').value = recordData.tags || '';
 
     // Show the overlay
     document.getElementById('overlay').style.display = 'flex';
@@ -2365,10 +2908,9 @@ function openRecordInOverlay(recordData) {
         overlayContent.scrollTop = 0;
     }
 
-    // Initialize change tracking AFTER a short delay to ensure form is populated
+    // Initialize change tracking AFTER a longer delay to ensure form is fully populated
     setTimeout(() => {
-        console.log('=== INITIALIZING CHANGE TRACKING ===');
-        initializeChangeTracking();
+        console.log('=== INITIALIZING CHANGE TRACKING (DELAYED) ===');
         
         // DEBUG: Check municipality and district after form is populated
         console.log('Municipality after form populated:', document.getElementById('municipality').value);
@@ -2382,19 +2924,32 @@ function openRecordInOverlay(recordData) {
         
         // Highlight required fields and setup error containers
         highlightRequiredFields();
+        setBirthdayMaxDate();
+
+        // ===== NEW: ENABLE ENTRY DETAILS FOR EXISTING RECORD =====
+        enableEntryDetails();
         
         // Make sure we're in add mode initially (hide back button)
         switchToAddMode();
         
+        // Initialize change tracking LAST after everything is set up
+        initializeChangeTracking();
+        
+        // Update button text for existing record
+        updateSaveButtonText();
+        
         // DEBUG: Final check
         console.log('Municipality final:', document.getElementById('municipality').value);
         console.log('District final:', document.getElementById('district').value);
-    }, 100);
+        console.log('Save button state after initialization:');
+        debugSaveButtonState();
+    }, 500); // Increased to 500ms to ensure everything is loaded
 
     // Fetch entries for this record
     fetch(`/api/members/${recordData.record_id}/entries`)
         .then(response => response.json())
         .then(data => {
+            // Format dates for display in table
             data.forEach(row => {
                 if (row.birth_date) {
                     const date = new Date(row.birth_date);
@@ -2409,11 +2964,14 @@ function openRecordInOverlay(recordData) {
                     row.OR_date = date.toLocaleDateString('en-US');
                 }
             });
+            
+            // Render entries table
             window.renderEntriesTable(data);
             
-            // Update Dispatch Ready status
+            // Update Dispatch Ready status after entries are loaded
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
+                updateRecordPaidFromEntries();
             }, 200);
             
             // Setup click handlers for entries table after it's rendered
@@ -2421,9 +2979,14 @@ function openRecordInOverlay(recordData) {
                 setupEntryTableClickHandlers();
                 setupEntriesTableMonitoring();
             }, 1000);
+            
+            // Setup MAAB number handling
             setTimeout(() => {
                 setupMaabNumberHandling();
             }, 200);
+        })
+        .catch(error => {
+            console.error('Error fetching entries:', error);
         });
 }
 
@@ -2690,27 +3253,8 @@ columns: [
     const searchInput = document.getElementById('search_input');
     const searchClear = document.getElementById('search_clear');
 
-    // Search functionality
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            performSearch(e.target.value);
-            
-            if (e.target.value.trim() !== "") {
-                searchClear.classList.add('visible');
-            } else {
-                searchClear.classList.remove('visible');
-            }
-        });
-    }
-
-    if (searchClear) {
-        searchClear.addEventListener('click', () => {
-            searchInput.value = "";
-            searchClear.classList.remove('visible');
-            performSearch("");
-            searchInput.focus();
-        });
-    }
+    // Initialize search functionality
+    setupSearchFunctionality();
 
     // ===== OPTIMIZED ADD RECORD BUTTON =====
     const addRecordBtn = document.querySelector('.btn-add');
@@ -3209,6 +3753,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize auto-fill functions
     initializeAutoFillFunctions();
+
+    // Initialize search functionality
+    setupSearchFunctionality();
+
+    // Set birthday max date
+    setBirthdayMaxDate();
     
     // Load filter dropdowns
     populateFilterDropdowns();
@@ -3232,28 +3782,38 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Add event listener for entry paid checkbox
-const entryPaidCheckbox = document.getElementById('entry_paid');
-if (entryPaidCheckbox) {
-    entryPaidCheckbox.addEventListener('change', function() {
-        console.log('Entry paid status changed:', this.checked);
-        updateEntryDispatchReady();
-        
-        // Also trigger auto-save since this affects dispatch ready status
-        scheduleAutoSave();
-    });
-}
+    const entryPaidCheckbox = document.getElementById('entry_paid');
+    if (entryPaidCheckbox) {
+        entryPaidCheckbox.addEventListener('change', function() {
+            console.log('Entry paid status changed:', this.checked);
+            updateEntryDispatchReady();
+            
+            // Also update record paid status
+            setTimeout(() => {
+                updateRecordPaidFromEntries();
+            }, 100);
+            
+            // Also trigger auto-save since this affects paid status
+            scheduleAutoSave();
+        });
+    }
 
-// Add event listener for entry declared checkbox
-const entryDeclaredCheckbox = document.getElementById('entry_declared');
-if (entryDeclaredCheckbox) {
-    entryDeclaredCheckbox.addEventListener('change', function() {
-        console.log('Entry declared status changed:', this.checked);
-        updateEntryDispatchReady();
-        
-        // Also trigger auto-save since this affects dispatch ready status
-        scheduleAutoSave();
-    });
-}
+    // Add event listener for entry declared checkbox
+    const entryDeclaredCheckbox = document.getElementById('entry_declared');
+    if (entryDeclaredCheckbox) {
+        entryDeclaredCheckbox.addEventListener('change', function() {
+            console.log('Entry declared status changed:', this.checked);
+            updateEntryDispatchReady();
+            
+            // Also update record paid status
+            setTimeout(() => {
+                updateRecordPaidFromEntries();
+            }, 100);
+            
+            // Also trigger auto-save since this affects dispatch ready status
+            scheduleAutoSave();
+        });
+    }
     
     // ===== CRITICAL FIX: Ensure age calculation is always triggered =====
     // Add event listener for birthdate changes
@@ -3283,9 +3843,13 @@ if (entryDeclaredCheckbox) {
     
     // Load initial data (active records)
     fetchActiveRecords();
+
+    // Pre-fetch the next record ID when page loads
+initializeNextRecordId();
 });
 
 // ===== MAAB NUMBER PREFIX HANDLING =====
+/*
 function initializeMaabNumberHandling() {
     const maabNoInput = document.getElementById('maab_no');
     const maabCatSelect = document.getElementById('maab_cat');
@@ -3364,5 +3928,222 @@ function setupMaabNumberHandling() {
 }
 
 window.populateEntryForm = populateEntryForm;
+*/
+
+// ===== DROPDOWN-SPECIFIC HANDLING =====
+function initializeDropdownHandling() {
+    const maabNoDropdown = document.getElementById('maab_no');
+    const maabCatSelect = document.getElementById('maab_cat');
+    
+    if (!maabNoDropdown || !maabCatSelect) return;
+    
+    console.log('✅ Initializing dropdown handling');
+    
+    // Simple placeholder update based on category
+    maabCatSelect.addEventListener('change', function() {
+        const category = this.value;
+        maabNoDropdown.title = `Select available ${category} ID from inventory`;
+    });
+    
+    // Visual feedback when selection is made
+    maabNoDropdown.addEventListener('change', function() {
+        if (this.value) {
+            console.log('✅ MAAB No selected:', this.value);
+        }
+    });
+}
+
+// Call this when overlay opens
+function setupDropdownHandling() {
+    setTimeout(initializeDropdownHandling, 100);
+}
+
+// ============== SELECT MAAB NO. FROM INVENTORY (WITH DUPLICATE PROTECTION) ==============
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🆔 MAAB No Dropdown System Initializing...');
+
+    let availableIDs = {};
+    let usedMAABNumbers = new Set();
+
+    // Fetch both available IDs and used MAAB numbers
+    async function fetchAllMAABData(category = null) {
+        try {
+            console.log('🔄 Fetching all MAAB data...');
+            
+            // Fetch available IDs from inventory
+            let url = '/api/inventory/available_ids';
+            if (category) {
+                url = `/api/inventory/available_ids?category=${encodeURIComponent(category)}`;
+            }
+            
+            const [availableResponse, usedResponse] = await Promise.all([
+                fetch(url),
+                fetch('/api/members/used_maab_numbers') // This is the new endpoint
+            ]);
+            
+            const availableResult = await availableResponse.json();
+            const usedResult = await usedResponse.json();
+            
+            console.log('🔍 Available IDs result:', availableResult);
+            console.log('🔍 Used MAAB numbers result:', usedResult);
+            
+            if (availableResult.success) {
+                availableIDs = availableResult.available_ids || {};
+            }
+            
+            if (usedResult.success) {
+                usedMAABNumbers = new Set(usedResult.used_numbers || []);
+                console.log(`✅ Loaded ${usedMAABNumbers.size} used MAAB numbers`);
+            } else {
+                console.warn('⚠️ Failed to load used MAAB numbers, using empty set');
+                usedMAABNumbers = new Set();
+            }
+            
+            return { availableIDs, usedMAABNumbers };
+            
+        } catch (error) {
+            console.error('❌ Error fetching MAAB data:', error);
+            return { availableIDs: {}, usedMAABNumbers: new Set() };
+        }
+    }
+
+    // Filter out used MAAB numbers from available IDs
+    function getTrulyAvailableIDs(category = null) {
+        const trulyAvailable = {};
+        
+        if (category && availableIDs[category]) {
+            // Show IDs for specific category (excluding used ones)
+            trulyAvailable[category] = availableIDs[category].filter(id => !usedMAABNumbers.has(id));
+        } else if (!category) {
+            // Show all available IDs from all categories (excluding used ones)
+            Object.keys(availableIDs).forEach(cat => {
+                trulyAvailable[cat] = availableIDs[cat].filter(id => !usedMAABNumbers.has(id));
+            });
+        }
+        
+        console.log(`✅ Filtered out used numbers. Remaining available:`, trulyAvailable);
+        return trulyAvailable;
+    }
+
+    // Populate MAAB No dropdown based on selected category
+    function populateMAABNoDropdown(category = null) {
+        const maabNoDropdown = document.getElementById('maab_no');
+        if (!maabNoDropdown) {
+            console.log('❌ MAAB No dropdown not found');
+            return;
+        }
+        
+        console.log(`🔄 Populating dropdown for category: ${category}`);
+        
+        // Clear existing options except the first one
+        while (maabNoDropdown.options.length > 1) {
+            maabNoDropdown.remove(1);
+        }
+        
+        let availableIDsForCategory = [];
+        const trulyAvailableIDs = getTrulyAvailableIDs(category);
+        
+        if (category && trulyAvailableIDs[category]) {
+            availableIDsForCategory = trulyAvailableIDs[category];
+            console.log(`📋 Using category-specific IDs for ${category}:`, availableIDsForCategory);
+        } else if (!category) {
+            Object.values(trulyAvailableIDs).forEach(ids => {
+                availableIDsForCategory.push(...ids);
+            });
+            console.log(`📋 Using all categories IDs:`, availableIDsForCategory);
+        }
+        
+        // Sort the IDs for better user experience
+        availableIDsForCategory.sort();
+        
+        // Add available IDs to dropdown
+        availableIDsForCategory.forEach(id => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = id;
+            maabNoDropdown.appendChild(option);
+        });
+        
+        console.log(`✅ Added ${availableIDsForCategory.length} options to dropdown`);
+        
+        // If no IDs available, show message
+        if (availableIDsForCategory.length === 0) {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = category ? `No available ${category} IDs` : "No available IDs in inventory";
+            option.disabled = true;
+            maabNoDropdown.appendChild(option);
+            console.warn(`⚠️ No available IDs for category: ${category}`);
+            
+            // Show warning toast if no IDs available
+            if (category) {
+                toastAlert("No IDs Available", `No available ${category} IDs in inventory. Please check inventory or select different category.`);
+            }
+        }
+    }
+
+    // Update dropdown when category changes
+    const categorySelect = document.getElementById('maab_cat');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const selectedCategory = this.value;
+            console.log(`🔄 Category changed to: ${selectedCategory}`);
+            populateMAABNoDropdown(selectedCategory);
+        });
+    }
+
+    // Refresh available IDs when overlay opens
+    function setupOverlayMAABNo() {
+        const overlay = document.getElementById('overlay');
+        if (!overlay) {
+            console.log('❌ Overlay not found');
+            return;
+        }
+        
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const isVisible = overlay.style.display === 'flex';
+                    console.log(`👀 Overlay visibility changed: ${isVisible}`);
+                    if (isVisible) {
+                        // Refresh both used numbers and available IDs when overlay opens
+                        console.log('🔄 Overlay opened, refreshing all MAAB data...');
+                        fetchAllMAABData().then(() => {
+                            const currentCategory = document.getElementById('maab_cat')?.value;
+                            populateMAABNoDropdown(currentCategory);
+                        });
+                    }
+                }
+            });
+        });
+        
+        observer.observe(overlay, { attributes: true });
+        console.log('✅ Overlay observer setup complete');
+    }
+
+    // Also refresh when entries table changes (after adding/editing entries)
+    function setupEntriesTableMonitoring() {
+        // This will be called when entries table is updated
+        window.refreshMAABDropdown = function() {
+            console.log('🔄 Entries table updated, refreshing all MAAB data...');
+            fetchAllMAABData().then(() => {
+                const currentCategory = document.getElementById('maab_cat')?.value;
+                populateMAABNoDropdown(currentCategory);
+            });
+        };
+    }
+
+    // Initialize MAAB No dropdown system
+    setupOverlayMAABNo();
+    setupEntriesTableMonitoring();
+
+    // Pre-load all MAAB data on page load
+    fetchAllMAABData().then(() => {
+        console.log('✅ All MAAB data pre-loaded on page load');
+    });
+
+    console.log('✅ MAAB No Dropdown system initialized successfully');
+});
+
 </script>
 {% endblock %}
