@@ -13,7 +13,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-if os.getenv('FLASK_ENV') == 'production':
+if os.getenv('FLASK_ENV') == 'production' or os.getenv('FLASK_ENV') == 'development':
     DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'aiven').lower()
 else:
     current_dir = Path(__file__).parent

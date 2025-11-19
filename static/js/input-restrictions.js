@@ -66,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Only apply restrictions to TEXT inputs, not SELECT dropdowns
   //const maabNoField = document.getElementById('maab_no');
+  const maabNoField = null;
   
   if (maabNoField && maabNoField.tagName === 'INPUT') {
     // Store the current prefix for this field
