@@ -1777,6 +1777,9 @@ function populateEntryForm(entryData) {
     }
     
     try {
+        // Store the current MAAB number BEFORE populating the form
+        const currentMaabNo = entryData.maab_no;
+        
         // Set entry ID
         document.getElementById('entry_id').value = entryData.entry_id || '';
         currentEditingEntryId = entryData.entry_id;
@@ -1791,7 +1794,7 @@ function populateEntryForm(entryData) {
         document.getElementById('blood_type').value = entryData.blood_type || '';
         
         // 2. Text inputs
-        document.getElementById('maab_no').value = entryData.maab_no || '';
+        // DON'T set maab_no here yet - let the dropdown handle it
         document.getElementById('fname').value = entryData.first_name || '';
         document.getElementById('mname').value = entryData.middle_name || '';
         document.getElementById('lname').value = entryData.last_name || '';
@@ -1837,9 +1840,24 @@ function populateEntryForm(entryData) {
         document.getElementById('entry_declared').checked = Boolean(entryData.declared);
         document.getElementById('entry_paid').checked = Boolean(entryData.paid);
         
+        // ✅ CRITICAL: Populate the MAAB dropdown AFTER a short delay to ensure category is set
+        setTimeout(() => {
+            const category = document.getElementById('maab_cat').value;
+            console.log(`🔄 Populating MAAB dropdown with category: ${category}, current MAAB: ${currentMaabNo}`);
+            if (window.populateMAABNoDropdown) {
+                window.populateMAABNoDropdown(category, currentMaabNo);
+            } else {
+                console.error('❌ populateMAABNoDropdown function not available');
+                // Fallback: try to set the value directly
+                if (currentMaabNo) {
+                    document.getElementById('maab_no').value = currentMaabNo;
+                }
+            }
+        }, 100);
+
         setTimeout(() => {
             updateEntryDispatchReady();
-        }, 100);
+        }, 200);
 
         console.log('All form fields populated successfully!');
         
@@ -1862,6 +1880,9 @@ function populateEntryForm(entryData) {
         toastError("Error", "Failed to load entry data into form");
     }
 }
+
+// Make the function available globally
+window.populateEntryForm = populateEntryForm;
 
 // FIXED: Enhanced date conversion function
 function convertToYYYYMMDD(dateStr) {
@@ -3200,44 +3221,74 @@ function archiveRecord() {
         return;
     }
 
-    console.log('Archiving record:', recordId);
+    console.log('🔄 Archiving record:', recordId);
 
-    fetch('/api/archive_record', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ record_id: recordId })
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errorData => {
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    // First, test if the record exists
+    fetch(`/api/debug/archive_check/${recordId}`)
+        .then(response => response.json())
+        .then(checkResult => {
+            console.log('🔍 Archive check result:', checkResult);
+            
+            if (!checkResult.success || !checkResult.record_exists) {
+                throw new Error(checkResult.error || 'Record not found');
+            }
+            
+            if (!checkResult.can_be_archived) {
+                throw new Error('Record is already archived');
+            }
+            
+            // Now proceed with archiving
+            return fetch('/api/archive_record', {
+                method: 'PATCH',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ record_id: recordId })
             });
-        }
-        return response.json();
-    })
-    .then(result => {
-        if (result.success) {
-            console.log('Record archived successfully');
+        })
+        .then(response => {
+            console.log('📡 Archive response status:', response.status);
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                return response.text().then(text => {
+                    console.error('❌ Non-JSON response:', text);
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                });
+            }
+            
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.error || `HTTP error: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(result => {
+            console.log('✅ Archive result:', result);
+            
+            if (result.success) {
+                hideDeleteConfirmationModal();
+                document.getElementById('overlay').style.display = 'none';
+                
+                toastSuccess("Record Archived", "The record has been successfully archived.");
+                
+                // Refresh the table
+                return refreshTableData();
+            } else {
+                throw new Error(result.error || 'Archive failed');
+            }
+        })
+        .then(() => {
+            console.log('🔄 Table refreshed after archiving');
+        })
+        .catch(error => {
+            console.error('❌ Archive error:', error);
             hideDeleteConfirmationModal();
-            document.getElementById('overlay').style.display = 'none';
-            
-            // Show success toast
-            toastSuccess("Record Archived", "The record has been successfully archived.");
-            
-            // Refresh the table data based on current view
-            return refreshTableData();
-        } else {
-            throw new Error(result.error || 'Failed to archive record');
-        }
-    })
-    .then(() => {
-        console.log('Table refreshed after archiving');
-    })
-    .catch(error => {
-        console.error('Error archiving record:', error);
-        hideDeleteConfirmationModal();
-        toastError("Archive Failed", "Failed to archive record: " + error.message);
-    });
+            toastError("Archive Failed", error.message);
+        });
 }
 
 // Export current record entries to Excel (server-side save)
@@ -4218,15 +4269,15 @@ document.addEventListener('DOMContentLoaded', function() {
         return trulyAvailable;
     }
 
-    // Populate MAAB No dropdown based on selected category
-    function populateMAABNoDropdown(category = null) {
+    // ✅ UPDATED: Populate MAAB No dropdown based on selected category
+    function populateMAABNoDropdown(category = null, currentMaabNo = null) {
         const maabNoDropdown = document.getElementById('maab_no');
         if (!maabNoDropdown) {
             console.log('❌ MAAB No dropdown not found');
             return;
         }
         
-        console.log(`🔄 Populating dropdown for category: ${category}`);
+        console.log(`🔄 Populating dropdown for category: ${category}, current MAAB: ${currentMaabNo}`);
         
         // Clear existing options except the first one
         while (maabNoDropdown.options.length > 1) {
@@ -4246,6 +4297,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`📋 Using all categories IDs:`, availableIDsForCategory);
         }
         
+        // ✅ CRITICAL FIX: Add the current MAAB number if it exists and isn't already in the list
+        if (currentMaabNo && currentMaabNo.trim() !== '' && !availableIDsForCategory.includes(currentMaabNo)) {
+            console.log(`✅ Adding current MAAB number to dropdown: ${currentMaabNo}`);
+            availableIDsForCategory.unshift(currentMaabNo); // Add to beginning
+        }
+        
         // Sort the IDs for better user experience
         availableIDsForCategory.sort();
         
@@ -4254,6 +4311,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const option = document.createElement('option');
             option.value = id;
             option.textContent = id;
+            
+            // Highlight the current MAAB number if it exists
+            if (id === currentMaabNo) {
+                option.selected = true;
+                option.style.fontWeight = 'bold';
+                option.style.backgroundColor = '#e8f5e8'; // Light green
+            }
+            
             maabNoDropdown.appendChild(option);
         });
         
@@ -4275,13 +4340,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Make the function available globally
+    window.populateMAABNoDropdown = populateMAABNoDropdown;
+
     // Update dropdown when category changes
     const categorySelect = document.getElementById('maab_cat');
     if (categorySelect) {
         categorySelect.addEventListener('change', function() {
             const selectedCategory = this.value;
-            console.log(`🔄 Category changed to: ${selectedCategory}`);
-            populateMAABNoDropdown(selectedCategory);
+            const currentMaabNo = document.getElementById('maab_no').value;
+            console.log(`🔄 Category changed to: ${selectedCategory}, current MAAB: ${currentMaabNo}`);
+            populateMAABNoDropdown(selectedCategory, currentMaabNo);
         });
     }
 
@@ -4303,7 +4372,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('🔄 Overlay opened, refreshing all MAAB data...');
                         fetchAllMAABData().then(() => {
                             const currentCategory = document.getElementById('maab_cat')?.value;
-                            populateMAABNoDropdown(currentCategory);
+                            const currentMaabNo = document.getElementById('maab_no')?.value;
+                            populateMAABNoDropdown(currentCategory, currentMaabNo);
                         });
                     }
                 }
@@ -4319,9 +4389,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // This will be called when entries table is updated
         window.refreshMAABDropdown = function() {
             console.log('🔄 Entries table updated, refreshing all MAAB data...');
+            const currentCategory = document.getElementById('maab_cat')?.value;
+            const currentMaabNo = document.getElementById('maab_no')?.value;
             fetchAllMAABData().then(() => {
-                const currentCategory = document.getElementById('maab_cat')?.value;
-                populateMAABNoDropdown(currentCategory);
+                populateMAABNoDropdown(currentCategory, currentMaabNo);
             });
         };
     }
