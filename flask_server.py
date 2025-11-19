@@ -255,7 +255,10 @@ def inventory():
 
 @server.route('/claims')
 @login_required
+@roles_required('admin', 'superadmin')
 def claims():
+    if current_user.office_location != 'Chapter':
+        abort(403)
     return render_template('claims.html')
 
 
@@ -2501,11 +2504,22 @@ def get_claim_records():
     return jsonify(claims_list)
     '''
 
+@server.route('/api/get_claim_id', methods=['GET'])
+def get_claim_id():
+    new_claim_id = db_conn.get_new_claim_id()
+    print('flask_server: new_claim_id', new_claim_id)
+    return jsonify({"new_claim_id": new_claim_id})
 
 @server.route('/api/add_claim_record', methods=['POST'])
 def add_claim_record():
     new_claim_id = db_conn.add_claim_record()
     return jsonify({"success": True, "claim_id": new_claim_id})
+
+
+@server.route('/api/get_maab_numbers', methods=['GET'])
+def get_maab_numbers():
+    maab_numbers = db_conn.get_unique_maab_numbers()
+    return jsonify({"maab_numbers": maab_numbers})
 
 
 @server.route('/api/verify_maab_no', methods=['POST'])

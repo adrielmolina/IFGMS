@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from sqlalchemy import create_engine, text, func, extract
+from sqlalchemy import create_engine, text, func, extract, distinct
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, scoped_session
 import cryptography
@@ -818,6 +818,17 @@ def archive_member_record(record_id):
     finally:
         db_session.close()
 
+
+def get_unique_maab_numbers():
+    db_session = SessionLocal()
+    try:
+        # Query distinct maab_no values
+        maab_numbers = db_session.query(distinct(models.Entries.maab_no)).all()
+        # flatten list of tuples to simple list
+        return [m[0] for m in maab_numbers if m[0] is not None]
+    except Exception as e:
+        print(f"Error fetching MAAB numbers: {e}")
+        return []
         
 def get_claim_records():
     db_session = SessionLocal()
@@ -910,6 +921,17 @@ def add_new_record():
         session.commit()
         return new_record.record_id
 
+def get_new_claim_id():
+    db_session = SessionLocal()
+    try:
+        claim_id = db_session.query(func.count(models.Claims.claim_id)).scalar()
+        if claim_id is None:
+            return 1
+        else:
+            return claim_id + 1
+    except Exception as e:
+        print(f"Error getting claim ID: {e}")
+        return None
 
 def add_claim_record():
     conn = conn_init()
@@ -996,37 +1018,7 @@ def save_record_details(data):
 # TODO change the column 'status' to claim_status
 # TODO change all instance of enhanced platinum to safe card
 def save_claim_record(data):
-    '''conn = conn_init()
-    Session = sessionmaker(bind=conn)
-    with Session() as session:
-        claim = session.query(models.Claims).filter_by(claim_id=data['claim_id']).first()
-        if not claim:
-            return False  # Or raise an exception
-
-        # List of all fields to update
-        fields = [
-            'date_filed', 'received_by', 'claim_origin', 'date_of_loss', 'maab_no',
-            'same_as_insured', 'claimant_first_name', 'claimant_middle_name', 'claimant_last_name',
-            'claimant_suffix', 'relation_to_insured', 'claimant_contact_no', 'claimant_email',
-            'claim_remarks', 'status', 'date_released', 'chinabank_check_no', 'chinabank_amount',
-            'bpi_check_no', 'bpi_amount', 'release_remarks', 'scanned_docs', 'prm_file',
-            'quit_claim_file', 'picked_up', 'date_picked_up', 'req_claim_form', 'req_prc_id',
-            'req_med_cert', 'req_hos_bill_or', 'req_state_of_acc', 'req_doctor_pres',
-            'req_purchased_meds', 'req_med_records', 'req_incident_rep', 'req_police_rep',
-            'req_drivers_lic', 'sent_advanced_notice'
-        ]
-
-        for field in fields:
-            if field in data:
-                value = data[field]
-                # Convert empty string to None for nullable columns
-                if value == '':
-                    value = None
-                setattr(claim, field, value)
-
-        session.commit()
-        return True'''
-    # TODO check if this works properly then delete above code. check if each field is saving
+    '''
     conn = conn_init()
     Session = sessionmaker(bind=conn)
     with Session() as session:
@@ -1043,6 +1035,39 @@ def save_claim_record(data):
 
         session.commit()
         return True
+    '''
+    
+    db_session = SessionLocal()
+    try:
+        claim_id = data.get('claim_id')
+        
+        if claim_id:
+            # Try to get existing record
+            claim = db_session.query(models.Claims).filter_by(claim_id=claim_id).first()
+        else:
+            claim = None
+
+        if claim:
+            # Update existing record
+            model_columns = {col.name for col in models.Claims.__table__.columns}
+            for field, value in data.items():
+                if field in model_columns and field != "claim_id":
+                    setattr(claim, field, value or None)
+        else:
+            # Create new record
+            # Filter out keys that are not model columns
+            model_columns = {col.name for col in models.Claims.__table__.columns}
+            new_claim_data = {k: v or None for k, v in data.items() if k in model_columns}
+            claim = models.Claims(**new_claim_data)
+            db_session.add(claim)
+
+        db_session.commit()
+        return True
+
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error saving claim record: {e}")
+        return False
 
 
 def delete_claim_record(claim_id):

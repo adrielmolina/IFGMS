@@ -173,7 +173,9 @@
 
                 <div id="principal_insured_info" class="collapse_group">      
                     <div class="input_set">
-                        <input type="text" id="maab_no" name="maab_no" autocomplete="off" required>
+                        <!-- <input type="text" id="maab_no" name="maab_no" autocomplete="off" required> -->
+                        <select id="maab_no" name="maab_no"></select>
+                        
                         <label for="maab_no">MAAB No.</label>
                         <button id="verify_maab_no" class="verify_maab_no">Verify</button>
                     </div>
@@ -734,6 +736,28 @@ document.addEventListener('DOMContentLoaded', function () {
     //disable the headers for now
     const checkboxes = document.querySelectorAll('.collapse_box_checkbox');
     checkboxes.forEach(cb => cb.disabled = true);
+
+
+    // for fetching maab ids
+    const maabSelect = document.getElementById('maab_no');
+
+    fetch('/api/get_maab_numbers')
+        .then(response => response.json())
+        .then(data => {
+            if (data.maab_numbers && data.maab_numbers.length) {
+                // Clear existing options except placeholder
+                maabSelect.innerHTML = '<option value="">Select MAAB No.</option>';
+                
+                data.maab_numbers.forEach(maab => {
+                    const option = document.createElement('option');
+                    option.value = maab;
+                    option.textContent = maab;
+                    maabSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(err => console.error("Failed to load MAAB numbers:", err));    
+
 
 
 
@@ -1463,9 +1487,13 @@ function refreshMembersTable() {
         .catch(err => console.error(err));
 }
 
+
+/*
 // ------------------------
 // Add Record logic (keeps pagination correct and opens the newly added record)
 // ------------------------
+
+// PREV ADD RECORD LOGIC. RETIRED
 document.getElementById('add_record_btn').addEventListener('click', function () {
     clearOverlay();
     document.getElementById('overlay').style.display = 'flex';
@@ -1520,11 +1548,94 @@ document.getElementById('add_record_btn').addEventListener('click', function () 
         console.error(error);
     });
 });
+*/
+
+//------------------------------
+//- NEW ADD RECORD FUNCTION
+
+document.getElementById('add_record_btn').addEventListener('click', function () {
+    clearOverlay();
+    document.getElementById('overlay').style.display = 'flex';
+    fetch('/api/get_claim_id', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(result => {
+        const newClaimId = result && result.new_claim_id ? result.new_claim_id : null;
+        if (newClaimId) {
+            document.getElementById('claim_id').value = newClaimId || '';
+            console.log('New Claim ID fetched:', newClaimId);
+        }
+    });  
+
+
+    /*
+    fetch('/api/add_claim_record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(result => {
+        // Refresh from server and then open the added record
+        fetch("/api/get_claim_records")
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(row => {
+                    try {
+                        if (row.date_filed) row.date_filed = new Date(row.date_filed).toLocaleDateString('en-US');
+                        if (row.date_of_loss) row.date_of_loss = new Date(row.date_of_loss).toLocaleDateString('en-US');
+                        if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
+                        if (row.date_released) row.date_released = new Date(row.date_released).toLocaleDateString('en-US');
+                        if (row.date_picked_up) row.date_picked_up = new Date(row.date_picked_up).toLocaleDateString('en-US');
+                    } catch(e){}
+                });
+
+                allClaims = data || [];
+                applySearchFilter();
+
+                // find the newly created record in filteredClaims (use result.claim_id if provided)
+                const newId = result && result.claim_id ? String(result.claim_id) : null;
+                if (newId) {
+                    const indexInFiltered = filteredClaims.findIndex(r => String(r.claim_id) === newId);
+                    if (indexInFiltered !== -1) {
+                        // put the page that contains the new record into view
+                        currentPage = Math.floor(indexInFiltered / entriesPerPage) + 1;
+                        renderClaimsTable();
+
+                        // open that row in the overlay after a short delay
+                        setTimeout(() => {
+                            const indexInPage = indexInFiltered % entriesPerPage;
+                            const cell = hotInstance.getCell(indexInPage, 0); // "Open" column
+                            if (cell) {
+                                const openLink = cell.querySelector('.open-link');
+                                if (openLink) openLink.click();
+                            }
+                        }, 150);
+                    }
+                }
+            });
+    })
+    .catch(error => {
+        alert('Error adding record');
+        console.error(error);
+    });
+    */
+});
+
+
+
+
 
 // ------------------------
 // Verify MAAB No
 // ------------------------
 document.getElementById('verify_maab_no').addEventListener('click', function () {
+    document.getElementById('verify_maab_no').innerHTML = 'Verifying...';
+    document.getElementById('verify_maab_no').disabled = true;
+
+
+
     const maabNo = document.getElementById('maab_no').value;
     if (!maabNo) {
         alert('Please enter a MAAB No.');
@@ -1545,6 +1656,10 @@ document.getElementById('verify_maab_no').addEventListener('click', function () 
                 document.getElementById('prpl_insured_suffix').value = data.suffix || '';
                 document.getElementById('prpl_insured_contact').value = data.contact_no || '';
                 document.getElementById('prpl_insured_email').value = data.email || '';
+
+                document.getElementById('verify_maab_no').innerHTML = 'Verify';
+                document.getElementById('verify_maab_no').disabled = false;
+
             } else {
                 alert('MAAB No. does not exist in the database.');
             }
@@ -1705,14 +1820,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-
     // ------------------------
     // Save claim record
     // ------------------------
     document.getElementById('save_claim_record').addEventListener('click', function () {
         document.getElementById('save_claim_record').innerHTML = 'Saving...';
         document.getElementById('save_claim_record').disabled = true
-
 
         const payload = {
             claim_id: document.getElementById('claim_id').value,
@@ -1768,6 +1881,7 @@ document.addEventListener("DOMContentLoaded", () => {
             sent_advanced_notice: document.getElementById('sent_advanced_notice').checked,
             claim_type: document.getElementById('claim_type').value
         };
+        
 
         fetch('/api/save_claim_record', {
             method: 'POST',
