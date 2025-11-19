@@ -199,7 +199,7 @@ class Claims(Base):
     claimant_middle_name = Column(String(255))
     claimant_last_name = Column(String(255))
     claimant_suffix = Column(String(255))
-    relation_to_insured = Column(String(255), default='SAME')
+    relation_to_insured = Column(String(255), default='')
     claimant_contact_no = Column(String(255))
     claimant_email = Column(String(255))
     claim_remarks = Column(Text)

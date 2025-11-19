@@ -27,6 +27,10 @@ label {
     color: #B92F2F
 }
 
+.ht_clone_top, .ht_clone_left, .ht_clone_top_left_corner {
+    z-index: 1 !important;
+}
+
 .controls_box {
     margin-top: 70px; 
 }
