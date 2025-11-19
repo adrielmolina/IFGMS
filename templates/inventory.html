@@ -612,12 +612,27 @@
         // 🔸 Handsontable Columns
         // ============================================================
         const hotColumns = [
-          { data: 'inv_id', type: 'text', title: 'ID' },
-          { data: 'maab_category', type: 'text', title: 'Maab Category' },
-          { data: 'maab_no', type: 'text', title: 'Maab No.' },
-          { data: 'used', type: 'text', title: 'Used' },
-          { data: 'allocated_to', type: 'text', title: 'Allocated To' },
-          { data: 'remarks', type: 'text', title: 'Remarks' }
+        { data: 'inv_id', type: 'text', title: 'ID' },
+        { data: 'maab_category', type: 'text', title: 'Maab Category' },
+        { data: 'maab_no', type: 'text', title: 'Maab No.' },
+        { 
+            data: 'used', 
+            type: 'text', 
+            title: 'Status',
+            renderer: function(instance, td, row, col, prop, value, cellProperties) {
+            Handsontable.dom.empty(td);
+            
+            // Convert database values to user-friendly status
+            if (value === 1 || value === '1' || value === true || value === 'true') {
+                td.innerHTML = '<span style="color: #dc3545; font-weight: 500;">Used</span>';
+            } else {
+                td.innerHTML = '<span style="color: #28a745; font-weight: 500;">Available</span>';
+            }
+            return td;
+            }
+        },
+        { data: 'allocated_to', type: 'text', title: 'Allocated To' },
+        { data: 'remarks', type: 'text', title: 'Remarks' }
         ];
 
         let currentHotInstance = null;

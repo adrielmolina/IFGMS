@@ -98,10 +98,12 @@
                 </div>
 
                 <div class="controls_box">
-                    <div class="controls_box_left">
+                    <!-- 
+                    <div class="controls_box_left" style="display: none;">
                         <button class="btn-expand" hidden>Expand all groups</button>
                         <button class="btn-expand" hidden>Collapse all groups</button>
                     </div>
+                    -->
 
                     <div class="controls_box_right">
                         <button id="save_claim_record" class="btn-save" disabled >Save</button>
@@ -169,6 +171,9 @@
 
                 <div id="principal_insured_info" class="collapse_group">      
                     <div class="input_set">
+                        <!-- <input type="text" id="maab_no" name="maab_no" autocomplete="off" required> -->
+                        <select id="maab_no" name="maab_no"></select>
+                        
                         <label for="maab_no">MAAB No.</label>
                         <input type="text" id="maab_no" name="maab_no" autocomplete="off" required>
                         <button id="verify_maab_no" class="verify_maab_no">Verify</button>
@@ -602,10 +607,10 @@
                                 </select>
 
                                 <label for="chinabank_check_no">Chinabank Check No.</label>
-                                <input type="text" id="chinabank_check_no" name="chinabank_check_no" required autocomplete="off">
+                                <input type="text" id="chinabank_check_no" name="chinabank_check_no" required autocomplete="off" disabled>
 
                                 <label for="bpi_check_no">BPI Check No.</label>
-                                <input type="text" id="bpi_check_no" name="bpi_check_no" required autocomplete="off">   
+                                <input type="text" id="bpi_check_no" name="bpi_check_no" required autocomplete="off" disabled>    
 
                                 <button class="generate_prm" id="generate_prm" hidden>Generate PRM Template</button>
                                 <input type="file" accept=".xlsx" id="upload_prm" name="upload_prm" required autocomplete="off" hidden>
@@ -614,21 +619,21 @@
                             </div>
 
                             <div class="release_sectin_column">
-                                <label for="date_released">Date Released</label>
+                                <label for="date_released">Date Approved / Denied</label>
 
                                 <span>
-                                <input type="date" id="date_released" name="date_released" required autocomplete="off">
+                                <input disabled type="date" id="date_released" name="date_released" required autocomplete="off">
                                     <button style="float: right;" type="button" onclick="document.getElementById('date_released').value = new Date().toISOString().slice(0, 10);">
                                         Today
                                     </button>
                                 </span>
 
                                 <label for="chinabank_amount">Chinabank Amount</label>
-                                <input type="text" id="chinabank_amount" name="chinabank_amount" required autocomplete="off">
+                                <input type="text" id="chinabank_amount" name="chinabank_amount" required autocomplete="off" disabled>
                                                                 
                                 
                                 <label for="bpi_amount">BPI Amount</label>  
-                                <input type="text" id="bpi_amount" name="bpi_amount" required autocomplete="off">
+                                <input type="text" id="bpi_amount" name="bpi_amount" required autocomplete="off" disabled>
 
                                 <button class="generate_quit_claim" id="generate_quit_claim" hidden>Generate Quit Claim Template</button>
                                 <input type="file" accept=".docx" id="upload_quit_claim" name="upload_quit_claim" required autocomplete="off" hidden>
@@ -638,19 +643,19 @@
 
                         <div class="release_remarks_section">
                             <label for="release_remarks">Release Remarks</label>
-                            <input type="text" id="release_remarks" name="release_remarks" required autocomplete="off">
+                            <input type="text" id="release_remarks" name="release_remarks" required autocomplete="off" disabled>
                         </div>   
                        
                     </div>
 
                     <div class="input_set">
                         <label for="picked_up">Picked Up</label>
-                        <input type="checkbox" id="picked_up" name="picked_up">
+                        <input type="checkbox" id="picked_up" name="picked_up" disabled>
                     </div>
 
                     <div class="input_set">
                         <label for="date_picked_up">Date Picked Up</label>
-                        <input type="date" id="date_picked_up" name="date_picked_up">
+                        <input type="date" id="date_picked_up" name="date_picked_up" disabled>
                     </div>      
                 </div>
 
@@ -689,7 +694,143 @@ document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams(window.location.search);
     
     statusFilter = params.get("status");
+
+
+
+    /*
+    // DISABLED FOR NOW
+    //------------------------
+    // Select all checkboxes with the class
+    const checkboxes = document.querySelectorAll('.collapse_box_checkbox');
+
+    checkboxes.forEach(checkbox => {
+        const targetId = checkbox.dataset.target_div; // get data-target_div
+        const targetDiv = document.getElementById(targetId);
+
+        if (!targetDiv) return; // skip if target div not found
+
+        // Set initial visibility and layout based on checkbox state
+        if (checkbox.checked) {
+            targetDiv.style.display = 'flex';
+            targetDiv.style.flexDirection = 'column';
+            targetDiv.style.position = 'relative';
+        } else {
+            targetDiv.style.display = 'none';
+        }
+
+        // Listen for changes
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                targetDiv.style.display = 'flex';
+                targetDiv.style.flexDirection = 'column';
+                targetDiv.style.position = 'relative';
+            } else {
+                targetDiv.style.display = 'none';
+            }
+        });
+    });
+    //---------------------------
+    */
+
+    //disable the headers for now
+    const checkboxes = document.querySelectorAll('.collapse_box_checkbox');
+    checkboxes.forEach(cb => cb.disabled = true);
+
+
+    // for fetching maab ids
+    const maabSelect = document.getElementById('maab_no');
+
+    fetch('/api/get_maab_numbers')
+        .then(response => response.json())
+        .then(data => {
+            if (data.maab_numbers && data.maab_numbers.length) {
+                // Clear existing options except placeholder
+                maabSelect.innerHTML = '<option value="">Select MAAB No.</option>';
+                
+                data.maab_numbers.forEach(maab => {
+                    const option = document.createElement('option');
+                    option.value = maab;
+                    option.textContent = maab;
+                    maabSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(err => console.error("Failed to load MAAB numbers:", err));    
+
+
+
+
 });
+
+
+function clearOverlay() {
+
+    //document.getElementById('overlay').scrollTop = 0;
+    window.scrollTo(0, 0);
+    
+    // Clear all fields if no record is found
+    document.getElementById('claim_id').value = '';
+    document.getElementById('date_filed').value = '';
+    document.getElementById('received_by').value = '';
+    document.getElementById('claim_origin').selectedIndex = 0;
+    document.getElementById('date_of_loss').value = '';
+    document.getElementById('maab_no').value = '';
+
+    document.getElementById('eff_date').value = '';
+    document.getElementById('prpl_insured_fname').value = '';
+    document.getElementById('prpl_insured_mname').value = '';
+    document.getElementById('prpl_insured_lname').value = '';
+    document.getElementById('prpl_insured_suffix').value = '';
+
+    document.getElementById('same_as_insureed').checked = false;
+    document.getElementById('claimant_fname').value = '';
+    document.getElementById('claimant_mname').value = '';
+    document.getElementById('claimant_lname').value = '';
+    document.getElementById('claimant_suffix').selectedIndex = 0;
+    document.getElementById('relation').value = '';
+    document.getElementById('claimant_contact_no').value = '';
+    document.getElementById('claimant_email').value = '';
+    document.getElementById('claim_remarks').value = '';
+
+    document.getElementById('claim_status').selectedIndex = 0;
+    document.getElementById('date_released').value = '';
+    document.getElementById('chinabank_check_no').value = '';
+    document.getElementById('chinabank_amount').value = '';
+    document.getElementById('bpi_check_no').value = '';
+    document.getElementById('bpi_amount').value = '';
+    document.getElementById('release_remarks').value = '';
+    
+    document.getElementById('scanned_docs').value = '';
+    document.getElementById('prm_file').value = '';
+    document.getElementById('quit_claim_file').value = '';
+    document.getElementById('picked_up').checked = false;
+    document.getElementById('date_picked_up').value = '';
+
+    document.getElementById('req_claim_form').checked = false;
+    document.getElementById('req_prc_id').checked = false;
+    document.getElementById('req_med_cert').checked = false;
+    document.getElementById('req_hos_bill_or').checked = false;
+    document.getElementById('req_state_of_acc').checked = false;
+    document.getElementById('req_doctor_pres').checked = false;
+    document.getElementById('req_purchased_meds').checked = false;
+    document.getElementById('req_med_records').checked = false;
+
+    document.getElementById('req_animal_bite_treat_rec').checked = false;
+    document.getElementById('req_incident_rep').checked = false;
+    document.getElementById('req_police_rep').checked = false;
+    document.getElementById('req_brgy_rep').checked = false;
+
+
+    document.getElementById('req_drivers_lic').checked = false;
+
+    document.getElementById('req_birth_cert').checked = false;
+    document.getElementById('req_marriage_cert').checked = false;
+    document.getElementById('req_death_cert').checked = false;
+    document.getElementById('req_burial_receipts').checked = false;
+
+    document.getElementById('sent_advanced_notice').checked = false;
+    document.getElementById('claim_type').selectedIndex = 0;
+}
 
 // ------------------------
 // Globals for pagination
@@ -877,6 +1018,7 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('quit_claim_file').value = claimDetails.quit_claim_file || '';
             document.getElementById('picked_up').checked = !!claimDetails.picked_up;
             document.getElementById('date_picked_up').value = converted_date_picked_up || '';
+
             document.getElementById('req_claim_form').checked = !!claimDetails.req_claim_form;
             document.getElementById('req_prc_id').checked = !!claimDetails.req_prc_id;
             document.getElementById('req_med_cert').checked = !!claimDetails.req_med_cert;
@@ -885,12 +1027,27 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('req_doctor_pres').checked = !!claimDetails.req_doctor_pres;
             document.getElementById('req_purchased_meds').checked = !!claimDetails.req_purchased_meds;
             document.getElementById('req_med_records').checked = !!claimDetails.req_med_records;
-            document.getElementById('req_incident_rep').checked = !!claimDetails.req_incident_rep;
-            document.getElementById('req_police_rep').checked = !!claimDetails.req_police_rep;
+            
+            document.getElementById('req_animal_bite_treat_rec').checked = !!claimDetails.req_animal_bite_treat_rec,
+            document.getElementById('req_incident_rep').checked = !!claimDetails.req_incident_rep,
+            document.getElementById('req_police_rep').checked = !!claimDetails.req_police_rep,
+            document.getElementById('req_brgy_rep').checked = !!claimDetails.req_brgy_rep,
+
             document.getElementById('req_drivers_lic').checked = !!claimDetails.req_drivers_lic;
+
+            document.getElementById('req_birth_cert').checked = !!claimDetails.req_birth_cert;
+            document.getElementById('req_marriage_cert').checked = !!claimDetails.req_marriage_cert;
+            document.getElementById('req_death_cert').checked = !!claimDetails.req_death_cert;
+            document.getElementById('req_burial_receipts').checked = !!claimDetails.req_burial_receipts;
+            document.getElementById('sent_advanced_notice').checked = !!claimDetails.sent_advanced_notice;
+            document.getElementById('claim_type').value = claimDetails.claim_type || '';
+
             document.getElementById('sent_advanced_notice').checked = !!claimDetails.sent_advanced_notice;
         } else {
+            
             // Clear all fields if no record is found
+            clearOverlay();
+            /*
             document.getElementById('claim_id').value = '';
             document.getElementById('date_filed').value = '';
             document.getElementById('received_by').value = '';
@@ -937,6 +1094,7 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('req_police_rep').checked = false;
             document.getElementById('req_drivers_lic').checked = false;
             document.getElementById('sent_advanced_notice').checked = false;
+            */
         }
 
         document.getElementById('overlay').style.display = 'flex';
@@ -1328,10 +1486,15 @@ function refreshMembersTable() {
         .catch(err => console.error(err));
 }
 
+
+/*
 // ------------------------
 // Add Record logic (keeps pagination correct and opens the newly added record)
 // ------------------------
+
+// PREV ADD RECORD LOGIC. RETIRED
 document.getElementById('add_record_btn').addEventListener('click', function () {
+    clearOverlay();
     document.getElementById('overlay').style.display = 'flex';
 
     fetch('/api/add_claim_record', {
@@ -1384,11 +1547,94 @@ document.getElementById('add_record_btn').addEventListener('click', function () 
         console.error(error);
     });
 });
+*/
+
+//------------------------------
+//- NEW ADD RECORD FUNCTION
+
+document.getElementById('add_record_btn').addEventListener('click', function () {
+    clearOverlay();
+    document.getElementById('overlay').style.display = 'flex';
+    fetch('/api/get_claim_id', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(result => {
+        const newClaimId = result && result.new_claim_id ? result.new_claim_id : null;
+        if (newClaimId) {
+            document.getElementById('claim_id').value = newClaimId || '';
+            console.log('New Claim ID fetched:', newClaimId);
+        }
+    });  
+
+
+    /*
+    fetch('/api/add_claim_record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(result => {
+        // Refresh from server and then open the added record
+        fetch("/api/get_claim_records")
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(row => {
+                    try {
+                        if (row.date_filed) row.date_filed = new Date(row.date_filed).toLocaleDateString('en-US');
+                        if (row.date_of_loss) row.date_of_loss = new Date(row.date_of_loss).toLocaleDateString('en-US');
+                        if (row.effectivity_date) row.effectivity_date = new Date(row.effectivity_date).toLocaleDateString('en-US');
+                        if (row.date_released) row.date_released = new Date(row.date_released).toLocaleDateString('en-US');
+                        if (row.date_picked_up) row.date_picked_up = new Date(row.date_picked_up).toLocaleDateString('en-US');
+                    } catch(e){}
+                });
+
+                allClaims = data || [];
+                applySearchFilter();
+
+                // find the newly created record in filteredClaims (use result.claim_id if provided)
+                const newId = result && result.claim_id ? String(result.claim_id) : null;
+                if (newId) {
+                    const indexInFiltered = filteredClaims.findIndex(r => String(r.claim_id) === newId);
+                    if (indexInFiltered !== -1) {
+                        // put the page that contains the new record into view
+                        currentPage = Math.floor(indexInFiltered / entriesPerPage) + 1;
+                        renderClaimsTable();
+
+                        // open that row in the overlay after a short delay
+                        setTimeout(() => {
+                            const indexInPage = indexInFiltered % entriesPerPage;
+                            const cell = hotInstance.getCell(indexInPage, 0); // "Open" column
+                            if (cell) {
+                                const openLink = cell.querySelector('.open-link');
+                                if (openLink) openLink.click();
+                            }
+                        }, 150);
+                    }
+                }
+            });
+    })
+    .catch(error => {
+        alert('Error adding record');
+        console.error(error);
+    });
+    */
+});
+
+
+
+
 
 // ------------------------
 // Verify MAAB No
 // ------------------------
 document.getElementById('verify_maab_no').addEventListener('click', function () {
+    document.getElementById('verify_maab_no').innerHTML = 'Verifying...';
+    document.getElementById('verify_maab_no').disabled = true;
+
+
+
     const maabNo = document.getElementById('maab_no').value;
     if (!maabNo) {
         alert('Please enter a MAAB No.');
@@ -1409,6 +1655,10 @@ document.getElementById('verify_maab_no').addEventListener('click', function () 
                 document.getElementById('prpl_insured_suffix').value = data.suffix || '';
                 document.getElementById('prpl_insured_contact').value = data.contact_no || '';
                 document.getElementById('prpl_insured_email').value = data.email || '';
+
+                document.getElementById('verify_maab_no').innerHTML = 'Verify';
+                document.getElementById('verify_maab_no').disabled = false;
+
             } else {
                 alert('MAAB No. does not exist in the database.');
             }
@@ -1499,83 +1749,12 @@ document.getElementById('same_as_insureed').addEventListener('change', function(
     }
 });
 
-// ------------------------
-// Save claim record
-// ------------------------
-document.getElementById('save_claim_record').addEventListener('click', function () {
-    const payload = {
-        claim_id: document.getElementById('claim_id').value,
-        date_filed: document.getElementById('date_filed').value,
-        received_by: document.getElementById('received_by').value,
-        claim_origin: document.getElementById('claim_origin').value,
-        date_of_loss: document.getElementById('date_of_loss').value,
-        maab_no: document.getElementById('maab_no').value,
-        same_as_insured: document.getElementById('same_as_insureed').checked,
-        claimant_first_name: document.getElementById('claimant_fname').value,
-        claimant_middle_name: document.getElementById('claimant_mname').value,
-        claimant_last_name: document.getElementById('claimant_lname').value,
-        claimant_suffix: document.getElementById('claimant_suffix').value,
-        relation_to_insured: document.getElementById('relation').value,
-        claimant_contact_no: document.getElementById('claimant_contact_no').value,
-        claimant_email: document.getElementById('claimant_email').value,
-        claim_remarks: document.getElementById('claim_remarks').value,
-        status: document.getElementById('claim_status').value,
-        date_released: document.getElementById('date_released').value,
-        chinabank_check_no: document.getElementById('chinabank_check_no').value,
-        chinabank_amount: document.getElementById('chinabank_amount').value,
-        bpi_check_no: document.getElementById('bpi_check_no').value,
-        bpi_amount: document.getElementById('bpi_amount').value,
-        release_remarks: document.getElementById('release_remarks').value,
-        scanned_docs: document.getElementById('scanned_docs').value,
-        prm_file: document.getElementById('prm_file').value,
-        quit_claim_file: document.getElementById('quit_claim_file').value,
-        picked_up: document.getElementById('picked_up').checked,
-        date_picked_up: document.getElementById('date_picked_up').value,
-        req_claim_form: document.getElementById('req_claim_form').checked,
-        req_prc_id: document.getElementById('req_prc_id').checked,
-        req_med_cert: document.getElementById('req_med_cert').checked,
-        req_hos_bill_or: document.getElementById('req_hos_bill_or').checked,
-        req_state_of_acc: document.getElementById('req_state_of_acc').checked,
-        req_doctor_pres: document.getElementById('req_doctor_pres').checked,
-        req_purchased_meds: document.getElementById('req_purchased_meds').checked,
-        req_med_records: document.getElementById('req_med_records').checked,
-        req_animal_bite_treat_rec: document.getElementById('req_animal_bite_treat_rec').checked,
-        req_incident_rep: document.getElementById('req_incident_rep').checked,
-        req_police_rep: document.getElementById('req_police_rep').checked,
-        req_brgy_rep: document.getElementById('req_brgy_rep').checked,
-        req_drivers_lic: document.getElementById('req_drivers_lic').checked,
-        req_birth_cert: document.getElementById('req_birth_cert').checked,
-        req_marriage_cert: document.getElementById('req_marriage_cert').checked,
-        req_death_cert: document.getElementById('req_death_cert').checked,
-        req_burial_receipts: document.getElementById('req_burial_receipts').checked,
-        sent_advanced_notice: document.getElementById('sent_advanced_notice').checked,
-        claim_type: document.getElementById('claim_type').value
-    };
-
-    fetch('/api/save_claim_record', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            alert('Record details saved!');
-            refreshMembersTable();
-        } else {
-            alert('Failed to save record details.');
-        }
-    })
-    .catch(error => {
-        alert('Error saving record details.');
-        console.error(error);
-    });
-});
 
 // ------------------------
 // Delete record
 // ------------------------
 document.getElementById('delete_claim_record').addEventListener('click', function () {
+    
     const claimId = document.getElementById('claim_id').value;
 
     if (!claimId) {
@@ -1583,9 +1762,12 @@ document.getElementById('delete_claim_record').addEventListener('click', functio
         return;
     }
 
-    if (!confirm('Are you sure you want to delete this record?')) {
+    if (!confirm('Are you sure you want to delete this record?')) {      
         return;
     }
+
+    document.getElementById('delete_claim_record').innerHTML = 'Deleting...';
+    document.getElementById('delete_claim_record').disabled = true;
 
     fetch(`/api/delete_claim_record`, {
         method: 'DELETE',
@@ -1600,7 +1782,10 @@ document.getElementById('delete_claim_record').addEventListener('click', functio
             alert('Record deleted successfully.');
         } else {
             alert('Failed to delete record.');
-            }
+        }
+
+        document.getElementById('delete_claim_record').innerHTML = 'Delete';
+        document.getElementById('delete_claim_record').disabled = false;
     })
     .catch(error => {
         console.error('Error deleting record:', error);
@@ -1640,6 +1825,91 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+    // ------------------------
+    // Save claim record
+    // ------------------------
+    document.getElementById('save_claim_record').addEventListener('click', function () {
+        document.getElementById('save_claim_record').innerHTML = 'Saving...';
+        document.getElementById('save_claim_record').disabled = true
+
+        const payload = {
+            claim_id: document.getElementById('claim_id').value,
+            date_filed: document.getElementById('date_filed').value,
+            received_by: document.getElementById('received_by').value,
+            claim_origin: document.getElementById('claim_origin').value,
+            date_of_loss: document.getElementById('date_of_loss').value,
+            maab_no: document.getElementById('maab_no').value,
+
+            same_as_insured: document.getElementById('same_as_insureed').checked,
+            claimant_first_name: document.getElementById('claimant_fname').value,
+            claimant_middle_name: document.getElementById('claimant_mname').value,
+            claimant_last_name: document.getElementById('claimant_lname').value,
+            claimant_suffix: document.getElementById('claimant_suffix').value,
+            relation_to_insured: document.getElementById('relation').value,
+            claimant_contact_no: document.getElementById('claimant_contact_no').value,
+            claimant_email: document.getElementById('claimant_email').value,
+            claim_remarks: document.getElementById('claim_remarks').value,
+
+            status: document.getElementById('claim_status').value,
+            date_released: document.getElementById('date_released').value,
+            chinabank_check_no: document.getElementById('chinabank_check_no').value,
+            chinabank_amount: document.getElementById('chinabank_amount').value,
+            bpi_check_no: document.getElementById('bpi_check_no').value,
+            bpi_amount: document.getElementById('bpi_amount').value,
+            release_remarks: document.getElementById('release_remarks').value,
+
+            scanned_docs: document.getElementById('scanned_docs').value,
+            prm_file: document.getElementById('prm_file').value,
+            quit_claim_file: document.getElementById('quit_claim_file').value,
+            picked_up: document.getElementById('picked_up').checked,
+            date_picked_up: document.getElementById('date_picked_up').value,
+
+            req_claim_form: document.getElementById('req_claim_form').checked,
+            req_prc_id: document.getElementById('req_prc_id').checked,
+            req_med_cert: document.getElementById('req_med_cert').checked,
+            req_hos_bill_or: document.getElementById('req_hos_bill_or').checked,
+            req_state_of_acc: document.getElementById('req_state_of_acc').checked,
+            req_doctor_pres: document.getElementById('req_doctor_pres').checked,
+            req_purchased_meds: document.getElementById('req_purchased_meds').checked,
+            req_med_records: document.getElementById('req_med_records').checked,
+
+            req_animal_bite_treat_rec: document.getElementById('req_animal_bite_treat_rec').checked,
+            req_incident_rep: document.getElementById('req_incident_rep').checked,
+            req_police_rep: document.getElementById('req_police_rep').checked,
+            req_brgy_rep: document.getElementById('req_brgy_rep').checked,
+
+            req_drivers_lic: document.getElementById('req_drivers_lic').checked,
+            req_birth_cert: document.getElementById('req_birth_cert').checked,
+            req_marriage_cert: document.getElementById('req_marriage_cert').checked,
+            req_death_cert: document.getElementById('req_death_cert').checked,
+            req_burial_receipts: document.getElementById('req_burial_receipts').checked,
+            sent_advanced_notice: document.getElementById('sent_advanced_notice').checked,
+            claim_type: document.getElementById('claim_type').value
+        };
+        
+
+        fetch('/api/save_claim_record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Record details saved!');
+                refreshMembersTable();
+            } else {
+                alert('Failed to save record details.');
+            }
+            document.getElementById('save_claim_record').innerHTML = 'Save';
+        })
+        .catch(error => {
+            alert('Error saving record details.');
+            console.error(error);
+        });
+        
+    });
 });
 
 /*
@@ -1667,7 +1937,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 const saveBtn = document.getElementById("save_claim_record");
 const overlay  = document.getElementById("overlay");
-console.log(saveBtn.disabled); 
+//console.log(saveBtn.disabled); 
 
 overlay .addEventListener("input", enableSaveBTN);
 overlay .addEventListener("change", enableSaveBTN);
@@ -1683,6 +1953,7 @@ function enableSaveBTN() {
 document.getElementById('close-overlay').addEventListener('click', function () {
     document.getElementById('overlay').style.display = 'none';
     saveBtn.disabled = true;
+    clearOverlay();
 });
 
 // close overlay on ESC key
@@ -1690,10 +1961,122 @@ document.addEventListener('keydown', function(event) {
     if (event.key === "Escape") {
         document.getElementById('overlay').style.display = 'none';
         saveBtn.disabled = true;
+        clearOverlay();
+    }
+});
+
+document.getElementById('claim_type').addEventListener('change', function() {
+    const claimType = this.value;
+    const same_as_insured_box = document.getElementById('same_as_insureed');
+
+    if (claimType === 'DEATH') {
+        same_as_insured_box.checked = false;
+        same_as_insured_box.disabled = true;
+    } else {
+        same_as_insured_box.disabled = false;
     }
 });
 
 
+    document.getElementById('same_as_insureed').addEventListener('change', function() {
+        const birth_cert = document.getElementById('req_birth_cert');
+        const marriage_cert = document.getElementById('req_marriage_cert');
+        const death_cert = document.getElementById('req_death_cert');
+        const burial_receipts = document.getElementById('req_burial_receipts');
+        if (this.checked) {
+        // re-enable save button when checkbox is toggled
+            birth_cert.checked = false;
+            marriage_cert.checked = false;
+            death_cert.checked = false;
+            burial_receipts.checked = false;
+
+            birth_cert.disabled = true;
+            marriage_cert.disabled = true;
+            death_cert.disabled = true;
+            burial_receipts.disabled = true;
+        }
+        else {
+            birth_cert.disabled = false;
+            marriage_cert.disabled = false;
+            death_cert.disabled = false;
+            burial_receipts.disabled = false;
+        }
+
+    });
+
+    document.getElementById('claim_status').addEventListener('change', function() {
+        const status = this.value;
+
+        const pickup_check = document.getElementById('picked_up');
+        const date_pickup = document.getElementById('date_picked_up');
+        const released = document.getElementById('date_released');
+        const chinabank = document.getElementById('chinabank_check_no');
+        const chinabank_amount = document.getElementById('chinabank_amount');
+        const bpi = document.getElementById('bpi_check_no');
+        const bpi_amount = document.getElementById('bpi_amount');
+        const release_rem = document.getElementById('release_remarks');
+        
+
+        if (status === 'approved') {
+            pickup_check.disabled = false;
+            date_pickup.disabled = false;
+            released.disabled = false;
+            released.value = new Date().toISOString().slice(0, 10); // Set to today
+
+            chinabank.disabled = false;
+            chinabank_amount.disabled = false;
+
+            bpi.disabled = false;
+            bpi_amount.disabled = false;
+            
+            release_rem.disabled = false;
+
+
+
+        } else if (status === 'denied') {
+            pickup_check.checked = false;
+            pickup_check.disabled = true;
+            date_pickup.value = '';
+            date_pickup.disabled = true;
+
+            released.disabled = false;
+            released.value = new Date().toISOString().slice(0, 10); // Set to today
+            
+            chinabank.value = '';
+            chinabank.disabled = true;
+            chinabank_amount.value = '';
+            chinabank_amount.disabled = true;
+
+
+            bpi.value = '';
+            bpi.disabled = true;
+            bpi_amount.value = '';
+            bpi_amount.disabled = true;
+
+        } else if (status === 'pending') {
+            pickup_check.checked = false;
+            pickup_check.disabled = true;
+            date_pickup.value = '';
+            date_pickup.disabled = true;
+
+            released.value = '';
+            released.disabled = true;
+
+            chinabank.value = '';
+            chinabank.disabled = true;
+            chinabank_amount.value = '';
+            chinabank_amount.disabled = true;
+
+            bpi.value = '';
+            bpi.disabled = true;
+            bpi_amount.value = '';
+            bpi_amount.disabled = true;
+
+            release_rem.value = '';
+            release_rem.disabled = true;
+        }
+
+    });
 
 
 </script>

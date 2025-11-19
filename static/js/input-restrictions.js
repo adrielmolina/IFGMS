@@ -65,7 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== 3️⃣ MAAB NUMBER FIELDS (digits only, with auto-prefix) =====
   
   // Only apply restrictions to TEXT inputs, not SELECT dropdowns
-  const maabNoField = document.getElementById('maab_no');
+  //const maabNoField = document.getElementById('maab_no');
+  const maabNoField = null;
   
   if (maabNoField && maabNoField.tagName === 'INPUT') {
     // Store the current prefix for this field

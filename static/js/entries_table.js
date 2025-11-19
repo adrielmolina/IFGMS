@@ -44,7 +44,22 @@ function renderEntriesTable(data) {
                 correctFormat: true,
                 allowInvalid: false
             },
-            { data: 'age', readOnly: true }, // Age is read-only
+            { 
+                data: 'age', 
+                readOnly: true, // Age is read-only
+                // Add visual styling for underage entries
+                renderer: function(instance, td, row, col, prop, value, cellProperties) {
+                    Handsontable.renderers.TextRenderer.apply(this, arguments);
+                    
+                    // Highlight age if less than 3
+                    if (value !== null && value !== undefined && parseInt(value) < 3) {
+                        td.style.backgroundColor = '#ffebee'; // Light red background
+                        td.style.color = '#c62828'; // Dark red text
+                        td.style.fontWeight = 'bold';
+                        td.title = 'Age must be 3 years or older';
+                    }
+                }
+            },
             { 
                 data: 'sex',
                 type: 'dropdown',
@@ -99,7 +114,7 @@ function renderEntriesTable(data) {
         viewportRowRenderingOffset: 10,
         viewportColumnRenderingOffset: 10,
 
-        // ✅ ADD AGE CALCULATION WHEN BIRTHDATE CHANGES
+        // ✅ ADD AGE CALCULATION AND VALIDATION WHEN BIRTHDATE CHANGES
         afterChange: function(changes, source) {
             if (source === 'loadData') return;
             
@@ -110,9 +125,15 @@ function renderEntriesTable(data) {
                     changes.forEach(([row, prop, oldValue, newValue]) => {
                         console.log(`Changed: row ${row}, prop ${prop}, from "${oldValue}" to "${newValue}"`);
                         
-                        // If birthdate column changed, calculate age
-                        if (prop === 'birth_date' && newValue) {
-                            calculateAgeForTableRow(row, newValue);
+                        // If birthdate column changed, calculate age and validate
+                        if (prop === 'birth_date') {
+                            if (newValue) {
+                                calculateAgeForTableRow(row, newValue);
+                                validateTableRowAge(row);
+                            } else {
+                                // Clear age if birthdate is cleared
+                                this.setDataAtRowProp(row, 'age', '');
+                            }
                         }
                         
                         const rowData = this.getSourceDataAtRow(row);
@@ -132,6 +153,12 @@ function renderEntriesTable(data) {
                 
                 if (rowData && rowData.entry_id) {
                     console.log('✅ SUCCESS: Found entry with ID:', rowData.entry_id);
+                    
+                    // Validate age before populating form
+                    if (rowData.age !== null && rowData.age !== undefined && parseInt(rowData.age) < 3) {
+                        toastAlert("Age Restriction", "This entry has an age under 3. Please update the birthdate before editing.");
+                        return;
+                    }
                     
                     // Call the global populate function
                     if (window.populateEntryForm) {
@@ -165,7 +192,7 @@ function renderEntriesTable(data) {
 
     console.log('✅ Entries table instance created and stored globally:', window.entriesHotInstance);
 
-    // Calculate ages for existing rows with birthdates when table loads
+    // Calculate ages and validate for existing rows when table loads
     setTimeout(() => {
         const entriesTable = window.entriesHotInstance;
         if (entriesTable && entriesTable.getData) {
@@ -174,6 +201,8 @@ function renderEntriesTable(data) {
                 if (row.birth_date) {
                     calculateAgeForTableRow(index, row.birth_date);
                 }
+                // Validate age for all rows on load
+                validateTableRowAge(index);
             });
         }
         
@@ -198,6 +227,7 @@ function calculateAgeForTableRow(rowIndex, birthdate) {
         // Validate date is not in future
         if (birthDate > today) {
             console.warn('Birthdate cannot be in the future');
+            entriesTable.setDataAtRowProp(rowIndex, 'age', 'Invalid');
             return;
         }
         
@@ -214,7 +244,63 @@ function calculateAgeForTableRow(rowIndex, birthdate) {
         
     } catch (error) {
         console.error('Error calculating age:', error);
+        entriesTable.setDataAtRowProp(rowIndex, 'age', 'Error');
     }
+}
+
+// ✅ ADD THIS FUNCTION TO VALIDATE AGE IN TABLE ROWS
+function validateTableRowAge(rowIndex) {
+    const entriesTable = window.entriesHotInstance;
+    if (!entriesTable) return;
+    
+    const rowData = entriesTable.getSourceDataAtRow(rowIndex);
+    const age = rowData.age;
+    
+    // Check if age is under 3
+    if (age !== null && age !== undefined && parseInt(age) < 3) {
+        console.warn(`⚠️ Row ${rowIndex} has underage entry: ${age} years`);
+        
+        // You can add additional visual indicators here if needed
+        // The renderer in the column definition already handles the styling
+        
+        // Optional: Show a warning toast for the first underage entry found
+        if (!window.underageWarningShown) {
+            toastAlert("Age Restriction", "Some entries have ages under 3 years. These are highlighted in red.");
+            window.underageWarningShown = true;
+        }
+        
+        return false;
+    }
+    
+    return true;
+}
+
+// ✅ ADD THIS FUNCTION TO VALIDATE ALL ROWS BEFORE SAVING
+function validateAllTableAges() {
+    const entriesTable = window.entriesHotInstance;
+    if (!entriesTable) return true;
+    
+    const data = entriesTable.getData();
+    let hasUnderageEntries = false;
+    let underageCount = 0;
+    
+    data.forEach((row, index) => {
+        const age = row.age;
+        if (age !== null && age !== undefined && parseInt(age) < 3) {
+            hasUnderageEntries = true;
+            underageCount++;
+            console.warn(`Underage entry at row ${index}: ${age} years`);
+        }
+    });
+    
+    if (hasUnderageEntries) {
+        toastAlert("Age Restriction", 
+            `Found ${underageCount} entries with age under 3 years. ` +
+            "Please update the birthdates before proceeding.");
+        return false;
+    }
+    
+    return true;
 }
 
 function ensureEntriesTableScroll() {
@@ -231,6 +317,13 @@ function ensureEntriesTableScroll() {
 
 async function updateEntryInBackend(entryData) {
     try {
+        // Validate age before sending to backend
+        if (entryData.age !== null && entryData.age !== undefined && parseInt(entryData.age) < 3) {
+            console.warn(`⚠️ Preventing save for underage entry: ${entryData.age} years`);
+            toastAlert("Age Restriction", "Cannot save entry with age under 3 years. Please update the birthdate.");
+            return;
+        }
+        
         const response = await fetch('/api/save_entry_update', {
             method: 'POST',
             headers: {
@@ -257,4 +350,17 @@ async function updateEntryInBackend(entryData) {
     }
 }
 
+// ✅ ADD THIS FUNCTION TO BULK VALIDATE BEFORE BATCH OPERATIONS
+function validateEntriesBeforeBatchOperation(operationName) {
+    if (!validateAllTableAges()) {
+        toastAlert("Age Validation Failed", 
+            `Cannot ${operationName} because some entries have ages under 3 years. ` +
+            "Please fix the highlighted entries first.");
+        return false;
+    }
+    return true;
+}
+
 window.renderEntriesTable = renderEntriesTable;
+window.validateAllTableAges = validateAllTableAges;
+window.validateEntriesBeforeBatchOperation = validateEntriesBeforeBatchOperation;

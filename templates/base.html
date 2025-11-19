@@ -127,12 +127,17 @@
 <script>
         document.addEventListener("DOMContentLoaded", function() {
             const current_userLevel = {{current_user.user_level|tojson}};
+            const current_office = {{current_user.office_location|tojson}};
 
             if (current_userLevel === "admin" || current_userLevel === "superadmin") {
                 document.getElementById("declaration").removeAttribute("hidden");
                 document.getElementById("reports").removeAttribute("hidden");
                 document.getElementById("audit_trails").removeAttribute("hidden");
                 document.getElementById("accounts").removeAttribute("hidden");
+            }
+
+            if (current_office !== "Chapter") {
+                document.getElementById("claims").setAttribute("hidden", true);
             }
 
             if (localStorage.getItem("appFont")) {
