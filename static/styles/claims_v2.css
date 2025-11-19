@@ -243,6 +243,16 @@ label {
   color: white !important;
 }
 
+.btn-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-delete:hover { 
+  background: #ef4444 !important;
+  color: white !important;
+}
+
 .btn-delete:hover {
   background-color: #dc2626 !important;
 }
