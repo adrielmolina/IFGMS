@@ -756,72 +756,6 @@ function clearAllValidationErrors() {
     });
 }
 
-// ===== AUTO-SAVE FUNCTIONALITY =====
-function setupAutoSave() {
-    const entriesTable = window.entriesHotInstance;
-    if (!entriesTable) return;
-
-    // Monitor for changes in entries table
-    entriesTable.addHook('afterChange', function(changes, source) {
-        if (source === 'edit') {
-            console.log('Entries table changed, scheduling auto-save...');
-            scheduleAutoSave();
-        }
-    });
-
-    // Monitor for changes in record form fields
-    const recordFields = ['eff_date', 'loc_par', 'loc_cat', 'municipality', 'district', 'origin', 'remarks', 'tags'];
-    recordFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.addEventListener('input', scheduleAutoSave);
-            field.addEventListener('change', scheduleAutoSave);
-        }
-    });
-
-    console.log('Auto-save monitoring setup complete');
-}
-
-function scheduleAutoSave() {
-    // Clear existing timeout
-    if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-    }
-
-    // Set new timeout for auto-save (2 seconds delay)
-    autoSaveTimeout = setTimeout(() => {
-        performAutoSave();
-    }, 2000);
-}
-
-async function performAutoSave() {
-    if (isAutoSaving) return;
-    
-    const recordId = document.getElementById('record_id').value;
-    if (!recordId || recordId === '0') {
-        console.log('No record to auto-save');
-        return;
-    }
-
-    isAutoSaving = true;
-    console.log('Performing auto-save...');
-
-    try {
-        // Save record details first
-        await saveRecordDetails(false); // false = don't show toast
-        
-        // Update dispatch ready status
-        updateDispatchReadyFromEntries();
-        
-        console.log('Auto-save completed successfully');
-        
-    } catch (error) {
-        console.error('Auto-save failed:', error);
-    } finally {
-        isAutoSaving = false;
-    }
-}
-
 function updateSaveButtonState(hasChanges) {
     const saveRecordBtn = document.getElementById('save_record_details');
     const saveEntryBtn = document.getElementById('add_entry_details');
@@ -902,9 +836,6 @@ function setupEntryTableClickHandlers() {
         if (entriesTable) {
             clearInterval(checkTable);
             console.log('Entries table instance found:', entriesTable);
-            
-            // Setup auto-save monitoring
-            setupAutoSave();
             
             console.log('Entry table click handlers setup complete');
         }
@@ -1583,8 +1514,6 @@ function updateDispatchReadyFromEntries() {
         dispatchReadyCheckbox.classList.add('dispatch-ready-auto');
         dispatchReadyCheckbox.disabled = true;
         
-        // Auto-save the record since dispatch ready changed
-        scheduleAutoSave();
         
         // Show success message
         const smallText = dispatchReadyCheckbox.parentElement.querySelector('small');
@@ -2208,6 +2137,7 @@ function closeOverlayWithoutSaving() {
 
     // ===== NEW: RESET ENTRY DETAILS STATE =====
     enableEntryDetails(); 
+    updateButtonStates();
 }
 
 function saveAndCloseOverlay() {
@@ -2295,6 +2225,9 @@ async function openEmptyRecordOverlay() {
         // Show the overlay
         document.getElementById('overlay').style.display = 'flex';
         
+        // ===== NEW: DISABLE BUTTONS FOR NEW RECORD =====
+        disableArchiveAndExport();
+        
         // Scroll to top of overlay
         const overlayContent = document.getElementById('overlay-content');
         if (overlayContent) {
@@ -2305,7 +2238,7 @@ async function openEmptyRecordOverlay() {
         setTimeout(() => {
             initializeChangeTracking();
             setDistrictFromMunicipality();
-            setOriginBasedOnUser(); // This will now set the origin automatically
+            setOriginBasedOnUser();
             setLocationParticularToUppercase();
             highlightRequiredFields();
             switchToAddMode();
@@ -2387,7 +2320,6 @@ function clearRecordForm() {
     updateSaveButtonText();
 }
 
-// Update your saveRecordDetails function to reset button after save
 function saveRecordDetails(showToast = true) {
     return new Promise((resolve, reject) => {
         // Clear previous errors
@@ -2445,12 +2377,13 @@ function saveRecordDetails(showToast = true) {
                 return;
             }
             
-            // In your saveRecordDetails function, update the new record handling:
+            // Handle new record creation
             if (isNewRecord && result.record_id) {
                 document.getElementById('record_id').value = result.record_id;
                 console.log('New record created with ID:', result.record_id);
 
-                // ===== NEW: ENABLE ENTRY DETAILS AFTER SUCCESSFUL SAVE =====
+                // ===== CRITICAL: ENABLE BUTTONS AND ENTRY DETAILS AFTER SUCCESSFUL SAVE =====
+                enableArchiveAndExport();
                 enableEntryDetails();
                 
                 // Refresh the next available ID since we just used one
@@ -2461,18 +2394,20 @@ function saveRecordDetails(showToast = true) {
                 });
             }
             
+            // Reset change tracking
             hasUnsavedChanges = false;
             storeOriginalData();
             updateSaveButtonState(false);
-            updateSaveButtonText(); // Reset button text after save
+            updateSaveButtonText();
             console.log('Record saved successfully');
             
+            // Show success message
             if (showToast) {
                 const message = isNewRecord ? "Record Created Successfully!" : "Record Updated Successfully!";
                 toastSuccess(message, "The record was successfully saved.");
             }
             
-            // Refresh the table data based on current view
+            // Refresh the table data
             return refreshTableData();
         })
         .then(() => {
@@ -2734,6 +2669,8 @@ function updateCheckboxStates() {
     
     console.log('✅ Checkbox states updated - New record:', isNewRecord);
 }
+
+
 
 // Function to set maximum date for birthday field to today
 function setBirthdayMaxDate() {
@@ -3079,13 +3016,16 @@ function openRecordInOverlay(recordData) {
     // Show the overlay
     document.getElementById('overlay').style.display = 'flex';
 
+    // ===== CRITICAL: ENABLE BUTTONS FOR EXISTING RECORD =====
+    enableArchiveAndExport();
+
     // Scroll to top of overlay
     const overlayContent = document.getElementById('overlay-content');
     if (overlayContent) {
         overlayContent.scrollTop = 0;
     }
 
-    // Initialize change tracking AFTER a longer delay to ensure form is fully populated
+    // Initialize change tracking AFTER a delay to ensure form is fully populated
     setTimeout(() => {
         console.log('=== INITIALIZING CHANGE TRACKING (DELAYED) ===');
         
@@ -3103,10 +3043,10 @@ function openRecordInOverlay(recordData) {
         highlightRequiredFields();
         setBirthdayMaxDate();
 
-        // ===== NEW: ENABLE ENTRY DETAILS FOR EXISTING RECORD =====
+        // ===== CRITICAL: ENABLE ENTRY DETAILS FOR EXISTING RECORD =====
         enableEntryDetails();
         
-        // ===== NEW: UPDATE CHECKBOX STATES =====
+        // ===== UPDATE CHECKBOX STATES =====
         updateCheckboxStates();
         
         // Make sure we're in add mode initially (hide back button)
@@ -3122,7 +3062,7 @@ function openRecordInOverlay(recordData) {
         console.log('Municipality final:', document.getElementById('municipality').value);
         console.log('District final:', document.getElementById('district').value);
         console.log('Save button state after initialization:');
-    }, 500); // Increased to 500ms to ensure everything is loaded
+    }, 500);
 
     // Fetch entries for this record
     fetch(`/api/members/${recordData.record_id}/entries`)
@@ -3333,6 +3273,56 @@ function exportCurrentRecordToExcel() {
             exportBtn.disabled = false;
             toastError("Export Failed", "Failed to export entries. Please try again.");
         });
+}
+
+// ===== BUTTON STATE MANAGEMENT =====
+function disableArchiveAndExport() {
+    const archiveBtn = document.querySelector('.delete_record');
+    const exportBtn = document.querySelector('.btn-export');
+    
+    if (archiveBtn) {
+        archiveBtn.disabled = true;
+        archiveBtn.title = "Save the record first to enable archiving";
+    }
+    
+    if (exportBtn) {
+        exportBtn.disabled = true;
+        exportBtn.title = "Save the record first to enable export";
+    }
+    
+    console.log('🛑 Archive and Export buttons disabled');
+}
+
+function enableArchiveAndExport() {
+    const archiveBtn = document.querySelector('.delete_record');
+    const exportBtn = document.querySelector('.btn-export');
+    
+    if (archiveBtn) {
+        archiveBtn.disabled = false;
+        archiveBtn.title = "Archive this record";
+    }
+    
+    if (exportBtn) {
+        exportBtn.disabled = false;
+        exportBtn.title = "Export to Excel";
+    }
+    
+    console.log('✅ Archive and Export buttons enabled');
+}
+
+// Function to check if record is new (unsaved)
+function isNewRecord() {
+    const recordId = document.getElementById('record_id').value;
+    return recordId == nextRecordId || recordId === '0' || recordId === '';
+}
+
+// Update button states based on record status
+function updateButtonStates() {
+    if (isNewRecord()) {
+        disableArchiveAndExport();
+    } else {
+        enableArchiveAndExport();
+    }
 }
 
 function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
@@ -3678,23 +3668,6 @@ function getDispatchReadyRecords() {
     return dispatchReadyRecords;
 }
 
-// Optional: Add a function to show which records will be added (for user confirmation)
-function confirmDispatchReadyRecords() {
-    const dispatchReadyRecords = getDispatchReadyRecords();
-    
-    if (dispatchReadyRecords.length === 0) {
-        return false; // No records to add
-    }
-    
-    // Get the record details for the confirmation message
-    const dataSource = isArchiveView ? archiveFilteredData : filteredData;
-    const recordDetails = dataSource
-        .filter(record => dispatchReadyRecords.includes(record.record_id))
-        .map(record => `• ${record.location_particular} (ID: ${record.record_id})`)
-        .join('\n');
-    
-    return confirm(`The following ${dispatchReadyRecords.length} dispatch-ready records will be added to dispatch:\n\n${recordDetails}\n\nContinue?`);
-}
 
 // Enhanced Add to Dispatch with detailed debugging
 document.getElementById('add_to_dispatch').addEventListener('click', function() {
@@ -3809,24 +3782,6 @@ function getDispatchReadyUndeclaredRecords() {
     
     console.log(`🎯 Total RECORD-LEVEL dispatch-ready, undeclared records found: ${dispatchReadyRecords.length}`);
     return dispatchReadyRecords;
-}
-
-// Optional: Enhanced confirmation dialog
-function confirmDispatchReadyRecords() {
-    const dispatchReadyRecords = getDispatchReadyUndeclaredRecords();
-    
-    if (dispatchReadyRecords.length === 0) {
-        return false; // No records to add
-    }
-    
-    // Get the record details for the confirmation message
-    const dataSource = isArchiveView ? archiveFilteredData : filteredData;
-    const recordDetails = dataSource
-        .filter(record => dispatchReadyRecords.includes(record.record_id))
-        .map(record => `• ${record.location_particular} (ID: ${record.record_id}) - Ready: ${record.dispatch_ready}, Declared: ${record.declared}`)
-        .join('\n');
-    
-    return confirm(`The following ${dispatchReadyRecords.length} dispatch-ready, undeclared records will be added to dispatch:\n\n${recordDetails}\n\nContinue?`);
 }
 
 // Function to get selected records from the table
@@ -4035,9 +3990,6 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 updateRecordPaidFromEntries();
             }, 100);
-            
-            // Also trigger auto-save since this affects paid status
-            scheduleAutoSave();
         });
     }
 
@@ -4052,9 +4004,6 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 updateRecordPaidFromEntries();
             }, 100);
-            
-            // Also trigger auto-save since this affects dispatch ready status
-            scheduleAutoSave();
         });
     }
     
@@ -4409,5 +4358,232 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ MAAB No Dropdown system initialized successfully');
 });
 
+function showDispatchReadyModal() {
+    const dispatchReadyRecords = getDispatchReadyUndeclaredRecords();
+    
+    if (dispatchReadyRecords.length === 0) {
+        toastAlert("No Dispatch-Ready Records", 
+            "No records are marked as dispatch-ready and undeclared. " +
+            "Please ensure records have all entries paid, are marked as dispatch-ready, and are not yet declared.");
+        return;
+    }
+
+    // Get record details for display - USE THE entries_count FIELD THAT'S ALREADY IN YOUR DATA
+    const dataSource = isArchiveView ? archiveFilteredData : filteredData;
+    const recordDetails = dataSource
+        .filter(record => dispatchReadyRecords.includes(record.record_id))
+        .map(record => {
+            // Use the entries_count that should be in your record data
+            // If entries_count doesn't exist, fall back to 0
+            const entryCount = record.entries_count !== undefined ? record.entries_count : 0;
+            
+            console.log(`Record ${record.record_id}: entries_count = ${record.entries_count}`); // Debug log
+            
+            return {
+                id: record.record_id,
+                location: record.location_particular,
+                year: record.year,
+                municipality: record.municipality,
+                entries: entryCount, // Use the count from your existing data
+                origin: record.origin || 'N/A'
+            };
+        });
+
+    console.log("Record details for modal:", recordDetails); // Debug log
+
+    // Create modal HTML with the updated data
+    const modalHTML = `
+        <div class="dispatch-records-modal" id="dispatchRecordsModal">
+            <div class="dispatch-modal">
+                <div class="dispatch-header">
+                    <h3><i class="fa-solid fa-list-check"></i> Add Records to Dispatch</h3>
+                    <button class="close-dispatch-modal">&times;</button>
+                </div>
+                
+                <div class="dispatch-content">
+                    <div class="dispatch-summary">
+                        Found <strong>${dispatchReadyRecords.length}</strong> dispatch-ready records ready to be added to the current dispatch.
+                    </div>
+                    
+                    <div class="dispatch-records-list">
+                        ${recordDetails.map(record => `
+                            <div class="dispatch-record-item">
+                                <div class="record-info">
+                                    <strong>${record.location}</strong>
+                                    <div class="record-details">
+                                        <span>ID: ${record.id}</span>
+                                        <span>Year: ${record.year}</span>
+                                        <span>Municipality: ${record.municipality}</span>
+                                        <span>Origin: ${record.origin}</span>
+                                        <span>Entries: ${record.entries}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="dispatch-footer">
+                    <button id="confirmAddToDispatch" class="btn btn-primary">
+                        <i class="fa-solid fa-list"></i> Add ${dispatchReadyRecords.length} Records to Dispatch
+                    </button>
+                    <button id="cancelAddToDispatch" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove any existing modal first
+    const existingModal = document.getElementById('dispatchRecordsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Show modal
+    const modal = document.getElementById('dispatchRecordsModal');
+    modal.style.display = 'flex';
+
+    // Setup event listeners
+    setupDispatchModalEvents(dispatchReadyRecords);
+}
+
+// Function to setup modal events (updated to match declaration behavior)
+function setupDispatchModalEvents(dispatchReadyRecords) {
+    const modal = document.getElementById('dispatchRecordsModal');
+    
+    if (!modal) {
+        console.error('❌ Modal not found');
+        return;
+    }
+
+    const closeBtn = modal.querySelector('.close-dispatch-modal');
+    const confirmBtn = modal.querySelector('#confirmAddToDispatch');
+    const cancelBtn = modal.querySelector('#cancelAddToDispatch');
+
+    // Close modal functions - FIXED: Better cleanup
+    function closeModal() {
+        if (modal) {
+            modal.style.display = 'none';
+            // Use setTimeout to ensure the animation completes
+            setTimeout(() => {
+                if (modal && modal.parentNode) {
+                    modal.parentNode.removeChild(modal);
+                }
+            }, 300);
+        }
+    }
+
+    // Close button
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+
+    // Cancel button
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeModal);
+    }
+
+    // Confirm button
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding to Dispatch...';
+            this.disabled = true;
+
+            console.log(`🚀 Sending ${dispatchReadyRecords.length} records to API:`, dispatchReadyRecords);
+
+            // Call the API to add records to dispatch
+            fetch('/api/add_to_dispatch', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    record_ids: dispatchReadyRecords,
+                    action: 'add_entries_to_dispatch',
+                    debug: true
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log("📡 API Response data:", result);
+                
+                closeModal(); // Close modal regardless of result
+                
+                if (result.success) {
+                    if (result.added_to_dispatch_count > 0) {
+                        toastSuccess("Records Added to Dispatch", 
+                            `Successfully added ${result.added_to_dispatch_count} dispatch-ready records to the current dispatch.`);
+                    } else {
+                        toastAlert("No Records Added", 
+                            `Found ${dispatchReadyRecords.length} dispatch-ready records, but none were added. ` +
+                            `They may already be in the dispatch or have issues. Check console for details.`);
+                    }
+                    // Refresh the table to show updated dispatch status
+                    refreshTableData();
+                } else {
+                    toastError("Add to Dispatch Failed", result.error || "Failed to add records to dispatch.");
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error adding to dispatch:', error);
+                closeModal();
+                toastError("Error", "An error occurred while adding records to dispatch: " + error.message);
+            })
+            .finally(() => {
+                // Restore button state in case of error
+                if (confirmBtn) {
+                    confirmBtn.innerHTML = originalText;
+                    confirmBtn.disabled = false;
+                }
+            });
+        });
+    }
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === "Escape" && modal && modal.style.display === 'flex') {
+            closeModal();
+        }
+    });
+}
+
+// Single event listener for add_to_dispatch button
+document.getElementById('add_to_dispatch').addEventListener('click', function(e) {
+    // Prevent any default behavior that might show browser prompt
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (this.disabled) {
+        toastAlert("No Active Dispatch", "Please create an active dispatch first before adding records.");
+        return;
+    }
+
+    // Show the modal instead of direct confirmation
+    showDispatchReadyModal();
+});
+
+// Also prevent any default form submission behavior
+document.addEventListener('DOMContentLoaded', function() {
+    // Prevent any form submission that might trigger browser prompts
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+});
 </script>
 {% endblock %}

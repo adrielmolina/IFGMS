@@ -846,6 +846,16 @@ def get_members():
         for record in member_records:
             try:
                 record_dict = record.to_dict()
+                
+                # ADD ENTRY COUNT TO EACH RECORD
+                record_id = record_dict.get('record_id')
+                if record_id:
+                    # Get entry count for this record
+                    entries = db_conn.get_entries(record_id)
+                    record_dict['entries_count'] = len(entries) if entries else 0
+                else:
+                    record_dict['entries_count'] = 0
+                    
                 records_list.append(record_dict)
             except Exception as e:
                 print(f"DEBUG: Error converting record to dict: {e}")

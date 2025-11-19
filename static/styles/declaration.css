@@ -1016,3 +1016,109 @@ small {
     width: 100%;
   }
 }
+
+/* ========================================================= */
+/* TRANSMIT CONFIRMATION MODAL STYLES                       */
+/* ========================================================= */
+
+.confirmation-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+}
+
+.confirmation-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+}
+
+.confirmation-text h4 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.confirmation-text p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.dispatch-details-summary {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.summary-value {
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Button styles for confirmation modal */
+.dispatch-footer .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.dispatch-footer .btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.dispatch-footer .btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.dispatch-footer .btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.dispatch-footer .btn-secondary:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
