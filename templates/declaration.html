@@ -407,6 +407,71 @@
     </button>
 </div>
 
+<!-- Transmit Confirmation Modal Overlay -->
+<div class="dispatch-overlay" id="transmitConfirmationOverlay" style="display: none;">
+  <div class="dispatch-modal">
+    <div class="dispatch-header">
+      <h3>
+        <i class="fa-solid fa-paper-plane"></i>
+        {% if current_user.office_location == 'Chapter' %}
+          Confirm Declaration
+        {% elif current_user.office_location in ['Dasmarinas', 'Silang'] %}
+          Confirm Dispatch Transmission
+        {% else %}
+          Confirm Action
+        {% endif %}
+      </h3>
+      <button class="close-btn" onclick="closeTransmitConfirmation()">&times;</button>
+    </div>
+    
+    <div class="dispatch-content">
+      <div class="confirmation-message">
+        <div class="confirmation-icon">
+          <i class="fa-solid fa-circle-question"></i>
+        </div>
+        <div class="confirmation-text">
+          <h4>Are you sure you want to proceed?</h4>
+          <p id="transmitConfirmationText">
+            This will transmit the entire dispatch containing <span id="dispatchEntryCount">0</span> entries.
+            This action cannot be undone.
+          </p>
+        </div>
+      </div>
+      
+      <div class="dispatch-details-summary">
+        <div class="summary-item">
+          <span class="summary-label">Dispatch ID:</span>
+          <span class="summary-value" id="modalDispatchId">{{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Total Entries:</span>
+          <span class="summary-value" id="modalTotalEntries">{{ active_dispatch.dispatch_total if active_dispatch else '0' }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Dispatch Type:</span>
+          <span class="summary-value">{{ active_dispatch.dispatch_type if active_dispatch else 'N/A' }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dispatch-footer">
+      <button type="button" class="btn btn-primary" onclick="confirmTransmit()">
+        <i class="fa-solid fa-check"></i>
+        {% if current_user.office_location == 'Chapter' %}
+          Yes, Declare
+        {% elif current_user.office_location in ['Dasmarinas', 'Silang'] %}
+          Yes, Transmit
+        {% else %}
+          Yes, Proceed
+        {% endif %}
+      </button>
+      <button type="button" class="btn btn-secondary" onclick="closeTransmitConfirmation()">
+        <i class="fa-solid fa-xmark"></i> Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -479,7 +544,7 @@ function updateCreateDispatchButton() {
     }
 }
 
-// ✅ Prevent clicks on disabled create button
+// ✅ Update the transmit button event listener
 function setupEventListeners() {
     // Create Dispatch button event listener with disabled state handling
     const createBtn = document.getElementById('btn_create_dispatch');
@@ -495,10 +560,10 @@ function setupEventListeners() {
         });
     }
     
-    // Transmit button event listener
+    // Transmit button event listener - UPDATED TO USE MODAL
     const transmitBtn = document.querySelector('.btn.transmit');
     if (transmitBtn) {
-        transmitBtn.addEventListener('click', transmitDispatch);
+        transmitBtn.addEventListener('click', openTransmitConfirmation); // Changed from transmitDispatch to openTransmitConfirmation
     }
     
     // Remove button event listener
@@ -771,13 +836,14 @@ async function submitDispatchForm() {
 }
 
 
-// Update setupOverlayListeners to include create overlay
+// ✅ Update overlay listeners to include transmit confirmation modal
 function setupOverlayListeners() {
     console.log("🔧 Setting up overlay listeners");
     
     // Close overlays when clicking outside content
     const editOverlay = document.getElementById('editDispatchOverlay');
     const createOverlay = document.getElementById('createDispatchOverlay');
+    const transmitOverlay = document.getElementById('transmitConfirmationOverlay');
     
     if (editOverlay) {
         editOverlay.addEventListener('click', function(e) {
@@ -795,13 +861,39 @@ function setupOverlayListeners() {
         });
     }
 
+    if (transmitOverlay) {
+        transmitOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeTransmitConfirmation();
+            }
+        });
+    }
+
     // Close with Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeEditOverlay();
             closeCreateOverlay();
+            closeTransmitConfirmation();
         }
     });
+}
+
+function updateTransmitButtonText() {
+    const transmitBtn = document.querySelector('.btn.transmit');
+    if (transmitBtn) {
+        const userLocation = '{{ current_user.office_location }}';
+        if (userLocation === 'Chapter') {
+            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Declare';
+        } else if (['Dasmarinas', 'Silang'].includes(userLocation)) {
+            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Transmit';
+        } else {
+            transmitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Action';
+        }
+        
+        // Ensure the button is always enabled for modal access
+        transmitBtn.disabled = false;
+    }
 }
 
 function initializeCheckboxListeners() {
@@ -1572,7 +1664,76 @@ function updateSummary() {
     summaryText.textContent = `Showing ${start} to ${end} of ${total} entries • ${checkedCount} selected`;
 }
 
-async function transmitDispatch() {
+// ✅ Open Transmit Confirmation Modal
+function openTransmitConfirmation() {
+    console.log("🎯 Opening transmit confirmation modal");
+    
+    // Check if there's an active dispatch
+    if (!mainTableData || mainTableData.length === 0) {
+        toastError('Error', 'No entries found in dispatch. Please add entries to dispatch first.');
+        return;
+    }
+
+    try {
+        const overlay = document.getElementById('transmitConfirmationOverlay');
+        if (!overlay) {
+            throw new Error('Transmit confirmation overlay not found');
+        }
+        
+        // Update modal content with current dispatch info
+        const entryCount = mainTableData.length;
+        document.getElementById('dispatchEntryCount').textContent = entryCount;
+        document.getElementById('modalTotalEntries').textContent = entryCount;
+        document.getElementById('modalDispatchId').textContent = 
+            "{{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}";
+        
+        // Update confirmation text based on user location
+        const confirmationText = document.getElementById('transmitConfirmationText');
+        const userLocation = '{{ current_user.office_location }}';
+        
+        if (userLocation === 'Chapter') {
+            confirmationText.innerHTML = `This will declare the entire dispatch containing <span id="dispatchEntryCount">${entryCount}</span> entries. This action cannot be undone.`;
+        } else if (['Dasmarinas', 'Silang'].includes(userLocation)) {
+            confirmationText.innerHTML = `This will transmit the entire dispatch containing <span id="dispatchEntryCount">${entryCount}</span> entries. This action cannot be undone.`;
+        } else {
+            confirmationText.innerHTML = `This will process the entire dispatch containing <span id="dispatchEntryCount">${entryCount}</span> entries. This action cannot be undone.`;
+        }
+        
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        console.log("✅ Transmit confirmation modal opened successfully");
+        
+    } catch (error) {
+        console.error('❌ Error opening transmit confirmation modal:', error);
+        toastError('Error', 'Cannot open confirmation modal. Please try again.');
+    }
+}
+
+// ✅ Close Transmit Confirmation Modal
+function closeTransmitConfirmation() {
+    console.log("🎯 Closing transmit confirmation modal");
+    try {
+        const overlay = document.getElementById('transmitConfirmationOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    } catch (error) {
+        console.error('Error closing transmit confirmation modal:', error);
+    }
+}
+
+// ✅ Confirm and Execute Transmission
+async function confirmTransmit() {
+    console.log("✅ User confirmed transmission");
+    closeTransmitConfirmation();
+    
+    // Execute the original transmit function
+    await executeTransmitDispatch();
+}
+
+// ✅ Updated transmit function (renamed from original)
+async function executeTransmitDispatch() {
     console.log("Starting transmission process for entire dispatch...");
     
     // Debug current state
@@ -1620,10 +1781,6 @@ async function transmitDispatch() {
     } catch (error) {
         console.error("❌ Error checking dispatch state:", error);
         toastError('Error', 'Failed to check dispatch status: ' + error.message);
-        return;
-    }
-
-    if (!confirm(`Are you sure you want to transmit this dispatch? This will mark ${mainTableData.length} entries as declared.`)) {
         return;
     }
 

@@ -838,6 +838,12 @@ def get_member_filter_options():
         origins = db_session.query(models.Records.origin).distinct().filter(models.Records.origin.isnot(None)).order_by(models.Records.origin).all()
         origins_list = [origin[0] for origin in origins]
         
+        # Ensure current user's office location is in the origins list
+        user_location = current_user.office_location if current_user else None
+        if user_location and user_location not in origins_list:
+            origins_list.append(user_location)
+            origins_list.sort()
+        
         return jsonify({
             'years': years_list,
             'origins': origins_list
@@ -995,6 +1001,16 @@ def get_members():
         for record in member_records:
             try:
                 record_dict = record.to_dict()
+                
+                # ADD ENTRY COUNT TO EACH RECORD
+                record_id = record_dict.get('record_id')
+                if record_id:
+                    # Get entry count for this record
+                    entries = db_conn.get_entries(record_id)
+                    record_dict['entries_count'] = len(entries) if entries else 0
+                else:
+                    record_dict['entries_count'] = 0
+                    
                 records_list.append(record_dict)
             except Exception as e:
                 print(f"DEBUG: Error converting record to dict: {e}")
@@ -1120,28 +1136,75 @@ def get_used_maab_numbers():
 def archive_record():
     try:
         data = request.get_json()
+        print(f"🔍 ARCHIVE RECORD API CALLED - Data: {data}")
+        
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+        
         record_id = data.get('record_id')
         
         if not record_id:
-            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record Failed', 'No record ID provided', current_user.account_id)
             return jsonify({"success": False, "error": "No record ID provided"}), 400
         
-        # Use the new function that handles both archiving and logging in one session
+        print(f"🔄 Archiving record: {record_id}")
+
+        # Use the archive function
         success = db_conn.archive_member_record_with_log(record_id, current_user.account_id)
         
         if success:
-            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record', f'Archived record ID: {record_id}', current_user.account_id)
-            return jsonify({"success": True})
+            print(f"✅ Record {record_id} archived successfully")
+            return jsonify({
+                "success": True, 
+                "message": "Record archived successfully"
+            })
         else:
-            db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record Failed', f'Failed to archive record ID: {record_id}', current_user.account_id)
-            return jsonify({"success": False, "error": "Failed to archive record"}), 500
+            print(f"❌ Failed to archive record {record_id}")
+            return jsonify({
+                "success": False, 
+                "error": "Failed to archive record - record not found or already archived"
+            }), 500
             
     except Exception as e:
-        print(f"Error archiving record: {e}")
+        print(f"❌ Error archiving record: {e}")
         import traceback
         traceback.print_exc()
-        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Archive Record Error', f'Error: {str(e)}', current_user.account_id)
-        return jsonify({"success": False, "error": "Internal server error"}), 500
+        return jsonify({
+            "success": False, 
+            "error": f"Internal server error: {str(e)}"
+        }), 500
+    
+@server.route('/api/debug/archive_check/<int:record_id>', methods=['GET'])
+@login_required
+def debug_archive_check(record_id):
+    """Debug route to check if a record can be archived"""
+    try:
+        db_session = SessionLocal()
+        
+        # Check if record exists
+        record = db_session.query(models.Records).filter_by(record_id=record_id).first()
+        
+        if not record:
+            return jsonify({
+                "success": False,
+                "error": f"Record {record_id} not found",
+                "exists": False
+            })
+        
+        return jsonify({
+            "success": True,
+            "record_exists": True,
+            "record_id": record.record_id,
+            "current_status": record.status,
+            "can_be_archived": record.status != 'archived'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+    finally:
+        db_session.close()
     
 @server.route('/api/add_record', methods=['POST'])
 def add_new_record():
