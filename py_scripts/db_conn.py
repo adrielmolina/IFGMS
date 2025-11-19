@@ -27,6 +27,9 @@ else:
 # FOR AIVEN DB CONNECTION
 AIVEN_URI = os.getenv('AIVEN_URI')
 
+# FOR RAILWAY DB CONNECTION
+RAILWAY_URI = os.getenv('RAILWAY_URI')
+
 # FOR LOCAL DB CONNECTION
 SQL_HOST = os.getenv('SQL_HOST')
 SQL_USER = os.getenv('SQL_USER')
@@ -51,6 +54,12 @@ def conn_init():
             
             db_url = f"{AIVEN_URI}&ssl_ca={ca_path}"
             print(f"Connecting to Aiven DB")
+        
+        elif DB_CONNECTION_MODE == "railway":
+            # Convert mysql:// to mysql+pymysql:// for SQLAlchemy
+            formatted_url = RAILWAY_URI.replace("mysql://", "mysql+pymysql://")
+            db_url = formatted_url
+            print("Connecting to Railway DB")
         
         else:  # local connection
             db_url = f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}/{SQL_DB}"
