@@ -17,16 +17,79 @@
 
     <link rel="stylesheet" href="/static/styles/toast.css">
     <script src="/static/js/toast.js"></script>
+    
+    <style>
+        .required-field::after {
+            content: " *";
+            color: #ff0000;
+            font-weight: bold;
+        }
+        
+        .error-message {
+            color: #ff0000;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .input-error {
+            border-color: #ff0000 !important;
+            background-color: #fff5f5 !important;
+        }
+    </style>
 {% endblock %}
 
 
 {% block content %}
     <div class="module_name">
         <h1>Accounts</h1>
-    </div>
     
-  
-    <div class="pending-requests-wrapper">
+    <!-- Move Active Accounts search bar here -->
+    <div class="search_box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="active_search" placeholder="Search..." autocomplete="off">
+        <button id="active_clear_search"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+</div>
+
+<!-- Move buttons here -->
+<div id="btn_row_active" class="filter_search_container">
+    <!-- Left side - Filters -->
+    <div class="filters-left">
+        <select id="accountTypeFilter" class="filter-select">
+            <option value="">All Account Types</option>
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+            <option value="superadmin">Super Admin</option>
+        </select>
+        
+        <select id="officeFilter" class="filter-select">
+            <option value="">All Offices</option>
+            <option value="Chapter">Chapter</option>
+            <option value="Dasmarinas">Dasmarinas</option>
+            <option value="Silang">Silang</option>
+        </select>
+
+        <button onclick="resetFilters()" class="btn-reset" style="font-size: 14px;">
+            <i class="fa-solid fa-arrow-rotate-left"></i> Reset Filters
+        </button>
+        </div>
+    
+<!-- Right side - Buttons  -->
+<div class="buttons-right">
+    <button id="create" name="action" value="create">
+        <i class="fa-solid fa-user-plus"></i> NEW ACCOUNT
+    </button>
+    <button id="archive" name="archive" value="archive" disabled style="opacity: 0.5; cursor: not-allowed;">
+        <i class="fa-solid fa-box-archive"></i> ARCHIVE
+    </button>
+    <button id="reset" name="reset" value="reset" title="This will set the password to Current Year + Current Month + user's initials" disabled style="opacity: 0.5; cursor: not-allowed;">
+        <i class="fa-solid fa-key"></i> RESET PASSWORD ⓘ
+    </button>
+</div>
+</div>
+
+    <div class="pending-requests-wrapper" hidden>
                     <div class="table-top">
                 <label>
                     Show
@@ -46,6 +109,8 @@
             <input type="text" id="pending_search" placeholder="Search..." autocomplete="off">
             <button id="pending_clear_search"><i class="fa-solid fa-xmark"></i></button>
         </div>
+    
+        
 
         <!-- Table layout -->
         <div class="table-container">
@@ -58,11 +123,6 @@
         </div>
     </div>
 </div>
-
-        <div id="btn_row_pending" class="btn_row">
-        <button id="approve" name="action" value="approve">APPROVE</button>
-        <button id="decline" name="action" value="decline">DECLINE</button>
-    </div>
     
 <div class="active-requests-wrapper">
                 <div class="table-top">
@@ -79,11 +139,6 @@
             </div>
     <div class="audit-logs_table full" spellcheck="false">
         <h4>Active Accounts</h4>
-        <div class="search_box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="active_search" placeholder="Search..." autocomplete="off">
-            <button id="active_clear_search"><i class="fa-solid fa-xmark"></i></button>
-        </div>
 
         <div class="table-container">
 
@@ -96,99 +151,85 @@
     </div>
 </div>
 
-    <div id="btn_row_active" class="btn_row">
-        <button id="create" name="action" value="create">NEW ACCOUNT</button>
-        <button id="archive" name="archive" value="archive">ARCHIVE</button>
-        <button id="reset" name="reset" value="reset" title="This will set the password to the user's Birthdate(YYYYMMDD)+initials">RESET PASSWORD ⓘ</button>
-    </div>
     
-    <div id="overlay" class="overlay">
-        <div id="overlay-content" class="overlay-content">
-            <span id="close-overlay" class="close-overlay">&times;</span>
-            <div id="overlay-body" class="overlay-body">
-                <!-- TODO disable autocomplte in all fields -  autocomplete="off" -->
-                <!-- TODO set all input field as required -->
-                <!-- TODO fix the route address for ID -->
-                <form id="account_info">
-                        <legend>&nbsp;CREATE ACCOUNT&nbsp;</legend>
+<div id="overlay" class="overlay">
+    <div id="overlay-content" class="overlay-content">
+        <span id="close-overlay" class="close-overlay">&times;</span>
+        <div id="overlay-body" class="overlay-body">
+            <form id="account_info">
+                    <legend>&nbsp;CREATE ACCOUNT&nbsp;</legend>
 
-
-                        <div class="parent">
-                            <div class="div1">
-                                <label for="fname">First Name</label>
-                                <input type="text" id="fname" name="fname" required autocomplete="off">
-                            </div>
-                            <div class="div2">
-                                <label for="mname">Middle Name</label>
-                                <input type="text" id="mname" name="mname" required autocomplete="off">
-                            </div>
-                            <div class="div3">
-                                <label for="lname">Last Name</label>
-                                <input type="text" id="lname" name="lname" required autocomplete="off">
-                            </div>
-                            <div class="div4">
-                                <label for="suffix">Suffix</label>
-                                <select name="suffix" id="suffix">
-                                    <option value="NA">NA</option>
-                                    <option value="Jr">Jr</option>
-                                    <option value="Sr">Sr</option>
-                                    <option value="II">II</option>
-                                    <option value="III">III</option>
-                                    <option value="IV">IV</option>
-                                    <option value="V">V</option>
-                                    <option value="VI">VI</option>
-                                    <option value="VII">VII</option>
-                                </select>
-                            </div>
-                            <div class="div14">
-                                <label for="bdate">Birthdate</label>
-                                <input type="date" id="bdate" name="bdate" required>
-                            </div>
-                            <div class="div15">
-                                <label for="contact_no">Contact No.</label>
-
-                                <span>
-                                    <input type="text" value="+63" readonly
-                                        style="width: 20%;">
-                                    <input type="text" id="contact_no" name="contact_no"
-                                        pattern="\d{10}" maxlength="10" required autocomplete="off" style="width: 78%;">
-                                </span>
-                                <!-- TODO use javascript to enforce number only -->
-                            </div>
-                            <div class="div16">
-                                <label for="email">Email Address</label>
-                                <input type="text" id="email" name="email" required autocomplete="off">
-                            </div>
-                            <div class="div17">
-                                <label for="username">Username</label>
-                                <input type="text" id="username" name="username" required autocomplete="off">
-                                <!-- TODO add check if username exists -->
-                            </div>
-                            <div class="div18">
-                                <label for="password">Password</label>
-                                <input type="password" id="password" name="password" required autocomplete="off">
-                            </div>
-                            <div class="div19">
-                                <label for="conf_password">Confirm Password</label>
-                                <input type="password" id="conf_password" name="conf_password" required autocomplete="off">
-                                <!-- TODO validate with js if the same password input -->
-                            </div>
-                            <div class="div20">
-                                <label for="branch">Office Branch</label>
-                                <select name="branch" id="branch">
-                                    <option value="chapter">Cavite Chapter</option>
-                                    <option value="dasma">Dasmariñas</option>
-                                    <option value="silang">Silang</option>
-                                </select>
-                            </div>
-                            <div class="div21">
-                                <button id="create_account_btn" type="button">CREATE ACCOUNT</button>   
-                            </div>
-                        </div>                                                     
-                </form>
-            </div>
+                    <div class="parent">
+                        <div class="div1">
+                            <label for="fname" class="required-field">First Name</label>
+                            <input type="text" id="fname" name="fname" required autocomplete="off">
+                            <div class="error-message" id="fname-error">First name is required</div>
+                        </div>
+                        <div class="div2">
+                            <label for="mname">Middle Name</label>
+                            <input type="text" id="mname" name="mname" autocomplete="off">
+                        </div>
+                        <div class="div3">
+                            <label for="lname" class="required-field">Last Name</label>
+                            <input type="text" id="lname" name="lname" required autocomplete="off">
+                            <div class="error-message" id="lname-error">Last name is required</div>
+                        </div>
+                        <div class="div4">
+                            <label for="suffix">Suffix</label>
+                            <select name="suffix" id="suffix">
+                                <option value="NA">NA</option>
+                                <option value="Jr">Jr</option>
+                                <option value="Sr">Sr</option>
+                                <option value="II">II</option>
+                                <option value="III">III</option>
+                                <option value="IV">IV</option>
+                                <option value="V">V</option>
+                                <option value="VI">VI</option>
+                                <option value="VII">VII</option>
+                            </select>
+                        </div>
+                        <div class="div14">
+                            <label for="bdate" class="required-field">Birthdate</label>
+                            <input type="date" id="bdate" name="bdate" required>
+                            <div class="error-message" id="bdate-error">Birthdate is required</div>
+                        </div>
+                        <div class="div15">
+                            <label for="contact_no" class="required-field">Contact No.</label>
+                            <span>
+                                <input type="text" value="+63" readonly style="width: 20%;">
+                                <input type="text" id="contact_no" name="contact_no" pattern="\d{10}" maxlength="10" required autocomplete="off" style="width: 78%;">
+                            </span>
+                            <div class="error-message" id="contact_no-error">Contact number is required (10 digits)</div>
+                        </div>
+                        <div class="div16">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" autocomplete="off">
+                            <div class="error-message" id="email-error">Please enter a valid email address</div>
+                        </div>
+                        <div class="div17">
+                            <label for="username" class="required-field">Username</label>
+                            <input type="text" id="username" name="username" required autocomplete="off">
+                            <div class="error-message" id="username-error">Username is required</div>
+                        </div>
+                        <!-- REMOVED PASSWORD FIELDS -->
+                        <div class="div20">
+                            <label for="branch" class="required-field">Office Branch</label>
+                            <select name="branch" id="branch" required>
+                                <option value="">Select Branch</option>
+                                <option value="chapter">Cavite Chapter</option>
+                                <option value="dasma">Dasmariñas</option>
+                                <option value="silang">Silang</option>
+                            </select>
+                            <div class="error-message" id="branch-error">Please select an office branch</div>
+                        </div>
+                        <div class="div21">
+                            <button id="create_account_btn" type="button" disabled style="opacity: 0.5; cursor: not-allowed;">CREATE ACCOUNT</button>   
+                        </div>
+                    </div>                                                     
+            </form>
         </div>
     </div>
+</div>
 
 {% endblock %}
 
@@ -196,6 +237,157 @@
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // ====================== VARIABLES ======================
+    let archiveBtn = document.getElementById('archive');
+    let resetBtn = document.getElementById('reset');
+    let createAccountBtn = document.getElementById('create_account_btn');
+
+    // ====================== BUTTON STATE MANAGEMENT ======================
+    function updateButtonStates() {
+        const selectedActive = activeTable.getSelectedData().length > 0;
+        
+        if (archiveBtn) {
+            archiveBtn.disabled = !selectedActive;
+            archiveBtn.style.opacity = selectedActive ? '1' : '0.5';
+            archiveBtn.style.cursor = selectedActive ? 'pointer' : 'not-allowed';
+        }
+        
+        if (resetBtn) {
+            resetBtn.disabled = !selectedActive;
+            resetBtn.style.opacity = selectedActive ? '1' : '0.5';
+            resetBtn.style.cursor = selectedActive ? 'pointer' : 'not-allowed';
+        }
+    }
+
+    // ====================== PASSWORD RESET LOGIC ======================
+    function generateDefaultPassword(firstName, lastName) {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+        const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        
+        return `${currentYear}${currentMonth}${initials}`;
+    }
+
+    // ====================== FORM VALIDATION ======================
+    function validateForm(showErrors = false) {
+        const requiredFields = [
+            {id: 'fname', name: 'First Name'},
+            {id: 'lname', name: 'Last Name'},
+            {id: 'contact_no', name: 'Contact Number'},
+            {id: 'username', name: 'Username'},
+            {id: 'branch', name: 'Office Branch'}
+        ];
+        
+        let isValid = true;
+        
+        if (showErrors) {
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('.input-error').forEach(el => {
+                el.classList.remove('input-error');
+            });
+        }
+        
+        // Validate required fields
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (!element.value.trim()) {
+                isValid = false;
+                if (showErrors) {
+                    element.classList.add('input-error');
+                    const errorEl = document.getElementById(`${field.id}-error`);
+                    if (errorEl) {
+                        errorEl.textContent = `${field.name} is required`;
+                        errorEl.style.display = 'block';
+                    }
+                }
+            }
+        });
+        
+        // Validate birthdate
+        const bdate = document.getElementById('bdate').value;
+        if (!bdate) {
+            isValid = false;
+            if (showErrors) {
+                document.getElementById('bdate').classList.add('input-error');
+                toastError('Missing Information', 'Birthdate is required');
+            }
+        }
+        
+        // Validate email
+        const email = document.getElementById('email').value;
+        if (email && !isValidEmail(email)) {
+            isValid = false;
+            if (showErrors) {
+                document.getElementById('email').classList.add('input-error');
+                document.getElementById('email-error').textContent = 'Please enter a valid email address';
+                document.getElementById('email-error').style.display = 'block';
+            }
+        }
+        
+        // Validate contact number
+        const contactNo = document.getElementById('contact_no').value;
+        if (contactNo && !/^\d{10}$/.test(contactNo)) {
+            isValid = false;
+            if (showErrors) {
+                document.getElementById('contact_no').classList.add('input-error');
+                document.getElementById('contact_no-error').textContent = 'Contact number must be exactly 10 digits';
+                document.getElementById('contact_no-error').style.display = 'block';
+            }
+        }
+        
+        return isValid;
+    }
+
+    function isValidEmail(email) {
+        // More strict email validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        
+        if (!emailRegex.test(email)) {
+            return false;
+        }
+        
+        // Additional checks for common email providers
+        const commonDomains = [
+            'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 
+            'icloud.com', 'protonmail.com', 'aol.com', 'zoho.com',
+            'gmail.com.ph', 'yahoo.com.ph'
+        ];
+        
+        const domain = email.split('@')[1].toLowerCase();
+        
+        // Check if domain has valid TLD
+        const validTLD = /\.(com|org|net|edu|gov|ph|info|biz|co|io)$/i;
+        return validTLD.test(domain);
+    }
+
+    function updateCreateAccountButton() {
+        if (createAccountBtn) {
+            const isValid = validateForm();
+            createAccountBtn.disabled = !isValid;
+            createAccountBtn.style.opacity = isValid ? '1' : '0.5';
+            createAccountBtn.style.cursor = isValid ? 'pointer' : 'not-allowed';
+        }
+    }
+
+    // ====================== FORM RESET FUNCTION ======================
+    function resetForm() {
+        document.getElementById('account_info').reset();
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.input-error').forEach(el => {
+            el.classList.remove('input-error');
+        });
+        updateCreateAccountButton();
+    }
+
+    function closeOverlayAndReset() {
+        document.getElementById('overlay').style.display = 'none';
+        resetForm();
+    }
 
     // ====================== SEARCH FUNCTIONALITY ======================
     const searchInputP = document.getElementById("pending_search");
@@ -284,59 +476,74 @@ document.addEventListener('DOMContentLoaded', function () {
         columns: accountColumns
     });
 
-    
-
     // ====================== TABLE EVENTS TO UPDATE INFO ======================
+    pendingTable.on("renderComplete", () => {
+        setTimeout(() => updateTableInfo(pendingTable, "pending_info"), 0);
+    });
+    activeTable.on("renderComplete", () => {
+        setTimeout(() => updateTableInfo(activeTable, "active_info"), 0);
+    });
 
-// Trigger update after render finishes (page load, filter, resize, etc.)
-pendingTable.on("renderComplete", () => {
-    setTimeout(() => updateTableInfo(pendingTable, "pending_info"), 0);
-});
-activeTable.on("renderComplete", () => {
-    setTimeout(() => updateTableInfo(activeTable, "active_info"), 0);
-});
-
+    activeTable.on("rowSelectionChanged", function() {
+        updateButtonStates();
+        updateTableInfo(activeTable, "active_info");
+    });
 
     // ====================== FETCH ACCOUNTS ======================
     function fetchAccounts() {
         fetch('/api/accounts')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
             .then(data => {
-                pendingTable.setData(data.pending).then(() => updateTableInfo(pendingTable, "pending_info"));
-                activeTable.setData(data.active).then(() => updateTableInfo(activeTable, "active_info"));
+                console.log('Fetched accounts data:', data);
+                if (data.pending) {
+                    pendingTable.setData(data.pending);
+                }
+                if (data.active) {
+                    activeTable.setData(data.active);
+                }
+                updateTableInfo(pendingTable, "pending_info");
+                updateTableInfo(activeTable, "active_info");
+                updateButtonStates();
+            })
+            .catch(err => {
+                console.error('Error fetching accounts:', err);
+                toastError('Load Error', 'We encountered a problem loading the accounts. Please refresh the page and try again.');
             });
     }
+
+    // Initial fetch
     fetchAccounts();
 
     // ====================== PAGINATION INFO ======================
     function updateTableInfo(table, infoId) {
-    const info = document.getElementById(infoId);
-    const totalRows = table.getDataCount("all");
-    const page = table.getPage();
-    const size = table.getPageSize();
-    const start = totalRows === 0 ? 0 : (page - 1) * size + 1;
-    const end = Math.min(page * size, totalRows);
+        const info = document.getElementById(infoId);
+        const totalRows = table.getDataCount("all");
+        const page = table.getPage();
+        const size = table.getPageSize();
+        const start = totalRows === 0 ? 0 : (page - 1) * size + 1;
+        const end = Math.min(page * size, totalRows);
 
-    // get number of selected rows
-    const selectedCount = table.getSelectedData().length;
+        const selectedCount = table.getSelectedData().length;
 
-    if (totalRows === 0) {
-        info.textContent = "No entries to show";
-    } else {
-        info.textContent = `Showing ${start} to ${end} of ${totalRows} entries` + 
-            (selectedCount > 0 ? ` • ${selectedCount} selected` : "");
+        if (totalRows === 0) {
+            info.textContent = "No entries to show";
+        } else {
+            info.textContent = `Showing ${start} to ${end} of ${totalRows} entries` + 
+                (selectedCount > 0 ? ` • ${selectedCount} selected` : "");
+        }
     }
-}
-
 
     pendingTable.on("dataLoaded", () => updateTableInfo(pendingTable, "pending_info"));
-pendingTable.on("pageLoaded", () => updateTableInfo(pendingTable, "pending_info"));
-pendingTable.on("rowSelectionChanged", () => updateTableInfo(pendingTable, "pending_info"));
+    pendingTable.on("pageLoaded", () => updateTableInfo(pendingTable, "pending_info"));
+    pendingTable.on("rowSelectionChanged", () => updateTableInfo(pendingTable, "pending_info"));
 
-activeTable.on("dataLoaded", () => updateTableInfo(activeTable, "active_info"));
-activeTable.on("pageLoaded", () => updateTableInfo(activeTable, "active_info"));
-activeTable.on("rowSelectionChanged", () => updateTableInfo(activeTable, "active_info"));
-
+    activeTable.on("dataLoaded", () => updateTableInfo(activeTable, "active_info"));
+    activeTable.on("pageLoaded", () => updateTableInfo(activeTable, "active_info"));
 
     document.getElementById("pending_entries").addEventListener("change", (e) => {
         pendingTable.setPageSize(parseInt(e.target.value));
@@ -349,80 +556,141 @@ activeTable.on("rowSelectionChanged", () => updateTableInfo(activeTable, "active
     });
 
     // ====================== ACCOUNT ACTIONS ======================
-    document.getElementById('create').addEventListener('click', () => {
+    document.getElementById('create').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         document.getElementById('overlay').style.display = 'flex';
+        setTimeout(() => {
+            updateCreateAccountButton();
+        }, 100);
     });
 
-    document.getElementById('approve').addEventListener('click', () => {
-        const selectedData = pendingTable.getSelectedData();
-        const ids = selectedData.map(row => row.account_id);
-        if (!ids.length) return alert("No accounts selected.");
-
-        fetch('/api/accounts/approve', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: ids })
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.success ? 'Selected accounts approved!' : 'Error approving accounts.');
-            fetchAccounts();
-        })
-        .catch(err => console.error(err));
-    });
-
-    document.getElementById('decline').addEventListener('click', () => {
-        const selectedData = pendingTable.getSelectedData();
-        const ids = selectedData.map(row => row.account_id);
-        if (!ids.length) return alert("No accounts selected.");
-
-        fetch('/api/accounts/decline', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: ids })
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.success ? 'Selected accounts declined!' : 'Error declining accounts.');
-            fetchAccounts();
-        })
-        .catch(err => console.error(err));
-    });
-
-    document.getElementById('reset').addEventListener('click', () => {
+    // ====================== ARCHIVE FUNCTIONALITY ======================
+    document.getElementById('archive').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (this.disabled) return;
+        
         const selectedData = activeTable.getSelectedData();
         const ids = selectedData.map(row => row.account_id);
-        if (!ids.length) return alert("No accounts selected.");
+        const names = selectedData.map(row => `${row.first_name} ${row.last_name}`);
+        
+        if (!ids.length) {
+            toastError('Selection Required', 'Please select at least one account to archive.');
+            return;
+        }
 
-        fetch('/api/accounts/reset', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: ids })
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.success ? 'Successfully reset password for selected accounts!' : 'Error resetting password for accounts.');
-            fetchAccounts();
-        })
-        .catch(err => console.error(err));
-    });
+        const accountList = names.join('\n');
+        if (!confirm(`Are you sure you want to archive ${ids.length} selected account(s)?\n\nAccounts:\n${accountList}\n\nThis will mark them as archived but keep their data.`)) {
+            return;
+        }
 
-    document.getElementById('archive').addEventListener('click', () => {
-        const selectedData = activeTable.getSelectedData();
-        const ids = selectedData.map(row => row.account_id);
-        if (!ids.length) return alert("No accounts selected.");
+        // Show loading state
+        const originalText = this.innerHTML;
+        this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Archiving ${ids.length} account(s)...`;
+        this.disabled = true;
+
+        console.log('Archiving accounts:', names);
 
         fetch('/api/accounts/archive', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ids: ids })
         })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.success ? 'Successfully archived selected account/s!' : 'Error archiving account/s.');
-            fetchAccounts();
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
         })
-        .catch(err => console.error(err));
+        .then(data => {
+            console.log('Archive response:', data);
+            if (data.success) {
+                const successCount = data.archived_count || ids.length;
+                toastSuccess('Accounts Archived', `Successfully archived ${successCount} account(s)!`);
+                
+                // Clear selection and refresh table
+                activeTable.deselectRow();
+                fetchAccounts();
+                
+            } else {
+                throw new Error(data.error || 'Archive failed');
+            }
+        })
+        .catch(err => {
+            console.error('Archive error:', err);
+            toastError('Archive Failed', 'Failed to archive accounts: ' + err.message);
+        })
+        .finally(() => {
+            // Restore button state
+            this.innerHTML = originalText;
+            this.disabled = false;
+            updateButtonStates();
+        });
+    });
+
+    // ====================== RESET FUNCTIONALITY ======================
+    document.getElementById('reset').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (this.disabled) return;
+        
+        const selectedData = activeTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        if (!ids.length) {
+            toastError('Selection Required', 'Please select at least one account to reset password.');
+            return;
+        }
+
+        // Generate password preview for confirmation
+        const passwordPreview = selectedData.map(account => {
+            const newPassword = generateDefaultPassword(account.first_name, account.last_name);
+            return `${account.first_name} ${account.last_name} → ${newPassword}`;
+        }).join('\n');
+
+        if (!confirm(`Reset password for ${ids.length} selected account(s)?\n\nNew passwords will be:\n${passwordPreview}\n\nContinue?`)) {
+            return;
+        }
+
+        // Show loading state
+        const originalText = this.innerHTML;
+        this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Resetting...`;
+        this.disabled = true;
+
+        fetch('/api/accounts/reset', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log('Reset response:', data);
+            if (data.success) {
+                toastSuccess('Passwords Reset', `Passwords reset for ${data.reset_count || ids.length} account(s)!`);
+                // Clear selection and refresh immediately
+                activeTable.deselectRow();
+                fetchAccounts();
+            } else {
+                throw new Error(data.error || 'Server returned failure');
+            }
+        })
+        .catch(err => {
+            console.error('Reset error:', err);
+            toastError('Reset Failed', 'Failed to reset passwords: ' + err.message);
+        })
+        .finally(() => {
+            // Restore button state
+            this.innerHTML = originalText;
+            this.disabled = false;
+            updateButtonStates();
+        });
     });
 
     // ====================== EDIT CELL EVENTS ======================
@@ -446,63 +714,222 @@ activeTable.on("rowSelectionChanged", () => updateTableInfo(activeTable, "active
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                alert(`Successfully updated ${rowData.account_id} to ${cell.getValue()}`);
+                toastSuccess('Settings Updated', 'Account settings updated successfully!');
+                // Refresh table after edit
                 fetchAccounts();
             } else {
-                alert(`Failed to update user_id ${rowData.account_id}`);
+                toastError('Update Failed', 'We were unable to update the account. Please try again.');
+                // Revert the cell change
+                cell.getRow().reload();
             }
+        })
+        .catch(err => {
+            console.error('Update error:', err);
+            cell.getRow().reload();
         });
     });
 
-    // ====================== OVERLAY ======================
-    document.getElementById('close-overlay').addEventListener('click', function () {
-        document.getElementById('overlay').style.display = 'none';
+    // ====================== OVERLAY FUNCTIONALITY ======================
+    document.getElementById('close-overlay').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeOverlayAndReset();
     });
 
+    // ESC key to close overlay
     document.addEventListener('keydown', function(event) {
         if (event.key === "Escape") {
-            document.getElementById('overlay').style.display = 'none';
+            closeOverlayAndReset();
         }
     });
 
-    document.getElementById('create_account_btn').addEventListener('click', function () {
-        const payload = {
-            username: document.getElementById('username').value,
-            password: document.getElementById('password').value,
-            conf_password: document.getElementById('conf_password').value,
-            email: document.getElementById('email').value,
-
-            fname: document.getElementById('fname').value,
-            mname: document.getElementById('mname').value,
-            lname: document.getElementById('lname').value,
-            suffix: document.getElementById('suffix').value,
-            
-            bdate: document.getElementById('bdate').value,
-            contact_no: document.getElementById('contact_no').value,
-            
-            branch: document.getElementById('branch').value
-        };
-
-        fetch('/create_acc_submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                toastSuccess('Account created successfully!');
-                document.getElementById('overlay').style.display = 'none';
-                fetchAccounts();
-            } else {
-                toastError('Account creation failed'); 
-            }
-        }) // ✅ you forgot this
-        .catch(err => console.error(err));
+    // Update create button when overlay opens
+    document.getElementById('create').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('overlay').style.display = 'flex';
+        resetForm();
     });
 
+    // Initialize create account button state
+    setTimeout(() => {
+        updateCreateAccountButton();
+    }, 500);
 
+    // ====================== FORM INPUT LISTENERS ======================
+    const formInputs = ['fname', 'lname', 'contact_no', 'username', 'email', 'branch', 'bdate'];
+    formInputs.forEach(field => {
+        const element = document.getElementById(field);
+        if (element) {
+            element.addEventListener('input', function() {
+                updateCreateAccountButton();
+                if (this.value.trim()) {
+                    this.classList.remove('input-error');
+                    const errorMsg = this.parentNode.querySelector('.error-message');
+                    if (errorMsg) {
+                        errorMsg.style.display = 'none';
+                    }
+                }
+            });
+            element.addEventListener('change', updateCreateAccountButton);
+        }
+    });
 
+    // Contact number validation - numbers only
+    document.getElementById('contact_no').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Email validation on blur
+    document.getElementById('email').addEventListener('blur', function() {
+        const email = this.value.trim();
+        if (email && !isValidEmail(email)) {
+            this.classList.add('input-error');
+            document.getElementById('email-error').textContent = 'Please enter a valid email address (e.g., name@gmail.com)';
+            document.getElementById('email-error').style.display = 'block';
+            updateCreateAccountButton();
+        }
+    });
+
+// ====================== CREATE ACCOUNT BUTTON ======================
+document.getElementById('create_account_btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!validateForm(true)) {
+        toastError('Form Error', 'Please check the form for errors. All required fields must be filled correctly.');
+        return;
+    }
+
+    // Double check birthdate
+    const bdate = document.getElementById('bdate').value;
+    if (!bdate) {
+        toastError('Missing Information', 'Birthdate is required');
+        document.getElementById('bdate').classList.add('input-error');
+        return;
+    }
+
+    // Generate default password automatically
+    const fname = document.getElementById('fname').value.trim();
+    const lname = document.getElementById('lname').value.trim();
+    const defaultPassword = generateDefaultPassword(fname, lname);
+
+    const payload = {
+        username: document.getElementById('username').value.trim(),
+        password: defaultPassword,
+        email: document.getElementById('email').value.trim(),
+        fname: fname,
+        mname: document.getElementById('mname').value.trim(),
+        lname: lname,
+        suffix: document.getElementById('suffix').value,
+        bdate: bdate,
+        contact_no: document.getElementById('contact_no').value.trim(),
+        branch: document.getElementById('branch').value
+    };
+
+    // Email validation - only if email is provided
+    if (payload.email && !isValidEmail(payload.email)) {
+        toastError('Invalid Email', 'Please enter a valid email address (e.g., name@example.com).');
+        document.getElementById('email').classList.add('input-error');
+        return;
+    }
+
+    const originalButtonText = this.innerHTML;
+    this.disabled = true;
+    this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating Account...`;
+    this.style.opacity = '0.7';
+
+    fetch('/create_acc_submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            toastSuccess('Account Created', 'Account was created successfully!');
+            // AUTO-CLOSE OVERLAY AND RESET FORM
+            closeOverlayAndReset();
+            // Refresh accounts table
+            fetchAccounts();
+        } else {
+            // Show specific error messages based on server response
+            if (data.message.includes('Username already exists')) {
+                toastError('Username Taken', 'This username is already taken. Please choose a different username.');
+                document.getElementById('username').classList.add('input-error');
+            } else if (data.message.includes('Email address already exists')) {
+                toastError('Email Taken', 'This email address is already registered. Please use a different email.');
+                document.getElementById('email').classList.add('input-error');
+            } else if (data.message.includes('Missing required fields')) {
+                toastError('Missing Information', 'Please fill in all required fields.');
+            } else if (data.message.includes('Birthdate is required')) {
+                toastError('Missing Information', 'Birthdate is required');
+                document.getElementById('bdate').classList.add('input-error');
+            } else {
+                toastError('Creation Failed', data.message || 'Failed to create account');
+            }
+        }
+    })
+    .catch(err => {
+        console.error('Create account error:', err);
+        toastError('Server Error', 'Failed to create account. Please try again.');
+    })
+    .finally(() => {
+        this.disabled = false;
+        this.innerHTML = originalButtonText;
+        this.style.opacity = '1';
+        updateCreateAccountButton();
+    });
+});
+// ====================== ACCOUNT TYPE FILTER ======================
+document.getElementById('accountTypeFilter').addEventListener('change', function() {
+    const filterValue = this.value.toLowerCase();
+    
+    activeTable.setFilter((data) => {
+        if (!filterValue) return true;
+        return data.user_level.toLowerCase() === filterValue;
+    });
+    
+    updateTableInfo(activeTable, "active_info");
+});
+
+// ====================== OFFICE FILTER ======================
+document.getElementById('officeFilter').addEventListener('change', function() {
+    const filterValue = this.value;
+    
+    activeTable.setFilter((data) => {
+        if (!filterValue) return true;
+        return data.office_location === filterValue;
+    });
+    
+    updateTableInfo(activeTable, "active_info");
+});
+
+// ====================== CLEAR FILTERS WHEN SEARCHING ======================
+document.getElementById("active_search").addEventListener("input", function() {
+    // Clear dropdown filters when searching
+    document.getElementById('accountTypeFilter').value = '';
+    document.getElementById('officeFilter').value = '';
+});
+
+// ====================== CLEAR SEARCH WHEN FILTERING ======================
+function clearSearchWhenFiltering() {
+    document.getElementById("active_search").value = '';
+}
+
+document.getElementById('accountTypeFilter').addEventListener('change', clearSearchWhenFiltering);
+document.getElementById('officeFilter').addEventListener('change', clearSearchWhenFiltering);
+
+// ====================== RESET FILTERS FUNCTION ======================
+function resetAllFilters() {
+    document.getElementById('accountTypeFilter').value = '';
+    document.getElementById('officeFilter').value = '';
+    document.getElementById("active_search").value = '';
+    activeTable.clearFilter();
+    updateTableInfo(activeTable, "active_info");
+}
+
+document.getElementById('resetFilters').addEventListener('click', resetAllFilters);
 
     // ====================== PROFILE IMAGE ======================
     const navProfileImage = document.getElementById("navProfileImage");
@@ -517,6 +944,10 @@ activeTable.on("rowSelectionChanged", () => updateTableInfo(activeTable, "active
         }
     });
 
+    // Initialize button states
+    setTimeout(() => {
+        updateButtonStates();
+    }, 1000);
 });
 </script>
 {% endblock %}

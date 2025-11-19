@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== 2️⃣ CONTACT NUMBER FIELDS (digits only) =====
   const digitFields = [
     "contact", // Members
+    "entry_or_no",
     "claimant_contact_no" // Claims
   ];
 
@@ -61,6 +62,88 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // ===== 3️⃣ MAAB NUMBER FIELDS (digits only, with auto-prefix) =====
+  
+  // Only apply restrictions to TEXT inputs, not SELECT dropdowns
+  //const maabNoField = document.getElementById('maab_no');
+  
+  if (maabNoField && maabNoField.tagName === 'INPUT') {
+    // Store the current prefix for this field
+    let currentPrefix = '';
+
+    // Function to update prefix based on category
+    function updateMaabPrefix() {
+      const categorySelect = document.getElementById('maab_cat');
+      if (categorySelect) {
+        const category = categorySelect.value;
+        const prefixMap = {
+          'Classic': 'PC',
+          'Bronze': 'PB', 
+          'Silver': 'PS',
+          'Gold': 'PG',
+          'Platinum': 'PP',
+          'Safe Card': 'PEP',
+          'Senior': 'S',
+          'Senior+': 'SP'
+        };
+        currentPrefix = prefixMap[category] || '';
+        
+        // Update placeholder to show the format
+        maabNoField.placeholder = `Enter 7 digits (${currentPrefix} + numbers)`;
+      }
+    }
+
+    // Initialize prefix and set up category change listener
+    if (document.getElementById('maab_cat')) {
+      updateMaabPrefix();
+      document.getElementById('maab_cat').addEventListener('change', updateMaabPrefix);
+    }
+
+    maabNoField.addEventListener("keydown", event => {
+      if (allowedKeys.includes(event.key)) return;
+      if (!/^\d$/.test(event.key)) event.preventDefault();
+    });
+
+    maabNoField.addEventListener("input", function() {
+      // Remove any non-digit characters
+      this.value = this.value.replace(/\D/g, '');
+      
+      // Limit to 7 digits
+      if (this.value.length > 7) {
+        this.value = this.value.slice(0, 7);
+      }
+    });
+
+    maabNoField.addEventListener("paste", event => {
+      const pasted = (event.clipboardData || window.clipboardData).getData("text");
+      const digitsOnly = pasted.replace(/\D/g, '').slice(0, 7);
+      event.preventDefault();
+      maabNoField.value = digitsOnly;
+    });
+
+    // Add focus/blur handlers to show full MAAB number with prefix
+    maabNoField.addEventListener("focus", function() {
+      // Remove prefix when focused for editing
+      if (currentPrefix && this.value.startsWith(currentPrefix)) {
+        this.value = this.value.replace(currentPrefix, '');
+      }
+    });
+
+    maabNoField.addEventListener("blur", function() {
+      // Add prefix back when blurred (if we have numbers)
+      if (currentPrefix && this.value && /^\d+$/.test(this.value)) {
+        this.value = currentPrefix + this.value.padStart(7, '0');
+      }
+    });
+    
+    console.log('✅ MAAB No restrictions applied to text input');
+  } else if (maabNoField && maabNoField.tagName === 'SELECT') {
+    console.log('✅ MAAB No is a dropdown - no restrictions needed');
+    // No restrictions needed for dropdown
+  } else {
+    console.log('❌ MAAB No field not found or not applicable');
+  }
+  
   // ===== 4️⃣ AMOUNT FIELDS (digits + decimal point) =====
   const amountFields = [
     "chinabank_amount",
@@ -103,9 +186,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ===== 6️⃣ FUTURE EXTENSIONS =====
-  // Add your next module’s field IDs here
-  // Example:
-  // const emailFields = ["member_email", "claimant_email"];
-  // const addressFields = ["member_address", "claim_address"];
+  // ===== 7️⃣ DATE FIELDS ENFORCEMENT =====
+  // Ensure OR date field uses datepicker
+  const dateFields = ["entry_or_date", "bdate", "declare_date", "dec_date", "eff_date"];
+
+  dateFields.forEach(id => {
+    const input = document.getElementById(id);
+    if (!input) return;
+
+    // Change type to date if it's not already
+    if (input.type !== 'date' && id === 'entry_or_date') {
+      input.type = 'date';
+    }
+
+    // Prevent manual text input for date fields
+    input.addEventListener("keydown", event => {
+      if (allowedKeys.includes(event.key)) return;
+      event.preventDefault();
+    });
+  });
 });

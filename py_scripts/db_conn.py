@@ -27,6 +27,9 @@ else:
 # FOR AIVEN DB CONNECTION
 AIVEN_URI = os.getenv('AIVEN_URI')
 
+# FOR RAILWAY DB CONNECTION
+RAILWAY_URI = os.getenv('RAILWAY_URI')
+
 # FOR LOCAL DB CONNECTION
 SQL_HOST = os.getenv('SQL_HOST')
 SQL_USER = os.getenv('SQL_USER')
@@ -51,6 +54,12 @@ def conn_init():
             
             db_url = f"{AIVEN_URI}&ssl_ca={ca_path}"
             print(f"Connecting to Aiven DB")
+        
+        elif DB_CONNECTION_MODE == "railway":
+            # Convert mysql:// to mysql+pymysql:// for SQLAlchemy
+            formatted_url = RAILWAY_URI.replace("mysql://", "mysql+pymysql://")
+            db_url = formatted_url
+            print("Connecting to Railway DB")
         
         else:  # local connection
             db_url = f"mysql+pymysql://{SQL_USER}:{SQL_PASS}@{SQL_HOST}/{SQL_DB}"
@@ -123,7 +132,135 @@ def create_account(**kwargs):
         db_session.rollback()
         print(f"Error creating account: {e}")
         return str(e)
-    
+# Add these to your db_conn class if they don't exist
+def username_exists(self, username):
+    """Check if username already exists in database"""
+    try:
+        # If you're using SQLAlchemy
+        db_session = SessionLocal()
+        existing_user = db_session.query(models.Accounts).filter(
+            models.Accounts.username == username
+        ).first()
+        db_session.close()
+        return existing_user is not None
+    except Exception as e:
+        print(f"Error in username_exists: {e}")
+        return False
+
+def email_exists(self, email):
+    """Check if email already exists in database"""
+    if not email:
+        return False
+    try:
+        db_session = SessionLocal()
+        existing_email = db_session.query(models.Accounts).filter(
+            models.Accounts.email == email
+        ).first()
+        db_session.close()
+        return existing_email is not None
+    except Exception as e:
+        print(f"Error in email_exists: {e}")
+        return False
+
+# ADD THESE FUNCTIONS TO YOUR db_conn.py
+
+def archive_account_to_table(account_id, archived_by_id):
+    """
+    Simple archive - just update account status to 'archived'
+    """
+    db_session = SessionLocal()
+    try:
+        print(f"🔄 Archiving account {account_id}...")
+        
+        # Direct update without fetching the object first
+        result = db_session.query(models.Accounts).filter(
+            models.Accounts.account_id == account_id
+        ).update({
+            models.Accounts.acct_status: 'archived'
+        })
+        
+        db_session.commit()
+        
+        if result > 0:
+            print(f"✅ Successfully archived account {account_id}")
+            
+            # Try to log, but don't fail if logging fails
+            try:
+                archiver = db_session.query(models.Accounts).filter(
+                    models.Accounts.account_id == archived_by_id
+                ).first()
+                
+                if archiver:
+                    POST_action_log(
+                        archiver.username,
+                        archiver.user_level,
+                        "Archive Account",
+                        f"Archived account ID: {account_id}",
+                        archived_by_id
+                    )
+            except Exception as log_error:
+                print(f"⚠️ Logging failed but archive succeeded: {log_error}")
+            
+            return True
+        else:
+            print(f"❌ Account {account_id} not found")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error archiving account {account_id}: {e}")
+        db_session.rollback()
+        return False
+    finally:
+        db_session.close()
+
+def name_exists(fname, lname, mname=None):
+    """Check if name combination already exists in database"""
+    try:
+        db_session = SessionLocal()
+        query = db_session.query(models.Accounts).filter(
+            models.Accounts.first_name == fname,
+            models.Accounts.last_name == lname
+        )
+        if mname and mname.strip():
+            query = query.filter(models.Accounts.middle_name == mname)
+        else:
+            query = query.filter(
+                (models.Accounts.middle_name == '') | 
+                (models.Accounts.middle_name.is_(None))
+            )
+        
+        existing_user = query.first()
+        return existing_user is not None
+    except Exception as e:
+        print(f"Error checking name existence: {e}")
+        return False
+    finally:
+        db_session.close()
+
+def name_exists(fname, lname, mname=None):
+    """Check if name combination already exists in database"""
+    try:
+        db_session = SessionLocal()
+        query = db_session.query(models.Accounts).filter(
+            models.Accounts.first_name == fname,
+            models.Accounts.last_name == lname
+        )
+        if mname and mname.strip():
+            query = query.filter(models.Accounts.middle_name == mname)
+        else:
+            query = query.filter(
+                (models.Accounts.middle_name == '') | 
+                (models.Accounts.middle_name.is_(None))
+            )
+        
+        existing_user = query.first()
+        return existing_user is not None
+    except Exception as e:
+        print(f"Error checking name existence: {e}")
+        return False
+    finally:
+        db_session.close()
+  
     
 def save_otp(email, otp):
     """Save OTP in the database with expiration time."""
@@ -283,24 +420,50 @@ def update_password(email, new_password):
 def create_dispatch(dispatch_type, origin, year, cutoff, late, remarks):
     db_session = SessionLocal()
     try:
+        print(f"🎯 Creating dispatch in database:")
+        print(f"   Type: {dispatch_type}")
+        print(f"   Origin: {origin}")
+        print(f"   Year: {year}")
+        print(f"   Cutoff: {cutoff}")
+        print(f"   Late Declare: {late}")
+        print(f"   Remarks: {remarks}")
+        
         new_dispatch = models.Dispatch(
             dispatch_type=dispatch_type,
             dispatch_origin=origin,
             dispatch_year=year,
             dispatch_cutoff=cutoff,
             late_declare=late,
-            dispatch_remarks=remarks
+            dispatch_remarks=remarks,
+            dispatch_status='current'  # Make sure this is set
         )
         db_session.add(new_dispatch)
         db_session.commit()
+        
+        print(f"✅ Dispatch created successfully with ID: {new_dispatch.dispatch_id}")
         return True
     except Exception as e:
         db_session.rollback()
-        print(f"Error creating dispatch: {e}")
+        print(f"❌ Error creating dispatch: {e}")
+        import traceback
+        traceback.print_exc()
         return str(e)
 
 
-
+def check_active_dispatch():
+    """Check if there's an active dispatch and return its ID"""
+    db_session = SessionLocal()
+    try:
+        active_dispatch = get_current_active_dispatch()
+        return {
+            'has_active_dispatch': active_dispatch is not None,
+            'dispatch_id': active_dispatch.dispatch_id if active_dispatch else None
+        }
+    except Exception as e:
+        print(f"Error checking active dispatch: {e}")
+        return {'has_active_dispatch': False}
+    finally:
+        db_session.close()
 
 
 
@@ -361,19 +524,42 @@ def reset_account(id):
     try:
         account = db_session.query(models.Accounts).filter_by(account_id=id).first()
         if account:
-            print(f"Resetting password for account ID {id}")
-            initials = (account.first_name[:1] + account.middle_name[:1] + account.last_name[:1]).lower().strip()
-            bdate = str(account.birth_date).replace('-', '') if account.birth_date else '00000000'
+            print(f"=== RESET PASSWORD DEBUG ===")
+            print(f"Account: {account.first_name} {account.last_name}")
+            print(f"Birthdate: {account.birth_date}")
             
-            account.password = tools.hash_password(bdate + initials)
+            # Generate new password
+            from datetime import datetime
+            now = datetime.now()
+            current_year = now.year
+            current_month = str(now.month).zfill(2)
+            initials = (account.first_name[0] + account.last_name[0]).upper()
             
+            new_password = f"{current_year}{current_month}{initials}"
+            print(f"New password: {new_password}")
+            
+            # Hash the password
+            hashed_password = tools.hash_password(new_password)
+            print(f"Password hashed: {len(hashed_password)} characters")
+            
+            # Update the account
+            account.password = hashed_password
             db_session.commit()
+            
+            print(f"✅ Password reset successful!")
             return True
-        return False
+        else:
+            print(f"❌ Account {id} not found")
+            return False
+            
     except Exception as e:
+        print(f"❌ Error in reset_account: {e}")
+        import traceback
+        traceback.print_exc()
         db_session.rollback()
-        print(f"Error approving account: {e}")
         return False
+    finally:
+        db_session.close()
 
 
 def update_userlvl(id, new_level):
@@ -1051,79 +1237,263 @@ def save_entry_details(record_id, maab_category, maab_no, first_name, middle_nam
         print(f"Error adding entry content: {e}")
         return False
 
+def transmit_dispatch_entries(dispatch_id, account_id=None):
+    """
+    Transmit all entries in a dispatch - KEEP DISPATCH ID VERSION
+    """
+    db_session = SessionLocal()
+    try:
+        print("=" * 60)
+        print("🚀 TRANSMIT DISPATCH ENTRIES - KEEP DISPATCH ID VERSION")
+        print(f"📦 Dispatch ID: {dispatch_id}")
+        
+        # 1️⃣ Get the dispatch
+        dispatch = db_session.query(models.Dispatch).filter_by(dispatch_id=dispatch_id).first()
+        if not dispatch:
+            print(f"❌ Dispatch {dispatch_id} not found")
+            return {"success": False, "error": "Dispatch not found"}
+        
+        print(f"✅ Found dispatch: {dispatch.dispatch_id}")
+        
+        # 2️⃣ Get all entries in this dispatch
+        entries = db_session.query(models.Entries).filter_by(dispatch_id=dispatch_id).all()
+        print(f"🔍 Found {len(entries)} entries in dispatch")
+        
+        if not entries:
+            print("❌ No entries found in dispatch")
+            return {"success": False, "error": "No entries found in dispatch"}
+        
+        transmitted_count = 0
+        current_date = datetime.now().date()
+        
+        # Track unique record IDs to update records later
+        record_ids_to_update = set()
+        
+        # 3️⃣ Process each entry - KEEP DISPATCH_ID, just update status
+        for entry in entries:
+            try:
+                print(f"🔄 Processing entry {entry.entry_id}")
+                
+                # Mark entry as declared with current date BUT KEEP DISPATCH_ID
+                entry.declared = True
+                entry.declaration_date = current_date
+                entry.tags = "transmitted"
+                # DON'T clear dispatch_id: entry.dispatch_id = None
+                
+                # Track the record ID for updating the record
+                record_ids_to_update.add(entry.record_id)
+                
+                transmitted_count += 1
+                print(f"✅ Successfully processed entry {entry.entry_id} (dispatch_id preserved)")
+                
+            except Exception as e:
+                print(f"❌ Error processing entry {entry.entry_id}: {e}")
+                continue
+        
+        # 4️⃣ Update all affected RECORDS - KEEP DISPATCH_ID
+        print(f"📝 Updating {len(record_ids_to_update)} records...")
+        for record_id in record_ids_to_update:
+            try:
+                record = db_session.query(models.Records).filter_by(record_id=record_id).first()
+                if record:
+                    # Update record status BUT KEEP DISPATCH_ID
+                    record.declared = True
+                    record.declaration_date = current_date
+                    record.tags = "transmitted"
+                    record.dispatch_ready = False  # No longer dispatch ready
+                    # DON'T clear dispatch_id: record.dispatch_id = None
+                    
+                    print(f"✅ Updated record {record_id}: declared=True, tags=transmitted, dispatch_id preserved")
+            except Exception as e:
+                print(f"❌ Error updating record {record_id}: {e}")
+                continue
+        
+        # 5️⃣ Update dispatch status
+        print(f"📊 Updating dispatch status from '{dispatch.dispatch_status}' to 'dispatched'")
+        
+        dispatch.dispatch_status = 'dispatched'
+        dispatch.date_dispatched = current_date
+        dispatch.dispatch_total = transmitted_count
+        
+        print(f"✅ Dispatch updated: status=dispatched, date={current_date}, total={transmitted_count}")
+        
+        # 6️⃣ Commit changes
+        db_session.commit()
+        print("💾 Changes committed successfully")
+        
+        return {
+            "success": True,
+            "transmitted_count": transmitted_count,
+            "dispatch_id": dispatch_id
+        }
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Error transmitting dispatch: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}
+    finally:
+        db_session.close()
+        print("🏁 TRANSMIT DISPATCH ENTRIES END")
+        print("=" * 60)
 
-def save_entry_updates(data):
+def save_entry_update(data):
     db_session = SessionLocal()
     try:
         entry_id = data.get("entry_id")
+        print(f"=== SAVE ENTRY UPDATES CALLED ===")
+        print(f"Entry ID: {entry_id}")
+        print(f"Full data received: {data}")
+        
         if not entry_id:
-            print("No entry_id provided.")
-            return None
+            print("❌ No entry_id provided.")
+            return False
 
-        # =======================
-        # UPDATE ENTRY
-        # =======================
+        # Find the entry
+        print(f"🔍 Looking for entry with ID: {entry_id}")
         entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
         if not entry:
-            print("Entry not found.")
-            return None
+            print(f"❌ Entry {entry_id} not found in database.")
+            return False
+        
+        print(f"✅ Entry found: ID={entry.entry_id}, Member ID={entry.member_id}")
 
-        entry.maab_category = data["maab_category"]
-        entry.maab_no = data["maab_no"]
-        entry.id_received = data["id_received"]
-        entry.declared = data["declared"]
-        entry.paid = data["paid"]
-        entry.OR_num = data["OR_num"]
-        entry.remarks = data["remarks"]
-        entry.tags = data["tags"]
-        entry.dispatch_ready = data["dispatch_ready"]
-        entry.dispatch_id = data["dispatch_id"]
+        # Update entry fields with proper validation
+        update_fields = [
+            'maab_category', 'maab_no', 'id_received', 'declared', 
+            'paid', 'OR_num', 'remarks', 'tags', 'dispatch_ready'
+        ]
+        
+        print("🔄 Updating entry fields...")
+        for field in update_fields:
+            if field in data:
+                value = data[field]
+                old_value = getattr(entry, field)
+                print(f"   {field}: {old_value} -> {value}")
+                
+                # Handle boolean fields
+                if field in ['id_received', 'declared', 'paid', 'dispatch_ready']:
+                    if value in [True, 1, '1', 'true']:
+                        value = True
+                    elif value in [False, 0, '0', 'false', None]:
+                        value = False
+                    else:
+                        value = bool(value)
+                # Handle OR_num specifically
+                elif field == 'OR_num':
+                    if value and str(value).strip() != '':
+                        try:
+                            value = int(value)
+                        except (ValueError, TypeError):
+                            value = str(value).strip()
+                    else:
+                        value = None
+                # Handle other string fields
+                elif field in ['maab_category', 'maab_no', 'remarks', 'tags']:
+                    value = str(value) if value is not None else ""
+                
+                setattr(entry, field, value)
 
-        entry.declaration_date = (
-            datetime.strptime(data["declaration_date"], "%m/%d/%Y").date()
-            if data["declaration_date"] else None
-        )
+        # Handle dates with proper conversion
+        print("🔄 Processing dates...")
+        
+        # Declaration date
+        declaration_date = data.get("declaration_date")
+        if declaration_date and str(declaration_date).strip():
+            try:
+                if isinstance(declaration_date, str):
+                    entry.declaration_date = datetime.strptime(declaration_date, "%Y-%m-%d").date()
+                print(f"   declaration_date set to: {entry.declaration_date}")
+            except (ValueError, TypeError) as e:
+                print(f"   ❌ Error parsing declaration_date '{declaration_date}': {e}")
+                entry.declaration_date = None
+        else:
+            entry.declaration_date = None
 
-        entry.OR_date = (
-            datetime.strptime(data["OR_date"], "%m/%d/%Y").date()
-            if data["OR_date"] else None
-        )
+        # OR date
+        OR_date = data.get("OR_date")
+        if OR_date and str(OR_date).strip():
+            try:
+                if isinstance(OR_date, str):
+                    entry.OR_date = datetime.strptime(OR_date, "%Y-%m-%d").date()
+                print(f"   OR_date set to: {entry.OR_date}")
+            except (ValueError, TypeError) as e:
+                print(f"   ❌ Error parsing OR_date '{OR_date}': {e}")
+                entry.OR_date = None
+        else:
+            entry.OR_date = None
 
-        # =======================
-        # UPDATE MEMBER INFO
-        # =======================
+        # Find and update member information
+        print(f"🔍 Looking for member with ID: {entry.member_id}")
         member = db_session.query(models.Members).filter_by(member_id=entry.member_id).first()
         if not member:
-            print("Member not found.")
-            return None
+            print(f"❌ Member {entry.member_id} not found.")
+            return False
+        
+        print(f"✅ Member found: ID={member.member_id}")
 
-        member.first_name = data["first_name"]
-        member.middle_name = data["middle_name"]
-        member.last_name = data["last_name"]
-        member.suffix = data["suffix"]
-        member.birth_date = (
-            datetime.strptime(data["birth_date"], "%m/%d/%Y").date()
-            if data["birth_date"] else None
-        )
-        member.age = data["age"]
-        member.sex = data["sex"]
-        member.contact_no = data["contact_no"]
-        member.email = data["email"]
-        member.address = data["address"]
-        member.blood_type = data["blood_type"]
+        # Update member fields with proper validation for ENUM fields
+        member_fields = [
+            'first_name', 'middle_name', 'last_name', 'suffix', 'age', 
+            'sex', 'contact_no', 'email', 'address', 'blood_type'
+        ]
+        
+        print("🔄 Updating member fields...")
+        for field in member_fields:
+            if field in data:
+                value = data[field]
+                old_value = getattr(member, field)
+                print(f"   {field}: {old_value} -> {value}")
+                
+                # Handle specific field types
+                if field == 'age' and value:
+                    try:
+                        value = int(value)
+                    except (ValueError, TypeError):
+                        value = None
+                # Handle sex field - convert empty string to NULL for ENUM
+                elif field == 'sex':
+                    if value == '' or value is None:
+                        value = None  # Use NULL instead of empty string for ENUM
+                    else:
+                        value = str(value).strip()
+                # Handle other string fields - convert empty string to None
+                elif field in ['first_name', 'middle_name', 'last_name', 'suffix', 'contact_no', 'email', 'address', 'blood_type']:
+                    if value == '':
+                        value = None
+                    else:
+                        value = str(value) if value is not None else None
+                
+                setattr(member, field, value)
 
-        # =======================
-        # SAVE ALL CHANGES
-        # =======================
+        # Handle birth date
+        birth_date = data.get("birth_date")
+        if birth_date and str(birth_date).strip():
+            try:
+                if isinstance(birth_date, str):
+                    member.birth_date = datetime.strptime(birth_date, "%Y-%m-%d").date()
+                print(f"   birth_date set to: {member.birth_date}")
+            except (ValueError, TypeError) as e:
+                print(f"   ❌ Error parsing birth_date '{birth_date}': {e}")
+                member.birth_date = None
+        else:
+            member.birth_date = None
+
+        # Commit all changes
+        print("💾 Committing changes to database...")
         db_session.commit()
-
+        print(f"✅ Successfully updated entry {entry_id} and member {member.member_id}")
         return True
 
-    
     except Exception as e:
         db_session.rollback()
-        print(f"Error saving entry updates: {e}")
+        print(f"❌ Error saving entry updates: {e}")
+        import traceback
+        traceback.print_exc()
         return False
+    finally:
+        db_session.close()
 
 
 def get_report_target_vs_actual(year):
@@ -1178,64 +1548,284 @@ def get_report_target_vs_actual(year):
         return []
 
 
-def get_current_active_dispatch():
-    db_session = SessionLocal()
+def get_current_active_dispatch(db_session=None):
+    """Get current active dispatch with optional session parameter"""
+    if db_session is None:
+        db_session = SessionLocal()
+        close_session = True
+    else:
+        close_session = False
+        
     try:
-
         last_dispatch = (
             db_session.query(models.Dispatch)
             .filter(models.Dispatch.dispatch_status == 'current')
-            .order_by(models.Dispatch.dispatch_id.desc())  # or .order_by(models.Dispatch.created_at.desc())
+            .order_by(models.Dispatch.dispatch_id.desc())
             .first()
         )
-        print('db_conn - current active dispatch', last_dispatch.dispatch_id)
+        print('db_conn - current active dispatch', last_dispatch.dispatch_id if last_dispatch else None)
         return last_dispatch
     except Exception as e:
         print(f"Error fetching current active dispatch: {e}")
         return None
+    finally:
+        if close_session:
+            db_session.close()
 
-def add_to_dispatch():
+def add_to_dispatch(record_ids=None):
     db_session = SessionLocal()
     try:
+        print("=" * 60)
+        print("🚀 DEBUG: add_to_dispatch START - RECORD LEVEL CHECK")
+        print(f"📦 Input record_ids: {record_ids}")
+        
         # 1️⃣ Get current active dispatch
         current_dispatch = get_current_active_dispatch()
         if not current_dispatch:
-            print("No active dispatch found.")
-            return None
+            print("❌ No active dispatch found")
+            return 0
 
-        # 2️⃣ Get all eligible entries
-        entries_to_dispatch = (
-            db_session.query(models.Entries)
-            .filter(
-                (models.Entries.dispatch_ready.is_(True)) &
-                ((models.Entries.declared.is_(False)) | (models.Entries.declared.is_(None))) &
-                ((models.Entries.dispatch_id.is_(None)) | (models.Entries.dispatch_id == 0))
+        print(f"✅ Active dispatch: ID={current_dispatch.dispatch_id}, Status={current_dispatch.dispatch_status}")
+
+        # 2️⃣ Check record-level status first
+        added_count = 0
+        for record_id in record_ids:
+            print(f"\n--- Checking record_id: {record_id} ---")
+            
+            # Get the RECORD to check its status
+            record = db_session.query(models.Records).filter(
+                models.Records.record_id == record_id
+            ).first()
+            
+            if not record:
+                print(f"   ❌ Record {record_id} not found")
+                continue
+                
+            print(f"   📋 Record {record_id}: dispatch_ready={record.dispatch_ready}, declared={record.declared}")
+            
+            # Check RECORD-LEVEL eligibility
+            is_record_eligible = (
+                record.dispatch_ready == True and 
+                record.declared == False
             )
-            .all()
-        )
+            
+            print(f"   ✅ Record eligible? {is_record_eligible}")
+            
+            if not is_record_eligible:
+                print(f"   ❌ Record {record_id} not eligible at record level")
+                continue
+            
+            # 3️⃣ Get all entries for this eligible record
+            entries = db_session.query(models.Entries).filter(
+                models.Entries.record_id == record_id
+            ).all()
+            
+            print(f"   📦 Found {len(entries)} entries for record {record_id}")
+            
+            # 4️⃣ Add ALL entries from this eligible record to dispatch
+            for entry in entries:
+                # Only check if entry is not already in THIS dispatch
+                if entry.dispatch_id != current_dispatch.dispatch_id:
+                    print(f"     🎯 ADDING entry {entry.entry_id} to dispatch {current_dispatch.dispatch_id}")
+                    entry.dispatch_id = current_dispatch.dispatch_id
+                    added_count += 1
+                else:
+                    print(f"     ℹ️  Entry {entry.entry_id} already in dispatch")
+            
+            # 🔥 CRITICAL FIX: Update the RECORD's dispatch_id too
+            print(f"     📝 UPDATING record {record_id} dispatch_id to {current_dispatch.dispatch_id}")
+            record.dispatch_id = current_dispatch.dispatch_id
 
-        if not entries_to_dispatch:
-            print("No entries found for dispatch.")
-            return None
-
-        # 3️⃣ Assign each entry to the current active dispatch
-        for entry in entries_to_dispatch:
-            entry.dispatch_id = current_dispatch.dispatch_id
-
-        # 4️⃣ Commit all changes
+        # 5️⃣ Commit changes
+        print(f"\n💾 Committing {added_count} changes...")
         db_session.commit()
-        print(f"Assigned {len(entries_to_dispatch)} entries to dispatch {current_dispatch.dispatch_id}")
+        print(f"✅ Successfully added {added_count} entries to dispatch and updated record dispatch_ids")
 
-        return len(entries_to_dispatch)
+        return added_count
 
     except Exception as e:
         db_session.rollback()
-        print(f"Error assigning entries to active dispatch: {e}")
-        return None
+        print(f"❌ Error in add_to_dispatch: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
+    finally:
+        db_session.close()
+        print("🏁 DEBUG: add_to_dispatch END")
+        print("=" * 60)
+
+def add_to_dispatch(record_ids=None):
+    db_session = SessionLocal()
+    try:
+        print("=" * 60)
+        print("🚀 DEBUG: add_to_dispatch START - RECORD LEVEL CHECK")
+        print(f"📦 Input record_ids: {record_ids}")
+        
+        # 1️⃣ Get current active dispatch
+        current_dispatch = get_current_active_dispatch()
+        if not current_dispatch:
+            print("❌ No active dispatch found")
+            return 0
+
+        print(f"✅ Active dispatch: ID={current_dispatch.dispatch_id}, Status={current_dispatch.dispatch_status}")
+
+        # 2️⃣ Check record-level status first
+        added_count = 0
+        for record_id in record_ids:
+            print(f"\n--- Checking record_id: {record_id} ---")
+            
+            # Get the RECORD to check its status
+            record = db_session.query(models.Records).filter(
+                models.Records.record_id == record_id
+            ).first()
+            
+            if not record:
+                print(f"   ❌ Record {record_id} not found")
+                continue
+                
+            print(f"   📋 Record {record_id}: dispatch_ready={record.dispatch_ready}, declared={record.declared}")
+            
+            # Check RECORD-LEVEL eligibility
+            is_record_eligible = (
+                record.dispatch_ready == True and 
+                record.declared == False
+            )
+            
+            print(f"   ✅ Record eligible? {is_record_eligible}")
+            
+            if not is_record_eligible:
+                print(f"   ❌ Record {record_id} not eligible at record level")
+                continue
+            
+            # 3️⃣ Get all entries for this eligible record
+            entries = db_session.query(models.Entries).filter(
+                models.Entries.record_id == record_id
+            ).all()
+            
+            print(f"   📦 Found {len(entries)} entries for record {record_id}")
+            
+            # 4️⃣ Add ALL entries from this eligible record to dispatch
+            for entry in entries:
+                # Only check if entry is not already in THIS dispatch
+                if entry.dispatch_id != current_dispatch.dispatch_id:
+                    print(f"     🎯 ADDING entry {entry.entry_id} to dispatch {current_dispatch.dispatch_id}")
+                    entry.dispatch_id = current_dispatch.dispatch_id
+                    added_count += 1
+                else:
+                    print(f"     ℹ️  Entry {entry.entry_id} already in dispatch")
+            
+            # 🔥 CRITICAL FIX: Update the RECORD's dispatch_id too
+            print(f"     📝 UPDATING record {record_id} dispatch_id to {current_dispatch.dispatch_id}")
+            record.dispatch_id = current_dispatch.dispatch_id
+
+        # 5️⃣ Commit changes
+        print(f"\n💾 Committing {added_count} changes...")
+        db_session.commit()
+        print(f"✅ Successfully added {added_count} entries to dispatch and updated record dispatch_ids")
+
+        return added_count
+
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Error in add_to_dispatch: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
+    finally:
+        db_session.close()
+        print("🏁 DEBUG: add_to_dispatch END")
+        print("=" * 60)
+
+def remove_entries_from_dispatch(selected_rows):
+    """
+    Remove selected entries from dispatch by setting their dispatch_id to NULL
+    """
+    db_session = SessionLocal()
+    try:
+        print("=" * 60)
+        print("🚀 DEBUG: remove_entries_from_dispatch START")
+        print(f"📦 Selected rows: {len(selected_rows)}")
+        
+        if not selected_rows:
+            return {"success": False, "error": "No entries provided"}
+        
+        removed_count = 0
+        processed_entry_ids = []
+        
+        # Process each selected entry
+        for row in selected_rows:
+            try:
+                entry_id = row.get('entry_id')
+                if not entry_id:
+                    print(f"❌ No entry_id in row: {row}")
+                    continue
+                
+                print(f"🔄 Removing entry {entry_id} from dispatch")
+                
+                # Find the entry
+                entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
+                if not entry:
+                    print(f"❌ Entry {entry_id} not found")
+                    continue
+                
+                # Store the record_id before clearing (for record update)
+                record_id = entry.record_id
+                
+                # Remove from dispatch by setting dispatch_id to NULL
+                entry.dispatch_id = None
+                processed_entry_ids.append(entry_id)
+                removed_count += 1
+                
+                print(f"✅ Entry {entry_id} removed from dispatch")
+                
+                # Check if this was the last entry in the record for this dispatch
+                # If so, clear the record's dispatch_id too
+                other_entries_in_dispatch = db_session.query(models.Entries).filter(
+                    models.Entries.record_id == record_id,
+                    models.Entries.dispatch_id.isnot(None)
+                ).count()
+                
+                if other_entries_in_dispatch == 0:
+                    # No more entries in this record are in dispatch, clear record dispatch_id
+                    record = db_session.query(models.Records).filter_by(record_id=record_id).first()
+                    if record:
+                        print(f"📝 Clearing dispatch_id from record {record_id} (no more entries in dispatch)")
+                        record.dispatch_id = None
+                
+            except Exception as e:
+                print(f"❌ Error processing entry {row.get('entry_id')}: {e}")
+                continue
+        
+        # Commit all changes
+        db_session.commit()
+        print(f"💾 Successfully removed {removed_count} entries from dispatch")
+        
+        return {
+            "success": True,
+            "removed_count": removed_count,
+            "processed_entry_ids": processed_entry_ids
+        }
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Error removing from dispatch: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}
+    finally:
+        db_session.close()
+        print("🏁 DEBUG: remove_entries_from_dispatch END")
+        print("=" * 60)
 
 def get_current_dispatch_contents(dispatch_id):
     db_session = SessionLocal()
     try:
+        if not dispatch_id:
+            print("No dispatch_id provided")
+            return []
+            
+        print(f"🔍 Fetching dispatch contents for dispatch_id: {dispatch_id}")
+        
         current_dispatch_contents = (
             db_session.query(
                 models.Entries.entry_id,
@@ -1256,11 +1846,17 @@ def get_current_dispatch_contents(dispatch_id):
             .filter(models.Entries.dispatch_id == dispatch_id)
             .all()
         )
-        print('db_conn - current dispatch contents', current_dispatch_contents)
+        
+        print(f'✅ Found {len(current_dispatch_contents)} entries in dispatch {dispatch_id}')
         return current_dispatch_contents
+        
     except Exception as e:
-        print(f"Error fetching current dispatch contents: {e}")
-        return None
+        print(f"❌ Error fetching current dispatch contents: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
+    finally:
+        db_session.close()
 
 def get_all_dispatch_records():
     db_session = SessionLocal()
@@ -1281,22 +1877,32 @@ def POST_action_log(current_user=None, current_user_lvl=None, action=None, desc=
     db_session = SessionLocal()
     
     try:
+        # Get user info from current_user if available
+        if current_user_id and not current_user:
+            user = db_session.query(models.Accounts).filter_by(account_id=current_user_id).first()
+            if user:
+                current_user = f"{user.first_name} {user.last_name}"
+                current_user_lvl = user.user_level
+        
         audit_log = models.Logs(
             date=datetime.now(),
-            staff_name=current_user,
-            user_level=current_user_lvl,
-            action_name=action,
-            description=desc,
+            staff_name=current_user or "System",
+            user_level=current_user_lvl or "Unknown",
+            action_name=action or "Unknown Action",
+            description=desc or "No description",
             account_id=current_user_id
         )
-        print(audit_log)
         
         db_session.add(audit_log)
         db_session.commit()
-        print("Action logged successfully.")
+        print(f"✅ Action logged: {action} - {desc}")
+        return True
     except Exception as e:
         db_session.rollback()
-        print(f"Error logging action: {e}")    
+        print(f"❌ Error logging action: {e}")
+        return False
+    finally:
+        db_session.close()
 
 
 # ! TODO remove this function. THIS FUNCTION IS RETIRED

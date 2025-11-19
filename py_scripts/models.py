@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Date, DECIMAL, Boolean, Text, ForeignKey, Enum, SmallInteger, DateTime, TIMESTAMP, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from flask_login import UserMixin
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -90,6 +91,9 @@ class Records(Base):
     remarks = Column(Text)
     tags = Column(String(255))
     status = Column(String(255), default='Active')
+    dispatch_ready = Column(Boolean)
+    dispatch_id = Column(Integer)
+    # TODO add the foerign key later 
     
     @property
     def declaration_date_YMD(self):
@@ -114,7 +118,9 @@ class Records(Base):
             'paid': self.paid,
             'origin': self.origin,
             'remarks': self.remarks,
-            'tags': self.tags
+            'tags': self.tags,
+            'dispatch_ready': self.dispatch_ready,
+            'dispatch_id': self.dispatch_id
         }
     
 
@@ -176,7 +182,7 @@ class Inventory(Base):
     maab_no = Column(String(255))
     used = Column(SmallInteger)
     remarks = Column(Text)
-    allocated_to = Column(Enum('Chapter', 'Dasmarinas', 'Silang'))
+    allocated_to = Column(String(255))
     
 
 class Claims(Base):
@@ -303,9 +309,9 @@ class Dispatch(Base):
     dispatch_origin = Column(String(255))
     dispatch_year = Column(Integer)
     dispatch_cutoff = Column(Date)
-    dispatch_status = Column(String(255))
+    dispatch_status = Column(Enum('current', 'dispatched', 'disregard', name='dispatch_status'))  # Fixed: Use the actual enum values
     date_dispatched = Column(Date)
-    dispatch_total = Column(DECIMAL(10, 0))
+    dispatch_total = Column(Integer)  # Changed from DECIMAL to Integer
     late_declare = Column(Boolean)
     dispatch_remarks = Column(Text)
     
@@ -329,7 +335,7 @@ class Dispatch(Base):
             'dispatch_cutoff': safe(self.dispatch_cutoff_YMD),
             'dispatch_status': safe(self.dispatch_status),
             'date_dispatched': safe(self.date_dispatched_YMD),
-            'dispatch_total': int(self.dispatch_total) if self.dispatch_total is not None else 0,
+            'dispatch_total': self.dispatch_total if self.dispatch_total is not None else 0,
             'late_declare': safe(self.late_declare),
             'dispatch_remarks': safe(self.dispatch_remarks)
         }
@@ -399,6 +405,28 @@ class Claims_Archive(Base):
     sent_advanced_notice = Column(Boolean)
     claim_type = Column(Enum('ACCIDENT', 'DEATH'))
 
+
+class ArchiveAccounts(Base):
+    __tablename__ = 'archive_accounts'
+    
+    archive_id = Column(Integer, primary_key=True)
+    account_id = Column(Integer)
+    username = Column(String(50), nullable=False)
+    email = Column(String(100))
+    first_name = Column(String(50), nullable=False)
+    middle_name = Column(String(50))
+    last_name = Column(String(50), nullable=False)
+    suffix = Column(String(10))
+    birth_date = Column(Date)
+    contact_no = Column(String(15))
+    office_location = Column(String(50))
+    user_level = Column(String(20))
+    acct_created = Column(Date)
+    acct_status = Column(String(20))
+    original_created_at = Column(DateTime)
+    archived_by = Column(Integer)
+    archived_at = Column(DateTime, default=datetime.now)
+    reason = Column(String(255))
 
 class Report_TvA(Base):
     __tablename__ = 'target_per_year'
