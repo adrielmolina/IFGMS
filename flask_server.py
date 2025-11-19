@@ -683,6 +683,12 @@ def get_member_filter_options():
         origins = db_session.query(models.Records.origin).distinct().filter(models.Records.origin.isnot(None)).order_by(models.Records.origin).all()
         origins_list = [origin[0] for origin in origins]
         
+        # Ensure current user's office location is in the origins list
+        user_location = current_user.office_location if current_user else None
+        if user_location and user_location not in origins_list:
+            origins_list.append(user_location)
+            origins_list.sort()
+        
         return jsonify({
             'years': years_list,
             'origins': origins_list

@@ -119,35 +119,35 @@
                                     <td>
                                         <div class="input-container checkbox-container">
                                             <label for="id_rcv">ID Received</label>
-                                            <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off">
+                                            <input type="checkbox" id="id_rcv" name="id_rcv" autocomplete="off" readonly onclick="return false;">
                                         </div>
                                     </td>
 
                                     <td>
                                         <div class="input-container checkbox-container">
                                             <label for="paid">Paid</label>
-                                            <input type="checkbox" id="paid" name="paid" autocomplete="off">
+                                            <input type="checkbox" id="paid" name="paid" autocomplete="off" readonly onclick="return false;">
                                         </div>
                                     </td>
 
                                     <td>
                                         <div class="input-container checkbox-container">
                                             <label for="declared">Declared</label>
-                                            <input type="checkbox" id="declared" name="declared" autocomplete="off">
+                                            <input type="checkbox" id="declared" name="declared" autocomplete="off" readonly onclick="return false;">
                                         </div>
                                     </td>
 
                                     <td>
                                         <div class="input-container checkbox-container">
                                             <label for="record_dispatch_ready">Dispatch Ready</label>
-                                            <input type="checkbox" id="record_dispatch_ready" name="record_dispatch_ready" autocomplete="off" readonly>
+                                            <input type="checkbox" id="record_dispatch_ready" name="record_dispatch_ready" autocomplete="off" readonly onclick="return false;">
                                         </div>
                                     </td>
 
                                     <td>
                                         <div class="input-container">
                                             <label for="dec_date">Declaration Date</label>
-                                            <input type="date" id="dec_date" name="dec_date" autocomplete="off">
+                                            <input type="date" id="dec_date" name="dec_date" autocomplete="off" readonly>
                                         </div>
                                     </td>
 
@@ -2241,8 +2241,6 @@ async function initializeNextRecordId() {
         nextRecordId = nextId;
         console.log('✅ Next record ID initialized:', nextRecordId);
         
-        // Update any UI elements that might show the next available ID
-        updateNextRecordIdDisplay();
         
     } catch (error) {
         console.error('❌ Failed to initialize next record ID:', error);
@@ -2259,7 +2257,6 @@ function refreshNextRecordId() {
 
 async function openEmptyRecordOverlay() {
     try {
-        // Get next available record ID first
         const nextId = await getNextRecordId();
         
         if (nextId === 0) {
@@ -2270,7 +2267,7 @@ async function openEmptyRecordOverlay() {
         // Clear all form fields
         clearRecordForm();
         
-        // Set the next available ID (this is just for display, not saved yet)
+        // Set the next available ID
         document.getElementById('record_id').value = nextId;
         document.getElementById('year').value = new Date().getFullYear();
         
@@ -2283,19 +2280,18 @@ async function openEmptyRecordOverlay() {
             overlayContent.scrollTop = 0;
         }
         
-        // Initialize change tracking and auto-fill functions
+        // Initialize functions
         setTimeout(() => {
             initializeChangeTracking();
             setDistrictFromMunicipality();
-            setOriginBasedOnUser();
+            setOriginBasedOnUser(); // This will now set the origin automatically
             setLocationParticularToUppercase();
             highlightRequiredFields();
             switchToAddMode();
             setupMaabNumberHandling(); 
             setBirthdayMaxDate();
-            
-            // ===== NEW: DISABLE ENTRY DETAILS FOR NEW RECORD =====
             disableEntryDetails();
+            updateCheckboxStates();
             
             // Clear entries table for new record
             if (window.entriesHotInstance) {
@@ -2311,6 +2307,35 @@ async function openEmptyRecordOverlay() {
         toastError("Error", "Failed to initialize new record. Please try again.");
     }
 }
+
+// Prevent manual changes to origin for new records
+function setupOriginFieldProtection() {
+    const originSelect = document.getElementById('origin');
+    const recordId = document.getElementById('record_id');
+    
+    if (originSelect && recordId) {
+        originSelect.addEventListener('mousedown', function(e) {
+            const isNewRecord = recordId.value == nextRecordId || recordId.value === '0';
+            if (isNewRecord && this.readOnly) {
+                e.preventDefault();
+                this.blur();
+                toastInfo("Auto-set Field", "Origin is automatically set based on your office location.");
+            }
+        });
+        
+        originSelect.addEventListener('keydown', function(e) {
+            const isNewRecord = recordId.value == nextRecordId || recordId.value === '0';
+            if (isNewRecord && this.readOnly) {
+                e.preventDefault();
+            }
+        });
+    }
+}
+
+// Call this in your DOMContentLoaded or overlay opening function
+document.addEventListener('DOMContentLoaded', function() {
+    setupOriginFieldProtection();
+});
 
 // Update your clearRecordForm function
 function clearRecordForm() {
@@ -2472,10 +2497,20 @@ function addNewEntry(recordId) {
         calculateAgeFromBirthdate();
     }
     
+    // ===== NEW: VALIDATE AGE =====
+    if (!validateAge()) {
+        toastAlert("Age Restriction", "The age of the entry should be 3+. Please check the birthdate.");
+        return;
+    }
+    
     // Helper function to convert empty strings to null
     function emptyToNull(value) {
         return value === '' ? null : value;
     }
+    
+    // Handle sex field specifically - convert empty string to null
+    const sexField = document.getElementById('sex');
+    const sexValue = sexField.value === '' ? null : sexField.value;
     
     const payload = {
         record_id: recordId,
@@ -2487,7 +2522,7 @@ function addNewEntry(recordId) {
         suffix: document.getElementById('suffix').value,
         birth_date: document.getElementById('bdate').value,
         age: document.getElementById('age').value ? parseInt(document.getElementById('age').value) : null,
-        sex: emptyToNull(document.getElementById('sex').value),
+        sex: sexValue,
         contact_no: emptyToNull(document.getElementById('contact').value),
         email: emptyToNull(document.getElementById('email').value),
         address: emptyToNull(document.getElementById('address').value),
@@ -2499,7 +2534,9 @@ function addNewEntry(recordId) {
         OR_num: emptyToNull(document.getElementById('entry_or_no').value),
         OR_date: emptyToNull(document.getElementById('entry_or_date').value),
         remarks: emptyToNull(document.getElementById('entry_remarks').value),
-        tags: emptyToNull(document.getElementById('entry_tags').value)
+        tags: emptyToNull(document.getElementById('entry_tags').value),
+        dispatch_ready: document.getElementById('record_dispatch_ready').checked,
+        dispatch_id: null
     };
 
     console.log('Adding new entry:', payload);
@@ -2518,65 +2555,64 @@ function addNewEntry(recordId) {
         }
         return response.json();
     })
-// In addNewEntry function, after successful save:
-.then(data => {
-    if (data.success === true) {
-        toastSuccess("Entry Added", "Entry added successfully!");
-        
-        // ✅ CRITICAL: MARK MAAB NUMBER AS USED IN INVENTORY
-        const maabNo = document.getElementById('maab_no').value;
-        console.log(`🔄 Attempting to mark MAAB number as used: ${maabNo}`);
-        
-        if (maabNo && maabNo.trim() !== '') {
-            fetch('/api/inventory/mark_as_used', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ maab_no: maabNo })
-            })
-            .then(response => response.json())
-            .then(result => {
-                console.log('🔍 mark_as_used API response:', result);
-                if (result.success) {
-                    console.log(`✅ MAAB number ${maabNo} marked as used in inventory`);
-                    // Refresh dropdown after marking as used
-                    setTimeout(() => {
-                        if (window.refreshMAABDropdown) {
-                            window.refreshMAABDropdown();
-                        }
-                    }, 1000);
-                } else {
-                    console.warn(`⚠️ Failed to mark MAAB number as used: ${result.error}`);
-                    toastAlert("Inventory Warning", `MAAB number saved but inventory not updated: ${result.error}`);
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error marking MAAB number as used:', error);
-            });
-        } else {
-            console.warn('⚠️ No MAAB number to mark as used');
-        }
-        
-        // Refresh entries table
-        refreshEntriesTable();
-        // Clear form and stay in add mode
-        clearEntryForm();
-        
-        // ✅ Refresh MAAB dropdown to exclude the newly used number
-        if (window.refreshMAABDropdown) {
+    .then(data => {
+        if (data.success === true) {
+            toastSuccess("Entry Added", "Entry added successfully!");
+            
+            // ✅ CRITICAL: MARK MAAB NUMBER AS USED IN INVENTORY
+            const maabNo = document.getElementById('maab_no').value;
+            console.log(`🔄 Attempting to mark MAAB number as used: ${maabNo}`);
+            
+            if (maabNo && maabNo.trim() !== '') {
+                fetch('/api/inventory/mark_as_used', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ maab_no: maabNo })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    console.log('🔍 mark_as_used API response:', result);
+                    if (result.success) {
+                        console.log(`✅ MAAB number ${maabNo} marked as used in inventory`);
+                        // Refresh dropdown after marking as used
+                        setTimeout(() => {
+                            if (window.refreshMAABDropdown) {
+                                window.refreshMAABDropdown();
+                            }
+                        }, 1000);
+                    } else {
+                        console.warn(`⚠️ Failed to mark MAAB number as used: ${result.error}`);
+                        toastAlert("Inventory Warning", `MAAB number saved but inventory not updated: ${result.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error marking MAAB number as used:', error);
+                });
+            } else {
+                console.warn('⚠️ No MAAB number to mark as used');
+            }
+            
+            // Refresh entries table
+            refreshEntriesTable();
+            // Clear form and stay in add mode
+            clearEntryForm();
+            
+            // ✅ Refresh MAAB dropdown to exclude the newly used number
+            if (window.refreshMAABDropdown) {
+                setTimeout(() => {
+                    window.refreshMAABDropdown();
+                }, 500);
+            }
+            
+            // Update Dispatch Ready status after a short delay
             setTimeout(() => {
-                window.refreshMAABDropdown();
+                updateDispatchReadyFromEntries();
+                updateRecordPaidFromEntries();
             }, 500);
+        } else {
+            toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
         }
-        
-        // Update Dispatch Ready status after a short delay
-        setTimeout(() => {
-            updateDispatchReadyFromEntries();
-            updateRecordPaidFromEntries();
-        }, 500);
-    } else {
-        toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
-    }
-})
+    })
     .catch(error => {
         console.error('Error:', error);
         toastError("Error", "An error occurred during entry adding: " + error.message);
@@ -2589,43 +2625,93 @@ function disableEntryDetails() {
     const entryRadioControls = document.querySelector('.entry-radio-controls');
     const entriesTable = document.getElementById('entries_table');
     
+    console.log('🛑 DISABLING ENTRY DETAILS - Entry Details element:', entryDetails);
+    console.log('🛑 DISABLING ENTRY DETAILS - Radio Controls:', entryRadioControls);
+    
     if (entryDetails) {
         entryDetails.classList.add('disabled');
+        console.log('✅ Added disabled class to entry details');
+    } else {
+        console.log('❌ entry_details element not found!');
     }
     
     if (entryRadioControls) {
         entryRadioControls.style.display = 'none';
+        console.log('✅ Hid entry radio controls');
+    } else {
+        console.log('❌ entry-radio-controls element not found!');
     }
     
     // Show empty state in entries table
     if (window.entriesHotInstance) {
         window.entriesHotInstance.loadData([]);
-        // You could also show a message in the table
+        console.log('✅ Cleared entries table');
     }
     
-    console.log('Entry details disabled - record not saved yet');
+    console.log('🛑 Entry details disabled - record not saved yet');
 }
 
 function enableEntryDetails() {
     const entryDetails = document.getElementById('entry_details');
     const entryRadioControls = document.querySelector('.entry-radio-controls');
     
+    console.log('✅ ENABLING ENTRY DETAILS - Entry Details element:', entryDetails);
+    console.log('✅ ENABLING ENTRY DETAILS - Radio Controls:', entryRadioControls);
+    
     if (entryDetails) {
         entryDetails.classList.remove('disabled');
+        console.log('✅ Removed disabled class from entry details');
     }
     
     if (entryRadioControls) {
         entryRadioControls.style.display = 'flex';
+        console.log('✅ Showed entry radio controls');
     }
     
-    console.log('Entry details enabled - record is saved');
+    console.log('✅ Entry details enabled - record is saved');
 }
 
 // Function to check if entry details should be enabled
 function shouldEnableEntryDetails() {
     const recordId = document.getElementById('record_id').value;
+    
+    // If nextRecordId is still 0 (not initialized), be more cautious
+    if (nextRecordId === 0) {
+        console.warn('⚠️ nextRecordId not initialized yet, checking record ID value');
+        // If recordId exists and is not 0 or empty, assume it's existing
+        return recordId && recordId !== '0' && recordId !== '';
+    }
+    
     const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
     return !isNewRecord;
+}
+
+function updateCheckboxStates() {
+    const recordId = document.getElementById('record_id').value;
+    const isNewRecord = shouldEnableEntryDetails() === false;
+    
+    const checkboxes = [
+        'record_dispatch_ready',
+        'paid', 
+        'id_rcv'
+    ];
+    
+    checkboxes.forEach(checkboxId => {
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            if (isNewRecord) {
+                // New record - checkboxes should be auto-controlled and disabled
+                checkbox.disabled = true;
+                checkbox.classList.add('dispatch-ready-auto', 'paid-auto', 'id-rcv-auto');
+            } else {
+                // Existing record - checkboxes should reflect actual data but be auto-controlled
+                checkbox.disabled = true; // They should still be auto-controlled
+                checkbox.classList.add('dispatch-ready-auto', 'paid-auto', 'id-rcv-auto');
+            }
+        }
+    });
+    
+    console.log('✅ Checkbox states updated - New record:', isNewRecord);
 }
 
 // Function to set maximum date for birthday field to today
@@ -2650,7 +2736,44 @@ function setBirthdayMaxDate() {
     }
 }
 
-// Update your existing calculateAgeFromBirthdate function to add extra validation
+// ===== AGE VALIDATION FUNCTION =====
+function validateAge() {
+    const ageInput = document.getElementById('age');
+    const bdateInput = document.getElementById('bdate');
+    
+    if (!ageInput || !bdateInput) return true; // Skip if elements not found
+    
+    const age = parseInt(ageInput.value);
+    
+    // Check if age is less than 3
+    if (age < 3) {
+        // Highlight the age field
+        ageInput.classList.add('required-field');
+        
+        // Create or show error element
+        let errorElement = document.getElementById('age_error');
+        if (!errorElement) {
+            errorElement = document.createElement('div');
+            errorElement.id = 'age_error';
+            errorElement.className = 'error-message';
+            ageInput.parentNode.appendChild(errorElement);
+        }
+        errorElement.textContent = "Age must be 3 years or older";
+        errorElement.classList.add('show');
+        
+        return false;
+    } else {
+        // Clear error if age is valid
+        ageInput.classList.remove('required-field');
+        const errorElement = document.getElementById('age_error');
+        if (errorElement) {
+            errorElement.classList.remove('show');
+        }
+        return true;
+    }
+}
+
+// ===== UPDATE AGE CALCULATION FUNCTION =====
 function calculateAgeFromBirthdate() {
     const birthdateInput = document.getElementById('bdate');
     const ageInput = document.getElementById('age');
@@ -2674,6 +2797,9 @@ function calculateAgeFromBirthdate() {
         }
         
         ageInput.value = age;
+        
+        // Validate age after calculation
+        setTimeout(validateAge, 100);
     } else {
         ageInput.value = ''; // Clear the field if no birthdate
     }
@@ -2692,6 +2818,12 @@ function updateEntry(entryId, recordId) {
     const ageInput = document.getElementById('age');
     if (!ageInput.value && document.getElementById('bdate').value) {
         calculateAgeFromBirthdate();
+    }
+    
+    // ===== NEW: VALIDATE AGE =====
+    if (!validateAge()) {
+        toastAlert("Age Restriction", "The age of the entry should be 3+. Please check the birthdate.");
+        return;
     }
     
     // Helper function to convert empty strings to null
@@ -2714,7 +2846,7 @@ function updateEntry(entryId, recordId) {
         suffix: document.getElementById('suffix').value,
         birth_date: document.getElementById('bdate').value,
         age: document.getElementById('age').value ? parseInt(document.getElementById('age').value) : null,
-        sex: sexValue,  // Use the properly handled sex value
+        sex: sexValue,
         contact_no: emptyToNull(document.getElementById('contact').value),
         email: emptyToNull(document.getElementById('email').value),
         address: emptyToNull(document.getElementById('address').value),
@@ -2750,20 +2882,44 @@ function updateEntry(entryId, recordId) {
     .then(data => {
         if (data.success === true) {
             toastSuccess("Entry Updated", "Entry updated successfully!");
-        //TODO: For updates, you might need to handle MAAB number changes
-        // If the MAAB number was changed, mark the new one as used and old one as available
-        
-        // Refresh entries table
-        refreshEntriesTable();
-        // Switch back to add mode and clear form
-        switchToAddMode();
-        
-        // ✅ Refresh MAAB dropdown
-        if (window.refreshMAABDropdown) {
-            setTimeout(() => {
-                window.refreshMAABDropdown();
-            }, 500);
-        }
+            
+            // Handle MAAB number changes for updates
+            const maabNo = document.getElementById('maab_no').value;
+            console.log(`🔄 Processing MAAB number update: ${maabNo}`);
+            
+            if (maabNo && maabNo.trim() !== '') {
+                // For updates, we might need to handle MAAB number changes
+                // If the MAAB number was changed, mark the new one as used
+                fetch('/api/inventory/mark_as_used', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ maab_no: maabNo })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    console.log('🔍 update mark_as_used API response:', result);
+                    if (result.success) {
+                        console.log(`✅ MAAB number ${maabNo} marked as used in inventory`);
+                    } else {
+                        console.warn(`⚠️ Failed to mark MAAB number as used: ${result.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error marking MAAB number as used:', error);
+                });
+            }
+            
+            // Refresh entries table
+            refreshEntriesTable();
+            // Switch back to add mode and clear form
+            switchToAddMode();
+            
+            // ✅ Refresh MAAB dropdown
+            if (window.refreshMAABDropdown) {
+                setTimeout(() => {
+                    window.refreshMAABDropdown();
+                }, 500);
+            }
             
             // Update Dispatch Ready status after a short delay
             setTimeout(() => {
@@ -2929,6 +3085,9 @@ function openRecordInOverlay(recordData) {
         // ===== NEW: ENABLE ENTRY DETAILS FOR EXISTING RECORD =====
         enableEntryDetails();
         
+        // ===== NEW: UPDATE CHECKBOX STATES =====
+        updateCheckboxStates();
+        
         // Make sure we're in add mode initially (hide back button)
         switchToAddMode();
         
@@ -2942,7 +3101,6 @@ function openRecordInOverlay(recordData) {
         console.log('Municipality final:', document.getElementById('municipality').value);
         console.log('District final:', document.getElementById('district').value);
         console.log('Save button state after initialization:');
-        debugSaveButtonState();
     }, 500); // Increased to 500ms to ensure everything is loaded
 
     // Fetch entries for this record
@@ -3707,24 +3865,53 @@ function setDistrictFromMunicipality() {
     }
 }
 
-// Function to auto-set origin based on logged-in user
 function setOriginBasedOnUser() {
     const originSelect = document.getElementById('origin');
     
-    // Get user's office location from Flask template
-    const userLocation = '{{ current_user.office_location if current_user else "Chapter" }}';
+    if (!originSelect) {
+        console.error('Origin select element not found');
+        return;
+    }
     
-    if (userLocation && originSelect) {
-        // Wait a moment for options to be populated, then set the value
+    // Get user's office location from Flask template
+    const userLocation = '{{ current_user.office_location if current_user else "" }}';
+    console.log('User location from template:', userLocation);
+    
+    if (userLocation && userLocation.trim() !== '') {
+        // Wait for dropdown to be populated, then set the value
+        const waitForOptions = setInterval(() => {
+            // Check if dropdown has options (more than just the placeholder)
+            if (originSelect.options.length > 1) {
+                clearInterval(waitForOptions);
+                
+                // Check if the user's location exists in the options
+                const optionExists = Array.from(originSelect.options).some(option => 
+                    option.value === userLocation
+                );
+                
+                if (optionExists) {
+                    originSelect.value = userLocation;
+                    
+                    // Make it visually distinct and read-only for new records
+                    originSelect.style.backgroundColor = '#f5f5f5';
+                    originSelect.title = 'Origin is automatically set based on your location: ' + userLocation;
+                    originSelect.readOnly = true;
+                    
+                    console.log('✅ Origin auto-set to:', userLocation);
+                } else {
+                    console.warn('User location not found in origin options:', userLocation);
+                    // Fallback: set to first available option or keep empty
+                }
+            }
+        }, 100); // Check every 100ms
+        
+        // Timeout after 5 seconds
         setTimeout(() => {
-            originSelect.value = userLocation;
-            
-            // Make it visually distinct
-            originSelect.style.backgroundColor = '#f5f5f5';
-            originSelect.title = 'Origin is automatically set based on your location: ' + userLocation;
-            
-            console.log('Origin auto-set to:', userLocation);
-        }, 100);
+            clearInterval(waitForOptions);
+            console.warn('Timeout waiting for origin options to populate');
+        }, 5000);
+    } else {
+        console.warn('No user location available for auto-setting origin');
     }
 }
 
@@ -3765,6 +3952,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check for active dispatch and update button state
     checkActiveDispatch();
+
+    // Pre-fetch the next record ID when page loads
+    initializeNextRecordId().then(() => {
+        console.log('✅ Next record ID initialized:', nextRecordId);
+    });
     
     // Add archive button event listener
     const archiveBtn = document.querySelector('.btn-archive');
@@ -3819,6 +4011,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listener for birthdate changes
     document.getElementById('bdate').addEventListener('change', function() {
         calculateAgeFromBirthdate();
+        validateAge();
     });
     
     // Also calculate age when the overlay opens (in case birthdate is already filled)
