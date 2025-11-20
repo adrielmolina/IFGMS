@@ -2,6 +2,25 @@ import bcrypt
 from pathlib import Path
 from datetime import datetime as dt
 from random import randint
+import re
+
+def validate_email_format(email):
+    """
+    Basic email format validation
+    """
+    if not email:
+        return False
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+# If you don't have generate_otp function, add this too:
+def generate_otp(length=6):
+    """
+    Generate a random OTP of specified length
+    """
+    import random
+    import string
+    return ''.join(random.choices(string.digits, k=length))
 
 def hash_password(password=''):
     salt = bcrypt.gensalt()

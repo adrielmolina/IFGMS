@@ -44,11 +44,13 @@ def test_domain():
 
     print(f"Status: {r.status_code}, Total time: {end-start:.4f}s")
 
-
+def get_claim_id_test():
+    claim_id = db_conn.get_claim_id()
+    print("New claim ID:", claim_id)
 
 if __name__ == "__main__":
-    test_db_connection_time()
-    print(test_db_latency())
+    #test_db_connection_time()
+    #print(test_db_latency())
     #test_domain()
-    
+    get_claim_id_test()
     
