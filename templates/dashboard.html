@@ -56,7 +56,7 @@
 
 <div class="cards-container">
     
-    <div class="card yellow">
+    <div class="card yellow" hidden="true">
         <h3><img class="icons" src="{{ url_for('static', filename='assets/analytics.png') }}" alt="logo"> Sales</h3>
         <h2 class="numbercount" id="salesCurrentTotal">100,000</h2> 
         <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p> 
@@ -111,8 +111,8 @@
 </div>
 
 <hr class="divider">
-    
-    <div class="side-card full">
+    <!-- TODO unhide later and totals sales-->
+    <div class="side-card full" hidden>
         <h4>UNIT SOLD</h4>
         <table id="unitTable" cellspacing="0" cellpadding="5">
             <tr>
