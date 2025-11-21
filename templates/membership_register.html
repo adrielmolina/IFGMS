@@ -6,6 +6,10 @@
     <title>MAAB Registration</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/membership_register.css') }}">
 
+
+    <!-- reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
@@ -690,6 +694,8 @@
                     <a href="#" id="openTerms">Terms and Conditions</a>
                 </label>
 
+                <div class="g-recaptcha" data-sitekey="{{ site_key }}"></div>
+
                 <div class="form-actions">
                     <button type="button" class="back-btn" id="back_btn">Back</button>
                     <button type="button" class="submit-btn" id="submit_btn">Submit</button>
@@ -807,7 +813,10 @@
         <div class="faq-item">
             <button class="faq-question">What are the benefits included in the MAAB membership?</button>
             <div class="faq-answer">
-                <p>Depending on your chosen membership type, benefits may include coverage for accident death, disablement, medical reimbursement, unprovoked assault, and daily hospital allowance.</p>
+                <p>Depending on your chosen membership type, benefits may include coverage for accident death, disablement, medical reimbursement, unprovoked assault, and daily hospital allowance, animal bites, and dengue.
+                    
+                    For Safe Card membership, there is an additional 1 blood bag and free ambulance service included.
+                </p>
             </div>
         </div>
 
@@ -1276,6 +1285,13 @@
         });
 
         document.getElementById('submit_btn').addEventListener('click', () => {
+            // --- CAPTCHA check ---
+            const recaptchaResponse = grecaptcha.getResponse();
+            if (!recaptchaResponse) {
+                toastError("Please complete the CAPTCHA.");
+                return;
+            }
+            
             const street = document.getElementById('street').value.toUpperCase();
             const brgy_no = document.getElementById('brgy_no').value;
             const municipality = document.getElementById('municipality').value;
