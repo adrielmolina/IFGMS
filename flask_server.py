@@ -558,6 +558,7 @@ def forgot_password_otp():
             print(f"✅ DEBUG: SUCCESS! OTP process completed for: {email}")
             print(f"✅ DEBUG: Redirecting to verify_otp page")
             
+            session.pop('_flashes', None)
             # Success
             flash({
                 "title": "OTP Sent!",
