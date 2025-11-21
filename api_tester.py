@@ -52,5 +52,6 @@ if __name__ == "__main__":
     #test_db_connection_time()
     #print(test_db_latency())
     #test_domain()
-    get_claim_id_test()
+    #get_claim_id_test()
+    target_vs_actual_test()
     

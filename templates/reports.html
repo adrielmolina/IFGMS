@@ -47,8 +47,131 @@
                     <option value="Private">Private</option>
                 </select>
             </div>
+
+            <button id="openReportsOverlay" class="btn-primary">
+                <i class="fas fa-plus"></i> Add Report Data
+            </button>
         </div>
     </div>
+
+    <!-- Reports Overlay -->
+<div id="reportsOverlay" class="overlay">
+    <div class="overlay-content">
+        <div class="overlay-header">
+            <h2>Add Report Data</h2>
+            <button id="closeOverlay" class="close-btn">&times;</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-button active" data-tab="target-actual">Target vs Actual</button>
+            <button class="tab-button" data-tab="budget-expenses">Budget vs Expenses</button>
+        </div>
+        
+        <!-- Target vs Actual Tab -->
+        <div id="target-actual" class="tab-content active">
+            <form id="targetActualForm" class="report-form">
+                <div class="form-group">
+                    <label for="dataType">Data Type:</label>
+                    <select id="dataType" name="dataType" required>
+                        <option value="">Select Type</option>
+                        <option value="target">Set Annual Target</option>
+                        <option value="actual">Add Monthly Actual</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="idCategory">ID Category:</label>
+                    <select id="idCategory" name="idCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="Classic">Classic</option>
+                        <option value="Bronze">Bronze</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Platinum">Platinum</option>
+                        <option value="Safe Card">Safe Card</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Senior+">Senior+</option>
+                    </select>
+                </div>
+                
+                <!-- Target-specific fields (shown when dataType = 'target') -->
+                <div id="targetFields" class="data-type-fields">
+                    <div class="form-group">
+                        <label for="targetCount">Target Count (Annual):</label>
+                        <input type="number" id="targetCount" name="targetCount" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="yearSelect">Year:</label>
+                        <select id="yearSelect" name="yearSelect" required>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                        </select>
+                    </div>
+                    
+                    <div class="calculated-field">
+                        <label>Calculated Target Amount:</label>
+                        <span id="calculatedAmount">₱0.00</span>
+                    </div>
+                </div>
+                
+                <!-- Actual-specific fields (shown when dataType = 'actual') -->
+                <div id="actualFields" class="data-type-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="actualCount">Actual Count (Monthly):</label>
+                        <input type="number" id="actualCount" name="actualCount" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="monthSelect">Month:</label>
+                        <select id="monthSelect" name="monthSelect" required>
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="actualYearSelect">Year:</label>
+                        <select id="actualYearSelect" name="actualYearSelect" required>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                        </select>
+                    </div>
+                    
+                    <div class="calculated-field">
+                        <label>Calculated Actual Amount:</label>
+                        <span id="calculatedActualAmount">₱0.00</span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Data</button>
+                    <button type="button" class="btn-secondary" id="cancelTarget">Cancel</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Budget vs Expenses Tab (keep your existing one) -->
+        <div id="budget-expenses" class="tab-content">
+            <!-- Your existing budget form here -->
+        </div>
+    </div>
+</div>
     
     <!-- TODO hidden for now. fix later -->
     <!-- Budget vs Expenses -->
@@ -101,406 +224,573 @@
 
 {% block extra_scripts %}
 <script>
-    // TABLE FOR BUDGET VS EXPENSES
+    // Category cost mapping for automatic calculation
+    const categoryCost = {
+        "Classic": 60,
+        "Bronze": 150,
+        "Silver": 300,
+        "Gold": 500,
+        "Platinum": 1000,
+        "Safe Card": 1200,
+        "Senior": 150,
+        "Senior+": 300
+    };
+
+    // Global variables for tables
+    let budgetExpense;
+    let target_vs_actual_table;
+    let perDistrictTable;
+
+    // Initialize all tables
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeBudgetExpenseTable();
+        initializeTargetVsActualTable();
+        initializePerDistrictTable();
+        initializeOverlay();
+        initializeFilters();
+        initializeCollapseBoxes();
+    });
+
+    // FIXED BUDGET VS EXPENSES TABLE
+function initializeBudgetExpenseTable() {
     const tableData = [
-    {
-        id: 1,
-        account_code: "5020401",
-        account_name: "Gasoline & Oil",
-        budget_2022: 100800,
-        jan: 1400, feb: 4100, mar: 3400, apr: 3700, may: 2000, jun: 2100,
-        jul: 1400, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0,
-        total_expense: 18100,
-        balance: 82700,
-    },
-    {
-        id: 2,
-        account_code: "5020511",
-        account_name: "Travel Local",
-        budget_2022: 20000,
-        jan: 0, feb: 0, mar: 0, apr: 0, may: 60, jun: 20,
-        jul: 0, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0,
-        total_expense: 80,
-        balance: 19920,
-    },
-    {
-        id: 3,
-        account_code: "5020601",
-        account_name: "Meals and Snacks",
-        budget_2022: 20000,
-        jan: 405, feb: 1905, mar: 1520, apr: 2209, may: 1639, jun: 1372,
-        jul: 400, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0,
-        total_expense: 9450,
-        balance: 10550,
-    },
-    {
-        id: 4,
-        account_code: "5020602",
-        account_name: "Token and Gift",
-        budget_2022: 10000,
-        jan: 0, feb: 2379, mar: 0, apr: 0, may: 365, jun: 0,
-        jul: 0, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0,
-        total_expense: 2744,
-        balance: 7256,
-    },
-    {
-        id: 5,
-        account_code: "5020603",
-        account_name: "Prizes, Awards & Reward",
-        budget_2022: 100000,
-        jan: 0, feb: 0, mar: 0, apr: 0, may: 0, jun: 0,
-        jul: 0, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0,
-        total_expense: 0,
-        balance: 100000,
-    },
+        {
+            id: 1,
+            account_code: "5020401",
+            account_name: "Gasoline & Oil",
+            budget_2025: 100800,
+            jan: 1400, feb: 4100, mar: 3400, apr: 3700, may: 2000, jun: 2100,
+            jul: 1400, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0,
+            total_expense: 18100,
+            balance: 82700,
+        }
     ];
 
-    const budgetExpense = new Tabulator("#budget_v_expense_table", {
-    data: tableData,
-    layout: "fitColumns", 
-    responsiveLayout: "collapse",
-        
-    columns: [
-        {title:"Account Code", field:"account_code", width:"10.625rem", headerHozAlign:"center"},
-        {title:"Account Name", field:"account_name", width:"10.625rem", headerHozAlign:"center"},
-        {title:"Budget 2025", width:"8rem", field:"budget_2022", hozAlign:"right", headerHozAlign:"center",
-        formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        
-        // Months
-        {title:"January", field:"jan", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"February", field:"feb", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"March", field:"mar", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"April", field:"apr", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"May", field:"may", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"June", field:"jun", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"July", field:"jul", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"August", field:"aug", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"September", field:"sep", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"October", field:"oct", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"November", field:"nov", width:"8rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        {title:"December", field:"dec", width:"8.5rem", hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
-        
-        // Totals
-        {title:"Total Expense", field:"total_expense", width:"9rem",hozAlign:"right", headerHozAlign:"center",
-             formatter:"money", formatterParams:{symbol:"₱", precision:0}, headerFormatterParams:{style:{background:"#ffffff", color:"#1f1313"}}},
-            {title:"Balance", field:"balance", width:"9rem", hozAlign:"right", headerHozAlign:"center",
-             formatter:"money", formatterParams:{symbol:"₱", precision:0},
-             cellFormatter:function(cell){
-                 let val = cell.getValue();
-                 cell.getElement().style.color = val < 0 ? "red" : "green";
-                 return "₱" + val.toLocaleString();
-             },
+    budgetExpense = new Tabulator("#budget_v_expense_table", {
+        data: tableData,
+        layout: "fitColumns", 
+        responsiveLayout: "collapse",
+        columns: [
+            {title:"Account Code", field:"account_code", width:150, headerHozAlign:"center"},
+            {title:"Account Name", field:"account_name", width:150, headerHozAlign:"center"},
+            {title:"Budget 2025", width:120, field:"budget_2025", hozAlign:"right", headerHozAlign:"center",
+            formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            
+            // Months
+            {title:"January", field:"jan", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"February", field:"feb", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"March", field:"mar", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"April", field:"apr", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"May", field:"may", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"June", field:"jun", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"July", field:"jul", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"August", field:"aug", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"September", field:"sep", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"October", field:"oct", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"November", field:"nov", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            {title:"December", field:"dec", width:100, hozAlign:"right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}},
+            
+            // Totals - FIXED: Remove headerFormatterParams and use proper formatter
+            {
+                title:"Total Expense", 
+                field:"total_expense", 
+                width:120,
+                hozAlign:"right", 
+                headerHozAlign:"center",
+                formatter:"money", 
+                formatterParams:{symbol:"₱", precision:0}
+            },
+            {
+                title:"Balance", 
+                field:"balance", 
+                width:120, 
+                hozAlign:"right", 
+                headerHozAlign:"center",
+                formatter:function(cell, formatterParams, onRendered){
+                    let val = cell.getValue();
+                    return val < 0 ? 
+                        '<span style="color:red">₱' + Math.abs(val).toLocaleString() + '</span>' : 
+                        '<span style="color:green">₱' + val.toLocaleString() + '</span>';
+                }
             },
         ],
     });
+}
 
-    // TABLE FOR TARGET VS ACTUAL
-    const targetColumns = [
-    { title: "Category", field: "category", width: "9.5rem", headerHozAlign: "center" },
-    { title: "Target", headerHozAlign:"center", columns: [
-        { title: "PCS", field: "target_PCS", hozAlign: "right", headerHozAlign:"center", width: "5rem" },
-        { title: "AMT", field: "target_AMT", hozAlign: "right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}, width: "7.5rem" }
-    ]}
-    ];
+    // TARGET VS ACTUAL TABLE
+    function initializeTargetVsActualTable() {
+        const targetColumns = [
+            { title: "Category", field: "category", width: "9.5rem", headerHozAlign: "center" },
+            { title: "Target", headerHozAlign:"center", columns: [
+                { title: "PCS", field: "target_PCS", hozAlign: "right", headerHozAlign:"center", width: "5rem", editor: "number" },
+                { title: "AMT", field: "target_AMT", hozAlign: "right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}, width: "7.5rem" }
+            ]}
+        ];
 
-    ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach(month => {
-    targetColumns.push({
-        title: month,
-        headerHozAlign:"center",
-        columns: [
-        { title: "PCS", field: month+"_PCS", hozAlign: "right", headerHozAlign:"center", width: "5rem" },
-        { title: "AMT", field: month+"_AMT", hozAlign: "right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}, width: "7.5rem" }
-        ]
-    });
-    });
-
-    const categories = [
-    "Classic",
-    "Bronze",
-    "Silver",
-    "Gold",
-    "Platinum",
-    "Safe Card",
-    "Senior",
-    "Senior+"
-    ];
-
-    const target_vs_actual_table = new Tabulator("#target_v_actual_table", {
-        columns: targetColumns,
-        autoColumns: false,
-        data: categories.map(category => {
-            const row = { category, target_PCS: 0, target_AMT: 0 };
-            ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach(month => {
-                row[month + "_PCS"] = 0;
-                row[month + "_AMT"] = 0;
+        ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach(month => {
+            targetColumns.push({
+                title: month,
+                headerHozAlign:"center",
+                columns: [
+                    { title: "PCS", field: month+"_PCS", hozAlign: "right", headerHozAlign:"center", width: "5rem", editor: "number" },
+                    { title: "AMT", field: month+"_AMT", hozAlign: "right", headerHozAlign:"center", formatter:"money", formatterParams:{symbol:"₱", precision:0}, width: "7.5rem" }
+                ]
             });
-            return row;
-        }),
-        layout: "fitColumns"
+        });
+
+        const categories = [
+            "Classic",
+            "Bronze",
+            "Silver",
+            "Gold",
+            "Platinum",
+            "Safe Card",
+            "Senior",
+            "Senior+"
+        ];
+
+        target_vs_actual_table = new Tabulator("#target_v_actual_table", {
+            columns: targetColumns,
+            autoColumns: false,
+            data: categories.map(category => {
+                const cost = categoryCost[category] || 0;
+                const row = { 
+                    category, 
+                    target_PCS: 0, 
+                    target_AMT: 0 
+                };
+                
+                ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach(month => {
+                    row[month + "_PCS"] = 0;
+                    row[month + "_AMT"] = 0;
+                });
+                return row;
+            }),
+            layout: "fitColumns",
+            cellEdited: function(cell) {
+                const field = cell.getField();
+                const row = cell.getRow();
+                const category = row.getData().category;
+                const cost = categoryCost[category] || 0;
+                
+                // Update AMT when PCS changes
+                if (field === "target_PCS") {
+                    const pcs = cell.getValue();
+                    row.update({ target_AMT: pcs * cost });
+                } else if (field.endsWith("_PCS")) {
+                    const month = field.replace("_PCS", "");
+                    const pcs = cell.getValue();
+                    row.update({ [month + "_AMT"]: pcs * cost });
+                }
+            }
+        });
+
+        // Load initial data from API
+        loadTargetVsActualData();
+    }
+
+    // PER DISTRICT TABLE
+    function initializePerDistrictTable() {
+        const districtMunicipalities = [
+            { districtNo: 1, municipality: 'Cavite City' },
+            { districtNo: 1, municipality: 'Kawit' },
+            { districtNo: 1, municipality: 'Noveleta' },
+            { districtNo: 1, municipality: 'Rosario' },
+            { districtNo: 2, municipality: 'Bacoor' },
+            { districtNo: 3, municipality: 'Imus' },
+            { districtNo: 4, municipality: 'Dasmariñas' },
+            { districtNo: 5, municipality: 'Carmona' },
+            { districtNo: 5, municipality: 'General Mariano Alvarez (GMA)' },
+            { districtNo: 5, municipality: 'Silang' },
+            { districtNo: 6, municipality: 'General Trias' },
+            { districtNo: 7, municipality: 'Amadeo' },
+            { districtNo: 7, municipality: 'Indang' },
+            { districtNo: 7, municipality: 'Tanza' },
+            { districtNo: 7, municipality: 'Trece Martires' },
+            { districtNo: 8, municipality: 'Alfonso' },
+            { districtNo: 8, municipality: 'Gen. Emilio Aguinaldo (Bailen)' },
+            { districtNo: 8, municipality: 'Magallanes' },
+            { districtNo: 8, municipality: 'Maragondon' },
+            { districtNo: 8, municipality: 'Mendez' },
+            { districtNo: 8, municipality: 'Naic' },
+            { districtNo: 8, municipality: 'Tagaytay City' },
+            { districtNo: 8, municipality: 'Ternate' }
+        ];
+
+        const classifications = [
+            'Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder',
+            'Public Elementary School', 'Private Elementary School',
+            'Public High School', 'Private High School',
+            'Public Senior High School', 'Private Senior High School',
+            'Public Integrated School', 'Private Integrated School',
+            'Public College', 'Private College',
+            'Government Company/Organization', 'Private Company/Organization',
+            'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events',
+            'Training', 'Company/Organization Training', 'Individual', 'Walk-In'
+        ];
+
+        perDistrictTable = new Tabulator("#per_district_table", {
+            layout: "fitColumns",
+            pagination: "local",
+            paginationSize: 50,
+            paginationSizeSelector: [25, 50, 100],
+            groupBy: ["district", "municipality"],
+            columns: [
+                { title: "Classification", field: "classification", headerHozAlign:"center", widthGrow: 2, cssClass:"bold-text" },
+                { title: "Classic", field: "classic", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+                { title: "Bronze", field: "bronze", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+                { title: "Silver", field: "silver", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+                { title: "Gold", field: "gold", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+                { title: "Platinum", field: "platinum", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+                { title: "E. Platinum", field: "enhanced_platinum", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+                { title: "Senior", field: "senior", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+                { title: "Senior+", field: "senior_plus", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
+                { title: "Total Per Classification", field: "total", hozAlign:"center", headerHozAlign:"center", widthGrow: 1.2 },
+            ],
+            groupHeader: function(value, count, data, group) {
+                if(group.getField() === "district") {
+                    return "<div style='text-align:center; font-weight:bold; font-size:1.1em;'>District " + value + "</div>";
+                }
+                if(group.getField() === "municipality") {
+                    return "<div style='text-align:center; font-weight:bold; background:#f0f0f0; padding:4px;'>" + value + "</div>";
+                }
+                return value;
+            },
+        });
+
+        // Load district data from members
+        loadPerDistrictData();
+
+        // Search functionality
+        document.getElementById('district-search').addEventListener('input', function(e) {
+            perDistrictTable.setFilter([
+                [
+                    {field: "municipality", type: "like", value: e.target.value},
+                    {field: "classification", type: "like", value: e.target.value}
+                ]
+            ]);
+        });
+    }
+
+// OVERLAY FUNCTIONALITY - ENHANCED VERSION
+function initializeOverlay() {
+    const overlay = document.getElementById('reportsOverlay');
+    const openBtn = document.getElementById('openReportsOverlay');
+    const closeBtn = document.getElementById('closeOverlay');
+    const cancelTarget = document.getElementById('cancelTarget');
+    
+    // Tab functionality
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    // Open overlay
+    openBtn.addEventListener('click', function() {
+        overlay.style.display = 'flex';
     });
-
-
-        
-    const categoryCost = {
-    "Classic": 60,
-    "Bronze": 150,
-    "Silver": 300,
-    "Gold": 500,
-    "Platinum": 1000,
-    "Safe Card": 1200,
-    "Senior": 150,
-    "Senior+": 300
+    
+    // Define closeOverlay globally
+    window.closeOverlay = function() {
+        overlay.style.display = 'none';
+        document.getElementById('targetActualForm').reset();
+        document.getElementById('budgetExpensesForm').reset();
+        document.getElementById('calculatedAmount').textContent = '₱0.00';
+        document.getElementById('calculatedActualAmount').textContent = '₱0.00';
+        // Reset to target view
+        document.getElementById('dataType').value = '';
+        document.getElementById('targetFields').style.display = 'block';
+        document.getElementById('actualFields').style.display = 'none';
     };
-
-    // FETCH TARGET VS ACTUAL DATA FROM API
-    // TODO fix the year selection filter to change the year dynamically and not hardcoded 2025
-    fetch("/api/get_report/target_vs_actual/2025")
-    .then(res => res.json())
-    .then(apiResult => {
-
-        const tableData = categories.map(category => {
-        const cost = categoryCost[category] || 0;
-        const apiMonths = apiResult[category] || {};
-
-        // Pull target_PCS from key 0
-        const targetPCS = apiMonths[0] || 0;
-
-        const row = {
-            category,
-            target_PCS: targetPCS,
-            target_AMT: targetPCS * cost
-        };
-
-        // Fill monthly PCS and AMT
-        ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach((month, i) => {
-            const pcs = apiMonths[i + 1] || 0; // months in API are 1-12
-            row[month + "_PCS"] = pcs;
-            row[month + "_AMT"] = pcs * cost;
-        });
-
-        return row;
+    
+    closeBtn.addEventListener('click', window.closeOverlay);
+    cancelTarget.addEventListener('click', window.closeOverlay);
+    
+    // Close overlay when clicking outside content
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            window.closeOverlay();
+        }
     });
-
-    target_vs_actual_table.setData(tableData);
-});
-
-
-     // TABLE FOR PER DISTRICT
-    const districtMunicipalities = [
-        { districtNo: 1, municipality: 'Cavite City' },
-        { districtNo: 1, municipality: 'Kawit' },
-        { districtNo: 1, municipality: 'Noveleta' },
-        { districtNo: 1, municipality: 'Rosario' },
-
-        { districtNo: 2, municipality: 'Bacoor' },
-        { districtNo: 3, municipality: 'Imus' },
-        { districtNo: 4, municipality: 'Dasmariñas' },
-
-        { districtNo: 5, municipality: 'Carmona' },
-        { districtNo: 5, municipality: 'General Mariano Alvarez (GMA)' },
-        { districtNo: 5, municipality: 'Silang' },
-
-        { districtNo: 6, municipality: 'General Trias' },
-
-        { districtNo: 7, municipality: 'Amadeo' },
-        { districtNo: 7, municipality: 'Indang' },
-        { districtNo: 7, municipality: 'Tanza' },
-        { districtNo: 7, municipality: 'Trece Martires' },
-
-        { districtNo: 8, municipality: 'Alfonso' },
-        { districtNo: 8, municipality: 'Gen. Emilio Aguinaldo (Bailen)' },
-        { districtNo: 8, municipality: 'Magallanes' },
-        { districtNo: 8, municipality: 'Maragondon' },
-        { districtNo: 8, municipality: 'Mendez' },
-        { districtNo: 8, municipality: 'Naic' },
-        { districtNo: 8, municipality: 'Tagaytay City' },
-        { districtNo: 8, municipality: 'Ternate' }
-    ];
-
-    const classifications = [
-        'Public Nursery', 'Private Nursery', 'Public Kinder', 'Private Kinder',
-        'Public Elementary School', 'Private Elementary School',
-        'Public High School', 'Private High School',
-        'Public Senior High School', 'Private Senior High School',
-        'Public Integrated School', 'Private Integrated School',
-        'Public College', 'Private College',
-        'Government Company/Organization', 'Private Company/Organization',
-        'Church', 'Red Cross 143', 'RCY', 'Brgy', 'LGU', 'MBD', 'Events',
-        'Training', 'Company/Organization Training', 'Individual', 'Walk-In'
-    ];
-
-    // Build Tabulator rows
-    const per_district_sample_data = [];
-    districtMunicipalities.forEach(entry => {
-        classifications.forEach(classification => {
-            per_district_sample_data.push({
-                district: entry.districtNo,
-                municipality: entry.municipality,
-                classification: classification,
-                classic: 10,
-                bronze: 20,
-                silver: 30,
-                gold: 40,
-                platinum: 50,
-                enhanced_platinum: 60,
-                senior: 70,
-                senior_plus: 80,
-                total: 360
+    
+    // Tab switching
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === targetTab) {
+                    content.classList.add('active');
+                }
             });
         });
     });
-
-    // Create Tabulator
-    const table = new Tabulator("#per_district_table", {
-        data: per_district_sample_data,
-        layout: "fitColumns",
-
-        pagination: "local",
-        paginationSize: 50,     // 50 rows per page
-        paginationSizeSelector: [25, 50, 100],
-
-        groupToggleElement: "header",
-
     
-        columns: [
-            // Classification gets more space (weight = 2)
-            { title: "Classification", field: "classification", headerHozAlign:"center", widthGrow: 2, cssClass:"bold-text" },
-
-            // Other columns - equal share (weight = 1 each)
-            { title: "Classic", field: "classic", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
-            { title: "Bronze", field: "bronze", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
-            { title: "Silver", field: "silver", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
-            { title: "Gold", field: "gold", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
-            { title: "Platinum", field: "platinum", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
-            { title: "E. Platinum", field: "enhanced_platinum", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
-            { title: "Senior", field: "senior", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
-            { title: "Senior+", field: "senior_plus", hozAlign:"center", headerHozAlign:"center", widthGrow: 0.8 },
-            { title: "Total Per Classification", field: "total", hozAlign:"center", headerHozAlign:"center", widthGrow: 1.2   },
-        ],
-
-    groupBy: ["district", "municipality"],
-
-    groupHeader: function(value, count, data, group){
-        // if(group.getField() === "district"){
-        //     // 8 matte shades (blue, green, red families)
-        //     let colors = [
-        //         "#E3F2FD", "#BBDEFB", "#90CAF9", // blues
-        //         "#E8F5E9", "#C8E6C9", "#A5D6A7", // greens
-        //         "#FFEBEE", "#FFCDD2"             // reds
-        //     ];
-        //     let bgColor = colors[(value - 1) % colors.length];
-
-        //     return `<div style="text-align:center; font-weight:bold; font-size:1.1em; 
-        //                         background:${bgColor}; padding:6px; border-radius:4px;">
-        //                 <span class="tabulator-arrow"></span> District ${value}
-        //             </div>`;
-        // }
-
-        // if(group.getField() === "municipality"){
-        //     return `<div style="text-align:center; font-weight:bold; background:#f5f5f5; padding:4px;">
-        //                 <span class="tabulator-arrow"></span> ${value}
-        //             </div>`;
-        // }        
-
-        if(group.getField() === "district"){
-            return "<div style='text-align:center; font-weight:bold; font-size:1.1em;'>District " + value + "</div>";
-        }
-        if(group.getField() === "municipality"){
-            return "<div style='text-align:center; font-weight:bold; background:#f0f0f0; padding:4px;'>" + value + "</div>";
-        }
-        return value;
-    },
-});
-
+    // Data type switching (Target vs Actual)
+    const dataTypeSelect = document.getElementById('dataType');
+    const targetFields = document.getElementById('targetFields');
+    const actualFields = document.getElementById('actualFields');
     
-    document.addEventListener('DOMContentLoaded', function () {
-    // Make headers clickable (toggle checkbox state)
-    document.querySelectorAll('.collapse_box_header')
-        .forEach(header => {
+    dataTypeSelect.addEventListener('change', function() {
+        if (this.value === 'target') {
+            targetFields.style.display = 'block';
+            actualFields.style.display = 'none';
+        } else if (this.value === 'actual') {
+            targetFields.style.display = 'none';
+            actualFields.style.display = 'block';
+        } else {
+            targetFields.style.display = 'none';
+            actualFields.style.display = 'none';
+        }
+    });
+    
+    // Auto-calculate amounts
+    const idCategory = document.getElementById('idCategory');
+    const targetCount = document.getElementById('targetCount');
+    const actualCount = document.getElementById('actualCount');
+    const calculatedAmount = document.getElementById('calculatedAmount');
+    const calculatedActualAmount = document.getElementById('calculatedActualAmount');
+    
+    function calculateAmounts() {
+        const category = idCategory.value;
+        const cost = categoryCost[category] || 0;
+        
+        // Calculate target amount
+        const target = parseInt(targetCount.value) || 0;
+        calculatedAmount.textContent = `₱${(target * cost).toLocaleString()}`;
+        
+        // Calculate actual amount
+        const actual = parseInt(actualCount.value) || 0;
+        calculatedActualAmount.textContent = `₱${(actual * cost).toLocaleString()}`;
+    }
+    
+    idCategory.addEventListener('change', calculateAmounts);
+    targetCount.addEventListener('input', calculateAmounts);
+    actualCount.addEventListener('input', calculateAmounts);
+    
+    // Form submission
+    document.getElementById('targetActualForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveTargetOrActualData();
+    });
+}
+
+    // FILTERS
+    function initializeFilters() {
+        const yearFilter = document.getElementById('filter_year');
+        const categoryFilter = document.getElementById('filter_category');
+
+        yearFilter.addEventListener('change', function() {
+            const year = this.value;
+            // Reload all tables with filtered data
+            loadTargetVsActualData(year);
+            loadBudgetData(year);
+            loadPerDistrictData(year);
+        });
+
+        categoryFilter.addEventListener('change', function() {
+            const category = this.value;
+            // Filter per district table by category
+            if (category) {
+                perDistrictTable.setFilter("classification", "like", category);
+            } else {
+                perDistrictTable.clearFilter();
+            }
+        });
+    }
+
+    // COLLAPSE BOXES
+    function initializeCollapseBoxes() {
+        document.querySelectorAll('.collapse_box_header').forEach(header => {
             header.addEventListener('click', function (e) {
-                // prevent double toggle when clicking directly on the label or checkbox
                 if (e.target.tagName === 'LABEL' || e.target.tagName === 'INPUT') return;
-
                 const checkbox = this.querySelector('.collapse_box_checkbox');
                 if (checkbox) {
-                    checkbox.checked = !checkbox.checked; // toggle the checkbox
-                    checkbox.dispatchEvent(new Event('change')); // fire change
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
                 }
             });
         });
 
-    // Show/hide collapse_group when checkbox changes
-    document.querySelectorAll('.collapse_box_checkbox')
-        .forEach(checkbox => {
-            // find target div (prefer data-target_div, otherwise remove _check from id)
+        document.querySelectorAll('.collapse_box_checkbox').forEach(checkbox => {
             const targetId = checkbox.dataset.target_div || checkbox.id.replace(/_check$/, '');
             const target = document.getElementById(targetId);
-
             if (!target) return;
-
-            // initial state
+            
             if (!checkbox.checked) target.style.display = 'none';
-
-            // toggle on change
+            
             checkbox.addEventListener('change', function () {
                 target.style.display = this.checked ? 'flex' : 'none';
             });
         });
-    });
+    }
 
+    // API FUNCTIONS
+    async function loadTargetVsActualData(year = '2025') {
+        try {
+            const response = await fetch(`/api/get_report/target_vs_actual/${year}`);
+            const apiResult = await response.json();
+            
+            const categories = ["Classic", "Bronze", "Silver", "Gold", "Platinum", "Safe Card", "Senior", "Senior+"];
+            const tableData = categories.map(category => {
+                const cost = categoryCost[category] || 0;
+                const apiMonths = apiResult[category] || {};
 
-// UPLOADED IMAGE
-document.addEventListener("DOMContentLoaded", function() {
-    const navProfileImage = document.getElementById("navProfileImage");
-    if (navProfileImage) {
-        const savedProfileImage = localStorage.getItem("profileImage");
-        if (savedProfileImage) {
-            navProfileImage.src = savedProfileImage;
+                const targetPCS = apiMonths[0] || 0;
+                const row = {
+                    category,
+                    target_PCS: targetPCS,
+                    target_AMT: targetPCS * cost
+                };
+
+                ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach((month, i) => {
+                    const pcs = apiMonths[i + 1] || 0;
+                    row[month + "_PCS"] = pcs;
+                    row[month + "_AMT"] = pcs * cost;
+                });
+
+                return row;
+            });
+
+            target_vs_actual_table.setData(tableData);
+        } catch (error) {
+            console.error('Error loading target vs actual data:', error);
         }
     }
-    
-    // Listen for storage changes from settings page
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'profileImage') {
-            const navProfileImage = document.getElementById("navProfileImage");
-            if (navProfileImage) {
-                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
-            }
+
+    async function loadBudgetData(year = '2025') {
+        try {
+            const response = await fetch(`/api/get_report/budget_expenses/${year}`);
+            const data = await response.json();
+            budgetExpense.setData(data);
+        } catch (error) {
+            console.error('Error loading budget data:', error);
         }
-    });
-});
+    }
 
+    async function loadPerDistrictData(year = '2025') {
+        try {
+            const response = await fetch(`/api/get_report/per_district/${year}`);
+            const data = await response.json();
+            perDistrictTable.setData(data);
+        } catch (error) {
+            console.error('Error loading district data:', error);
+            // Fallback to sample data if API fails
+            loadSampleDistrictData();
+        }
+    }
 
-    /*
-    // GENERATE TARGET VS ACTUAL PLACEHOLDER DATA WITH ZEROS
-    const generateTargetVsActualPlaceholder = () => {
-        const membershipCategories = ["Classic", "Bronze", "Silver", "Gold", "Platinum", "Safe Card", "Senior", "Senior+"];
-        const placeholderData = [];
-        
-        membershipCategories.forEach(category => {
-            const placeholderRow = { category: category, target_PCS: 0, target_AMT: 0 };
-            
-            // Add zero values for all months
-            ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].forEach(month => {
-                placeholderRow[month + "_PCS"] = 0;
-                placeholderRow[month + "_AMT"] = 0;
+    function loadSampleDistrictData() {
+        const districtMunicipalities = [
+            { districtNo: 1, municipality: 'Cavite City' },
+            { districtNo: 1, municipality: 'Kawit' },
+            // ... other municipalities
+        ];
+
+        const classifications = [
+            'Public Nursery', 'Private Nursery', // ... other classifications
+        ];
+
+        const sampleData = [];
+        districtMunicipalities.forEach(entry => {
+            classifications.forEach(classification => {
+                sampleData.push({
+                    district: entry.districtNo,
+                    municipality: entry.municipality,
+                    classification: classification,
+                    classic: Math.floor(Math.random() * 100),
+                    bronze: Math.floor(Math.random() * 50),
+                    silver: Math.floor(Math.random() * 30),
+                    gold: Math.floor(Math.random() * 20),
+                    platinum: Math.floor(Math.random() * 10),
+                    enhanced_platinum: Math.floor(Math.random() * 5),
+                    senior: Math.floor(Math.random() * 40),
+                    senior_plus: Math.floor(Math.random() * 25),
+                    total: 0 // Will be calculated
+                });
             });
-            
-            placeholderData.push(placeholderRow);
         });
-        
-        return placeholderData;
+
+        // Calculate totals
+        sampleData.forEach(row => {
+            row.total = row.classic + row.bronze + row.silver + row.gold + row.platinum + 
+                       row.enhanced_platinum + row.senior + row.senior_plus;
+        });
+
+        perDistrictTable.setData(sampleData);
+    }
+
+    // SAVE FUNCTIONS - FIXED VERSION
+async function saveTargetData() {
+    const formData = {
+        category: document.getElementById('idCategory').value,
+        targetCount: parseInt(document.getElementById('targetCount').value),
+        month: parseInt(document.getElementById('monthSelect').value),
+        year: document.getElementById('yearSelect').value
     };
 
-    const targetVsActualTable = new Tabulator("#target_v_actual_table", {
-        columns: targetColumns,
-        autoColumns: false,
-        data: generateTargetVsActualPlaceholder(),
-        layout: "fitColumns"
-    });
-    */
-    
+    try {
+        const response = await fetch('/api/save_report/target_vs_actual', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
 
-    </script>
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Target data saved successfully!');
+            // Close overlay after successful save
+            closeOverlay();
+            loadTargetVsActualData(formData.year);
+        } else {
+            alert('Error saving target data: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving target data:', error);
+        alert('Error saving target data: ' + error.message);
+    }
+}
+
+
+    async function saveBudgetData() {
+    const formData = {
+        accountCode: document.getElementById('accountCode').value,
+        accountName: document.getElementById('accountName').value,
+        budgetAmount: parseFloat(document.getElementById('budgetAmount').value),
+        expenseMonth: document.getElementById('expenseMonth').value,
+        expenseAmount: parseFloat(document.getElementById('expenseAmount').value),
+        budgetYear: document.getElementById('budgetYear').value
+    };
+
+    try {
+        const response = await fetch('/api/save_report/budget_expenses', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Budget data saved successfully!');
+            // Close overlay after successful save
+            closeOverlay();
+            loadBudgetData(formData.budgetYear);
+        } else {
+            alert('Error saving budget data: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving budget data:', error);
+        alert('Error saving budget data: ' + error.message);
+    }
+}
+</script>
 {% endblock %}
 

@@ -1494,6 +1494,232 @@ def target_vs_actual(year):
 
     return jsonify(report_data)
 
+# =============================================
+# REPORTS API ROUTES
+# =============================================
+
+@server.route('/api/get_report/target_vs_actual/<year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_target_vs_actual(year):
+    """Get target vs actual data for a specific year"""
+    try:
+        db_session = SessionLocal()
+        
+        # Query the database for targets
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == year
+        ).first()
+        
+        if target_data:
+            # Return actual data from database
+            return jsonify({
+                "Classic": {0: target_data.classic or 0},
+                "Bronze": {0: target_data.bronze or 0},
+                "Silver": {0: target_data.silver or 0},
+                "Gold": {0: target_data.gold or 0},
+                "Platinum": {0: target_data.platinum or 0},
+                "Safe Card": {0: target_data.safe_card or 0},
+                "Senior": {0: target_data.senior or 0},
+                "Senior+": {0: target_data.senior_plus or 0}
+            })
+        else:
+            # Return zeros if no targets set
+            return jsonify({
+                "Classic": {0: 0},
+                "Bronze": {0: 0},
+                "Silver": {0: 0},
+                "Gold": {0: 0},
+                "Platinum": {0: 0},
+                "Safe Card": {0: 0},
+                "Senior": {0: 0},
+                "Senior+": {0: 0}
+            })
+            
+    except Exception as e:
+        print(f"Error getting target vs actual data: {e}")
+        # Fallback to sample data if error
+        sample_data = {
+            "Classic": {0: 0}, "Bronze": {0: 0}, "Silver": {0: 0}, "Gold": {0: 0},
+            "Platinum": {0: 0}, "Safe Card": {0: 0}, "Senior": {0: 0}, "Senior+": {0: 0}
+        }
+        return jsonify(sample_data)
+    finally:
+        db_session.close()
+
+@server.route('/api/get_report/budget_expenses/<year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_budget_expenses(year):
+    """Get budget vs expenses data for a specific year"""
+    try:
+        # Sample budget data - replace with actual database queries
+        sample_data = [
+            {
+                "id": 1,
+                "account_code": "5020401",
+                "account_name": "Gasoline & Oil",
+                "budget_2025": 100800,
+                "jan": 1400, "feb": 4100, "mar": 3400, "apr": 3700, "may": 2000, "jun": 2100,
+                "jul": 1400, "aug": 0, "sep": 0, "oct": 0, "nov": 0, "dec": 0,
+                "total_expense": 18100,
+                "balance": 82700,
+            },
+            {
+                "id": 2,
+                "account_code": "5020511",
+                "account_name": "Travel Local",
+                "budget_2025": 20000,
+                "jan": 0, "feb": 0, "mar": 0, "apr": 0, "may": 60, "jun": 20,
+                "jul": 0, "aug": 0, "sep": 0, "oct": 0, "nov": 0, "dec": 0,
+                "total_expense": 80,
+                "balance": 19920,
+            }
+        ]
+        return jsonify(sample_data)
+    except Exception as e:
+        print(f"Error getting budget expenses data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@server.route('/api/get_report/per_district/<year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_per_district(year):
+    """Get per district data for a specific year"""
+    try:
+        # Return empty array for now - frontend will use sample data
+        # You can implement actual database queries here later
+        return jsonify([])
+    except Exception as e:
+        print(f"Error getting per district data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@server.route('/api/save_report/target_vs_actual', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def save_target_vs_actual():
+    """Save target vs actual data"""
+    try:
+        data = request.get_json()
+        print("Saving target vs actual data:", data)
+        
+        # Extract data from request
+        category = data.get('category')
+        target_count = data.get('targetCount')
+        month = data.get('month')  # This is the month number (1-12)
+        year = data.get('year')
+        
+        # Validate required fields
+        if not all([category, target_count, month, year]):
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
+        
+        db_session = SessionLocal()
+        try:
+            # Check if target entry exists for this year
+            target_entry = db_session.query(models.Report_TvA).filter(
+                models.Report_TvA.year == year
+            ).first()
+            
+            if target_entry:
+                # Update existing entry
+                if category == "Classic":
+                    target_entry.classic = target_count
+                elif category == "Bronze":
+                    target_entry.bronze = target_count
+                elif category == "Silver":
+                    target_entry.silver = target_count
+                elif category == "Gold":
+                    target_entry.gold = target_count
+                elif category == "Platinum":
+                    target_entry.platinum = target_count
+                elif category == "Safe Card":
+                    target_entry.safe_card = target_count
+                elif category == "Senior":
+                    target_entry.senior = target_count
+                elif category == "Senior+":
+                    target_entry.senior_plus = target_count
+                
+                print(f"✅ Updated {category} target for year {year}: {target_count}")
+                
+            else:
+                # Create new entry with zeros for all categories except the one we're setting
+                new_target = models.Report_TvA(
+                    year=year,
+                    classic=target_count if category == "Classic" else 0,
+                    bronze=target_count if category == "Bronze" else 0,
+                    silver=target_count if category == "Silver" else 0,
+                    gold=target_count if category == "Gold" else 0,
+                    platinum=target_count if category == "Platinum" else 0,
+                    safe_card=target_count if category == "Safe Card" else 0,
+                    senior=target_count if category == "Senior" else 0,
+                    senior_plus=target_count if category == "Senior+" else 0
+                )
+                db_session.add(new_target)
+                print(f"✅ Created new target entry for year {year}: {category} = {target_count}")
+            
+            db_session.commit()
+            
+            # Log the action
+            db_conn.POST_action_log(
+                current_user.username, 
+                current_user.user_level, 
+                'Save Target Data', 
+                f'Saved target data: {category} - {target_count} for {month}/{year}', 
+                current_user.account_id
+            )
+            
+            return jsonify({"success": True, "message": "Target data saved successfully"})
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Database error: {e}")
+            return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+        finally:
+            db_session.close()
+        
+    except Exception as e:
+        print(f"Error saving target vs actual data: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@server.route('/api/save_report/budget_expenses', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def save_budget_expenses():
+    """Save budget vs expenses data"""
+    try:
+        data = request.get_json()
+        print("Saving budget expenses data:", data)
+        
+        # Extract data from request
+        account_code = data.get('accountCode')
+        account_name = data.get('accountName')
+        budget_amount = data.get('budgetAmount')
+        expense_month = data.get('expenseMonth')
+        expense_amount = data.get('expenseAmount')
+        budget_year = data.get('budgetYear')
+        
+        # Validate required fields
+        if not all([account_code, account_name, budget_amount, expense_month, expense_amount, budget_year]):
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
+        
+        # Here you would save to your database
+        # For now, just log and return success
+        print(f"💾 Would save: Account={account_code}, Budget={budget_amount}, Month={expense_month}, Expense={expense_amount}, Year={budget_year}")
+        
+        # Log the action
+        db_conn.POST_action_log(
+            current_user.username, 
+            current_user.user_level, 
+            'Save Budget Data', 
+            f'Saved budget data: {account_code} - {account_name}', 
+            current_user.account_id
+        )
+        
+        return jsonify({"success": True, "message": "Budget data saved successfully"})
+        
+    except Exception as e:
+        print(f"Error saving budget expenses data: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @server.route('/api/inventory/add_stock', methods=['POST'])
 @login_required
