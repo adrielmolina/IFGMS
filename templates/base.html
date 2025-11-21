@@ -113,7 +113,7 @@
                 </li>
 
                 <li id="logout">
-                    <a href="/logout"><img class="icons" src="{{ url_for('static', filename='assets/logout.svg') }}" alt="logo"/>Logout</a>
+                    <a href="/logout" onclick="return confirmLogout(event)"><img class="icons" src="{{ url_for('static', filename='assets/logout.svg') }}" alt="logo"/>Logout</a>
                 </li>
             </ul>
         </aside>
@@ -166,6 +166,13 @@
             });
             });
 
+            window.confirmLogout = function(event) {
+            if (!confirm("Are you sure you want to log out?")) {
+                event.preventDefault(); // prevent navigation if user cancels
+                return false;
+            }
+            return true; // allow navigation if user confirms
+            }
 
         });
 
