@@ -90,4 +90,8 @@ if __name__ == "__main__":
     #print(test_db_latency())
     #test_domain()
     #get_claim_id_test()
-    mailjet_test()
+    #mailjet_test()
+    
+    target_vs_actual_test()
+    
+    

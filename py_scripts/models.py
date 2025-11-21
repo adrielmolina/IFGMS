@@ -233,7 +233,7 @@ class Claims(Base):
     req_death_cert = Column(Boolean)
     req_burial_receipts = Column(Boolean)
     sent_advanced_notice = Column(Boolean)
-    claim_type = Column(Enum('ACCIDENT', 'DEATH'))
+    claim_type = Column(Enum('ACCIDENT', 'DEATH', 'DENGUE'))
     
     @property
     def date_filed_YMD(self):

@@ -202,8 +202,8 @@
                             <div class="error-message" id="contact_no-error">Contact number is required (10 digits)</div>
                         </div>
                         <div class="div16">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" autocomplete="off">
+                            <label for="email" class="required-field">Email Address</label>
+                            <input type="email" id="email" name="email" required autocomplete="off">
                             <div class="error-message" id="email-error">Please enter a valid email address</div>
                         </div>
                         <div class="div17">
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const requiredFields = [
             {id: 'fname', name: 'First Name'},
             {id: 'lname', name: 'Last Name'},
-            {id: 'contact_no', name: 'Contact Number'},
+            {id: 'email', name: 'Email Address'},
             {id: 'username', name: 'Username'},
             {id: 'branch', name: 'Office Branch'}
         ];
