@@ -134,6 +134,9 @@
                 document.getElementById("claims").removeAttribute("hidden");
                 document.getElementById("reports").removeAttribute("hidden");
                 document.getElementById("audit_trails").removeAttribute("hidden");
+            }
+
+            if (current_userLevel === "superadmin") {
                 document.getElementById("accounts").removeAttribute("hidden");
             }
 

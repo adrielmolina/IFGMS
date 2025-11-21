@@ -695,16 +695,64 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ====================== EDIT CELL EVENTS ======================
     activeTable.on("cellEdited", function(cell) {
+        const oldValue = cell.getOldValue();
+        const newValue = cell.getValue();
         const rowData = cell.getRow().getData();
         let url, payload;
+        const currentUserId = {{ current_user.account_id }}; 
+
+        // 0. Prevent demoting yourself
+        if (rowData.account_id === currentUserId && oldValue === 'superadmin' && newValue !== 'superadmin') {
+            toastError('Invalid Update', 'You cannot demote your own superadmin account.');
+            cell.restoreOldValue();
+            return;
+        }
 
         if (cell.getField() === "user_level") {
+            // 1. Superadmin must be in Chapter
+            if (newValue === 'superadmin' && rowData.office_location !== 'Chapter') {
+                toastError('Invalid Update', 'Superadmin account must have office location as "Chapter".');
+                cell.restoreOldValue();
+                return;
+            }
+
+            // Count superadmins **excluding this row if it’s being demoted**
+            const superadminCount = activeTable.getData()
+                .filter(r => r.user_level === 'superadmin' && r.account_id !== rowData.account_id)
+                .length + (newValue === 'superadmin' ? 1 : 0);
+
+            // 2. Maximum 2 superadmins
+            if (newValue === 'superadmin' && superadminCount > 2) {
+                toastError('Invalid Update', 'There can only be a maximum of 2 superadmin accounts.');
+                cell.restoreOldValue();
+                return;
+            }
+
+            // 3. At least 1 superadmin
+            if (oldValue === 'superadmin' && newValue !== 'superadmin' && superadminCount < 1) {
+                toastError('Invalid Update', 'There must be at least one superadmin account.');
+                cell.restoreOldValue();
+                return;
+            }
+
             url = '/api/accounts/update_userlvl';
-            payload = { id: rowData.account_id, user_level: cell.getValue() };
+            payload = { id: rowData.account_id, user_level: newValue };
+
         } else if (cell.getField() === "office_location") {
+            const newOffice = newValue;
+
+            // Superadmin must remain in Chapter
+            if (rowData.user_level === 'superadmin' && newOffice !== 'Chapter') {
+                toastError('Invalid Update', 'Superadmin account must have office location as "Chapter".');
+                cell.restoreOldValue();
+                return;
+            }
+
             url = '/api/accounts/update_ofc';
-            payload = { id: rowData.account_id, office_location: cell.getValue() };
+            payload = { id: rowData.account_id, office_location: newOffice };
+
         } else return;
+
 
         fetch(url, {
             method: 'PATCH',
