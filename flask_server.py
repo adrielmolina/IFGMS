@@ -11,11 +11,23 @@ import openpyxl
 from functools import wraps
 from io import BytesIO
 from flask import send_file
+import requests
 
 
 server = Flask(__name__)
 server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
+#reCaptcha
+SITE_KEY = os.getenv("SITE_KEY")
+if not SITE_KEY:
+    print("reCaptcha site key not set.")
+    raise ValueError("SITE_KEY environment variable not set.")
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    print("reCaptcha secret key not set.")
+    raise ValueError("SECRET_KEY environment variable not set.")
+
 
 # CACHE CONTROL FOR STATIC FILES
 cache_bypass = True
@@ -90,7 +102,30 @@ def auto_login():
 def login():
     username = request.form.get("username")
     password = request.form.get("password")
+    token = request.form.get("g-recaptcha-response")
 
+    # 2️⃣ Verify captcha first
+    if not token:
+        flash({
+            "title": "Login Error!",
+            "text": "Please complete the CAPTCHA.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        return render_template('index.html')
+
+    resp = requests.post(
+        "https://www.google.com/recaptcha/api/siteverify",
+        data={"secret": SECRET_KEY, "response": token}
+    ).json()
+
+    if not resp.get("success"):
+        flash({
+            "title": "Login Error!",
+            "text": "CAPTCHA verification failed. Try again.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        return render_template('index.html')
+    
     user = db_conn.sign_in(username, password)
 
     if user:
@@ -154,7 +189,7 @@ def landing_page():
     else:
         env = 'Development'
     
-    return render_template('index.html', env=env)
+    return render_template('index.html', env=env, site_key=SITE_KEY)
 
 
 @server.route('/create_account')
@@ -169,7 +204,7 @@ def forgot_password():
 
 @server.route('/membership_register')
 def membership_register():
-    return render_template('membership_register.html')
+    return render_template('membership_register.html', site_key=SITE_KEY)
 
 
 @server.route('/profile_settings')
