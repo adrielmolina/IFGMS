@@ -809,23 +809,24 @@ def get_member_records(status='active', office_loc=None):
 
         # Apply office location logic
         if office_loc == 'Chapter':
-            # Chapter = all Chapter + transmitted (declared) Dasma/Silang
-            query = query.filter(
-                (models.Records.origin == "Chapter") |
-                (
-                    (models.Records.origin.in_(["Dasmariñas", "Silang"])) &
-                    (models.Records.tags == "transmitted")
-                )
-            )
+            # Chapter users can see all records
+            print("🔍 Chapter user - showing all records")
+            # No additional filtering needed for Chapter users
+            pass
 
         elif office_loc == 'Dasmarinas':
+            # Only Dasmariñas records
             query = query.filter(models.Records.origin == "Dasmariñas")
+            print("🔍 Dasmarinas user - filtering to Dasmariñas records only")
 
         elif office_loc == 'Silang':
+            # Only Silang records
             query = query.filter(models.Records.origin == "Silang")
+            print("🔍 Silang user - filtering to Silang records only")
 
-        # If office_loc is None, return based only on status
+        # If office_loc is None or doesn't match known locations, return based only on status
         records = query.order_by(models.Records.record_id.desc()).all()
+        print(f"✅ Found {len(records)} records for office location: {office_loc}")
         return records
 
     except Exception as e:

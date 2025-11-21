@@ -195,9 +195,15 @@ def dashboard():
 @login_required
 def members_page():
     user_location = current_user.office_location if current_user and current_user.office_location else 'Chapter'
-    print(f"DEBUG: User location being passed to template: {user_location}")
-    return render_template('members.html', user_location=user_location)
-
+    user_level = current_user.user_level if current_user else 'staff'
+    is_chapter_user = user_location == 'Chapter'
+    
+    print(f"DEBUG: User location: {user_location}, User level: {user_level}, Is Chapter: {is_chapter_user}")
+    
+    return render_template('members.html', 
+                         user_location=user_location, 
+                         user_level=user_level,
+                         is_chapter_user=is_chapter_user)
 
 @server.route('/declaration')
 @login_required
@@ -990,9 +996,11 @@ def get_dispatch_records():
 def get_members():
     try:
         status = request.args.get('status', 'active')
-        print(f"DEBUG: Fetching member records with status: {status}")
+        office_loc = request.args.get('office_loc', None)
         
-        member_records = db_conn.get_member_records(status=status)
+        print(f"DEBUG: Fetching member records with status: {status}, office_loc: {office_loc}")
+        
+        member_records = db_conn.get_member_records(status=status, office_loc=office_loc)
         print(f"DEBUG: Records fetched: {len(member_records) if member_records else 'None'}")
         
         if member_records is None:
