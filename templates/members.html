@@ -265,12 +265,15 @@
                                     <td>
                                         <div class="input-container">
                                             <label for="tags">Tags</label>
+                                            <input type="text" id="tags" name="tags" autocomplete="off" placeholder=" ">
+                                            <!--
                                             <select id="tags" name="tags">
                                                 <option value="" selected>No Tag</option>
                                                 <option value="Underage">Underage</option>
                                                 <option value="Overage">Overage</option>
                                                 <option value="Late-declare">Late-declare</option>
                                             </select>
+                                            -->
                                         </div>
                                     </td>
                                 </tr>
@@ -483,7 +486,7 @@
                                    <td>
                                         <div class="input-container">
                                             <label for="entry_or_date">OR Date</label>
-                                            <input type="date" id="entry_or_date" name="entry_or_date" autocomplete="off">
+                                            <input type="date" id="entry_or_date" name="entry_or_date" autocomplete="off" readonly>
                                         </div>
                                     </td>
                                 </tr>
@@ -583,6 +586,26 @@ let isAutoSaving = false;
 
 let nextRecordId = 0;
 
+// Initialization state tracking
+let initializationState = {
+    domReady: false,
+    scriptsLoaded: false,
+    dataLoaded: false
+};
+
+// Debounce function for performance
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 // ===== REQUIRED FIELD VALIDATION FUNCTIONS =====
 function validateRequiredFields() {
     const requiredFields = {
@@ -594,7 +617,6 @@ function validateRequiredFields() {
     
     let isValid = true;
     
-    // Check record required fields
     for (const [fieldId, fieldName] of Object.entries(requiredFields)) {
         const field = document.getElementById(fieldId);
         const errorElement = document.getElementById(fieldId + '_error');
@@ -603,8 +625,6 @@ function validateRequiredFields() {
             const value = field.type === 'select-one' ? field.value : field.value.trim();
             if (!value) {
                 isValid = false;
-                
-                // Add visual indication
                 field.classList.add('required-field');
                 if (errorElement) {
                     errorElement.textContent = `Please enter ${fieldName.toLowerCase()}`;
@@ -627,12 +647,11 @@ function validateEntryRequiredFields() {
         'fname': 'First Name',
         'lname': 'Last Name', 
         'bdate': 'Birthdate',
-        'maab_no': 'MAAB No.'  // Add this line
+        'maab_no': 'MAAB No.'
     };
     
     let isValid = true;
     
-    // Check entry required fields
     for (const [fieldId, fieldName] of Object.entries(requiredEntryFields)) {
         const field = document.getElementById(fieldId);
         const errorElement = document.getElementById(fieldId + '_error');
@@ -641,8 +660,6 @@ function validateEntryRequiredFields() {
             const value = field.value.trim();
             if (!value) {
                 isValid = false;
-                
-                // Add visual indication
                 field.classList.add('required-field');
                 if (errorElement) {
                     errorElement.textContent = `Please enter ${fieldName.toLowerCase()}`;
@@ -658,7 +675,6 @@ function validateEntryRequiredFields() {
     }
     
     if (!isValid) {
-        // Scroll to the entry form to make it visible
         setTimeout(() => {
             const entryForm = document.getElementById('entry_details');
             if (entryForm) {
@@ -685,22 +701,19 @@ function highlightRequiredFields() {
         { id: 'fname', name: 'First Name' },
         { id: 'lname', name: 'Last Name' },
         { id: 'bdate', name: 'Birthdate' },
-        { id: 'maab_no', name: 'MAAB No' }  // Add this line
+        { id: 'maab_no', name: 'MAAB No' }
     ];
     
-    // Add required indicators to record fields
     requiredRecordFields.forEach(field => {
         const fieldElement = document.getElementById(field.id);
         if (fieldElement) {
             const container = fieldElement.closest('.input-container');
             const label = container?.querySelector('label');
             
-            // Add star to label
             if (label && !label.innerHTML.includes('required-star')) {
                 label.innerHTML = label.innerHTML + ' <span class="required-star">*</span>';
             }
             
-            // Add error message element
             if (!document.getElementById(field.id + '_error')) {
                 const errorElement = document.createElement('div');
                 errorElement.id = field.id + '_error';
@@ -710,19 +723,16 @@ function highlightRequiredFields() {
         }
     });
     
-    // Add required indicators to entry fields
     requiredEntryFields.forEach(field => {
         const fieldElement = document.getElementById(field.id);
         if (fieldElement) {
             const container = fieldElement.closest('.input-container');
             const label = container?.querySelector('label');
             
-            // Add star to label
             if (label && !label.innerHTML.includes('required-star')) {
                 label.innerHTML = label.innerHTML + ' <span class="required-star">*</span>';
             }
             
-            // Add error message element
             if (!document.getElementById(field.id + '_error')) {
                 const errorElement = document.createElement('div');
                 errorElement.id = field.id + '_error';
@@ -733,9 +743,7 @@ function highlightRequiredFields() {
     });
 }
 
-// ===== CLEAR ALL VALIDATION ERRORS =====
 function clearAllValidationErrors() {
-    // Clear record field errors
     const recordFields = ['eff_date', 'loc_par', 'loc_cat', 'municipality'];
     recordFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
@@ -745,8 +753,7 @@ function clearAllValidationErrors() {
         if (errorElement) errorElement.classList.remove('show');
     });
     
-    // Clear entry field errors
-    const entryFields = ['fname', 'lname', 'bdate', 'maab_no'];  // Add 'maab_no' here
+    const entryFields = ['fname', 'lname', 'bdate', 'maab_no'];
     entryFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         const errorElement = document.getElementById(fieldId + '_error');
@@ -760,14 +767,12 @@ function updateSaveButtonState(hasChanges) {
     const saveRecordBtn = document.getElementById('save_record_details');
     const saveEntryBtn = document.getElementById('add_entry_details');
     
-    // Always enable the Add Entry button - it should never be grayed out
     if (saveEntryBtn) {
         saveEntryBtn.disabled = false;
         saveEntryBtn.style.opacity = '1';
         saveEntryBtn.style.cursor = 'pointer';
     }
     
-    // Only manage save record button state based on changes
     if (saveRecordBtn) {
         if (hasChanges) {
             saveRecordBtn.disabled = false;
@@ -781,9 +786,10 @@ function updateSaveButtonState(hasChanges) {
     }
 }
 
-// ===== MISSING FUNCTION - ADD THIS =====
 function fetchActiveRecords() {
-    return fetch("/api/members/records?status=active")
+    const userLocation = '{{ user_location }}';
+    
+    return fetch(`/api/members/records?status=active&office_loc=${encodeURIComponent(userLocation)}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -795,7 +801,6 @@ function fetchActiveRecords() {
             return response.json();
         })
         .then(data => {
-            // Format dates
             data.forEach(row => {
                 if (row.declaration_date) {
                     const date = new Date(row.declaration_date);
@@ -807,7 +812,6 @@ function fetchActiveRecords() {
                 }
             });
 
-            // Initialize or update the table
             if (!hotInstance) {
                 initializeTable(data);
             } else {
@@ -826,17 +830,14 @@ function fetchActiveRecords() {
         });
 }
 
-// FIXED: Setup entry table click handler
 function setupEntryTableClickHandlers() {
     console.log('Setting up entry table click handlers...');
     
-    // Wait for the table to be rendered
     const checkTable = setInterval(() => {
         const entriesTable = window.entriesHotInstance;
         if (entriesTable) {
             clearInterval(checkTable);
             console.log('Entries table instance found:', entriesTable);
-            
             console.log('Entry table click handlers setup complete');
         }
     }, 100);
@@ -845,88 +846,57 @@ function setupEntryTableClickHandlers() {
 function showArchiveView() {
     isArchiveView = true;
     
-    // Update UI
     const activeControls = document.querySelector('.controls_box:not(#archiveControls)');
     const archiveControls = document.getElementById('archiveControls');
     
-    if (activeControls) {
-        activeControls.style.display = 'none';
-    }
+    if (activeControls) activeControls.style.display = 'none';
+    if (archiveControls) archiveControls.style.display = 'flex';
     
-    if (archiveControls) {
-        archiveControls.style.display = 'flex';
-    }
-    
-    // Update module titles
     const moduleTitle = document.querySelector('.module_name h1');
-    if (moduleTitle) {
-        moduleTitle.textContent = 'Archived Members';
-    }
+    if (moduleTitle) moduleTitle.textContent = 'Archived Members';
     
-    // Reset search when switching views
     const searchInput = document.getElementById('search_input');
-    if (searchInput) {
-        searchInput.value = '';
-    }
+    if (searchInput) searchInput.value = '';
     const searchClear = document.getElementById('search_clear');
-    if (searchClear) {
-        searchClear.classList.remove('visible');
-    }
+    if (searchClear) searchClear.classList.remove('visible');
     
-    // Reset archive pagination
     archiveCurrentPage = 1;
     archiveEntriesPerPage = 10;
     document.getElementById('entriesPerPage').value = '10';
     
-    // Fetch archived records
     fetchArchivedRecords();
 }
 
 function showActiveView() {
     isArchiveView = false;
     
-    // Update UI
     const activeControls = document.querySelector('.controls_box:not(#archiveControls)');
     const archiveControls = document.getElementById('archiveControls');
     
-    if (activeControls) {
-        activeControls.style.display = 'flex';
-    }
+    if (activeControls) activeControls.style.display = 'flex';
+    if (archiveControls) archiveControls.style.display = 'none';
     
-    if (archiveControls) {
-        archiveControls.style.display = 'none';
-    }
-    
-    // Update module titles
     const moduleTitle = document.querySelector('.module_name h1');
-    if (moduleTitle) {
-        moduleTitle.textContent = 'Members';
-    }
+    if (moduleTitle) moduleTitle.textContent = 'Members';
     
-    // Reset search when switching views
     const searchInput = document.getElementById('search_input');
-    if (searchInput) {
-        searchInput.value = '';
-    }
+    if (searchInput) searchInput.value = '';
     const searchClear = document.getElementById('search_clear');
-    if (searchClear) {
-        searchClear.classList.remove('visible');
-    }
+    if (searchClear) searchClear.classList.remove('visible');
     
-    // Reset active pagination
     currentPage = 1;
     entriesPerPage = 10;
     document.getElementById('entriesPerPage').value = '10';
     
-    // Fetch active records
     fetchActiveRecords();
 }
 
 function fetchArchivedRecords() {
-    fetch("/api/members/records?status=archived")
+    const userLocation = '{{ user_location }}';
+    
+    fetch(`/api/members/records?status=archived&office_loc=${encodeURIComponent(userLocation)}`)
         .then(response => response.json())
         .then(data => {
-            // Format dates
             data.forEach(row => {
                 if (row.declaration_date) {
                     const date = new Date(row.declaration_date);
@@ -938,11 +908,9 @@ function fetchArchivedRecords() {
                 }
             });
 
-            // Update archive data arrays
             archiveAllData = [...data];
             archiveFilteredData = [...data];
             
-            // Re-render the table with archive pagination
             renderArchiveTable();
             populateYearPicker();
             
@@ -998,22 +966,75 @@ function updateArchivePagination() {
     const totalPages = Math.ceil(archiveFilteredData.length / archiveEntriesPerPage);
     if (totalPages <= 1) return;
 
-    function addButton(label, page, disabled = false, active = false) {
+    function addButton(label, page, disabled = false, active = false, isEllipsis = false) {
         const btn = document.createElement("button");
         btn.textContent = label;
         if (disabled) btn.disabled = true;
         if (active) btn.classList.add("active");
-        btn.onclick = () => {
-            archiveCurrentPage = page;
-            renderArchiveTable();
-        };
+        if (isEllipsis) {
+            btn.classList.add("ellipsis");
+            btn.disabled = true;
+        } else {
+            btn.onclick = () => {
+                archiveCurrentPage = page;
+                renderArchiveTable();
+            };
+        }
         paginationControls.appendChild(btn);
     }
 
+    // Previous button
     addButton("Previous", archiveCurrentPage - 1, archiveCurrentPage === 1);
-    for (let i = 1; i <= totalPages; i++) {
+
+    // Always show first page
+    addButton(1, 1, false, 1 === archiveCurrentPage);
+
+    // Calculate page range to show
+    let startPage, endPage;
+    const maxVisiblePages = 5; // Show max 5 page numbers
+    
+    if (totalPages <= maxVisiblePages) {
+        // Show all pages if total pages is less than max visible
+        startPage = 2;
+        endPage = totalPages - 1;
+    } else {
+        // Calculate range around current page
+        const sidePages = Math.floor((maxVisiblePages - 3) / 2); // Pages to show on each side of current
+        
+        startPage = Math.max(2, archiveCurrentPage - sidePages);
+        endPage = Math.min(totalPages - 1, archiveCurrentPage + sidePages);
+        
+        // Adjust if we're at the beginning
+        if (startPage === 2) {
+            endPage = startPage + (maxVisiblePages - 3);
+        }
+        // Adjust if we're at the end
+        if (endPage === totalPages - 1) {
+            startPage = endPage - (maxVisiblePages - 3);
+        }
+    }
+
+    // Add ellipsis after first page if needed
+    if (startPage > 2) {
+        addButton("...", null, true, false, true);
+    }
+
+    // Add middle pages
+    for (let i = startPage; i <= endPage; i++) {
         addButton(i, i, false, i === archiveCurrentPage);
     }
+
+    // Add ellipsis before last page if needed
+    if (endPage < totalPages - 1) {
+        addButton("...", null, true, false, true);
+    }
+
+    // Always show last page if there's more than 1 page
+    if (totalPages > 1) {
+        addButton(totalPages, totalPages, false, totalPages === archiveCurrentPage);
+    }
+
+    // Next button
     addButton("Next", archiveCurrentPage + 1, archiveCurrentPage === totalPages);
 }
 
@@ -1025,16 +1046,11 @@ function calculateArchiveTableHeight() {
     const recordsOnThisPage = Math.min(entriesPerPageValue, totalRecords - startIndex);
     
     switch(entriesPerPageValue) {
-        case 10:
-            return 100 + (recordsOnThisPage * 45);
-        case 25:
-            return 100 + (recordsOnThisPage * 47);
-        case 50:
-            return 100 + (recordsOnThisPage * 48);
-        case 100:
-            return 100 + (recordsOnThisPage * 49);
-        default:
-            return 100 + (recordsOnThisPage * 45);
+        case 10: return 100 + (recordsOnThisPage * 45);
+        case 25: return 100 + (recordsOnThisPage * 47);
+        case 50: return 100 + (recordsOnThisPage * 48);
+        case 100: return 100 + (recordsOnThisPage * 49);
+        default: return 100 + (recordsOnThisPage * 45);
     }
 }
 
@@ -1084,22 +1100,75 @@ function updatePagination() {
     const totalPages = Math.ceil(filteredData.length / entriesPerPage);
     if (totalPages <= 1) return;
 
-    function addButton(label, page, disabled = false, active = false) {
+    function addButton(label, page, disabled = false, active = false, isEllipsis = false) {
         const btn = document.createElement("button");
         btn.textContent = label;
         if (disabled) btn.disabled = true;
         if (active) btn.classList.add("active");
-        btn.onclick = () => {
-            currentPage = page;
-            renderTable();
-        };
+        if (isEllipsis) {
+            btn.classList.add("ellipsis");
+            btn.disabled = true;
+        } else {
+            btn.onclick = () => {
+                currentPage = page;
+                renderTable();
+            };
+        }
         paginationControls.appendChild(btn);
     }
 
+    // Previous button
     addButton("Previous", currentPage - 1, currentPage === 1);
-    for (let i = 1; i <= totalPages; i++) {
+
+    // Always show first page
+    addButton(1, 1, false, 1 === currentPage);
+
+    // Calculate page range to show
+    let startPage, endPage;
+    const maxVisiblePages = 5; // Show max 5 page numbers
+    
+    if (totalPages <= maxVisiblePages) {
+        // Show all pages if total pages is less than max visible
+        startPage = 2;
+        endPage = totalPages - 1;
+    } else {
+        // Calculate range around current page
+        const sidePages = Math.floor((maxVisiblePages - 3) / 2); // Pages to show on each side of current
+        
+        startPage = Math.max(2, currentPage - sidePages);
+        endPage = Math.min(totalPages - 1, currentPage + sidePages);
+        
+        // Adjust if we're at the beginning
+        if (startPage === 2) {
+            endPage = startPage + (maxVisiblePages - 3);
+        }
+        // Adjust if we're at the end
+        if (endPage === totalPages - 1) {
+            startPage = endPage - (maxVisiblePages - 3);
+        }
+    }
+
+    // Add ellipsis after first page if needed
+    if (startPage > 2) {
+        addButton("...", null, true, false, true);
+    }
+
+    // Add middle pages
+    for (let i = startPage; i <= endPage; i++) {
         addButton(i, i, false, i === currentPage);
     }
+
+    // Add ellipsis before last page if needed
+    if (endPage < totalPages - 1) {
+        addButton("...", null, true, false, true);
+    }
+
+    // Always show last page if there's more than 1 page
+    if (totalPages > 1) {
+        addButton(totalPages, totalPages, false, totalPages === currentPage);
+    }
+
+    // Next button
     addButton("Next", currentPage + 1, currentPage === totalPages);
 }
 
@@ -1111,16 +1180,11 @@ function calculateTableHeight() {
     const recordsOnThisPage = Math.min(entriesPerPageValue, totalRecords - startIndex);
     
     switch(entriesPerPageValue) {
-        case 10:
-            return 100 + (recordsOnThisPage * 45);
-        case 25:
-            return 100 + (recordsOnThisPage * 47);
-        case 50:
-            return 100 + (recordsOnThisPage * 48);
-        case 100:
-            return 100 + (recordsOnThisPage * 49);
-        default:
-            return 100 + (recordsOnThisPage * 45);
+        case 10: return 100 + (recordsOnThisPage * 45);
+        case 25: return 100 + (recordsOnThisPage * 47);
+        case 50: return 100 + (recordsOnThisPage * 48);
+        case 100: return 100 + (recordsOnThisPage * 49);
+        default: return 100 + (recordsOnThisPage * 45);
     }
 }
 
@@ -1134,16 +1198,25 @@ function updateTableHeight() {
     }
 }
 
-// Filter functionality for both views
+// ===== MODIFY THE FILTER FUNCTION TO RESPECT USER PERMISSIONS =====
 function applyFilters() {
+    const userLocation = '{{ user_location }}';
+    const isChapterUser = '{{ is_chapter_user|lower }}' === 'true';
+    
     if (isArchiveView) {
-        // Apply filters to archive data
         const yearFilter = document.getElementById('filter_year').value;
         const originFilter = document.getElementById('filter_origin').value;
         
         archiveFilteredData = archiveAllData.filter(row => {
             const yearMatch = !yearFilter || row.year == yearFilter;
-            const originMatch = !originFilter || row.origin === originFilter;
+            
+            // For sub-branch users, only show their location's records
+            let originMatch = true;
+            if (!isChapterUser) {
+                originMatch = row.origin === userLocation;
+            } else {
+                originMatch = !originFilter || row.origin === originFilter;
+            }
             
             return yearMatch && originMatch;
         });
@@ -1151,13 +1224,19 @@ function applyFilters() {
         archiveCurrentPage = 1;
         renderArchiveTable();
     } else {
-        // Apply filters to active data
         const yearFilter = document.getElementById('filter_year').value;
         const originFilter = document.getElementById('filter_origin').value;
         
         filteredData = allData.filter(row => {
             const yearMatch = !yearFilter || row.year == yearFilter;
-            const originMatch = !originFilter || row.origin === originFilter;
+            
+            // For sub-branch users, only show their location's records
+            let originMatch = true;
+            if (!isChapterUser) {
+                originMatch = row.origin === userLocation;
+            } else {
+                originMatch = !originFilter || row.origin === originFilter;
+            }
             
             return yearMatch && originMatch;
         });
@@ -1167,18 +1246,25 @@ function applyFilters() {
     }
 }
 
-// Enhanced search functionality for both views
+// ===== MODIFY SEARCH FUNCTION TO RESPECT USER PERMISSIONS =====
 function performSearch(query) {
     const searchQuery = query.toLowerCase().trim();
-    console.log(`🔍 Performing search: "${searchQuery}" - Archive view: ${isArchiveView}`);
+    const userLocation = '{{ user_location }}';
+    const isChapterUser = '{{ is_chapter_user|lower }}' === 'true';
+    
+    console.log(`🔍 Performing search: "${searchQuery}" - User: ${userLocation}, Archive: ${isArchiveView}`);
     
     if (isArchiveView) {
         if (searchQuery === '') {
+            // When clearing search, apply user-based filtering
             archiveFilteredData = [...archiveAllData];
-            console.log('📊 Archive search cleared, showing all records:', archiveFilteredData.length);
+            
+            // Apply user permission filtering
+            if (!isChapterUser) {
+                archiveFilteredData = archiveFilteredData.filter(row => row.origin === userLocation);
+            }
         } else {
             archiveFilteredData = archiveAllData.filter(row => {
-                // Search through all relevant fields
                 const searchableFields = [
                     String(row.record_id || ''),
                     String(row.year || ''),
@@ -1191,24 +1277,32 @@ function performSearch(query) {
                     String(row.tags || '')
                 ];
                 
-                const matches = searchableFields.some(field => 
+                const matchesSearch = searchableFields.some(field => 
                     field.toLowerCase().includes(searchQuery)
                 );
                 
-                return matches;
+                // For sub-branch users, only include their location's records
+                if (!isChapterUser) {
+                    return matchesSearch && row.origin === userLocation;
+                }
+                
+                return matchesSearch;
             });
-            console.log('📊 Archive search results:', archiveFilteredData.length);
         }
         
         archiveCurrentPage = 1;
         renderArchiveTable();
     } else {
         if (searchQuery === '') {
+            // When clearing search, apply user-based filtering
             filteredData = [...allData];
-            console.log('📊 Active search cleared, showing all records:', filteredData.length);
+            
+            // Apply user permission filtering
+            if (!isChapterUser) {
+                filteredData = filteredData.filter(row => row.origin === userLocation);
+            }
         } else {
             filteredData = allData.filter(row => {
-                // Search through all relevant fields
                 const searchableFields = [
                     String(row.record_id || ''),
                     String(row.year || ''),
@@ -1221,20 +1315,23 @@ function performSearch(query) {
                     String(row.tags || '')
                 ];
                 
-                const matches = searchableFields.some(field => 
+                const matchesSearch = searchableFields.some(field => 
                     field.toLowerCase().includes(searchQuery)
                 );
                 
-                return matches;
+                // For sub-branch users, only include their location's records
+                if (!isChapterUser) {
+                    return matchesSearch && row.origin === userLocation;
+                }
+                
+                return matchesSearch;
             });
-            console.log('📊 Active search results:', filteredData.length);
         }
         
         currentPage = 1;
         renderTable();
     }
     
-    // Update Handsontable search plugin if available
     if (hotInstance) {
         try {
             const searchPlugin = hotInstance.getPlugin('search');
@@ -1243,22 +1340,18 @@ function performSearch(query) {
                 hotInstance.render();
             }
         } catch (error) {
-            console.log('Search plugin not available, continuing without it');
+            console.log('Search plugin not available');
         }
     }
 }
 
-// ===== SEARCH FUNCTIONALITY FUNCTIONS =====
 function setupSearchFunctionality() {
     const searchInput = document.getElementById('search_input');
     const searchClear = document.getElementById('search_clear');
 
     if (searchInput) {
-        // Remove any existing event listeners first
         searchInput.removeEventListener('input', handleSearchInput);
         searchInput.addEventListener('input', handleSearchInput);
-        
-        // Also add keyup for better responsiveness
         searchInput.addEventListener('keyup', handleSearchInput);
     }
 
@@ -1297,7 +1390,6 @@ function handleSearchClear() {
     }
 }
 
-// Entries per page change handler
 document.getElementById('entriesPerPage').addEventListener("change", function() {
     const newEntriesPerPage = parseInt(this.value);
     
@@ -1314,7 +1406,6 @@ document.getElementById('entriesPerPage').addEventListener("change", function() 
     }
 });
 
-// Function to populate all filter dropdowns
 function populateFilterDropdowns() {
     fetch('/api/members/filter_options')
         .then(response => response.json())
@@ -1323,11 +1414,8 @@ function populateFilterDropdowns() {
             const originSelect = document.getElementById('filter_origin');
             const formOriginSelect = document.getElementById('origin');
             
-            // Clear and populate year filter
             if (yearSelect) {
-                while (yearSelect.options.length > 1) {
-                    yearSelect.remove(1);
-                }
+                while (yearSelect.options.length > 1) yearSelect.remove(1);
                 data.years.forEach(year => {
                     const option = document.createElement('option');
                     option.value = year;
@@ -1336,11 +1424,8 @@ function populateFilterDropdowns() {
                 });
             }
             
-            // Clear and populate origin filter
             if (originSelect) {
-                while (originSelect.options.length > 1) {
-                    originSelect.remove(1);
-                }
+                while (originSelect.options.length > 1) originSelect.remove(1);
                 data.origins.forEach(origin => {
                     const option = document.createElement('option');
                     option.value = origin;
@@ -1349,11 +1434,8 @@ function populateFilterDropdowns() {
                 });
             }
             
-            // Clear and populate form origin select
             if (formOriginSelect) {
-                while (formOriginSelect.options.length > 1) {
-                    formOriginSelect.remove(1);
-                }
+                while (formOriginSelect.options.length > 1) formOriginSelect.remove(1);
                 data.origins.forEach(origin => {
                     const option = document.createElement('option');
                     option.value = origin;
@@ -1362,28 +1444,20 @@ function populateFilterDropdowns() {
                 });
             }
             
-            console.log('Filter dropdowns populated:', {
-                years: data.years,
-                origins: data.origins
-            });
+            console.log('Filter dropdowns populated:', { years: data.years, origins: data.origins });
         })
-        .catch(error => {
-            console.error('Error fetching filter options:', error);
-        });
+        .catch(error => console.error('Error fetching filter options:', error));
 }
 
-// Replace the old populateYearPicker function
 function populateYearPicker() {
     populateFilterDropdowns();
 }
 
-// Function to update save button text based on whether it's a new or existing record
 function updateSaveButtonText() {
     const saveRecordBtn = document.getElementById('save_record_details');
     const recordId = document.getElementById('record_id').value;
     
     if (saveRecordBtn) {
-        // Check if it's an existing record (record_id is not 0 and not the next available ID)
         const isExistingRecord = recordId && recordId !== '0' && recordId != nextRecordId;
         
         if (isExistingRecord && hasUnsavedChanges) {
@@ -1396,7 +1470,6 @@ function updateSaveButtonText() {
     }
 }
 
-// Function to check if record is existing (not new)
 function isExistingRecord() {
     const recordId = document.getElementById('record_id').value;
     return recordId && recordId !== '0' && recordId != nextRecordId;
@@ -1406,20 +1479,14 @@ function handleFormChange() {
     const recordId = document.getElementById('record_id').value;
     const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
     
-    console.log('🔄 Form change detected - Checkbox changed');
-    console.log('Record ID:', recordId, 'Is new record:', isNewRecord);
-    
-    // For new records, always enable save button
     if (isNewRecord) {
         if (!hasUnsavedChanges) {
             hasUnsavedChanges = true;
             updateSaveButtonState(true);
-            console.log('New record - enabling save button');
         }
         return;
     }
     
-    // For existing records, check if data actually changed
     const currentRecordData = {
         year: document.getElementById('year').value,
         id_rcv: document.getElementById('id_rcv').checked,
@@ -1439,51 +1506,28 @@ function handleFormChange() {
     
     const hasActualChanges = JSON.stringify(originalRecordData) !== JSON.stringify(currentRecordData);
     
-    console.log('🔍 Change check results:', {
-        hasActualChanges: hasActualChanges,
-        hasUnsavedChanges: hasUnsavedChanges,
-        checkboxStates: {
-            id_rcv: currentRecordData.id_rcv,
-            paid: currentRecordData.paid,
-            declared: currentRecordData.declared,
-            dispatch_ready: currentRecordData.record_dispatch_ready
-        }
-    });
-    
     if (hasActualChanges && !hasUnsavedChanges) {
         hasUnsavedChanges = true;
         updateSaveButtonState(true);
-        console.log('✅ Changes detected - Update button enabled');
     } else if (!hasActualChanges && hasUnsavedChanges) {
         hasUnsavedChanges = false;
         updateSaveButtonState(false);
-        console.log('✅ Changes reverted - Update button disabled');
     }
     
-    // Always update button text when form changes
     updateSaveButtonText();
 }
 
-// Update the updateEntryDispatchReady function to also update record paid status
 function updateEntryDispatchReady() {
     const entryPaidCheckbox = document.getElementById('entry_paid');
     const entryDeclaredCheckbox = document.getElementById('entry_declared');
     
-    if (!entryPaidCheckbox || !entryDeclaredCheckbox) {
-        console.log('Entry paid or declared checkbox not found');
-        return;
-    }
+    if (!entryPaidCheckbox || !entryDeclaredCheckbox) return;
     
     const isPaid = entryPaidCheckbox.checked;
     const isDeclared = entryDeclaredCheckbox.checked;
     
-    console.log(`Entry dispatch ready check - Paid: ${isPaid}, Declared: ${isDeclared}`);
-    
-    // Entry is dispatch ready if it's paid AND not declared
     const isDispatchReady = isPaid && !isDeclared;
     
-    // Update the visual state (we don't have an entry dispatch ready checkbox anymore)
-    // But we can update the record-level dispatch ready based on all entries
     updateDispatchReadyFromEntries();
     updateRecordPaidFromEntries(); 
     updateRecordIdReceivedFromEntries(); 
@@ -1493,179 +1537,120 @@ function updateDispatchReadyFromEntries() {
     const entriesTable = window.entriesHotInstance;
     const dispatchReadyCheckbox = document.getElementById('record_dispatch_ready');
     
-    if (!entriesTable || !dispatchReadyCheckbox) {
-        console.log('Entries table or dispatch ready checkbox not found');
-        return;
-    }
+    if (!entriesTable || !dispatchReadyCheckbox) return;
     
     const entriesData = entriesTable.getSourceData();
     
     if (!entriesData || entriesData.length === 0) {
-        // No entries - uncheck and gray out
         dispatchReadyCheckbox.checked = false;
         dispatchReadyCheckbox.classList.add('dispatch-ready-auto');
         dispatchReadyCheckbox.disabled = true;
-        console.log('No entries found, dispatch ready unchecked');
         return;
     }
     
-    // Check if ALL entries are paid AND not declared
     const allEntriesPaidAndUndeclared = entriesData.every(entry => {
-        // Handle both boolean and numeric values for paid status
         const isPaid = entry.paid === true || entry.paid === 1 || entry.paid === '1';
         const isNotDeclared = entry.declared === false || entry.declared === 0 || entry.declared === '0' || entry.declared === null;
-        
-        console.log(`Entry ${entry.entry_id}: paid = ${entry.paid}, declared = ${entry.declared}, isPaid = ${isPaid}, isNotDeclared = ${isNotDeclared}`);
         return isPaid && isNotDeclared;
     });
     
-    console.log(`All entries paid and undeclared: ${allEntriesPaidAndUndeclared}, Total entries: ${entriesData.length}`);
-    
-    // Update the checkbox based on paid and declared status
     if (allEntriesPaidAndUndeclared) {
-        // All entries are paid AND not declared - check and gray out
         dispatchReadyCheckbox.checked = true;
         dispatchReadyCheckbox.classList.add('dispatch-ready-auto');
         dispatchReadyCheckbox.disabled = true;
         
-        
-        // Show success message
         const smallText = dispatchReadyCheckbox.parentElement.querySelector('small');
         if (smallText) {
             smallText.style.color = '#28a745';
             smallText.textContent = '✓ All entries are paid and undeclared - Ready for dispatch';
         }
     } else {
-        // Not all entries meet criteria - uncheck and gray out
         dispatchReadyCheckbox.checked = false;
         dispatchReadyCheckbox.classList.add('dispatch-ready-auto');
         dispatchReadyCheckbox.disabled = true;
     }
     
-    // Trigger form change for unsaved changes tracking
     dispatchReadyCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-// Function to update record ID Received status based on entries
 function updateRecordIdReceivedFromEntries() {
     const entriesTable = window.entriesHotInstance;
     const recordIdRcvCheckbox = document.getElementById('id_rcv');
     
-    if (!entriesTable || !recordIdRcvCheckbox) {
-        console.log('Entries table or record ID Received checkbox not found');
-        return;
-    }
+    if (!entriesTable || !recordIdRcvCheckbox) return;
     
     const entriesData = entriesTable.getSourceData();
     
     if (!entriesData || entriesData.length === 0) {
-        // No entries - uncheck and gray out
         recordIdRcvCheckbox.checked = false;
         recordIdRcvCheckbox.classList.add('id-rcv-auto');
         recordIdRcvCheckbox.disabled = true;
-        console.log('No entries found, record ID Received unchecked');
         return;
     }
     
-    // Check if ALL entries have ID Received = true
     const allEntriesIdReceived = entriesData.every(entry => {
-        // Handle both boolean and numeric values for ID received status
         const isIdReceived = entry.id_received === true || entry.id_received === 1 || entry.id_received === '1';
-        console.log(`Entry ${entry.entry_id}: id_received = ${entry.id_received}, isIdReceived = ${isIdReceived}`);
         return isIdReceived;
     });
     
-    console.log(`All entries ID Received: ${allEntriesIdReceived}, Total entries: ${entriesData.length}`);
-    
-    // Update the checkbox based on ID received status
     if (allEntriesIdReceived) {
-        // All entries have ID received - check and gray out
         recordIdRcvCheckbox.checked = true;
         recordIdRcvCheckbox.classList.add('id-rcv-auto');
         recordIdRcvCheckbox.disabled = true;
-        
     } else {
-        // Not all entries have ID received - uncheck and gray out
         recordIdRcvCheckbox.checked = false;
         recordIdRcvCheckbox.classList.add('id-rcv-auto');
         recordIdRcvCheckbox.disabled = true;
-        
     }
     
-    // Trigger form change for unsaved changes tracking
     recordIdRcvCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-// Function to update record paid status based on entries
 function updateRecordPaidFromEntries() {
     const entriesTable = window.entriesHotInstance;
     const recordPaidCheckbox = document.getElementById('paid');
     
-    if (!entriesTable || !recordPaidCheckbox) {
-        console.log('Entries table or record paid checkbox not found');
-        return;
-    }
+    if (!entriesTable || !recordPaidCheckbox) return;
     
     const entriesData = entriesTable.getSourceData();
     
     if (!entriesData || entriesData.length === 0) {
-        // No entries - uncheck and gray out
         recordPaidCheckbox.checked = false;
         recordPaidCheckbox.classList.add('paid-auto');
         recordPaidCheckbox.disabled = true;
-        console.log('No entries found, record paid unchecked');
         return;
     }
     
-    // Check if ALL entries are paid
     const allEntriesPaid = entriesData.every(entry => {
-        // Handle both boolean and numeric values for paid status
         const isPaid = entry.paid === true || entry.paid === 1 || entry.paid === '1';
-        console.log(`Entry ${entry.entry_id}: paid = ${entry.paid}, isPaid = ${isPaid}`);
         return isPaid;
     });
     
-    console.log(`All entries paid: ${allEntriesPaid}, Total entries: ${entriesData.length}`);
-    
-    // Update the checkbox based on paid status
     if (allEntriesPaid) {
-        // All entries are paid - check and gray out
         recordPaidCheckbox.checked = true;
         recordPaidCheckbox.classList.add('paid-auto');
         recordPaidCheckbox.disabled = true;
         
-        // Show success message
         const smallText = recordPaidCheckbox.parentElement.querySelector('small');
         if (smallText) {
             smallText.style.color = '#28a745';
             smallText.textContent = '✓ All entries are paid';
         }
     } else {
-        // Not all entries are paid - uncheck and gray out
         recordPaidCheckbox.checked = false;
         recordPaidCheckbox.classList.add('paid-auto');
         recordPaidCheckbox.disabled = true;
-        
     }
     
-    // Trigger form change for unsaved changes tracking
     recordPaidCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-// Update the entries table monitoring to track all statuses
 function setupEntriesTableMonitoring() {
     const entriesTable = window.entriesHotInstance;
-    if (!entriesTable) {
-        console.error('Entries table not available for monitoring');
-        return;
-    }
+    if (!entriesTable) return;
     
-    // Monitor for data changes in paid, declared, and id_received columns
     entriesTable.addHook('afterChange', function(changes, source) {
         if (source === 'edit' || source === 'loadData') {
-            console.log('Entries table changed, updating Dispatch Ready, Paid, and ID Received status...');
-            
-            // Check if the change affects paid, declared, or id_received columns
             const statusChanged = changes && changes.some(change => {
                 const columnProp = entriesTable.getColHeader(change[1]);
                 return columnProp && (columnProp.includes('Paid') || columnProp.includes('Declared') || columnProp.includes('ID Received'));
@@ -1675,19 +1660,15 @@ function setupEntriesTableMonitoring() {
                 setTimeout(() => {
                     updateDispatchReadyFromEntries();
                     updateRecordPaidFromEntries();
-                    updateRecordIdReceivedFromEntries(); // Add this line
+                    updateRecordIdReceivedFromEntries();
                 }, 100);
             }
         }
     });
-    
-    console.log('Entries table monitoring setup complete');
 }
 
-// FIXED: Function to populate ALL entry form fields from table row data
 function populateEntryForm(entryData) {
     console.log('=== POPULATING ENTRY FORM ===');
-    console.log('Full entry data:', entryData);
     
     if (!entryData) {
         console.error('No entry data provided to populate form');
@@ -1695,24 +1676,16 @@ function populateEntryForm(entryData) {
     }
     
     try {
-        // Store the current MAAB number BEFORE populating the form
         const currentMaabNo = entryData.maab_no;
         
-        // Set entry ID
         document.getElementById('entry_id').value = entryData.entry_id || '';
         currentEditingEntryId = entryData.entry_id;
-        console.log('Set entry_id to:', entryData.entry_id);
         
-        // === POPULATE ALL FORM FIELDS ===
-        
-        // 1. Select fields
         document.getElementById('maab_cat').value = entryData.maab_category || 'Classic';
         document.getElementById('suffix').value = entryData.suffix || 'NA';
         document.getElementById('sex').value = entryData.sex || '';
         document.getElementById('blood_type').value = entryData.blood_type || '';
         
-        // 2. Text inputs
-        // DON'T set maab_no here yet - let the dropdown handle it
         document.getElementById('fname').value = entryData.first_name || '';
         document.getElementById('mname').value = entryData.middle_name || '';
         document.getElementById('lname').value = entryData.last_name || '';
@@ -1724,73 +1697,45 @@ function populateEntryForm(entryData) {
         document.getElementById('entry_remarks').value = entryData.remarks || '';
         document.getElementById('entry_tags').value = entryData.tags || '';
         
-        // 3. Date fields (convert format with error handling)
         const birthDateInput = document.getElementById('bdate');
         const declareDateInput = document.getElementById('declare_date');
         const orDateInput = document.getElementById('entry_or_date');
         
         if (entryData.birth_date) {
-            const convertedDate = convertToYYYYMMDD(entryData.birth_date);
-            birthDateInput.value = convertedDate;
-            console.log('Birth date converted:', entryData.birth_date, '->', convertedDate);
-        } else {
-            birthDateInput.value = '';
-        }
+            birthDateInput.value = convertToYYYYMMDD(entryData.birth_date);
+        } else birthDateInput.value = '';
         
         if (entryData.declaration_date) {
-            const convertedDate = convertToYYYYMMDD(entryData.declaration_date);
-            declareDateInput.value = convertedDate;
-            console.log('Declaration date converted:', entryData.declaration_date, '->', convertedDate);
-        } else {
-            declareDateInput.value = '';
-        }
+            declareDateInput.value = convertToYYYYMMDD(entryData.declaration_date);
+        } else declareDateInput.value = '';
         
         if (entryData.OR_date) {
-            const convertedDate = convertToYYYYMMDD(entryData.OR_date);
-            orDateInput.value = convertedDate;
-            console.log('OR date converted:', entryData.OR_date, '->', convertedDate);
-        } else {
-            orDateInput.value = '';
-        }
+            orDateInput.value = convertToYYYYMMDD(entryData.OR_date);
+        } else orDateInput.value = '';
         
-        // 4. Checkboxes - SET ID RECEIVED TO FALSE REGARDLESS OF DATABASE VALUE
-        document.getElementById('id_received').checked = false; // Always set to false
+        document.getElementById('id_received').checked = false;
         document.getElementById('entry_declared').checked = Boolean(entryData.declared);
         document.getElementById('entry_paid').checked = Boolean(entryData.paid);
         
-        // ✅ CRITICAL: Populate the MAAB dropdown AFTER a short delay to ensure category is set
+        // Update OR Date field state based on paid status
+        updateORDateFieldState(Boolean(entryData.paid), orDateInput);
+        
         setTimeout(() => {
             const category = document.getElementById('maab_cat').value;
-            console.log(`🔄 Populating MAAB dropdown with category: ${category}, current MAAB: ${currentMaabNo}`);
             if (window.populateMAABNoDropdown) {
                 window.populateMAABNoDropdown(category, currentMaabNo);
-            } else {
-                console.error('❌ populateMAABNoDropdown function not available');
-                // Fallback: try to set the value directly
-                if (currentMaabNo) {
-                    document.getElementById('maab_no').value = currentMaabNo;
-                }
+            } else if (currentMaabNo) {
+                document.getElementById('maab_no').value = currentMaabNo;
             }
         }, 100);
 
-        setTimeout(() => {
-            updateEntryDispatchReady();
-        }, 200);
+        setTimeout(() => updateEntryDispatchReady(), 200);
 
-        console.log('All form fields populated successfully!');
-        
-        // Switch to edit mode and show back button
         switchToEditMode();
         
-        // Scroll to the entry form
         setTimeout(() => {
             const entryForm = document.getElementById('entry_details');
-            if (entryForm) {
-                entryForm.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                });
-            }
+            if (entryForm) entryForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
         
     } catch (error) {
@@ -1799,21 +1744,13 @@ function populateEntryForm(entryData) {
     }
 }
 
-// Make the function available globally
 window.populateEntryForm = populateEntryForm;
 
-// FIXED: Enhanced date conversion function
 function convertToYYYYMMDD(dateStr) {
     if (!dateStr) return '';
     
-    console.log('Converting date:', dateStr, 'Type:', typeof dateStr);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
     
-    // If already in YYYY-MM-DD format, return as-is
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        return dateStr;
-    }
-    
-    // Handle MM/DD/YYYY format
     if (dateStr.includes('/')) {
         const parts = dateStr.split('/');
         if (parts.length === 3) {
@@ -1824,58 +1761,45 @@ function convertToYYYYMMDD(dateStr) {
         }
     }
     
-    // Handle MM-DD-YYYY format (from Handsontable)
     if (dateStr.includes('-')) {
         const parts = dateStr.split('-');
         if (parts.length === 3) {
             let [month, day, year] = parts;
             
-            // Check if it's already in YYYY-MM-DD format but with dashes
             if (year.length === 4 && month.length === 2 && day.length === 2) {
-                return dateStr; // Already correct format
+                return dateStr;
             }
             
-            // Handle MM-DD-YYYY format
             month = month.padStart(2, '0');
             day = day.padStart(2, '0');
             
-            // If year is 2 digits, assume it's 20XX
-            if (year.length === 2) {
-                year = '20' + year;
-            }
+            if (year.length === 2) year = '20' + year;
             
             return `${year}-${month}-${day}`;
         }
     }
     
-    // Try to parse as Date object as fallback
     try {
         const date = new Date(dateStr);
-        if (!isNaN(date.getTime())) {
-            return date.toISOString().split('T')[0];
-        }
+        if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
     } catch (e) {
         console.warn('Could not parse date:', dateStr);
     }
     
-    return ''; // Return empty if format is unrecognized
+    return '';
 }
 
 function switchToEditMode() {
     isEditingEntry = true;
     
-    // Change button text
     const addButton = document.getElementById('add_entry_details');
     if (addButton) {
         addButton.innerHTML = '<img src="/static/assets/save.png" alt="save" class="btn-icon"> Save Changes';
-        addButton.disabled = false; // Enable the button
+        addButton.disabled = false;
     }
     
-    // Show back button
     const backButton = document.getElementById('back_to_add');
-    if (backButton) {
-        backButton.classList.add('show');
-    }
+    if (backButton) backButton.classList.add('show');
     
     console.log('Switched to edit mode for entry:', currentEditingEntryId);
 }
@@ -1884,21 +1808,16 @@ function switchToAddMode() {
     isEditingEntry = false;
     currentEditingEntryId = null;
     
-    // Clear the form
     clearEntryForm();
     
-    // Change button text back
     const addButton = document.getElementById('add_entry_details');
     if (addButton) {
         addButton.innerHTML = '<img src="/static/assets/add.png" alt="add" class="btn-icon"> Add Entry';
-        addButton.disabled = false; // Enable the button
+        addButton.disabled = false;
     }
     
-    // Hide back button
     const backButton = document.getElementById('back_to_add');
-    if (backButton) {
-        backButton.classList.remove('show');
-    }
+    if (backButton) backButton.classList.remove('show');
     
     console.log('Switched back to add mode');
 }
@@ -1907,72 +1826,60 @@ function clearEntryForm() {
     const entryId = document.getElementById('entry_id');
     if (entryId) entryId.value = '';
     
-    // Clear all form fields
     const fields = ['maab_no', 'fname', 'mname', 'lname', 'age', 'contact', 'email', 'address', 'entry_or_no', 'entry_remarks', 'entry_tags'];
     fields.forEach(field => {
         const element = document.getElementById(field);
         if (element) element.value = '';
     });
     
-    // Reset selects to default values
     document.getElementById('maab_cat').value = 'Classic';
     document.getElementById('suffix').value = 'NA';
     document.getElementById('sex').value = '';
     document.getElementById('blood_type').value = '';
     
-    // Reset checkboxes
     const checkboxes = ['id_received', 'entry_declared', 'entry_paid'];
     checkboxes.forEach(checkbox => {
         const element = document.getElementById(checkbox);
         if (element) element.checked = false;
     });
     
-    // Clear dates
     const dates = ['bdate', 'declare_date', 'entry_or_date'];
     dates.forEach(date => {
         const element = document.getElementById(date);
         if (element) element.value = '';
     });
     
-    // Clear any validation errors
-    clearAllValidationErrors();
+    // Reset OR Date field to readonly state
+    const orDateField = document.getElementById('entry_or_date');
+    if (orDateField) {
+        orDateField.readOnly = true;
+        orDateField.style.backgroundColor = '#f5f5f5';
+        orDateField.style.cursor = 'not-allowed';
+    }
     
-    console.log('Entry form cleared');
+    clearAllValidationErrors();
 }
 
-// Update your initializeChangeTracking function
 function initializeChangeTracking() {
-    // Store original data when overlay opens
     storeOriginalData();
-    
-    // Reset the flag when overlay opens
     hasUnsavedChanges = false;
     
-    // Add event listeners to all form inputs
     const formInputs = document.querySelectorAll('#overlay input, #overlay select, #overlay textarea');
     formInputs.forEach(input => {
-        // Remove existing listeners to avoid duplicates
         input.removeEventListener('input', handleFormChange);
         input.removeEventListener('change', handleFormChange);
-        
-        // Add new listeners
         input.addEventListener('input', handleFormChange);
         input.addEventListener('change', handleFormChange);
     });
     
-    // Update button state based on whether it's a new or existing record
-    updateSaveButtonState(false); // Start with disabled for existing records
+    updateSaveButtonState(false);
     updateSaveButtonText();
-    
-    console.log('Change tracking initialized - hasUnsavedChanges:', hasUnsavedChanges);
 }
 
-// Update your storeOriginalData function
 function storeOriginalData() {
     const recordId = document.getElementById('record_id').value;
     const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
     
-    // Store original record data
     originalRecordData = {
         year: document.getElementById('year').value,
         id_rcv: document.getElementById('id_rcv').checked,
@@ -1990,23 +1897,14 @@ function storeOriginalData() {
         tags: document.getElementById('tags').value
     };
     
-    console.log('Original data stored for record:', recordId, 'Is new:', isNewRecord);
-    console.log('Original data:', originalRecordData);
-    
-    // For new records, start with save button enabled
-    // For existing records, start with save button disabled
     hasUnsavedChanges = isNewRecord;
     updateSaveButtonState(isNewRecord);
     updateSaveButtonText();
 }
 
 function checkForChanges() {
-    if (!hasUnsavedChanges) {
-        console.log('No unsaved changes flag set');
-        return false;
-    }
+    if (!hasUnsavedChanges) return false;
     
-    // Check record details for changes
     const currentRecordData = {
         year: document.getElementById('year').value,
         id_rcv: document.getElementById('id_rcv').checked,
@@ -2024,125 +1922,74 @@ function checkForChanges() {
         tags: document.getElementById('tags').value
     };
     
-    // Check if record data changed
     const recordChanged = JSON.stringify(originalRecordData) !== JSON.stringify(currentRecordData);
-    
-    console.log('Record changed:', recordChanged);
-    console.log('Original:', originalRecordData);
-    console.log('Current:', currentRecordData);
-    
     return recordChanged;
 }
 
-// Override the close overlay function
 function setupCloseOverlayWithConfirmation() {
     const closeOverlay = document.getElementById('close-overlay');
     const overlay = document.getElementById('overlay');
     
-    if (!closeOverlay || !overlay) {
-        console.error('Close overlay elements not found');
-        return;
-    }
+    if (!closeOverlay || !overlay) return;
     
-    // Close button click
     closeOverlay.addEventListener('click', function(e) {
         e.preventDefault();
-        console.log('Close button clicked');
         attemptCloseOverlay();
     });
     
-    // ESC key press
     document.addEventListener('keydown', function(event) {
         if (event.key === "Escape" && overlay.style.display === 'flex') {
             event.preventDefault();
-            console.log('ESC key pressed with overlay open');
             attemptCloseOverlay();
         }
     });
     
-    // Modal button handlers
     const confirmClose = document.getElementById('confirmClose');
     const cancelClose = document.getElementById('cancelClose');
     const saveAndClose = document.getElementById('saveAndClose');
     
-    if (confirmClose) {
-        confirmClose.addEventListener('click', function() {
-            console.log('Close without saving confirmed');
-            closeOverlayWithoutSaving();
-        });
-    }
-    
-    if (cancelClose) {
-        cancelClose.addEventListener('click', function() {
-            console.log('Continue editing selected');
-            hideUnsavedChangesModal();
-        });
-    }
-    
-    if (saveAndClose) {
-        saveAndClose.addEventListener('click', function() {
-            console.log('Save and close selected');
-            saveAndCloseOverlay();
-        });
-    }
+    if (confirmClose) confirmClose.addEventListener('click', closeOverlayWithoutSaving);
+    if (cancelClose) cancelClose.addEventListener('click', hideUnsavedChangesModal);
+    if (saveAndClose) saveAndClose.addEventListener('click', saveAndCloseOverlay);
 }
 
 function attemptCloseOverlay() {
-    console.log('Attempting to close overlay, checking for changes...');
     if (checkForChanges()) {
-        console.log('Changes detected, showing modal');
         showUnsavedChangesModal();
     } else {
-        console.log('No changes detected, closing directly');
         closeOverlayWithoutSaving();
     }
 }
 
 function showUnsavedChangesModal() {
-    console.log('Showing unsaved changes modal');
     const modal = document.getElementById('unsavedChangesModal');
-    if (modal) {
-        modal.style.display = 'flex';
-    }
+    if (modal) modal.style.display = 'flex';
 }
 
 function hideUnsavedChangesModal() {
-    console.log('Hiding unsaved changes modal');
     const modal = document.getElementById('unsavedChangesModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    if (modal) modal.style.display = 'none';
 }
 
 function closeOverlayWithoutSaving() {
-    console.log('Closing overlay without saving');
     hideUnsavedChangesModal();
     const overlay = document.getElementById('overlay');
-    if (overlay) {
-        overlay.style.display = 'none';
-    }
+    if (overlay) overlay.style.display = 'none';
     hasUnsavedChanges = false;
     updateSaveButtonState(false);
-
-    // ===== NEW: RESET ENTRY DETAILS STATE =====
-    enableEntryDetails(); 
+    enableEntryDetails();
     updateButtonStates();
 }
 
 function saveAndCloseOverlay() {
-    console.log('Saving and closing overlay');
     hideUnsavedChangesModal();
     
-    // Trigger save for record
     saveRecordDetails()
         .then(() => {
             const overlay = document.getElementById('overlay');
-            if (overlay) {
-                overlay.style.display = 'none';
-            }
+            if (overlay) overlay.style.display = 'none';
             hasUnsavedChanges = false;
             updateSaveButtonState(false);
-            console.log('Saved and closed successfully');
             toastSuccess("Record Saved Successfully!", "The record was successfully updated.");
         })
         .catch(error => {
@@ -2151,9 +1998,6 @@ function saveAndCloseOverlay() {
         });
 }
 
-// ===== OPTIMIZED ADD RECORD FUNCTIONALITY =====
-
-// Add this function to your JavaScript
 async function getNextRecordId() {
     try {
         const response = await fetch('/api/members/get_next_record_id');
@@ -2161,37 +2005,25 @@ async function getNextRecordId() {
         
         if (data.next_record_id) {
             nextRecordId = data.next_record_id;
-            console.log('Next available record ID:', nextRecordId);
             return nextRecordId;
-        } else {
-            console.error('Failed to get next record ID');
-            return 0;
-        }
+        } else return 0;
     } catch (error) {
         console.error('Error fetching next record ID:', error);
         return 0;
     }
 }
 
-// Function to initialize and pre-fetch the next record ID
 async function initializeNextRecordId() {
     try {
-        console.log('🔄 Initializing next record ID...');
         const nextId = await getNextRecordId();
         nextRecordId = nextId;
-        console.log('✅ Next record ID initialized:', nextRecordId);
-        
-        
     } catch (error) {
-        console.error('❌ Failed to initialize next record ID:', error);
-        // Set a fallback - this will be refreshed when user tries to create a record
+        console.error('Failed to initialize next record ID:', error);
         nextRecordId = 0;
     }
 }
 
-// Function to refresh the next ID when needed
 function refreshNextRecordId() {
-    console.log('🔄 Refreshing next record ID...');
     return initializeNextRecordId();
 }
 
@@ -2204,27 +2036,18 @@ async function openEmptyRecordOverlay() {
             return;
         }
         
-        // Clear all form fields
         clearRecordForm();
-        
-        // Set the next available ID
         document.getElementById('record_id').value = nextId;
         document.getElementById('year').value = new Date().getFullYear();
         
-        // ===== CRITICAL: DISABLE ENTRY DETAILS FIRST =====
         disableEntryDetails();
         disableArchiveAndExport();
         
-        // Show the overlay
         document.getElementById('overlay').style.display = 'flex';
         
-        // Scroll to top of overlay
         const overlayContent = document.getElementById('overlay-content');
-        if (overlayContent) {
-            overlayContent.scrollTop = 0;
-        }
+        if (overlayContent) overlayContent.scrollTop = 0;
         
-        // Initialize functions
         setTimeout(() => {
             initializeChangeTracking();
             setDistrictFromMunicipality();
@@ -2232,20 +2055,13 @@ async function openEmptyRecordOverlay() {
             setLocationParticularToUppercase();
             highlightRequiredFields();
             switchToAddMode();
-            setupMaabNumberHandling(); 
+            setupMaabNumberHandling();
             setBirthdayMaxDate();
-            
-            // ===== REINFORCE DISABLED STATE =====
             disableEntryDetails();
             updateCheckboxStates();
             setupCheckboxChangeTracking();
             
-            // Clear entries table for new record
-            if (window.entriesHotInstance) {
-                window.entriesHotInstance.loadData([]);
-            }
-            
-            // Ensure button shows "Save" for new record
+            if (window.entriesHotInstance) window.entriesHotInstance.loadData([]);
             updateSaveButtonText();
         }, 100);
         
@@ -2255,7 +2071,6 @@ async function openEmptyRecordOverlay() {
     }
 }
 
-// Prevent manual changes to origin for new records
 function setupOriginFieldProtection() {
     const originSelect = document.getElementById('origin');
     const recordId = document.getElementById('record_id');
@@ -2272,21 +2087,12 @@ function setupOriginFieldProtection() {
         
         originSelect.addEventListener('keydown', function(e) {
             const isNewRecord = recordId.value == nextRecordId || recordId.value === '0';
-            if (isNewRecord && this.readOnly) {
-                e.preventDefault();
-            }
+            if (isNewRecord && this.readOnly) e.preventDefault();
         });
     }
 }
 
-// Call this in your DOMContentLoaded or overlay opening function
-document.addEventListener('DOMContentLoaded', function() {
-    setupOriginFieldProtection();
-});
-
-// Update your clearRecordForm function
 function clearRecordForm() {
-    // Don't clear the record_id field here - let openEmptyRecordOverlay handle it
     const fieldsToClear = [
         'id_rcv', 'paid', 'declared', 'record_dispatch_ready',
         'dec_date', 'eff_date', 'loc_par', 'loc_cat', 'municipality',
@@ -2296,29 +2102,20 @@ function clearRecordForm() {
     fieldsToClear.forEach(fieldId => {
         const element = document.getElementById(fieldId);
         if (element) {
-            if (element.type === 'checkbox') {
-                element.checked = false;
-            } else if (element.type === 'select-one') {
-                element.selectedIndex = 0;
-            } else {
-                element.value = '';
-            }
+            if (element.type === 'checkbox') element.checked = false;
+            else if (element.type === 'select-one') element.selectedIndex = 0;
+            else element.value = '';
         }
     });
     
-    // Clear any validation errors
     clearAllValidationErrors();
-    
-    // Reset button text to "Save" for new records
     updateSaveButtonText();
 }
 
 function saveRecordDetails(showToast = true) {
     return new Promise((resolve, reject) => {
-        // Clear previous errors
         clearAllValidationErrors();
         
-        // Validate required fields first
         if (!validateRequiredFields()) {
             reject(new Error("Required fields missing"));
             return;
@@ -2327,13 +2124,12 @@ function saveRecordDetails(showToast = true) {
         const recordId = document.getElementById('record_id').value;
         const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
         
-        // Helper function to convert empty strings to null
         function emptyToNull(value) {
             return value === '' ? null : value;
         }
         
         const payload = {
-            record_id: isNewRecord ? null : recordId, // Send null for new records
+            record_id: isNewRecord ? null : recordId,
             year: document.getElementById('year').value,
             id_received: document.getElementById('id_rcv').checked ? 1 : 0,
             paid: document.getElementById('paid').checked ? 1 : 0,
@@ -2350,10 +2146,6 @@ function saveRecordDetails(showToast = true) {
             tags: emptyToNull(document.getElementById('tags').value)
         };
 
-        console.log('Saving record details:', payload);
-        console.log('Is new record:', isNewRecord);
-
-        // Use POST for new records, PATCH for updates
         const method = isNewRecord ? 'POST' : 'PATCH';
         const url = '/api/save_record_details';
 
@@ -2365,102 +2157,65 @@ function saveRecordDetails(showToast = true) {
         .then(response => response.json())
         .then(result => {
             if (!result.success) {
-                console.error('Save failed:', result);
                 reject(new Error("Failed to save record"));
                 return;
             }
             
-            // Handle new record creation
             if (isNewRecord && result.record_id) {
-    document.getElementById('record_id').value = result.record_id;
-    console.log('New record created with ID:', result.record_id);
-
-    // ===== CRITICAL: ENABLE BUTTONS AND ENTRY DETAILS AFTER SUCCESSFUL SAVE =====
-    enableArchiveAndExport();
-    enableEntryDetails();
-    
-    // Also update checkbox states
-    updateCheckboxStates();
-    
-    // Refresh the next available ID since we just used one
-    getNextRecordId().then(() => {
-        console.log('Next record ID refreshed after save');
-    }).catch(error => {
-        console.error('Failed to refresh next record ID:', error);
-    });
-}
+                document.getElementById('record_id').value = result.record_id;
+                enableArchiveAndExport();
+                enableEntryDetails();
+                updateCheckboxStates();
+                
+                getNextRecordId().catch(error => console.error('Failed to refresh next record ID:', error));
+            }
             
-            // Reset change tracking
             hasUnsavedChanges = false;
             storeOriginalData();
             updateSaveButtonState(false);
             updateSaveButtonText();
-            console.log('Record saved successfully');
             
-            // Show success message
             if (showToast) {
                 const message = isNewRecord ? "Record Created Successfully!" : "Record Updated Successfully!";
                 toastSuccess(message, "The record was successfully saved.");
             }
             
-            // Refresh the table data
             return refreshTableData();
         })
-        .then(() => {
-            resolve();
-        })
+        .then(() => resolve())
         .catch(error => {
             console.error('Fetch error:', error);
-            if (showToast) {
-                toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
-            }
+            if (showToast) toastAlert("Error Saving Record", "There was an issue saving your record. Please try again.");
             reject(error);
         });
     });
 }
 
-// Updated add/save entry function
 document.getElementById('add_entry_details').addEventListener('click', function () {
     const entryId = document.getElementById('entry_id').value;
     const recordId = document.getElementById('record_id').value;
     
-    if (isEditingEntry && entryId) {
-        // Update existing entry
-        updateEntry(entryId, recordId);
-    } else {
-        // Add new entry
-        addNewEntry(recordId);
-    }
+    if (isEditingEntry && entryId) updateEntry(entryId, recordId);
+    else addNewEntry(recordId);
 });
 
-// Function to add new entry
 function addNewEntry(recordId) {
-    // Clear previous errors
     clearAllValidationErrors();
     
-    // Validate required entry fields first
-    if (!validateEntryRequiredFields()) {
-        return;
-    }
+    if (!validateEntryRequiredFields()) return;
     
-    // Calculate age if not already calculated
     const ageInput = document.getElementById('age');
-    if (!ageInput.value && document.getElementById('bdate').value) {
-        calculateAgeFromBirthdate();
-    }
+    if (!ageInput.value && document.getElementById('bdate').value) calculateAgeFromBirthdate();
     
-    // ===== NEW: VALIDATE AGE =====
     if (!validateAge()) {
         toastAlert("Age Restriction", "The age of the entry should be 3+. Please check the birthdate.");
         return;
     }
     
-    // Helper function to convert empty strings to null
     function emptyToNull(value) {
         return value === '' ? null : value;
     }
     
-    // Handle sex field specifically - convert empty string to null
     const sexField = document.getElementById('sex');
     const sexValue = sexField.value === '' ? null : sexField.value;
     
@@ -2491,15 +2246,12 @@ function addNewEntry(recordId) {
         dispatch_id: null
     };
 
-    console.log('Adding new entry:', payload);
-
     fetch('/api/save_entry_details', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
     .then(response => {
-        console.log('Response status:', response.status);
         if (!response.ok) {
             return response.text().then(text => {
                 throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
@@ -2511,10 +2263,7 @@ function addNewEntry(recordId) {
         if (data.success === true) {
             toastSuccess("Entry Added", "Entry added successfully!");
             
-            // ✅ CRITICAL: MARK MAAB NUMBER AS USED IN INVENTORY
             const maabNo = document.getElementById('maab_no').value;
-            console.log(`🔄 Attempting to mark MAAB number as used: ${maabNo}`);
-            
             if (maabNo && maabNo.trim() !== '') {
                 fetch('/api/inventory/mark_as_used', {
                     method: 'POST',
@@ -2523,47 +2272,27 @@ function addNewEntry(recordId) {
                 })
                 .then(response => response.json())
                 .then(result => {
-                    console.log('🔍 mark_as_used API response:', result);
                     if (result.success) {
-                        console.log(`✅ MAAB number ${maabNo} marked as used in inventory`);
-                        // Refresh dropdown after marking as used
                         setTimeout(() => {
-                            if (window.refreshMAABDropdown) {
-                                window.refreshMAABDropdown();
-                            }
+                            if (window.refreshMAABDropdown) window.refreshMAABDropdown();
                         }, 1000);
-                    } else {
-                        console.warn(`⚠️ Failed to mark MAAB number as used: ${result.error}`);
-                        toastAlert("Inventory Warning", `MAAB number saved but inventory not updated: ${result.error}`);
-                    }
+                    } else toastAlert("Inventory Warning", `MAAB number saved but inventory not updated: ${result.error}`);
                 })
-                .catch(error => {
-                    console.error('❌ Error marking MAAB number as used:', error);
-                });
-            } else {
-                console.warn('⚠️ No MAAB number to mark as used');
+                .catch(error => console.error('Error marking MAAB number as used:', error));
             }
             
-            // Refresh entries table
             refreshEntriesTable();
-            // Clear form and stay in add mode
             clearEntryForm();
             
-            // ✅ Refresh MAAB dropdown to exclude the newly used number
             if (window.refreshMAABDropdown) {
-                setTimeout(() => {
-                    window.refreshMAABDropdown();
-                }, 500);
+                setTimeout(() => window.refreshMAABDropdown(), 500);
             }
             
-            // Update Dispatch Ready status after a short delay
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
                 updateRecordPaidFromEntries();
             }, 500);
-        } else {
-            toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
-        }
+        } else toastError("Entry Failed", "Entry adding failed: " + (data.error || "Unknown error"));
     })
     .catch(error => {
         console.error('Error:', error);
@@ -2574,49 +2303,28 @@ function addNewEntry(recordId) {
 function disableEntryDetails() {
     const entryDetails = document.getElementById('entry_details');
     const entryRadioControls = document.querySelector('.entry-radio-controls');
-    const entriesTable = document.getElementById('entries_table');
     const addEntryBtn = document.getElementById('add_entry_details');
-    
-    console.log('🛑 DISABLING ENTRY DETAILS');
-    console.log('Entry Details element:', entryDetails);
-    console.log('Radio Controls:', entryRadioControls);
-    console.log('Add Entry Button:', addEntryBtn);
     
     if (entryDetails) {
         entryDetails.classList.add('disabled');
-        
-        // Also disable all input fields within entry details
         const entryInputs = entryDetails.querySelectorAll('input, select, textarea');
         entryInputs.forEach(input => {
             input.disabled = true;
             input.style.pointerEvents = 'none';
         });
-        
-        console.log('✅ Added disabled class and disabled inputs in entry details');
     }
     
-    if (entryRadioControls) {
-        entryRadioControls.style.display = 'none';
-        console.log('✅ Hid entry radio controls');
-    }
-    
+    if (entryRadioControls) entryRadioControls.style.display = 'none';
     if (addEntryBtn) {
         addEntryBtn.disabled = true;
         addEntryBtn.style.opacity = '0.6';
         addEntryBtn.style.cursor = 'not-allowed';
-        console.log('✅ Disabled add entry button');
     }
     
-    // Show empty state in entries table
     if (window.entriesHotInstance) {
         window.entriesHotInstance.loadData([]);
-        window.entriesHotInstance.updateSettings({
-            readOnly: true
-        });
-        console.log('✅ Cleared and disabled entries table');
+        window.entriesHotInstance.updateSettings({ readOnly: true });
     }
-    
-    console.log('🛑 Entry details fully disabled - record not saved yet');
 }
 
 function enableEntryDetails() {
@@ -2624,53 +2332,28 @@ function enableEntryDetails() {
     const entryRadioControls = document.querySelector('.entry-radio-controls');
     const addEntryBtn = document.getElementById('add_entry_details');
     
-    console.log('✅ ENABLING ENTRY DETAILS');
-    
     if (entryDetails) {
         entryDetails.classList.remove('disabled');
-        
-        // Re-enable all input fields within entry details
         const entryInputs = entryDetails.querySelectorAll('input, select, textarea');
         entryInputs.forEach(input => {
             input.disabled = false;
             input.style.pointerEvents = 'auto';
         });
-        
-        console.log('✅ Removed disabled class and re-enabled inputs in entry details');
     }
     
-    if (entryRadioControls) {
-        entryRadioControls.style.display = 'flex';
-        console.log('✅ Showed entry radio controls');
-    }
-    
+    if (entryRadioControls) entryRadioControls.style.display = 'flex';
     if (addEntryBtn) {
         addEntryBtn.disabled = false;
         addEntryBtn.style.opacity = '1';
         addEntryBtn.style.cursor = 'pointer';
-        console.log('✅ Enabled add entry button');
     }
     
-    // Re-enable entries table
-    if (window.entriesHotInstance) {
-        window.entriesHotInstance.updateSettings({
-            readOnly: false
-        });
-        console.log('✅ Enabled entries table');
-    }
-    
-    console.log('✅ Entry details fully enabled - record is saved');
+    if (window.entriesHotInstance) window.entriesHotInstance.updateSettings({ readOnly: false });
 }
 
 function checkAndSetEntryDetailsState() {
     const recordId = document.getElementById('record_id').value;
     const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
-    
-    console.log('🔍 Checking entry details state:', {
-        recordId: recordId,
-        nextRecordId: nextRecordId,
-        isNewRecord: isNewRecord
-    });
     
     if (isNewRecord) {
         disableEntryDetails();
@@ -2681,17 +2364,9 @@ function checkAndSetEntryDetailsState() {
     }
 }
 
-// Function to check if entry details should be enabled
 function shouldEnableEntryDetails() {
     const recordId = document.getElementById('record_id').value;
-    
-    // If nextRecordId is still 0 (not initialized), be more cautious
-    if (nextRecordId === 0) {
-        console.warn('⚠️ nextRecordId not initialized yet, checking record ID value');
-        // If recordId exists and is not 0 or empty, assume it's existing
-        return recordId && recordId !== '0' && recordId !== '';
-    }
-    
+    if (nextRecordId === 0) return recordId && recordId !== '0' && recordId !== '';
     const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
     return !isNewRecord;
 }
@@ -2700,28 +2375,20 @@ function updateCheckboxStates() {
     const recordId = document.getElementById('record_id').value;
     const isNewRecord = shouldEnableEntryDetails() === false;
     
-    const checkboxes = [
-        'record_dispatch_ready',
-        'paid', 
-        'id_rcv',
-        'declared'
-    ];
+    const checkboxes = ['record_dispatch_ready', 'paid', 'id_rcv', 'declared'];
     
     checkboxes.forEach(checkboxId => {
         const checkbox = document.getElementById(checkboxId);
         if (checkbox) {
             if (isNewRecord) {
-                // New record - checkboxes should be auto-controlled and disabled
                 checkbox.disabled = true;
                 checkbox.classList.add('dispatch-ready-auto', 'paid-auto', 'id-rcv-auto');
                 checkbox.title = "Save the record first to enable editing";
             } else {
-                // ✅ EXISTING RECORD - Enable manual control and auto-update
                 checkbox.disabled = false;
                 checkbox.classList.remove('dispatch-ready-auto', 'paid-auto', 'id-rcv-auto');
                 checkbox.title = "Click to toggle - changes save automatically";
                 
-                // Add visual indicator for auto-update functionality
                 const container = checkbox.closest('.input-container');
                 if (container) {
                     let indicator = container.querySelector('.auto-update-indicator');
@@ -2739,51 +2406,38 @@ function updateCheckboxStates() {
         }
     });
     
-    console.log('✅ Checkbox states updated - New record:', isNewRecord);
-    
-    // Setup enhanced change tracking
     setupCheckboxChangeTracking();
 }
 
-
-
-// Function to set maximum date for birthday field to today
 function setBirthdayMaxDate() {
     const bdateInput = document.getElementById('bdate');
     if (bdateInput) {
         const today = new Date().toISOString().split('T')[0];
         bdateInput.setAttribute('max', today);
         
-        // Also add validation on change
         bdateInput.addEventListener('change', function() {
             const selectedDate = new Date(this.value);
             const today = new Date();
             
             if (selectedDate > today) {
-                // If future date is selected, reset to today and show warning
                 this.value = today.toISOString().split('T')[0];
                 toastAlert("Invalid Date", "Birthdate cannot be in the future. Set to today's date.");
-                calculateAgeFromBirthdate(); // Recalculate age
+                calculateAgeFromBirthdate();
             }
         });
     }
 }
 
-// ===== AGE VALIDATION FUNCTION =====
 function validateAge() {
     const ageInput = document.getElementById('age');
     const bdateInput = document.getElementById('bdate');
     
-    if (!ageInput || !bdateInput) return true; // Skip if elements not found
+    if (!ageInput || !bdateInput) return true;
     
     const age = parseInt(ageInput.value);
     
-    // Check if age is less than 3
     if (age < 3) {
-        // Highlight the age field
         ageInput.classList.add('required-field');
-        
-        // Create or show error element
         let errorElement = document.getElementById('age_error');
         if (!errorElement) {
             errorElement = document.createElement('div');
@@ -2793,20 +2447,15 @@ function validateAge() {
         }
         errorElement.textContent = "Age must be 3 years or older";
         errorElement.classList.add('show');
-        
         return false;
     } else {
-        // Clear error if age is valid
         ageInput.classList.remove('required-field');
         const errorElement = document.getElementById('age_error');
-        if (errorElement) {
-            errorElement.classList.remove('show');
-        }
+        if (errorElement) errorElement.classList.remove('show');
         return true;
     }
 }
 
-// ===== UPDATE AGE CALCULATION FUNCTION =====
 function calculateAgeFromBirthdate() {
     const birthdateInput = document.getElementById('bdate');
     const ageInput = document.getElementById('age');
@@ -2815,56 +2464,39 @@ function calculateAgeFromBirthdate() {
         const birthDate = new Date(birthdateInput.value);
         const today = new Date();
         
-        // Additional validation to ensure birthdate is not in future
         if (birthDate > today) {
             birthdateInput.value = today.toISOString().split('T')[0];
-            birthDate.setTime(today.getTime()); // Reset to today
+            birthDate.setTime(today.getTime());
             toastAlert("Invalid Date", "Birthdate cannot be in the future. Set to today's date.");
         }
         
         let age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
         
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
         
         ageInput.value = age;
-        
-        // Validate age after calculation
         setTimeout(validateAge, 100);
-    } else {
-        ageInput.value = ''; // Clear the field if no birthdate
-    }
+    } else ageInput.value = '';
 }
 
 function updateEntry(entryId, recordId) {
-    // Clear previous errors
     clearAllValidationErrors();
     
-    // Validate required entry fields first
-    if (!validateEntryRequiredFields()) {
-        return;
-    }
+    if (!validateEntryRequiredFields()) return;
     
-    // Calculate age if not already calculated
     const ageInput = document.getElementById('age');
-    if (!ageInput.value && document.getElementById('bdate').value) {
-        calculateAgeFromBirthdate();
-    }
+    if (!ageInput.value && document.getElementById('bdate').value) calculateAgeFromBirthdate();
     
-    // ===== NEW: VALIDATE AGE =====
     if (!validateAge()) {
         toastAlert("Age Restriction", "The age of the entry should be 3+. Please check the birthdate.");
         return;
     }
     
-    // Helper function to convert empty strings to null
     function emptyToNull(value) {
         return value === '' ? null : value;
     }
     
-    // Handle sex field specifically - convert empty string to null
     const sexField = document.getElementById('sex');
     const sexValue = sexField.value === '' ? null : sexField.value;
     
@@ -2896,15 +2528,12 @@ function updateEntry(entryId, recordId) {
         dispatch_id: null
     };
 
-    console.log('🔄 UPDATE ENTRY PAYLOAD:', payload);
-
     fetch('/api/save_entry_update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
     .then(response => {
-        console.log('Response status:', response.status);
         if (!response.ok) {
             return response.text().then(text => {
                 throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
@@ -2916,13 +2545,8 @@ function updateEntry(entryId, recordId) {
         if (data.success === true) {
             toastSuccess("Entry Updated", "Entry updated successfully!");
             
-            // Handle MAAB number changes for updates
             const maabNo = document.getElementById('maab_no').value;
-            console.log(`🔄 Processing MAAB number update: ${maabNo}`);
-            
             if (maabNo && maabNo.trim() !== '') {
-                // For updates, we might need to handle MAAB number changes
-                // If the MAAB number was changed, mark the new one as used
                 fetch('/api/inventory/mark_as_used', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -2930,38 +2554,20 @@ function updateEntry(entryId, recordId) {
                 })
                 .then(response => response.json())
                 .then(result => {
-                    console.log('🔍 update mark_as_used API response:', result);
-                    if (result.success) {
-                        console.log(`✅ MAAB number ${maabNo} marked as used in inventory`);
-                    } else {
-                        console.warn(`⚠️ Failed to mark MAAB number as used: ${result.error}`);
-                    }
+                    if (!result.success) console.warn(`Failed to mark MAAB number as used: ${result.error}`);
                 })
-                .catch(error => {
-                    console.error('❌ Error marking MAAB number as used:', error);
-                });
+                .catch(error => console.error('Error marking MAAB number as used:', error));
             }
             
-            // Refresh entries table
             refreshEntriesTable();
-            // Switch back to add mode and clear form
             switchToAddMode();
             
-            // ✅ Refresh MAAB dropdown
-            if (window.refreshMAABDropdown) {
-                setTimeout(() => {
-                    window.refreshMAABDropdown();
-                }, 500);
-            }
-            
-            // Update Dispatch Ready status after a short delay
+            if (window.refreshMAABDropdown) setTimeout(() => window.refreshMAABDropdown(), 500);
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
                 updateRecordPaidFromEntries();
             }, 500);
-        } else {
-            toastError("Update Failed", "Entry update failed: " + (data.error || "Unknown error"));
-        }
+        } else toastError("Update Failed", "Entry update failed: " + (data.error || "Unknown error"));
     })
     .catch(error => {
         console.error('Error:', error);
@@ -2969,17 +2575,12 @@ function updateEntry(entryId, recordId) {
     });
 }
 
-// Update the refreshEntriesTable function to also update paid status
 function refreshEntriesTable() {
     const recordId = document.getElementById('record_id').value;
-    console.log('Fetching entries for record:', recordId);
     
     fetch(`/api/members/${recordId}/entries`)
         .then(response => response.json())
         .then(entriesData => {
-            console.log('Received entries data:', entriesData);
-            
-            // Format dates for display
             entriesData.forEach(row => {
                 if (row.birth_date) {
                     const date = new Date(row.birth_date);
@@ -2995,48 +2596,28 @@ function refreshEntriesTable() {
                 }
             });
             
-            // Render the table
             window.renderEntriesTable(entriesData);
             
-            // Update all statuses based on entries
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
                 updateRecordPaidFromEntries();
-                updateRecordIdReceivedFromEntries(); // Add this line
+                updateRecordIdReceivedFromEntries();
             }, 100);
             
-            // Setup click handlers after table is rendered
             setTimeout(() => {
-                console.log('Setting up entry table click handlers...');
                 setupEntryTableClickHandlers();
                 setupEntriesTableMonitoring();
-                
-                // Debug: Check if table instance is available
-                const entriesTable = window.entriesHotInstance;
-                if (entriesTable) {
-                    const data = entriesTable.getSourceData();
-                    console.log('Table data available:', data);
-                    if (data && data.length > 0) {
-                        console.log('First row sample data:', data[0]);
-                    }
-                } else {
-                    console.error('❌ entriesHotInstance is still null after render!');
-                }
             }, 500);
         })
-        .catch(error => {
-            console.error('Error fetching entries:', error);
-        });
+        .catch(error => console.error('Error fetching entries:', error));
 }
 
-// Back button event listener
 document.getElementById('back_to_add').addEventListener('click', function() {
     switchToAddMode();
 });
 
 function openRecordInOverlay(recordData) {
     console.log('=== OPEN RECORD IN OVERLAY ===');
-    console.log('Full record data:', recordData);
     
     function convertToYYYYMMDD(dateStr) {
         if (!dateStr) return '';
@@ -3050,15 +2631,9 @@ function openRecordInOverlay(recordData) {
         return '';
     }
 
-    // Convert dates to YYYY-MM-DD format for form inputs
-    if (recordData.declaration_date) {
-        recordData.declaration_date = convertToYYYYMMDD(recordData.declaration_date);
-    }
-    if (recordData.effectivity_date) {
-        recordData.effectivity_date = convertToYYYYMMDD(recordData.effectivity_date);
-    }
+    if (recordData.declaration_date) recordData.declaration_date = convertToYYYYMMDD(recordData.declaration_date);
+    if (recordData.effectivity_date) recordData.effectivity_date = convertToYYYYMMDD(recordData.effectivity_date);
 
-    // Populate the form fields
     document.getElementById('record_id').value = recordData.record_id;
     document.getElementById('year').value = recordData.year;
     document.getElementById('id_rcv').checked = Boolean(recordData.id_received);
@@ -3069,83 +2644,35 @@ function openRecordInOverlay(recordData) {
     document.getElementById('eff_date').value = recordData.effectivity_date || '';
     document.getElementById('loc_par').value = recordData.location_particular || '';
     document.getElementById('loc_cat').value = recordData.location_category || '';
-    
-    // DEBUG: Municipality field
-    const municipalityField = document.getElementById('municipality');
-    console.log('Municipality from record data:', recordData.municipality);
-    console.log('Municipality field before setting:', municipalityField.value);
-    municipalityField.value = recordData.municipality || '';
-    console.log('Municipality field after setting:', municipalityField.value);
-    
-    // DEBUG: District field
-    const districtField = document.getElementById('district');
-    console.log('District from record data:', recordData.district);
-    console.log('District field before setting:', districtField.value);
-    districtField.value = recordData.district || '';
-    console.log('District field after setting:', districtField.value);
-    
+    document.getElementById('municipality').value = recordData.municipality || '';
+    document.getElementById('district').value = recordData.district || '';
     document.getElementById('origin').value = recordData.origin || '';
     document.getElementById('remarks').value = recordData.remarks || '';
     document.getElementById('tags').value = recordData.tags || '';
 
-    // Show the overlay
     document.getElementById('overlay').style.display = 'flex';
-
-    // ===== CRITICAL: ENABLE BUTTONS FOR EXISTING RECORD =====
     enableArchiveAndExport();
 
-    // Scroll to top of overlay
     const overlayContent = document.getElementById('overlay-content');
-    if (overlayContent) {
-        overlayContent.scrollTop = 0;
-    }
+    if (overlayContent) overlayContent.scrollTop = 0;
 
-    // Initialize change tracking AFTER a delay to ensure form is fully populated
     setTimeout(() => {
-        console.log('=== INITIALIZING CHANGE TRACKING (DELAYED) ===');
-        
-        // DEBUG: Check municipality and district after form is populated
-        console.log('Municipality after form populated:', document.getElementById('municipality').value);
-        console.log('District after form populated:', document.getElementById('district').value);
-        
-        // Re-initialize district and origin for this record
-        console.log('=== CALLING SET DISTRICT FROM MUNICIPALITY ===');
         setDistrictFromMunicipality();
         setOriginBasedOnUser();
         setLocationParticularToUppercase();
-        
-        // Highlight required fields and setup error containers
         highlightRequiredFields();
         setBirthdayMaxDate();
-
-        // ===== CRITICAL: ENABLE ENTRY DETAILS FOR EXISTING RECORD =====
         enableEntryDetails();
-        
-        // ===== UPDATE CHECKBOX STATES =====
         updateCheckboxStates();
-        
-        // Make sure we're in add mode initially (hide back button)
         switchToAddMode();
-        
-        // Initialize change tracking LAST after everything is set up
         initializeChangeTracking();
-        
-        // Update button text for existing record
         updateSaveButtonText();
-        
         setupCheckboxChangeTracking();
-
-        // DEBUG: Final check
-        console.log('Municipality final:', document.getElementById('municipality').value);
-        console.log('District final:', document.getElementById('district').value);
-        console.log('Save button state after initialization:');
     }, 500);
 
-    // Fetch entries for this record
     fetch(`/api/members/${recordData.record_id}/entries`)
         .then(response => response.json())
         .then(data => {
-            // Format dates for display in table
             data.forEach(row => {
                 if (row.birth_date) {
                     const date = new Date(row.birth_date);
@@ -3161,44 +2688,31 @@ function openRecordInOverlay(recordData) {
                 }
             });
             
-            // Render entries table
             window.renderEntriesTable(data);
             
-            // Update Dispatch Ready status after entries are loaded
             setTimeout(() => {
                 updateDispatchReadyFromEntries();
                 updateRecordPaidFromEntries();
             }, 200);
             
-            // Setup click handlers for entries table after it's rendered
             setTimeout(() => {
                 setupEntryTableClickHandlers();
                 setupEntriesTableMonitoring();
             }, 1000);
             
-            // Setup MAAB number handling
-            setTimeout(() => {
-                setupMaabNumberHandling();
-            }, 200);
+            setTimeout(() => setupMaabNumberHandling(), 200);
         })
-        .catch(error => {
-            console.error('Error fetching entries:', error);
-        });
+        .catch(error => console.error('Error fetching entries:', error));
 }
 
-// Delete Record functionality
 function setupDeleteRecord() {
     const deleteBtn = document.getElementById('delete_record');
     const confirmDeleteBtn = document.getElementById('confirmDelete');
     const cancelDeleteBtn = document.getElementById('cancelDelete');
     const deleteModal = document.getElementById('deleteConfirmationModal');
 
-    if (!deleteBtn || !confirmDeleteBtn || !cancelDeleteBtn || !deleteModal) {
-        console.error('Delete record elements not found');
-        return;
-    }
+    if (!deleteBtn || !confirmDeleteBtn || !cancelDeleteBtn || !deleteModal) return;
 
-    // Delete button click
     deleteBtn.addEventListener('click', function() {
         const recordId = document.getElementById('record_id').value;
         if (!recordId || recordId === '0') {
@@ -3208,24 +2722,15 @@ function setupDeleteRecord() {
         showDeleteConfirmationModal();
     });
 
-    // Confirm delete
-    confirmDeleteBtn.addEventListener('click', function() {
-        archiveRecord();
-    });
-
-    // Cancel delete
-    cancelDeleteBtn.addEventListener('click', function() {
-        hideDeleteConfirmationModal();
-    });
+    confirmDeleteBtn.addEventListener('click', archiveRecord);
+    cancelDeleteBtn.addEventListener('click', hideDeleteConfirmationModal);
 }
 
 function showDeleteConfirmationModal() {
-    console.log('Showing delete confirmation modal');
     document.getElementById('deleteConfirmationModal').style.display = 'flex';
 }
 
 function hideDeleteConfirmationModal() {
-    console.log('Hiding delete confirmation modal');
     document.getElementById('deleteConfirmationModal').style.display = 'none';
 }
 
@@ -3238,40 +2743,24 @@ function archiveRecord() {
         return;
     }
 
-    console.log('🔄 Archiving record:', recordId);
-
-    // First, test if the record exists
     fetch(`/api/debug/archive_check/${recordId}`)
         .then(response => response.json())
         .then(checkResult => {
-            console.log('🔍 Archive check result:', checkResult);
-            
             if (!checkResult.success || !checkResult.record_exists) {
                 throw new Error(checkResult.error || 'Record not found');
             }
+            if (!checkResult.can_be_archived) throw new Error('Record is already archived');
             
-            if (!checkResult.can_be_archived) {
-                throw new Error('Record is already archived');
-            }
-            
-            // Now proceed with archiving
             return fetch('/api/archive_record', {
                 method: 'PATCH',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({ record_id: recordId })
             });
         })
         .then(response => {
-            console.log('📡 Archive response status:', response.status);
-            
-            // Check if response is JSON
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 return response.text().then(text => {
-                    console.error('❌ Non-JSON response:', text);
                     throw new Error(`Server error: ${response.status} ${response.statusText}`);
                 });
             }
@@ -3284,31 +2773,21 @@ function archiveRecord() {
             return response.json();
         })
         .then(result => {
-            console.log('✅ Archive result:', result);
-            
             if (result.success) {
                 hideDeleteConfirmationModal();
                 document.getElementById('overlay').style.display = 'none';
-                
                 toastSuccess("Record Archived", "The record has been successfully archived.");
-                
-                // Refresh the table
                 return refreshTableData();
-            } else {
-                throw new Error(result.error || 'Archive failed');
-            }
+            } else throw new Error(result.error || 'Archive failed');
         })
-        .then(() => {
-            console.log('🔄 Table refreshed after archiving');
-        })
+        .then(() => console.log('Table refreshed after archiving'))
         .catch(error => {
-            console.error('❌ Archive error:', error);
+            console.error('Archive error:', error);
             hideDeleteConfirmationModal();
             toastError("Archive Failed", error.message);
         });
 }
 
-// Export current record entries to Excel (server-side save)
 function exportCurrentRecordToExcel() {
     const recordId = document.getElementById('record_id').value;
     const locationParticular = document.getElementById('loc_par').value;
@@ -3323,7 +2802,6 @@ function exportCurrentRecordToExcel() {
         return;
     }
     
-    // Show loading state
     const exportBtn = document.querySelector('.btn-export');
     const originalText = exportBtn.innerHTML;
     exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting...';
@@ -3332,17 +2810,13 @@ function exportCurrentRecordToExcel() {
     fetch(`/api/export_record_entries/${recordId}`)
         .then(response => response.json())
         .then(result => {
-            // Restore button state
             exportBtn.innerHTML = originalText;
             exportBtn.disabled = false;
             
             if (result.success) {
                 toastSuccess("Export Successful", 
-                    `File saved to server: ${result.filename}\nExported ${result.export_count} entries.\n\nIncluded fields:\n• Category, MAAB No, Name details\n• Birthdate, Age, Sex, Contact, Email\n• OR No, OR Date, Declared status\n• Remarks\n• Record details: Declaration Date, Effectivity Date, Location Category, Municipality, District, Origin`);
-                console.log('File saved at:', result.file_path);
-            } else {
-                toastError("Export Failed", result.error || "Failed to export entries.");
-            }
+                    `File saved to server: ${result.filename}\nExported ${result.export_count} entries.`);
+            } else toastError("Export Failed", result.error || "Failed to export entries.");
         })
         .catch(error => {
             console.error('Export error:', error);
@@ -3352,7 +2826,6 @@ function exportCurrentRecordToExcel() {
         });
 }
 
-// ===== BUTTON STATE MANAGEMENT =====
 function disableArchiveAndExport() {
     const archiveBtn = document.querySelector('.delete_record');
     const exportBtn = document.querySelector('.btn-export');
@@ -3366,8 +2839,6 @@ function disableArchiveAndExport() {
         exportBtn.disabled = true;
         exportBtn.title = "Save the record first to enable export";
     }
-    
-    console.log('🛑 Archive and Export buttons disabled');
 }
 
 function enableArchiveAndExport() {
@@ -3383,23 +2854,16 @@ function enableArchiveAndExport() {
         exportBtn.disabled = false;
         exportBtn.title = "Export to Excel";
     }
-    
-    console.log('✅ Archive and Export buttons enabled');
 }
 
-// Function to check if record is new (unsaved)
 function isNewRecord() {
     const recordId = document.getElementById('record_id').value;
     return recordId == nextRecordId || recordId === '0' || recordId === '';
 }
 
-// Update button states based on record status
 function updateButtonStates() {
-    if (isNewRecord()) {
-        disableArchiveAndExport();
-    } else {
-        enableArchiveAndExport();
-    }
+    if (isNewRecord()) disableArchiveAndExport();
+    else enableArchiveAndExport();
 }
 
 function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
@@ -3414,72 +2878,68 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
     return td;
 }
 
-// Horizontal scroll function
 function ensureHorizontalScroll() {
     const tableContainer = document.querySelector('.table-container');
     const handsontable = document.getElementById('members_table');
     
     if (tableContainer && handsontable) {
-        const requiredWidth = 17 * 173; // Changed from 16 to 17 columns
+        const requiredWidth = 17 * 173;
         handsontable.style.minWidth = requiredWidth + 'px';
         tableContainer.style.overflowX = 'auto';
         tableContainer.style.overflowY = 'hidden';
     }
 }
 
-// Initialize table with active records
 function initializeTable(data) {
     const container = document.getElementById('members_table');
 
-    // Initialize Handsontable with adaptive height
     hotInstance = new Handsontable(container, {
         data: data.slice(0, entriesPerPage),
         colHeaders: [
-    'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Dispatch Ready', 'Dispatch ID', 'Declaration Date', 'Effectivity Date',
-    'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
-],
-columns: [
-    { renderer: openLinkRenderer },
-    { data: 'record_id', readOnly: true },
-    { data: 'year' },
-    { data: 'id_received', type: 'checkbox' },
-    { data: 'declared', type: 'checkbox' },
-    { data: 'dispatch_ready', type: 'checkbox' },
-    { 
-        data: 'dispatch_id', 
-        readOnly: true,
-        // Add visual styling for dispatch ID
-        renderer: function(instance, td, row, col, prop, value, cellProperties) {
-            Handsontable.renderers.TextRenderer.apply(this, arguments);
-            if (value && value !== null && value !== '') {
-                td.style.backgroundColor = '#e8f5e8'; // Light green background
-                td.style.fontWeight = 'bold';
-            }
-        }
-    },
-    { 
-        data: 'declaration_date',
-        type: 'date',
-        dateFormat: 'MM-DD-YYYY',
-        correctFormat: true,
-        allowInvalid: false
-    },
-    { 
-        data: 'effectivity_date',
-        type: 'date',
-        dateFormat: 'MM-DD-YYYY',
-        correctFormat: true,
-        allowInvalid: false
-    },
-    { data: 'location_particular' },
-    { data: 'location_category' },
-    { data: 'municipality' },
-    { data: 'district' },
-    { data: 'paid', type: 'checkbox' },
-    { data: 'origin' },
-    { data: 'remarks' },
-    { data: 'tags' }
-],
+            'Open', 'Record ID', 'Year', 'ID Received', 'Declared', 'Dispatch Ready', 'Dispatch ID', 'Declaration Date', 'Effectivity Date',
+            'Location Particular', 'Location Category', 'Municipality', 'District', 'Paid', 'Origin', 'Remarks', 'Tags'
+        ],
+        columns: [
+            { renderer: openLinkRenderer },
+            { data: 'record_id', readOnly: true },
+            { data: 'year' },
+            { data: 'id_received', type: 'checkbox' },
+            { data: 'declared', type: 'checkbox' },
+            { data: 'dispatch_ready', type: 'checkbox' },
+            { 
+                data: 'dispatch_id', 
+                readOnly: true,
+                renderer: function(instance, td, row, col, prop, value, cellProperties) {
+                    Handsontable.renderers.TextRenderer.apply(this, arguments);
+                    if (value && value !== null && value !== '') {
+                        td.style.backgroundColor = '#e8f5e8';
+                        td.style.fontWeight = 'bold';
+                    }
+                }
+            },
+            { 
+                data: 'declaration_date',
+                type: 'date',
+                dateFormat: 'MM-DD-YYYY',
+                correctFormat: true,
+                allowInvalid: false
+            },
+            { 
+                data: 'effectivity_date',
+                type: 'date',
+                dateFormat: 'MM-DD-YYYY',
+                correctFormat: true,
+                allowInvalid: false
+            },
+            { data: 'location_particular' },
+            { data: 'location_category' },
+            { data: 'municipality' },
+            { data: 'district' },
+            { data: 'paid', type: 'checkbox' },
+            { data: 'origin' },
+            { data: 'remarks' },
+            { data: 'tags' }
+        ],
         rowHeaders: true,
         autoWrapRow: false,
         autoWrapCol: false,
@@ -3492,28 +2952,23 @@ columns: [
         height: calculateTableHeight(),
     });
 
-    // Store data and initialize
     allData = [...data];
     filteredData = [...data];
 
-    // Populate year picker after data is loaded
     populateYearPicker();
+    setupOriginFilterBasedOnUser(); 
 
-    // Initialize search plugin
     function initializeSearchPlugin() {
         if (hotInstance) {
             const searchPlugin = hotInstance.getPlugin('search');
             searchPlugin.setCallback(function(instance, row, col, data, testResult) {
                 instance.getCellMeta(row, col).className = '';
-                if (testResult) {
-                    instance.getCellMeta(row, col).className = 'htSearchResult';
-                }
+                if (testResult) instance.getCellMeta(row, col).className = 'htSearchResult';
             });
         }
     }
     initializeSearchPlugin();
 
-    // Set up scroll and height
     setTimeout(ensureHorizontalScroll, 300);
     window.addEventListener('resize', function() {
         ensureHorizontalScroll();
@@ -3525,171 +2980,36 @@ columns: [
         hotInstance.addHook('afterLoadData', ensureHorizontalScroll);
     }
 
-    // UI elements
-    const searchInput = document.getElementById('search_input');
-    const searchClear = document.getElementById('search_clear');
-
-    // Initialize search functionality
     setupSearchFunctionality();
 
-    // ===== OPTIMIZED ADD RECORD BUTTON =====
     const addRecordBtn = document.querySelector('.btn-add');
     if (addRecordBtn) {
         addRecordBtn.addEventListener('click', function () {
-            // Immediately open overlay with empty form - no database query first
             openEmptyRecordOverlay();
         });
     }
 
-    // Save record details
     const saveRecordBtn = document.getElementById('save_record_details');
     if (saveRecordBtn) {
         saveRecordBtn.addEventListener('click', function () {
             saveRecordDetails()
-                .then(() => {
-                    // Success handled in saveRecordDetails
-                })
-                .catch(error => {
-                    console.error("Save Error:", error);
-                    // Error handled in saveRecordDetails
-                });
+                .then(() => {})
+                .catch(error => console.error("Save Error:", error));
         });
     }
 
-    // Initial render
     renderTable();
 }
 
-// Add event listeners for filter changes
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait for elements to be available
-    setTimeout(() => {
-        const yearFilter = document.getElementById('filter_year');
-        const originFilter = document.getElementById('filter_origin');
-        
-        // Initialize checkbox change tracking
-    setupCheckboxChangeTracking();
-
-    // Initialize automatic update system
-    setupAutomaticUpdate();
-    
-        if (yearFilter) yearFilter.addEventListener('change', applyFilters);
-        if (originFilter) originFilter.addEventListener('change', applyFilters);
-    }, 1000);
-});
-
-// Toggle functionality
-document.querySelectorAll('input[name="record_input_mode"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        const recordForm = document.querySelector('.record_details_table');
-        if (this.value === 'table') {
-            recordForm.style.display = 'none';
-        } else {
-            recordForm.style.display = 'table';
-        }
-    });
-});
-
-document.querySelectorAll('input[name="entry_input_mode"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        const entryForm = document.getElementById('entry_details');
-        if (this.value === 'table') {
-            entryForm.style.display = 'none';
-        } else {
-            entryForm.style.display = 'block';
-        }
-    });
-});
-
-// Export to Excel - UPDATED FUNCTION
-document.querySelector('.btn-export').addEventListener('click', function () {
-    // Check if we're in the overlay (record is open)
-    const overlay = document.getElementById('overlay');
-    const recordId = document.getElementById('record_id').value;
-    
-    if (overlay && overlay.style.display === 'flex' && recordId && recordId !== '0') {
-        // Export the current record entries
-        exportCurrentRecordToExcel();
-    } else {
-        // Export the main table (existing functionality)
-        if (!hotInstance) {
-            console.error("hotInstance is not defined.");
-            return;
-        }
-
-        const exportPlugin = hotInstance.getPlugin('exportFile');
-        exportPlugin.downloadFile('xlsx', {
-            filename: isArchiveView ? 'archived_members_records' : 'members_records',
-            sheetName: isArchiveView ? 'Archived Records' : 'Records',
-            fileExtension: 'xlsx',
-            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        });
-    }
-});
-
-// Profile image handling
-document.addEventListener("DOMContentLoaded", function() {
-    const navProfileImage = document.getElementById("navProfileImage");
-    if (navProfileImage) {
-        const savedProfileImage = localStorage.getItem("profileImage");
-        if (savedProfileImage) {
-            navProfileImage.src = savedProfileImage;
-        }
-    }
-});
-
-window.addEventListener('storage', function(e) {
-    if (e.key === 'profileImage') {
-        const navProfileImage = document.getElementById("navProfileImage");
-        if (navProfileImage) {
-            navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
-        }
-    }
-});
-
-// District mapping based on municipality
 const municipalityToDistrict = {
-    // First District
-    'Cavite City': '1',
-    'Kawit': '1', 
-    'Noveleta': '1',
-    'Rosario': '1',
-    
-    // Second District
-    'Bacoor': '2',
-    
-    // Third District
-    'Imus': '3',
-    
-    // Fourth District
-    'Dasmariñas': '4',
-    
-    // Fifth District
-    'Carmona': '5',
-    'General Mariano Alvarez (GMA)': '5',
-    'Silang': '5',
-    
-    // Sixth District
-    'General Trias': '6',
-    
-    // Seventh District
-    'Amadeo': '7',
-    'Indang': '7',
-    'Tanza': '7',
-    'Trece Martires': '7',
-    
-    // Eighth District
-    'Tagaytay City': '8',
-    'Alfonso': '8',
-    'Gen. Emilio Aguinaldo (Bailen)': '8',
-    'Magallanes': '8',
-    'Maragondon': '8',
-    'Mendez': '8',
-    'Naic': '8',
-    'Ternate': '8'
+    'Cavite City': '1', 'Kawit': '1', 'Noveleta': '1', 'Rosario': '1',
+    'Bacoor': '2', 'Imus': '3', 'Dasmariñas': '4',
+    'Carmona': '5', 'General Mariano Alvarez (GMA)': '5', 'Silang': '5',
+    'General Trias': '6', 'Amadeo': '7', 'Indang': '7', 'Tanza': '7', 'Trece Martires': '7',
+    'Tagaytay City': '8', 'Alfonso': '8', 'Gen. Emilio Aguinaldo (Bailen)': '8',
+    'Magallanes': '8', 'Maragondon': '8', 'Mendez': '8', 'Naic': '8', 'Ternate': '8'
 };
 
-// Function to check if there's an active dispatch and update button state
 function checkActiveDispatch() {
     fetch('/api/check_active_dispatch')
         .then(response => response.json())
@@ -3698,26 +3018,21 @@ function checkActiveDispatch() {
             const statusMessage = document.getElementById('dispatch_status_message');
             
             if (data.has_active_dispatch) {
-                // Enable the button
                 addToDispatchBtn.disabled = false;
                 addToDispatchBtn.style.opacity = '1';
                 addToDispatchBtn.style.cursor = 'pointer';
                 addToDispatchBtn.title = 'Add selected records to current dispatch';
                 if (statusMessage) statusMessage.style.display = 'none';
-                console.log('Active dispatch available:', data.dispatch_id);
             } else {
-                // Disable the button and show message
                 addToDispatchBtn.disabled = true;
                 addToDispatchBtn.style.opacity = '0.6';
                 addToDispatchBtn.style.cursor = 'not-allowed';
                 addToDispatchBtn.title = 'No active dispatch available. Create one first.';
                 if (statusMessage) statusMessage.style.display = 'inline';
-                console.log('No active dispatch available');
             }
         })
         .catch(error => {
             console.error('Error checking active dispatch:', error);
-            // Default to disabled on error
             const addToDispatchBtn = document.getElementById('add_to_dispatch');
             const statusMessage = document.getElementById('dispatch_status_message');
             addToDispatchBtn.disabled = true;
@@ -3731,750 +3046,43 @@ function checkActiveDispatch() {
         });
 }
 
-
-// NEW FUNCTION: Get all records with dispatch_ready = true
 function getDispatchReadyRecords() {
     const dispatchReadyRecords = [];
-    
-    // Use the appropriate data source based on current view
     const dataSource = isArchiveView ? archiveFilteredData : filteredData;
     
     dataSource.forEach(record => {
-        // Check if record is dispatch-ready (dispatch_ready = true)
         if (record.dispatch_ready === true || record.dispatch_ready === 1 || record.dispatch_ready === '1') {
             dispatchReadyRecords.push(record.record_id);
-            console.log(`Found dispatch-ready record: ${record.record_id} - ${record.location_particular}`);
         }
     });
     
-    console.log(`Total dispatch-ready records found: ${dispatchReadyRecords.length}`);
     return dispatchReadyRecords;
 }
-
-
-// Enhanced Add to Dispatch with detailed debugging
-document.getElementById('add_to_dispatch').addEventListener('click', function() {
-    if (this.disabled) {
-        toastAlert("No Active Dispatch", "Please create an active dispatch first before adding records.");
-        return;
-    }
-
-    // Get ALL records with dispatch_ready = true AND declared = false
-    const dispatchReadyRecords = getDispatchReadyUndeclaredRecords();
-    
-    console.log("🔍 DEBUG - Records found for dispatch:", {
-        totalRecords: dispatchReadyRecords.length,
-        recordIDs: dispatchReadyRecords
-    });
-    
-    if (dispatchReadyRecords.length === 0) {
-        toastAlert("No Dispatch-Ready Records", 
-            "No records are marked as dispatch-ready and undeclared. " +
-            "Please ensure records have all entries paid, are marked as dispatch-ready, and are not yet declared.");
-        return;
-    }
-
-    // Show detailed confirmation with record info
-    if (!confirmDispatchReadyRecords()) {
-        return; // User cancelled
-    }
-
-    // Show loading state
-    const originalText = this.innerHTML;
-    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding to Dispatch...';
-    this.disabled = true;
-
-    console.log(`🚀 Sending ${dispatchReadyRecords.length} records to API:`, dispatchReadyRecords);
-
-    // Call the API to add records to dispatch
-    fetch('/api/add_to_dispatch', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            record_ids: dispatchReadyRecords,
-            action: 'add_entries_to_dispatch',
-            debug: true // Add debug flag
-        })
-    })
-    .then(response => {
-        console.log("📡 API Response status:", response.status);
-        return response.json();
-    })
-    .then(result => {
-        console.log("📡 API Response data:", result);
-        
-        // Restore button state
-        this.innerHTML = originalText;
-        this.disabled = false;
-        
-        if (result.success) {
-            if (result.added_to_dispatch_count > 0) {
-                toastSuccess("Records Added to Dispatch", 
-                    `Successfully added ${result.added_to_dispatch_count} dispatch-ready records to the current dispatch.`);
-            } else {
-                toastAlert("No Records Added", 
-                    `Found ${dispatchReadyRecords.length} dispatch-ready records, but none were added. ` +
-                    `They may already be in the dispatch or have issues. Check console for details.`);
-            }
-            // Refresh the table to show updated dispatch status
-            refreshTableData();
-        } else {
-            toastError("Add to Dispatch Failed", result.error || "Failed to add records to dispatch.");
-        }
-    })
-    .catch(error => {
-        console.error('❌ Error adding to dispatch:', error);
-        // Restore button state
-        this.innerHTML = originalText;
-        this.disabled = false;
-        toastError("Error", "An error occurred while adding records to dispatch: " + error.message);
-    });
-});
-
-// Enhanced debug function - clarify it's checking RECORD level
-function getDispatchReadyUndeclaredRecords() {
-    const dispatchReadyRecords = [];
-    
-    // Use the appropriate data source based on current view
-    const dataSource = isArchiveView ? archiveFilteredData : filteredData;
-    
-    console.log("🔍 Scanning data source for RECORD-LEVEL dispatch-ready records:", {
-        totalRecords: dataSource.length,
-        isArchiveView: isArchiveView
-    });
-    
-    dataSource.forEach(record => {
-        // Check RECORD-LEVEL status: dispatch-ready AND not declared
-        const isDispatchReady = record.dispatch_ready === true || record.dispatch_ready === 1 || record.dispatch_ready === '1';
-        const isNotDeclared = record.declared === false || record.declared === 0 || record.declared === '0' || record.declared === null;
-        
-        console.log(`📋 RECORD ${record.record_id}:`, {
-            location: record.location_particular,
-            record_dispatch_ready: record.dispatch_ready,
-            record_declared: record.declared,
-            isDispatchReady: isDispatchReady,
-            isNotDeclared: isNotDeclared,
-            eligible: isDispatchReady && isNotDeclared
-        });
-        
-        if (isDispatchReady && isNotDeclared) {
-            dispatchReadyRecords.push(record.record_id);
-            console.log(`✅ Found eligible RECORD: ${record.record_id} - ${record.location_particular}`);
-        }
-    });
-    
-    console.log(`🎯 Total RECORD-LEVEL dispatch-ready, undeclared records found: ${dispatchReadyRecords.length}`);
-    return dispatchReadyRecords;
-}
-
-// Function to get selected records from the table
-function getSelectedRecords() {
-    const selectedRecords = [];
-    
-    if (hotInstance) {
-        const selected = hotInstance.getSelected();
-        if (selected) {
-            for (let i = 0; i < selected.length; i++) {
-                const [startRow, startCol, endRow, endCol] = selected[i];
-                for (let row = startRow; row <= endRow; row++) {
-                    const rowData = hotInstance.getSourceDataAtRow(row);
-                    if (rowData && rowData.record_id) {
-                        selectedRecords.push(rowData.record_id);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Remove duplicates
-    return [...new Set(selectedRecords)];
-}
-
-
-// Function to auto-set district based on municipality selection
-function setDistrictFromMunicipality() {
-    const municipalitySelect = document.getElementById('municipality');
-    const districtInput = document.getElementById('district');
-    
-    console.log('=== SET DISTRICT FROM MUNICIPALITY CALLED ===');
-    console.log('Municipality select value:', municipalitySelect?.value);
-    console.log('District input value before:', districtInput?.value);
-    
-    if (municipalitySelect && districtInput) {
-        // Store the current value before cloning
-        const currentValue = municipalitySelect.value;
-        
-        // Remove existing event listeners by replacing the element
-        const newMunicipalitySelect = municipalitySelect.cloneNode(true);
-        
-        // Restore the value after cloning
-        newMunicipalitySelect.value = currentValue;
-        
-        municipalitySelect.parentNode.replaceChild(newMunicipalitySelect, municipalitySelect);
-        
-        // Add event listener to the new select element
-        newMunicipalitySelect.addEventListener('change', function() {
-            const selectedMunicipality = this.value;
-            console.log('Municipality changed to:', selectedMunicipality);
-            
-            // Only set district if a municipality is actually selected (not empty)
-            if (selectedMunicipality) {
-                const district = municipalityToDistrict[selectedMunicipality] || '';
-                districtInput.value = district;
-                
-                console.log('Municipality selected:', selectedMunicipality, 'District set to:', district);
-                
-                // Trigger form change for unsaved changes tracking
-                const event = new Event('change', { bubbles: true });
-                districtInput.dispatchEvent(event);
-            } else {
-                // Clear district if municipality is empty
-                districtInput.value = '';
-                console.log('Municipality empty, district cleared');
-            }
-        });
-        
-        // Also set district immediately if municipality already has a value (and it's not empty)
-        const currentMunicipality = newMunicipalitySelect.value;
-        console.log('Current municipality value after restore:', currentMunicipality);
-        
-        if (currentMunicipality) {
-            const district = municipalityToDistrict[currentMunicipality] || '';
-            districtInput.value = district;
-            console.log('District set from current municipality:', district);
-        } else {
-            // Clear district if municipality is empty
-            districtInput.value = '';
-            console.log('No municipality value, district cleared');
-        }
-        
-        console.log('District input value after:', districtInput.value);
-    } else {
-        console.log('Municipality select or district input not found');
-    }
-}
-
-function setOriginBasedOnUser() {
-    const originSelect = document.getElementById('origin');
-    
-    if (!originSelect) {
-        console.error('Origin select element not found');
-        return;
-    }
-    
-    // Get user's office location from Flask template
-    const userLocation = '{{ current_user.office_location if current_user else "" }}';
-    console.log('User location from template:', userLocation);
-    
-    if (userLocation && userLocation.trim() !== '') {
-        // Wait for dropdown to be populated, then set the value
-        const waitForOptions = setInterval(() => {
-            // Check if dropdown has options (more than just the placeholder)
-            if (originSelect.options.length > 1) {
-                clearInterval(waitForOptions);
-                
-                // Check if the user's location exists in the options
-                const optionExists = Array.from(originSelect.options).some(option => 
-                    option.value === userLocation
-                );
-                
-                if (optionExists) {
-                    originSelect.value = userLocation;
-                    
-                    // Make it visually distinct and read-only for new records
-                    originSelect.style.backgroundColor = '#f5f5f5';
-                    originSelect.title = 'Origin is automatically set based on your location: ' + userLocation;
-                    originSelect.readOnly = true;
-                    
-                    console.log('✅ Origin auto-set to:', userLocation);
-                } else {
-                    console.warn('User location not found in origin options:', userLocation);
-                    // Fallback: set to first available option or keep empty
-                }
-            }
-        }, 100); // Check every 100ms
-        
-        // Timeout after 5 seconds
-        setTimeout(() => {
-            clearInterval(waitForOptions);
-            console.warn('Timeout waiting for origin options to populate');
-        }, 5000);
-    } else {
-        console.warn('No user location available for auto-setting origin');
-    }
-}
-
-// Function to auto-set location particular to uppercase while typing
-function setLocationParticularToUppercase() {
-    const locParInput = document.getElementById('loc_par');
-    
-    if (locParInput) {
-        locParInput.addEventListener('input', function() {
-            this.value = this.value.toUpperCase();
-        });
-    }
-}
-
-// Initialize all auto-fill functions
-function initializeAutoFillFunctions() {
-    setDistrictFromMunicipality();
-    setOriginBasedOnUser();
-    setLocationParticularToUppercase();
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page loaded, setting up close confirmation');
-    setupCloseOverlayWithConfirmation();
-    setupDeleteRecord();
-    
-    // Initialize auto-fill functions
-    initializeAutoFillFunctions();
-
-    // Initialize search functionality
-    setupSearchFunctionality();
-
-    // Set birthday max date
-    setBirthdayMaxDate();
-    
-    // Load filter dropdowns
-    populateFilterDropdowns();
-    
-    // Check for active dispatch and update button state
-    checkActiveDispatch();
-
-    // Pre-fetch the next record ID when page loads
-    initializeNextRecordId().then(() => {
-        console.log('✅ Next record ID initialized:', nextRecordId);
-    });
-    
-    // Add archive button event listener
-    const archiveBtn = document.querySelector('.btn-archive');
-    if (archiveBtn) {
-        archiveBtn.addEventListener('click', function() {
-            showArchiveView();
-        });
-    }
-    
-    // Add back button event listener
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-back')) {
-            showActiveView();
-        }
-    });
-
-    // Add event listener for entry paid checkbox
-    const entryPaidCheckbox = document.getElementById('entry_paid');
-    if (entryPaidCheckbox) {
-        entryPaidCheckbox.addEventListener('change', function() {
-            console.log('Entry paid status changed:', this.checked);
-            updateEntryDispatchReady();
-            
-            // Also update record paid status
-            setTimeout(() => {
-                updateRecordPaidFromEntries();
-            }, 100);
-        });
-    }
-
-    // Add event listener for entry declared checkbox
-    const entryDeclaredCheckbox = document.getElementById('entry_declared');
-    if (entryDeclaredCheckbox) {
-        entryDeclaredCheckbox.addEventListener('change', function() {
-            console.log('Entry declared status changed:', this.checked);
-            updateEntryDispatchReady();
-            
-            // Also update record paid status
-            setTimeout(() => {
-                updateRecordPaidFromEntries();
-            }, 100);
-        });
-    }
-    
-    // ===== CRITICAL FIX: Ensure age calculation is always triggered =====
-    // Add event listener for birthdate changes
-    document.getElementById('bdate').addEventListener('change', function() {
-        calculateAgeFromBirthdate();
-        validateAge();
-    });
-    
-    // Also calculate age when the overlay opens (in case birthdate is already filled)
-    const overlay = document.getElementById('overlay');
-    if (overlay) {
-        overlay.addEventListener('click', function(e) {
-            if (e.target.id === 'close-overlay' || e.target.closest('#close-overlay')) {
-                // When overlay opens, check if we need to calculate age
-                setTimeout(() => {
-                    const bdate = document.getElementById('bdate');
-                    const age = document.getElementById('age');
-                    if (bdate.value && !age.value) {
-                        calculateAgeFromBirthdate();
-                    }
-                }, 100);
-            }
-        });
-    }
-    
-    // Check dispatch status periodically (every 30 seconds)
-    setInterval(checkActiveDispatch, 30000);
-    
-    // Load initial data (active records)
-    fetchActiveRecords();
-
-    // Pre-fetch the next record ID when page loads
-initializeNextRecordId();
-});
-
-// ===== MAAB NUMBER PREFIX HANDLING =====
-/*
-function initializeMaabNumberHandling() {
-    const maabNoInput = document.getElementById('maab_no');
-    const maabCatSelect = document.getElementById('maab_cat');
-    
-    if (!maabNoInput || !maabCatSelect) return;
-    
-    const prefixMap = {
-        'Classic': 'PC',
-        'Bronze': 'PB', 
-        'Silver': 'PS',
-        'Gold': 'PG',
-        'Platinum': 'PP',
-        'Safe Card': 'PEP',
-        'Senior': 'S',
-        'Senior+': 'SP'
-    };
-    
-    function updateMaabPrefix() {
-        const category = maabCatSelect.value;
-        const prefix = prefixMap[category] || '';
-        
-        // Update placeholder to show expected format
-        maabNoInput.placeholder = `Enter 7 digits (will become ${prefix} + numbers)`;
-        
-        // If there's existing value with numbers, update it with new prefix
-        const currentValue = maabNoInput.value;
-        const numbersOnly = currentValue.replace(/\D/g, '');
-        if (numbersOnly && numbersOnly.length <= 7) {
-            maabNoInput.value = prefix + numbersOnly.padStart(7, '0');
-        }
-    }
-    
-    // Initialize on load
-    updateMaabPrefix();
-    
-    // Update when category changes
-    maabCatSelect.addEventListener('change', updateMaabPrefix);
-    
-    // Handle input to ensure only digits and limit to 7
-    maabNoInput.addEventListener('input', function() {
-        // Remove any non-digit characters
-        this.value = this.value.replace(/\D/g, '');
-        
-        // Limit to 7 digits
-        if (this.value.length > 7) {
-            this.value = this.value.slice(0, 7);
-        }
-    });
-    
-    // Handle focus - remove prefix for editing
-    maabNoInput.addEventListener('focus', function() {
-        const currentValue = this.value;
-        Object.values(prefixMap).forEach(prefix => {
-            if (currentValue.startsWith(prefix)) {
-                this.value = currentValue.replace(prefix, '');
-                return;
-            }
-        });
-    });
-    
-    // Handle blur - add prefix back
-    maabNoInput.addEventListener('blur', function() {
-        const category = maabCatSelect.value;
-        const prefix = prefixMap[category] || '';
-        const numbersOnly = this.value.replace(/\D/g, '');
-        
-        if (numbersOnly && prefix) {
-            this.value = prefix + numbersOnly.padStart(7, '0');
-        }
-    });
-}
-
-// Call this when the overlay opens
-function setupMaabNumberHandling() {
-    setTimeout(initializeMaabNumberHandling, 100);
-}
-
-window.populateEntryForm = populateEntryForm;
-*/
-
-// ===== DROPDOWN-SPECIFIC HANDLING =====
-function initializeDropdownHandling() {
-    const maabNoDropdown = document.getElementById('maab_no');
-    const maabCatSelect = document.getElementById('maab_cat');
-    
-    if (!maabNoDropdown || !maabCatSelect) return;
-    
-    console.log('✅ Initializing dropdown handling');
-    
-    // Simple placeholder update based on category
-    maabCatSelect.addEventListener('change', function() {
-        const category = this.value;
-        maabNoDropdown.title = `Select available ${category} ID from inventory`;
-    });
-    
-    // Visual feedback when selection is made
-    maabNoDropdown.addEventListener('change', function() {
-        if (this.value) {
-            console.log('✅ MAAB No selected:', this.value);
-        }
-    });
-}
-
-// Call this when overlay opens
-function setupDropdownHandling() {
-    setTimeout(initializeDropdownHandling, 100);
-}
-
-// ============== SELECT MAAB NO. FROM INVENTORY (WITH DUPLICATE PROTECTION) ==============
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🆔 MAAB No Dropdown System Initializing...');
-
-    let availableIDs = {};
-    let usedMAABNumbers = new Set();
-
-    // Fetch both available IDs and used MAAB numbers
-    async function fetchAllMAABData(category = null) {
-        try {
-            console.log('🔄 Fetching all MAAB data...');
-            
-            // Fetch available IDs from inventory
-            let url = '/api/inventory/available_ids';
-            if (category) {
-                url = `/api/inventory/available_ids?category=${encodeURIComponent(category)}`;
-            }
-            
-            const [availableResponse, usedResponse] = await Promise.all([
-                fetch(url),
-                fetch('/api/members/used_maab_numbers') // This is the new endpoint
-            ]);
-            
-            const availableResult = await availableResponse.json();
-            const usedResult = await usedResponse.json();
-            
-            console.log('🔍 Available IDs result:', availableResult);
-            console.log('🔍 Used MAAB numbers result:', usedResult);
-            
-            if (availableResult.success) {
-                availableIDs = availableResult.available_ids || {};
-            }
-            
-            if (usedResult.success) {
-                usedMAABNumbers = new Set(usedResult.used_numbers || []);
-                console.log(`✅ Loaded ${usedMAABNumbers.size} used MAAB numbers`);
-            } else {
-                console.warn('⚠️ Failed to load used MAAB numbers, using empty set');
-                usedMAABNumbers = new Set();
-            }
-            
-            return { availableIDs, usedMAABNumbers };
-            
-        } catch (error) {
-            console.error('❌ Error fetching MAAB data:', error);
-            return { availableIDs: {}, usedMAABNumbers: new Set() };
-        }
-    }
-
-    // Filter out used MAAB numbers from available IDs
-    function getTrulyAvailableIDs(category = null) {
-        const trulyAvailable = {};
-        
-        if (category && availableIDs[category]) {
-            // Show IDs for specific category (excluding used ones)
-            trulyAvailable[category] = availableIDs[category].filter(id => !usedMAABNumbers.has(id));
-        } else if (!category) {
-            // Show all available IDs from all categories (excluding used ones)
-            Object.keys(availableIDs).forEach(cat => {
-                trulyAvailable[cat] = availableIDs[cat].filter(id => !usedMAABNumbers.has(id));
-            });
-        }
-        
-        console.log(`✅ Filtered out used numbers. Remaining available:`, trulyAvailable);
-        return trulyAvailable;
-    }
-
-    // ✅ UPDATED: Populate MAAB No dropdown based on selected category
-    function populateMAABNoDropdown(category = null, currentMaabNo = null) {
-        const maabNoDropdown = document.getElementById('maab_no');
-        if (!maabNoDropdown) {
-            console.log('❌ MAAB No dropdown not found');
-            return;
-        }
-        
-        console.log(`🔄 Populating dropdown for category: ${category}, current MAAB: ${currentMaabNo}`);
-        
-        // Clear existing options except the first one
-        while (maabNoDropdown.options.length > 1) {
-            maabNoDropdown.remove(1);
-        }
-        
-        let availableIDsForCategory = [];
-        const trulyAvailableIDs = getTrulyAvailableIDs(category);
-        
-        if (category && trulyAvailableIDs[category]) {
-            availableIDsForCategory = trulyAvailableIDs[category];
-            console.log(`📋 Using category-specific IDs for ${category}:`, availableIDsForCategory);
-        } else if (!category) {
-            Object.values(trulyAvailableIDs).forEach(ids => {
-                availableIDsForCategory.push(...ids);
-            });
-            console.log(`📋 Using all categories IDs:`, availableIDsForCategory);
-        }
-        
-        // ✅ CRITICAL FIX: Add the current MAAB number if it exists and isn't already in the list
-        if (currentMaabNo && currentMaabNo.trim() !== '' && !availableIDsForCategory.includes(currentMaabNo)) {
-            console.log(`✅ Adding current MAAB number to dropdown: ${currentMaabNo}`);
-            availableIDsForCategory.unshift(currentMaabNo); // Add to beginning
-        }
-        
-        // Sort the IDs for better user experience
-        availableIDsForCategory.sort();
-        
-        // Add available IDs to dropdown
-        availableIDsForCategory.forEach(id => {
-            const option = document.createElement('option');
-            option.value = id;
-            option.textContent = id;
-            
-            // Highlight the current MAAB number if it exists
-            if (id === currentMaabNo) {
-                option.selected = true;
-                option.style.fontWeight = 'bold';
-                option.style.backgroundColor = '#e8f5e8'; // Light green
-            }
-            
-            maabNoDropdown.appendChild(option);
-        });
-        
-        console.log(`✅ Added ${availableIDsForCategory.length} options to dropdown`);
-        
-        // If no IDs available, show message
-        if (availableIDsForCategory.length === 0) {
-            const option = document.createElement('option');
-            option.value = "";
-            option.textContent = category ? `No available ${category} IDs` : "No available IDs in inventory";
-            option.disabled = true;
-            maabNoDropdown.appendChild(option);
-            console.warn(`⚠️ No available IDs for category: ${category}`);
-            
-            // Show warning toast if no IDs available
-            if (category) {
-                toastAlert("No IDs Available", `No available ${category} IDs in inventory. Please check inventory or select different category.`);
-            }
-        }
-    }
-
-    // Make the function available globally
-    window.populateMAABNoDropdown = populateMAABNoDropdown;
-
-    // Update dropdown when category changes
-    const categorySelect = document.getElementById('maab_cat');
-    if (categorySelect) {
-        categorySelect.addEventListener('change', function() {
-            const selectedCategory = this.value;
-            const currentMaabNo = document.getElementById('maab_no').value;
-            console.log(`🔄 Category changed to: ${selectedCategory}, current MAAB: ${currentMaabNo}`);
-            populateMAABNoDropdown(selectedCategory, currentMaabNo);
-        });
-    }
-
-    // Refresh available IDs when overlay opens
-    function setupOverlayMAABNo() {
-        const overlay = document.getElementById('overlay');
-        if (!overlay) {
-            console.log('❌ Overlay not found');
-            return;
-        }
-        
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    const isVisible = overlay.style.display === 'flex';
-                    console.log(`👀 Overlay visibility changed: ${isVisible}`);
-                    if (isVisible) {
-                        // Refresh both used numbers and available IDs when overlay opens
-                        console.log('🔄 Overlay opened, refreshing all MAAB data...');
-                        fetchAllMAABData().then(() => {
-                            const currentCategory = document.getElementById('maab_cat')?.value;
-                            const currentMaabNo = document.getElementById('maab_no')?.value;
-                            populateMAABNoDropdown(currentCategory, currentMaabNo);
-                        });
-                    }
-                }
-            });
-        });
-        
-        observer.observe(overlay, { attributes: true });
-        console.log('✅ Overlay observer setup complete');
-    }
-
-    // Also refresh when entries table changes (after adding/editing entries)
-    function setupEntriesTableMonitoring() {
-        // This will be called when entries table is updated
-        window.refreshMAABDropdown = function() {
-            console.log('🔄 Entries table updated, refreshing all MAAB data...');
-            const currentCategory = document.getElementById('maab_cat')?.value;
-            const currentMaabNo = document.getElementById('maab_no')?.value;
-            fetchAllMAABData().then(() => {
-                populateMAABNoDropdown(currentCategory, currentMaabNo);
-            });
-        };
-    }
-
-    // Initialize MAAB No dropdown system
-    setupOverlayMAABNo();
-    setupEntriesTableMonitoring();
-
-    // Pre-load all MAAB data on page load
-    fetchAllMAABData().then(() => {
-        console.log('✅ All MAAB data pre-loaded on page load');
-    });
-
-    console.log('✅ MAAB No Dropdown system initialized successfully');
-});
 
 function showDispatchReadyModal() {
     const dispatchReadyRecords = getDispatchReadyUndeclaredRecords();
     
     if (dispatchReadyRecords.length === 0) {
         toastAlert("No Dispatch-Ready Records", 
-            "No records are marked as dispatch-ready and undeclared. " +
-            "Please ensure records have all entries paid, are marked as dispatch-ready, and are not yet declared.");
+            "No records are marked as dispatch-ready and undeclared.");
         return;
     }
 
-    // Get record details for display - USE THE entries_count FIELD THAT'S ALREADY IN YOUR DATA
     const dataSource = isArchiveView ? archiveFilteredData : filteredData;
     const recordDetails = dataSource
         .filter(record => dispatchReadyRecords.includes(record.record_id))
         .map(record => {
-            // Use the entries_count that should be in your record data
-            // If entries_count doesn't exist, fall back to 0
             const entryCount = record.entries_count !== undefined ? record.entries_count : 0;
-            
-            console.log(`Record ${record.record_id}: entries_count = ${record.entries_count}`); // Debug log
-            
             return {
                 id: record.record_id,
                 location: record.location_particular,
                 year: record.year,
                 municipality: record.municipality,
-                entries: entryCount, // Use the count from your existing data
+                entries: entryCount,
                 origin: record.origin || 'N/A'
             };
         });
 
-    console.log("Record details for modal:", recordDetails); // Debug log
-
-    // Create modal HTML with the updated data
     const modalHTML = `
         <div class="dispatch-records-modal" id="dispatchRecordsModal">
             <div class="dispatch-modal">
@@ -4482,12 +3090,10 @@ function showDispatchReadyModal() {
                     <h3><i class="fa-solid fa-list-check"></i> Add Records to Dispatch</h3>
                     <button class="close-dispatch-modal">&times;</button>
                 </div>
-                
                 <div class="dispatch-content">
                     <div class="dispatch-summary">
                         Found <strong>${dispatchReadyRecords.length}</strong> dispatch-ready records ready to be added to the current dispatch.
                     </div>
-                    
                     <div class="dispatch-records-list">
                         ${recordDetails.map(record => `
                             <div class="dispatch-record-item">
@@ -4505,83 +3111,52 @@ function showDispatchReadyModal() {
                         `).join('')}
                     </div>
                 </div>
-                
                 <div class="dispatch-footer">
                     <button id="confirmAddToDispatch" class="btn btn-primary">
                         <i class="fa-solid fa-list"></i> Add ${dispatchReadyRecords.length} Records to Dispatch
                     </button>
-                    <button id="cancelAddToDispatch" class="btn btn-secondary">
-                        Cancel
-                    </button>
+                    <button id="cancelAddToDispatch" class="btn btn-secondary">Cancel</button>
                 </div>
             </div>
         </div>
     `;
 
-    // Remove any existing modal first
     const existingModal = document.getElementById('dispatchRecordsModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
+    if (existingModal) existingModal.remove();
 
-    // Add modal to page
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-    // Show modal
     const modal = document.getElementById('dispatchRecordsModal');
     modal.style.display = 'flex';
 
-    // Setup event listeners
     setupDispatchModalEvents(dispatchReadyRecords);
 }
 
-// Function to setup modal events (updated to match declaration behavior)
 function setupDispatchModalEvents(dispatchReadyRecords) {
     const modal = document.getElementById('dispatchRecordsModal');
-    
-    if (!modal) {
-        console.error('❌ Modal not found');
-        return;
-    }
+    if (!modal) return;
 
     const closeBtn = modal.querySelector('.close-dispatch-modal');
     const confirmBtn = modal.querySelector('#confirmAddToDispatch');
     const cancelBtn = modal.querySelector('#cancelAddToDispatch');
 
-    // Close modal functions - FIXED: Better cleanup
     function closeModal() {
         if (modal) {
             modal.style.display = 'none';
-            // Use setTimeout to ensure the animation completes
             setTimeout(() => {
-                if (modal && modal.parentNode) {
-                    modal.parentNode.removeChild(modal);
-                }
+                if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
             }, 300);
         }
     }
 
-    // Close button
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeModal);
-    }
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
-    // Cancel button
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', closeModal);
-    }
-
-    // Confirm button
     if (confirmBtn) {
         confirmBtn.addEventListener('click', function() {
-            // Show loading state
             const originalText = this.innerHTML;
             this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding to Dispatch...';
             this.disabled = true;
 
-            console.log(`🚀 Sending ${dispatchReadyRecords.length} records to API:`, dispatchReadyRecords);
-
-            // Call the API to add records to dispatch
             fetch('/api/add_to_dispatch', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -4593,32 +3168,21 @@ function setupDispatchModalEvents(dispatchReadyRecords) {
             })
             .then(response => response.json())
             .then(result => {
-                console.log("📡 API Response data:", result);
-                
-                closeModal(); // Close modal regardless of result
-                
+                closeModal();
                 if (result.success) {
                     if (result.added_to_dispatch_count > 0) {
                         toastSuccess("Records Added to Dispatch", 
                             `Successfully added ${result.added_to_dispatch_count} dispatch-ready records to the current dispatch.`);
-                    } else {
-                        toastAlert("No Records Added", 
-                            `Found ${dispatchReadyRecords.length} dispatch-ready records, but none were added. ` +
-                            `They may already be in the dispatch or have issues. Check console for details.`);
-                    }
-                    // Refresh the table to show updated dispatch status
+                    } else toastAlert("No Records Added", `Found ${dispatchReadyRecords.length} dispatch-ready records, but none were added.`);
                     refreshTableData();
-                } else {
-                    toastError("Add to Dispatch Failed", result.error || "Failed to add records to dispatch.");
-                }
+                } else toastError("Add to Dispatch Failed", result.error || "Failed to add records to dispatch.");
             })
             .catch(error => {
-                console.error('❌ Error adding to dispatch:', error);
+                console.error('Error adding to dispatch:', error);
                 closeModal();
                 toastError("Error", "An error occurred while adding records to dispatch: " + error.message);
             })
             .finally(() => {
-                // Restore button state in case of error
                 if (confirmBtn) {
                     confirmBtn.innerHTML = originalText;
                     confirmBtn.disabled = false;
@@ -4627,83 +3191,145 @@ function setupDispatchModalEvents(dispatchReadyRecords) {
         });
     }
 
-    // Close modal when clicking outside
     modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closeModal();
-        }
+        if (e.target === modal) closeModal();
     });
 
-    // Close modal with Escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === "Escape" && modal && modal.style.display === 'flex') {
-            closeModal();
-        }
+        if (e.key === "Escape" && modal && modal.style.display === 'flex') closeModal();
     });
 }
 
-// Single event listener for add_to_dispatch button
-document.getElementById('add_to_dispatch').addEventListener('click', function(e) {
-    // Prevent any default behavior that might show browser prompt
-    e.preventDefault();
-    e.stopPropagation();
+function getDispatchReadyUndeclaredRecords() {
+    const dispatchReadyRecords = [];
+    const dataSource = isArchiveView ? archiveFilteredData : filteredData;
     
-    if (this.disabled) {
-        toastAlert("No Active Dispatch", "Please create an active dispatch first before adding records.");
-        return;
-    }
-
-    // Show the modal instead of direct confirmation
-    showDispatchReadyModal();
-});
-
-// Also prevent any default form submission behavior
-document.addEventListener('DOMContentLoaded', function() {
-    // Prevent any form submission that might trigger browser prompts
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        });
+    dataSource.forEach(record => {
+        const isDispatchReady = record.dispatch_ready === true || record.dispatch_ready === 1 || record.dispatch_ready === '1';
+        const isNotDeclared = record.declared === false || record.declared === 0 || record.declared === '0' || record.declared === null;
+        
+        if (isDispatchReady && isNotDeclared) dispatchReadyRecords.push(record.record_id);
     });
-});
+    
+    return dispatchReadyRecords;
+}
+
+function confirmDispatchReadyRecords() {
+    const dispatchReadyRecords = getDispatchReadyUndeclaredRecords();
+    if (dispatchReadyRecords.length === 0) return false;
+    showDispatchReadyModal();
+    return true;
+}
+
+function getSelectedRecords() {
+    const selectedRecords = [];
+    if (hotInstance) {
+        const selected = hotInstance.getSelected();
+        if (selected) {
+            for (let i = 0; i < selected.length; i++) {
+                const [startRow, startCol, endRow, endCol] = selected[i];
+                for (let row = startRow; row <= endRow; row++) {
+                    const rowData = hotInstance.getSourceDataAtRow(row);
+                    if (rowData && rowData.record_id) selectedRecords.push(rowData.record_id);
+                }
+            }
+        }
+    }
+    return [...new Set(selectedRecords)];
+}
+
+function setDistrictFromMunicipality() {
+    const municipalitySelect = document.getElementById('municipality');
+    const districtInput = document.getElementById('district');
+    
+    if (municipalitySelect && districtInput) {
+        const currentValue = municipalitySelect.value;
+        const newMunicipalitySelect = municipalitySelect.cloneNode(true);
+        newMunicipalitySelect.value = currentValue;
+        municipalitySelect.parentNode.replaceChild(newMunicipalitySelect, municipalitySelect);
+        
+        newMunicipalitySelect.addEventListener('change', function() {
+            const selectedMunicipality = this.value;
+            if (selectedMunicipality) {
+                const district = municipalityToDistrict[selectedMunicipality] || '';
+                districtInput.value = district;
+                const event = new Event('change', { bubbles: true });
+                districtInput.dispatchEvent(event);
+            } else districtInput.value = '';
+        });
+        
+        const currentMunicipality = newMunicipalitySelect.value;
+        if (currentMunicipality) {
+            districtInput.value = municipalityToDistrict[currentMunicipality] || '';
+        } else districtInput.value = '';
+    }
+}
+
+function setOriginBasedOnUser() {
+    const originSelect = document.getElementById('origin');
+    if (!originSelect) return;
+    
+    const userLocation = '{{ user_location }}';
+    const isChapterUser = '{{ is_chapter_user|lower }}' === 'true';
+    
+    if (userLocation && userLocation.trim() !== '') {
+        const waitForOptions = setInterval(() => {
+            if (originSelect.options.length > 1) {
+                clearInterval(waitForOptions);
+                const optionExists = Array.from(originSelect.options).some(option => option.value === userLocation);
+                if (optionExists) {
+                    if (!isChapterUser) {
+                        // Sub-branch users - lock to their location
+                        originSelect.value = userLocation;
+                        originSelect.disabled = true;
+                        originSelect.style.backgroundColor = '#f5f5f5';
+                        originSelect.title = 'Origin is automatically set to your location: ' + userLocation;
+                        console.log(`✅ Sub-branch user - origin field locked to: ${userLocation}`);
+                    } else {
+                        // Chapter users - can choose any origin
+                        originSelect.disabled = false;
+                        originSelect.title = 'Select origin for this record';
+                        console.log('✅ Chapter user - origin field enabled for selection');
+                    }
+                }
+            }
+        }, 100);
+        
+        setTimeout(() => clearInterval(waitForOptions), 5000);
+    }
+}
+
+function setLocationParticularToUppercase() {
+    const locParInput = document.getElementById('loc_par');
+    if (locParInput) locParInput.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+}
+
+function initializeAutoFillFunctions() {
+    setDistrictFromMunicipality();
+    setOriginBasedOnUser();
+    setLocationParticularToUppercase();
+}
 
 function setupCheckboxChangeTracking() {
-    const checkboxes = [
-        'id_rcv', 'paid', 'declared', 'record_dispatch_ready'
-    ];
-    
+    const checkboxes = ['id_rcv', 'paid', 'declared', 'record_dispatch_ready'];
     checkboxes.forEach(checkboxId => {
         const checkbox = document.getElementById(checkboxId);
         if (checkbox) {
-            // Remove existing listeners to avoid duplicates
             checkbox.removeEventListener('change', handleFormChange);
             checkbox.removeEventListener('change', handleAutomaticUpdate);
-            
-            // Add both listeners
             checkbox.addEventListener('change', handleFormChange);
             checkbox.addEventListener('change', handleAutomaticUpdate);
-            
-            console.log(`✅ Enhanced tracking added to checkbox: ${checkboxId}`);
         }
     });
 }
 
-// ===== AUTOMATIC UPDATE ON CHECKBOX CHANGES =====
 function setupAutomaticUpdate() {
-    const checkboxes = [
-        'id_rcv', 'paid', 'declared', 'record_dispatch_ready'
-    ];
-    
+    const checkboxes = ['id_rcv', 'paid', 'declared', 'record_dispatch_ready'];
     checkboxes.forEach(checkboxId => {
         const checkbox = document.getElementById(checkboxId);
         if (checkbox) {
-            // Remove existing listeners to avoid duplicates
             checkbox.removeEventListener('change', handleAutomaticUpdate);
-            // Add automatic update listener
             checkbox.addEventListener('change', handleAutomaticUpdate);
-            console.log(`✅ Automatic update tracking added to checkbox: ${checkboxId}`);
         }
     });
 }
@@ -4711,62 +3337,379 @@ function setupAutomaticUpdate() {
 function handleAutomaticUpdate() {
     const recordId = document.getElementById('record_id').value;
     const isNewRecord = recordId == nextRecordId || recordId === '0' || recordId === '';
+    if (isNewRecord) return;
+    if (!checkForChanges()) return;
     
-    // Only auto-update for existing records
-    if (isNewRecord) {
-        console.log('🆕 New record - skipping automatic update');
-        return;
-    }
-    
-    // Check if there are actual changes
-    if (!checkForChanges()) {
-        console.log('🔄 No actual changes detected - skipping automatic update');
-        return;
-    }
-    
-    console.log('🚀 Automatic update triggered for checkbox change');
-    
-    // Show saving indicator
     const saveBtn = document.getElementById('save_record_details');
     const originalText = saveBtn.innerHTML;
     saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
     saveBtn.disabled = true;
     
-    // Auto-save the record
-    saveRecordDetails(false) // false = don't show success toast
+    saveRecordDetails(false)
         .then(() => {
-            console.log('✅ Automatic update successful');
-            
-            // Show brief success feedback
             const checkbox = this;
             const originalBackground = checkbox.style.backgroundColor;
-            checkbox.style.backgroundColor = '#d4edda'; // Light green
-            setTimeout(() => {
-                checkbox.style.backgroundColor = originalBackground;
-            }, 500);
-            
-            // Show subtle success message
+            checkbox.style.backgroundColor = '#d4edda';
+            setTimeout(() => checkbox.style.backgroundColor = originalBackground, 500);
             toastSuccess("Auto-updated", "Record updated automatically", 1500);
         })
         .catch(error => {
-            console.error('❌ Automatic update failed:', error);
-            
-            // Show error feedback
             const checkbox = this;
             const originalBackground = checkbox.style.backgroundColor;
-            checkbox.style.backgroundColor = '#f8d7da'; // Light red
-            setTimeout(() => {
-                checkbox.style.backgroundColor = originalBackground;
-            }, 1000);
-            
-            // Show error message
+            checkbox.style.backgroundColor = '#f8d7da';
+            setTimeout(() => checkbox.style.backgroundColor = originalBackground, 1000);
             toastAlert("Update Failed", "Please save manually");
         })
         .finally(() => {
-            // Restore button state
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
         });
+}
+
+// MAAB Number Dropdown System
+let availableIDs = {};
+let usedMAABNumbers = new Set();
+
+async function fetchAllMAABData(category = null) {
+    try {
+        let url = '/api/inventory/available_ids';
+        if (category) url = `/api/inventory/available_ids?category=${encodeURIComponent(category)}`;
+        
+        const [availableResponse, usedResponse] = await Promise.all([
+            fetch(url),
+            fetch('/api/members/used_maab_numbers')
+        ]);
+        
+        const availableResult = await availableResponse.json();
+        const usedResult = await usedResponse.json();
+        
+        if (availableResult.success) availableIDs = availableResult.available_ids || {};
+        if (usedResult.success) usedMAABNumbers = new Set(usedResult.used_numbers || []);
+        
+        return { availableIDs, usedMAABNumbers };
+    } catch (error) {
+        console.error('Error fetching MAAB data:', error);
+        return { availableIDs: {}, usedMAABNumbers: new Set() };
+    }
+}
+
+function getTrulyAvailableIDs(category = null) {
+    const trulyAvailable = {};
+    
+    if (category && availableIDs[category]) {
+        trulyAvailable[category] = availableIDs[category].filter(id => !usedMAABNumbers.has(id));
+    } else if (!category) {
+        Object.keys(availableIDs).forEach(cat => {
+            trulyAvailable[cat] = availableIDs[cat].filter(id => !usedMAABNumbers.has(id));
+        });
+    }
+    
+    return trulyAvailable;
+}
+
+function populateMAABNoDropdown(category = null, currentMaabNo = null) {
+    const maabNoDropdown = document.getElementById('maab_no');
+    if (!maabNoDropdown) return;
+    
+    while (maabNoDropdown.options.length > 1) maabNoDropdown.remove(1);
+    
+    let availableIDsForCategory = [];
+    const trulyAvailableIDs = getTrulyAvailableIDs(category);
+    
+    if (category && trulyAvailableIDs[category]) availableIDsForCategory = trulyAvailableIDs[category];
+    else if (!category) Object.values(trulyAvailableIDs).forEach(ids => availableIDsForCategory.push(...ids));
+    
+    if (currentMaabNo && currentMaabNo.trim() !== '' && !availableIDsForCategory.includes(currentMaabNo)) {
+        availableIDsForCategory.unshift(currentMaabNo);
+    }
+    
+    availableIDsForCategory.sort();
+    
+    availableIDsForCategory.forEach(id => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = id;
+        if (id === currentMaabNo) {
+            option.selected = true;
+            option.style.fontWeight = 'bold';
+            option.style.backgroundColor = '#e8f5e8';
+        }
+        maabNoDropdown.appendChild(option);
+    });
+    
+    if (availableIDsForCategory.length === 0) {
+        const option = document.createElement('option');
+        option.value = "";
+        option.textContent = category ? `No available ${category} IDs` : "No available IDs in inventory";
+        option.disabled = true;
+        maabNoDropdown.appendChild(option);
+        if (category) toastAlert("No IDs Available", `No available ${category} IDs in inventory. Please check inventory or select different category.`);
+    }
+}
+
+window.populateMAABNoDropdown = populateMAABNoDropdown;
+
+function setupMaabNumberHandling() {
+    const categorySelect = document.getElementById('maab_cat');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const selectedCategory = this.value;
+            const currentMaabNo = document.getElementById('maab_no').value;
+            populateMAABNoDropdown(selectedCategory, currentMaabNo);
+        });
+    }
+}
+
+function setupOverlayMAABNo() {
+    const overlay = document.getElementById('overlay');
+    if (!overlay) return;
+    
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                const isVisible = overlay.style.display === 'flex';
+                if (isVisible) {
+                    fetchAllMAABData().then(() => {
+                        const currentCategory = document.getElementById('maab_cat')?.value;
+                        const currentMaabNo = document.getElementById('maab_no')?.value;
+                        populateMAABNoDropdown(currentCategory, currentMaabNo);
+                    });
+                }
+            }
+        });
+    });
+    
+    observer.observe(overlay, { attributes: true });
+}
+
+function setupEntriesTableMonitoring() {
+    window.refreshMAABDropdown = function() {
+        const currentCategory = document.getElementById('maab_cat')?.value;
+        const currentMaabNo = document.getElementById('maab_no')?.value;
+        fetchAllMAABData().then(() => populateMAABNoDropdown(currentCategory, currentMaabNo));
+    };
+}
+
+// Initialize MAAB No dropdown system
+setupOverlayMAABNo();
+setupEntriesTableMonitoring();
+fetchAllMAABData().then(() => console.log('MAAB data pre-loaded'));
+
+// Event Listeners Setup
+function setupButtonEventListeners() {
+    const archiveBtn = document.querySelector('.btn-archive');
+    if (archiveBtn) archiveBtn.addEventListener('click', showArchiveView);
+    
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-back')) showActiveView();
+    });
+
+    const entryPaidCheckbox = document.getElementById('entry_paid');
+    if (entryPaidCheckbox) {
+        entryPaidCheckbox.addEventListener('change', function() {
+            updateEntryDispatchReady();
+            setTimeout(() => updateRecordPaidFromEntries(), 100);
+            
+            // Update OR Date field state when paid checkbox changes
+            const orDateField = document.getElementById('entry_or_date');
+            if (orDateField) {
+                updateORDateFieldState(this.checked, orDateField);
+            }
+        });
+    }
+
+    const entryDeclaredCheckbox = document.getElementById('entry_declared');
+    if (entryDeclaredCheckbox) {
+        entryDeclaredCheckbox.addEventListener('change', function() {
+            updateEntryDispatchReady();
+            setTimeout(() => updateRecordPaidFromEntries(), 100);
+        });
+    }
+    
+    // Initialize OR Date field state
+    setupORDateFieldState();
+}
+
+function setupFormEventListeners() {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+}
+
+// Main Initialization
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 Initializing Members Management Page...');
+    initializationState.domReady = true;
+    
+    setupCloseOverlayWithConfirmation();
+    setupDeleteRecord();
+    initializeAutoFillFunctions();
+    setupSearchFunctionality();
+    setBirthdayMaxDate();
+    populateFilterDropdowns();
+    checkActiveDispatch();
+    setupOriginFieldProtection();
+    
+    // Initialize OR Date field state management
+    setupORDateFieldState();
+
+    setTimeout(setupOriginFilterBasedOnUser, 1000);
+    
+    initializeNextRecordId().then(() => console.log('Next record ID initialized:', nextRecordId));
+    
+    setupButtonEventListeners();
+    setupFormEventListeners();
+    
+    fetchActiveRecords();
+    
+    setTimeout(() => {
+        const yearFilter = document.getElementById('filter_year');
+        const originFilter = document.getElementById('filter_origin');
+        if (yearFilter) yearFilter.addEventListener('change', applyFilters);
+        if (originFilter) originFilter.addEventListener('change', applyFilters);
+    }, 1000);
+    
+    document.querySelectorAll('input[name="record_input_mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const recordForm = document.querySelector('.record_details_table');
+            recordForm.style.display = this.value === 'table' ? 'none' : 'table';
+        });
+    });
+    
+    document.querySelectorAll('input[name="entry_input_mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const entryForm = document.getElementById('entry_details');
+            entryForm.style.display = this.value === 'table' ? 'none' : 'block';
+        });
+    });
+    
+    document.querySelector('.btn-export').addEventListener('click', function () {
+        const overlay = document.getElementById('overlay');
+        const recordId = document.getElementById('record_id').value;
+        
+        if (overlay && overlay.style.display === 'flex' && recordId && recordId !== '0') {
+            exportCurrentRecordToExcel();
+        } else {
+            if (!hotInstance) return;
+            const exportPlugin = hotInstance.getPlugin('exportFile');
+            exportPlugin.downloadFile('xlsx', {
+                filename: isArchiveView ? 'archived_members_records' : 'members_records',
+                sheetName: isArchiveView ? 'Archived Records' : 'Records',
+                fileExtension: 'xlsx',
+                mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+        }
+    });
+    
+    document.getElementById('add_to_dispatch').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.disabled) {
+            toastAlert("No Active Dispatch", "Please create an active dispatch first before adding records.");
+            return;
+        }
+        showDispatchReadyModal();
+    });
+    
+    const navProfileImage = document.getElementById("navProfileImage");
+    if (navProfileImage) {
+        const savedProfileImage = localStorage.getItem("profileImage");
+        if (savedProfileImage) navProfileImage.src = savedProfileImage;
+    }
+    
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profileImage') {
+            const navProfileImage = document.getElementById("navProfileImage");
+            if (navProfileImage) navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+        }
+    });
+    
+    setInterval(checkActiveDispatch, 30000);
+    console.log('✅ Members Management Page Initialized');
+});
+
+// Global error handling
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+    console.error('File:', e.filename);
+    console.error('Line:', e.lineno);
+});
+
+// ===== ORIGIN FILTER CONTROL BASED ON USER LOCATION =====
+function setupOriginFilterBasedOnUser() {
+    const originFilter = document.getElementById('filter_origin');
+    const userLocation = '{{ user_location }}';
+    const isChapterUser = '{{ is_chapter_user|lower }}' === 'true';
+    
+    console.log(`🔧 Setting up origin filter - User: ${userLocation}, Is Chapter: ${isChapterUser}`);
+    
+    if (!originFilter) return;
+    
+    if (isChapterUser) {
+        // Chapter users - enable filter and show all options
+        originFilter.disabled = false;
+        originFilter.title = "Filter by origin";
+        console.log('✅ Chapter user - origin filter enabled');
+    } else {
+        // Sub-branch users - disable filter and pre-select their location
+        originFilter.disabled = true;
+        originFilter.title = `Filter locked to your location: ${userLocation}`;
+        
+        // Wait for options to load, then select user's location
+        const waitForOptions = setInterval(() => {
+            if (originFilter.options.length > 1) {
+                clearInterval(waitForOptions);
+                const optionExists = Array.from(originFilter.options).some(option => option.value === userLocation);
+                if (optionExists) {
+                    originFilter.value = userLocation;
+                    originFilter.style.backgroundColor = '#f5f5f5';
+                    console.log(`✅ Sub-branch user - origin filter locked to: ${userLocation}`);
+                } else {
+                    console.warn(`⚠️ User location '${userLocation}' not found in origin options`);
+                }
+            }
+        }, 100);
+        
+        setTimeout(() => clearInterval(waitForOptions), 5000);
+    }
+}
+
+function setupORDateFieldState() {
+    const paidCheckbox = document.getElementById('entry_paid');
+    const orDateField = document.getElementById('entry_or_date');
+    
+    if (!paidCheckbox || !orDateField) return;
+    
+    // Initialize state based on current paid status
+    updateORDateFieldState(paidCheckbox.checked, orDateField);
+    
+    // Add event listener for paid checkbox changes
+    paidCheckbox.addEventListener('change', function() {
+        updateORDateFieldState(this.checked, orDateField);
+    });
+}
+
+function updateORDateFieldState(isPaid, orDateField) {
+    if (isPaid) {
+        // Enable OR Date when paid is checked
+        orDateField.readOnly = false;
+        orDateField.style.backgroundColor = '';
+        orDateField.style.cursor = 'pointer';
+        orDateField.title = 'Enter OR date';
+    } else {
+        // Disable OR Date when paid is unchecked
+        orDateField.readOnly = true;
+        orDateField.style.backgroundColor = '#f5f5f5';
+        orDateField.style.cursor = 'not-allowed';
+        orDateField.title = 'OR Date is only available when Paid is checked';
+        
+        // Optional: Clear OR Date when unpaid
+        // orDateField.value = '';
+    }
 }
 </script>
 {% endblock %}
