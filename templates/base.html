@@ -87,7 +87,7 @@
                     <a href="/inventory"><img class="icons" src="{{ url_for('static', filename='assets/inventory.svg') }}" alt="logo"/>Inventory</a>
                 </li>
             
-                <li id="claims">
+                <li id="claims" hidden>
                     <a href="/claims"><img class="icons" src="{{ url_for('static', filename='assets/claims.svg') }}" alt="logo"/>Manage Claims</a>
                 </li>
 
@@ -131,6 +131,7 @@
 
             if (current_userLevel === "admin" || current_userLevel === "superadmin") {
                 document.getElementById("declaration").removeAttribute("hidden");
+                document.getElementById("claims").removeAttribute("hidden");
                 document.getElementById("reports").removeAttribute("hidden");
                 document.getElementById("audit_trails").removeAttribute("hidden");
                 document.getElementById("accounts").removeAttribute("hidden");
@@ -139,6 +140,7 @@
             if (current_office !== "Chapter") {
                 document.getElementById("claims").setAttribute("hidden", true);
                 document.getElementById("declaration").setAttribute("hidden", true);
+                document.getElementById("accounts").setAttribute("hidden", true);
             }
 
             if (localStorage.getItem("appFont")) {
