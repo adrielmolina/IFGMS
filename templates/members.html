@@ -963,22 +963,75 @@ function updateArchivePagination() {
     const totalPages = Math.ceil(archiveFilteredData.length / archiveEntriesPerPage);
     if (totalPages <= 1) return;
 
-    function addButton(label, page, disabled = false, active = false) {
+    function addButton(label, page, disabled = false, active = false, isEllipsis = false) {
         const btn = document.createElement("button");
         btn.textContent = label;
         if (disabled) btn.disabled = true;
         if (active) btn.classList.add("active");
-        btn.onclick = () => {
-            archiveCurrentPage = page;
-            renderArchiveTable();
-        };
+        if (isEllipsis) {
+            btn.classList.add("ellipsis");
+            btn.disabled = true;
+        } else {
+            btn.onclick = () => {
+                archiveCurrentPage = page;
+                renderArchiveTable();
+            };
+        }
         paginationControls.appendChild(btn);
     }
 
+    // Previous button
     addButton("Previous", archiveCurrentPage - 1, archiveCurrentPage === 1);
-    for (let i = 1; i <= totalPages; i++) {
+
+    // Always show first page
+    addButton(1, 1, false, 1 === archiveCurrentPage);
+
+    // Calculate page range to show
+    let startPage, endPage;
+    const maxVisiblePages = 5; // Show max 5 page numbers
+    
+    if (totalPages <= maxVisiblePages) {
+        // Show all pages if total pages is less than max visible
+        startPage = 2;
+        endPage = totalPages - 1;
+    } else {
+        // Calculate range around current page
+        const sidePages = Math.floor((maxVisiblePages - 3) / 2); // Pages to show on each side of current
+        
+        startPage = Math.max(2, archiveCurrentPage - sidePages);
+        endPage = Math.min(totalPages - 1, archiveCurrentPage + sidePages);
+        
+        // Adjust if we're at the beginning
+        if (startPage === 2) {
+            endPage = startPage + (maxVisiblePages - 3);
+        }
+        // Adjust if we're at the end
+        if (endPage === totalPages - 1) {
+            startPage = endPage - (maxVisiblePages - 3);
+        }
+    }
+
+    // Add ellipsis after first page if needed
+    if (startPage > 2) {
+        addButton("...", null, true, false, true);
+    }
+
+    // Add middle pages
+    for (let i = startPage; i <= endPage; i++) {
         addButton(i, i, false, i === archiveCurrentPage);
     }
+
+    // Add ellipsis before last page if needed
+    if (endPage < totalPages - 1) {
+        addButton("...", null, true, false, true);
+    }
+
+    // Always show last page if there's more than 1 page
+    if (totalPages > 1) {
+        addButton(totalPages, totalPages, false, totalPages === archiveCurrentPage);
+    }
+
+    // Next button
     addButton("Next", archiveCurrentPage + 1, archiveCurrentPage === totalPages);
 }
 
@@ -1044,22 +1097,75 @@ function updatePagination() {
     const totalPages = Math.ceil(filteredData.length / entriesPerPage);
     if (totalPages <= 1) return;
 
-    function addButton(label, page, disabled = false, active = false) {
+    function addButton(label, page, disabled = false, active = false, isEllipsis = false) {
         const btn = document.createElement("button");
         btn.textContent = label;
         if (disabled) btn.disabled = true;
         if (active) btn.classList.add("active");
-        btn.onclick = () => {
-            currentPage = page;
-            renderTable();
-        };
+        if (isEllipsis) {
+            btn.classList.add("ellipsis");
+            btn.disabled = true;
+        } else {
+            btn.onclick = () => {
+                currentPage = page;
+                renderTable();
+            };
+        }
         paginationControls.appendChild(btn);
     }
 
+    // Previous button
     addButton("Previous", currentPage - 1, currentPage === 1);
-    for (let i = 1; i <= totalPages; i++) {
+
+    // Always show first page
+    addButton(1, 1, false, 1 === currentPage);
+
+    // Calculate page range to show
+    let startPage, endPage;
+    const maxVisiblePages = 5; // Show max 5 page numbers
+    
+    if (totalPages <= maxVisiblePages) {
+        // Show all pages if total pages is less than max visible
+        startPage = 2;
+        endPage = totalPages - 1;
+    } else {
+        // Calculate range around current page
+        const sidePages = Math.floor((maxVisiblePages - 3) / 2); // Pages to show on each side of current
+        
+        startPage = Math.max(2, currentPage - sidePages);
+        endPage = Math.min(totalPages - 1, currentPage + sidePages);
+        
+        // Adjust if we're at the beginning
+        if (startPage === 2) {
+            endPage = startPage + (maxVisiblePages - 3);
+        }
+        // Adjust if we're at the end
+        if (endPage === totalPages - 1) {
+            startPage = endPage - (maxVisiblePages - 3);
+        }
+    }
+
+    // Add ellipsis after first page if needed
+    if (startPage > 2) {
+        addButton("...", null, true, false, true);
+    }
+
+    // Add middle pages
+    for (let i = startPage; i <= endPage; i++) {
         addButton(i, i, false, i === currentPage);
     }
+
+    // Add ellipsis before last page if needed
+    if (endPage < totalPages - 1) {
+        addButton("...", null, true, false, true);
+    }
+
+    // Always show last page if there's more than 1 page
+    if (totalPages > 1) {
+        addButton(totalPages, totalPages, false, totalPages === currentPage);
+    }
+
+    // Next button
     addButton("Next", currentPage + 1, currentPage === totalPages);
 }
 
