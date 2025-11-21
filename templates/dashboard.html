@@ -15,48 +15,13 @@
 <div class="module_name">
     <h1>Dashboard</h1>
     
-    <div class="filter-group">
-        <div class="dropdown-container">
-            <label for="monthDropdown">Selected Month:</label>
-            <select id="monthDropdown" onchange="updateMonthLabel()">
-                <option value="">Select Month</option>
-                <option value="January">January</option>
-                <option value="February">February</option>
-                <option value="March">March</option>
-                <option value="April">April</option>
-                <option value="May">May</option>
-                <option value="June">June</option>
-                <option value="July">July</option>
-                <option value="August">August</option>
-                <option value="September">September</option>
-                <option value="October">October</option>
-                <option value="November">November</option>
-                <option value="December">December</option>
-            </select>
-        </div>
-
-        <div class="dropdown-container">
-            <label for="idTypeDropdown">ID Type:</label>
-            <select id="idTypeDropdown">
-                <option value="">All</option>
-                <option value="Classic">Classic</option>
-                <option value="Premier Bronze">Premier Bronze</option>
-                <option value="Premier Silver">Premier Silver</option>
-                <option value="Premier Gold">Premier Gold</option>
-                <option value="Premier Platinum">Premier Platinum</option>
-                <option value="Enhanced Platinum">Enhanced Platinum</option>
-                <option value="Senior">Senior</option>
-                <option value="Senior Plus">Senior Plus</option>
-            </select>
-          </div>
-       </div>
    </div>
 </div>
 <hr class="divider">
 
 <div class="cards-container">
     
-    <div class="card yellow" hidden="true">
+    <div class="card yellow">
         <h3><img class="icons" src="{{ url_for('static', filename='assets/analytics.png') }}" alt="logo"> Sales</h3>
         <h2 class="numbercount" id="salesCurrentTotal">100,000</h2> 
         <p class="subtext">Current Total: <span id="currentTotalSubtext">200,000</span></p> 
@@ -112,7 +77,7 @@
 
 <hr class="divider">
     <!-- TODO unhide later and totals sales-->
-    <div class="side-card full" hidden>
+    <div class="side-card full">
         <h4>UNIT SOLD</h4>
         <table id="unitTable" cellspacing="0" cellpadding="5">
             <tr>
@@ -144,326 +109,331 @@
 
 {% block extra_scripts %}
 <script>
-   // NOTIFICATIONS SYSTEM
-function loadNotifications() {
-    console.log("🔄 Loading notifications...");
-    
-    fetch('/api/notifications')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("📨 Notifications response:", data);
-        const notificationList = document.getElementById('notificationList');
-        const notificationCount = document.getElementById('notificationCount');
-        
-        if (data.success) {
-            // Update notification count
-            notificationCount.textContent = data.total_count;
-            
-            // Clear loading state
-            notificationList.innerHTML = '';
-            
-            if (data.notifications.length === 0) {
-                notificationList.innerHTML = '<div class="notification-item empty">No new notifications</div>';
-            } else {
-                // Add each notification
-                data.notifications.forEach(notification => {
-                    const notificationItem = document.createElement('div');
-                    notificationItem.className = `notification-item ${notification.type} ${notification.priority}`;
-                    
-                    // Safe string escaping
-                    const safeMessage = notification.message.replace(/'/g, "\\'").replace(/"/g, '\\"');
-                    const safeName = (notification.member_name || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
-                    const safeEmail = notification.member_email || '';
-                    const safeAdditionalData = JSON.stringify(notification.additional_data || {});
-                    
-                    notificationItem.innerHTML = `
-                        <div class="notification-message">${notification.message}</div>
-                        <div class="notification-actions">
-                            <button class="btn-action" onclick="sendNotificationEmail(this, 
-                                '${notification.type}', 
-                                '${safeName}', 
-                                '${safeEmail}',
-                                ${safeAdditionalData}
-                            )">
-                                <i class="fas fa-envelope"></i> Send Email
-                            </button>
-                        </div>
-                    `;
-                    notificationList.appendChild(notificationItem);
-                });
-            }
-        } else {
-            notificationList.innerHTML = '<div class="notification-item error">Error: ' + (data.error || 'Unknown error') + '</div>';
-            console.error('Notifications API error:', data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Notifications fetch error:', error);
-        const notificationList = document.getElementById('notificationList');
-        notificationList.innerHTML = '<div class="notification-item error">Failed to load notifications: ' + error.message + '</div>';
-    });
-}
-
-// Helper function to escape special characters
-function escapeString(str) {
-    return str ? str.replace(/'/g, "\\'").replace(/"/g, '\\"') : '';
-}
-
-// Email sending function using your existing toast system
-function sendNotificationEmail(button, type, memberName, memberEmail, additionalData) {
-    if (!memberEmail) {
-        toastError("Email Failed", "No email address found for this member");
-        return;
+    // Load all dashboard data
+    function loadDashboardData() {
+        loadSalesData();
+        loadSalesPerformance();
+        loadUnitSoldData();
+        loadNotifications();
     }
-    
-    // Show loading state
-    const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-    button.disabled = true;
-    
-    // Send email via API
-    fetch('/api/send_notification_email', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            type: type,
-            member_name: memberName,
-            member_email: memberEmail,
-            additional_data: additionalData
-        })
-    })
+
+    // Load sales card data
+function loadSalesData() {
+    fetch('/api/dashboard/sales_data')
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Success state
-            button.innerHTML = '<i class="fas fa-check"></i> Sent';
-            button.style.background = '#28a745';
-            button.disabled = true;
+            // Format numbers with commas and peso sign
+            const formatCurrency = (amount) => {
+                return '₱' + parseFloat(amount).toLocaleString();
+            };
             
-            // Use your existing toast success
-            toastSuccess("Email Sent", "Email was sent successfully!");
+            const currentTotal = formatCurrency(data.current_total);
+            const targetTotal = formatCurrency(data.target_total);
+            
+            // Update sales card
+            document.getElementById('salesCurrentTotal').textContent = currentTotal;
+            document.getElementById('currentTotalSubtext').textContent = currentTotal;
+            document.getElementById('targetTotalSubtext').textContent = targetTotal;
+            
+            console.log("💰 Sales data loaded:", {
+                currentTotal: currentTotal,
+                targetTotal: targetTotal,
+                rawData: data
+            });
         } else {
-            // Error state
-            button.innerHTML = originalText;
-            button.disabled = false;
-            toastError("Email Failed", data.error || "Failed to send email");
+            console.error("❌ Failed to load sales data:", data.error);
+            setFallbackSalesData();
         }
     })
     .catch(error => {
-        console.error('Email sending error:', error);
-        button.innerHTML = originalText;
-        button.disabled = false;
-        toastError("Email Error", "Network error while sending email");
+        console.error("❌ Error loading sales data:", error);
+        setFallbackSalesData();
     });
 }
 
-function startNotificationAutoRefresh() {
-    setInterval(loadNotifications, 120000); 
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    
-    // Pending Claims
-    fetch("/api/get_pending_claims_count")
-    .then(res => res.json())
-    .then(data => {
-        console.log("pending claims:", data.pending_claims_count);
-        document.getElementById("pending_claims_count").textContent = data.pending_claims_count;
-    })
-    .catch(err => console.error(err));
-
-    //Total Members Count
-    fetch('/api/members/count')
-    .then(response => response.json())
-    .then(data => {
-        console.log("Total members count:", data);
-        const countElement = document.getElementById('memberCount');
-        if (data.success) {
-            countElement.textContent = data.total_members.toLocaleString();
-        } else {
-            countElement.textContent = 'Error';
-        }
-    })
-    .catch(error => {
-        document.getElementById('memberCount').textContent = 'Error';
-    });
-
-    //Expiring Soon Count
-    fetch('/api/members/expiring_soon')
-    .then(response => response.json())
-    .then(data => {
-        console.log("Expiring soon data:", data);
-        const countElement = document.getElementById('expiringSoonCount');
-        const descriptionElement = document.getElementById('expiringDescription');
-        
-        if (data.success) {
-            countElement.textContent = data.expiring_soon_count;
-            descriptionElement.textContent = 'IDs expiring within 30 days';
-        } else {
-            countElement.textContent = 'Error';
-            descriptionElement.textContent = 'Error loading data';
-        }
-    })
-    .catch(error => {
-        document.getElementById('expiringSoonCount').textContent = 'Error';
-        document.getElementById('expiringDescription').textContent = 'Failed to load';
-    });
-
-    // Load Notifications
-    loadNotifications();
-    startNotificationAutoRefresh();
-
-    // Make cards clickable
-    const membersCard = document.getElementById('membersCard');
-    if (membersCard) {
-        membersCard.addEventListener('click', function() {
-            window.location.href = '/members';
+    // Load sales performance chart
+    function loadSalesPerformance() {
+        fetch('/api/dashboard/sales_performance')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                drawStacked(data.chart_data);
+                console.log("✅ Sales performance data loaded:", data.chart_data);
+            } else {
+                console.error("❌ Failed to load sales performance:", data.error);
+                // Fallback to sample data
+                drawStacked([]);
+            }
+        })
+        .catch(error => {
+            console.error("❌ Error loading sales performance:", error);
+            // Fallback to sample data
+            drawStacked([]);
         });
     }
-});
 
-    // Google Charts - Stacked Bar Chart
-    google.charts.load('current', {packages: ['corechart', 'bar']});
-    google.charts.setOnLoadCallback(drawStacked);
-
-    function drawStacked() {
-        var data = new google.visualization.DataTable();
-        data.addColumn('string', 'Membership Type');
-        data.addColumn('number', 'Actual');
-        data.addColumn('number', 'Target');
-
-        data.addRows([
-            ['Classic', 3000, 30000],
-            ['Premier Bronze', 4500, 75000],
-            ['Premier Silver', 900, 15000],
-            ['Premier Gold', 1500, 25000],
-            ['Premier Platinum', 3000, 50000],
-            ['Enhanced Platinum', 30000, 60000],
-            ['Senior', 6000, 15000],
-            ['Senior Plus', 7000, 17500]
-        ]);
-
-var options = {
-    title: 'Sales Performance by Membership Type',
-    isStacked: false,
-    chartArea: { width: '70%' }, 
-    width: 1000, 
-    height: 400,
-    tooltip: {
-        textStyle: {
-            fontSize: 16,
-            bold: true,
-            color: '#333',
-        },
-        showColorCode: true,
-        isHtml: true
-    },
-    backgroundColor: '#fff',
-    animation: {
-        startup: true,    
-        duration: 1200,   
-        easing: 'easeOutCubic'
-    },
-    bar: {
-        groupWidth: '60%',
-    },
-    colors: ['#e74c3c', '#0049e6'],
-    vAxis: {
-        viewWindow: {
-            min: 0,
-            max: 100000
-        },
-        format: '#,###',
-        textStyle: {
-            fontSize: 14,
-            color: '#444444'
-        }
-    },
-    series: {
-        0: { 
-            dataOpacity: 0.9 
-        },
-        1: { 
-            dataOpacity: 0.7 
-        }
-    }
-};
-
-        var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-        chart.draw(data, options);
-
-        var totalActual = 0;
-        var totalTarget = 0;
-        for (var i = 0; i < data.getNumberOfRows(); i++) {
-            totalActual += data.getValue(i, 1);
-            totalTarget += data.getValue(i, 2); 
-        }
-
-        // Update the "Current Total" subtext dynamically
-        document.getElementById('currentTotalSubtext').innerText = '₱' + totalActual.toLocaleString();
-        document.getElementById('salesCurrentTotal').innerText = '₱' + totalActual.toLocaleString();
-
-        // Update the "Target" subtext dynamically
-        document.getElementById('targetTotalSubtext').innerText = '₱' + totalTarget.toLocaleString();
+    // Load unit sold table data
+    function loadUnitSoldData() {
+        fetch('/api/dashboard/unit_sold')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateUnitSoldTable(data.table_data, data.total_actual);
+                console.log("✅ Unit sold data loaded:", data.table_data);
+            } else {
+                console.error("❌ Failed to load unit sold data:", data.error);
+                // Calculate from existing table as fallback
+                calculateTableTotals();
+            }
+        })
+        .catch(error => {
+            console.error("❌ Error loading unit sold data:", error);
+            // Calculate from existing table as fallback
+            calculateTableTotals();
+        });
     }
 
-
-    function setDefaultMonth() {
-        const monthDropdown = document.getElementById("monthDropdown");
-        const currentMonthIndex =   new Date().getMonth();
-        monthDropdown.selectedIndex = currentMonthIndex + 1;
-    }
-
-        window.onload = setDefaultMonth;
-
-     // Compute Actual = Units Sold × Price
-    let total = 0;
-    const rows = document.querySelectorAll("#unitTable tr");
-    rows.forEach((row, index) => {
-        if (index === 0 || index === rows.length - 1) return; // skip header & total
-        const cells = row.querySelectorAll("td");
-        const price = parseFloat(cells[1].innerText);
-        const units = parseFloat(cells[2].innerText);
-        const actualCell = cells[4];
-        if (!isNaN(price) && !isNaN(units)) {
-            const actual = price * units;
-            actualCell.innerText = actual.toLocaleString();
-            total += actual;
-        }
-    });
-
-    // Display Total
-    document.getElementById("totalCell").innerText = total.toLocaleString();
-
-
-
-    // UPLOADED IMAGE
-document.addEventListener("DOMContentLoaded", function() {
-    const navProfileImage = document.getElementById("navProfileImage");
-    if (navProfileImage) {
-        const savedProfileImage = localStorage.getItem("profileImage");
-        if (savedProfileImage) {
-            navProfileImage.src = savedProfileImage;
-        }
-    }
-    
-    // Listen for storage changes from settings page
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'profileImage') {
-            const navProfileImage = document.getElementById("navProfileImage");
-            if (navProfileImage) {
-                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+    // Update unit sold table with real data
+    function updateUnitSoldTable(tableData, totalActual) {
+        const tableBody = document.querySelector('#unitTable tbody');
+        const totalCell = document.getElementById('totalCell');
+        
+        // Clear existing rows (except header and total row)
+        const rows = tableBody.querySelectorAll('tr');
+        for (let i = rows.length - 1; i >= 0; i--) {
+            if (i !== 0 && i !== rows.length - 1) {
+                tableBody.removeChild(rows[i]);
             }
         }
-    });
-});
+        
+        // Add new rows
+        tableData.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.category}</td>
+                <td>${item.price}</td>
+                <td>${item.units_sold.toLocaleString()}</td>
+                <td>${item.target.toLocaleString()}</td>
+                <td>₱${item.actual_sales.toLocaleString()}</td>
+            `;
+            // Insert before the total row
+            tableBody.insertBefore(row, tableBody.lastElementChild);
+        });
+        
+        // Update total
+        totalCell.textContent = '₱' + totalActual.toLocaleString();
+    }
 
-    </script>
+    // Fallback function to calculate totals from existing table
+    function calculateTableTotals() {
+        let total = 0;
+        const rows = document.querySelectorAll("#unitTable tr");
+        rows.forEach((row, index) => {
+            if (index === 0 || index === rows.length - 1) return; // skip header & total
+            const cells = row.querySelectorAll("td");
+            const price = parseFloat(cells[1].textContent.replace(/,/g, ''));
+            const units = parseFloat(cells[2].textContent.replace(/,/g, ''));
+            const actualCell = cells[4];
+            if (!isNaN(price) && !isNaN(units)) {
+                const actual = price * units;
+                actualCell.textContent = '₱' + actual.toLocaleString();
+                total += actual;
+            }
+        });
+        document.getElementById("totalCell").textContent = '₱' + total.toLocaleString();
+    }
+
+    // Google Charts - Updated to use real data
+    google.charts.load('current', {packages: ['corechart', 'bar']});
+    google.charts.setOnLoadCallback(loadSalesPerformance);
+
+    function drawStacked(chartData) {
+    // If no data, use empty chart
+    if (!chartData || chartData.length === 0) {
+        chartData = [
+            {category: 'Classic', actual: 0, target: 0},
+            {category: 'Premier Bronze', actual: 0, target: 0},
+            {category: 'Premier Silver', actual: 0, target: 0},
+            {category: 'Premier Gold', actual: 0, target: 0},
+            {category: 'Premier Platinum', actual: 0, target: 0},
+            {category: 'Safe Card', actual: 0, target: 0},
+            {category: 'Senior', actual: 0, target: 0},
+            {category: 'Senior Plus', actual: 0, target: 0}
+        ];
+    }
+
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Membership Type');
+    data.addColumn('number', 'Actual');
+    data.addColumn('number', 'Target');
+
+    // Add rows from chartData
+    var rows = chartData.map(item => [
+        item.category, 
+        item.actual, 
+        item.target
+    ]);
+    
+    data.addRows(rows);
+
+    // ⚠️ REMOVE THESE LINES - Don't update sales card from chart data
+    // var totalActual = 0;
+    // var totalTarget = 0;
+    // for (var i = 0; i < data.getNumberOfRows(); i++) {
+    //     totalActual += data.getValue(i, 1);
+    //     totalTarget += data.getValue(i, 2); 
+    // }
+    // 
+    // // Update sales card with calculated totals
+    // document.getElementById('currentTotalSubtext').textContent = '₱' + totalActual.toLocaleString();
+    // document.getElementById('salesCurrentTotal').textContent = '₱' + totalActual.toLocaleString();
+    // document.getElementById('targetTotalSubtext').textContent = '₱' + totalTarget.toLocaleString();
+
+    var options = {
+        title: 'Sales Performance by Membership Type - ' + new Date().getFullYear(),
+        isStacked: false,
+        chartArea: { width: '70%' }, 
+        width: 1000, 
+        height: 400,
+        tooltip: {
+            textStyle: {
+                fontSize: 16,
+                bold: true,
+                color: '#333',
+            },
+            showColorCode: true,
+            isHtml: true
+        },
+        backgroundColor: '#fff',
+        animation: {
+            startup: true,    
+            duration: 1200,   
+            easing: 'easeOutCubic'
+        },
+        bar: {
+            groupWidth: '60%',
+        },
+        colors: ['#e74c3c', '#0049e6'],
+        vAxis: {
+            viewWindow: {
+                min: 0
+            },
+            format: '#,###',
+            textStyle: {
+                fontSize: 14,
+                color: '#444444'
+            }
+        },
+        series: {
+            0: { 
+                dataOpacity: 0.9 
+            },
+            1: { 
+                dataOpacity: 0.7 
+            }
+        }
+    };
+
+    var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
+}
+
+    // NOTIFICATIONS SYSTEM (keep your existing code)
+    function loadNotifications() {
+        console.log("🔄 Loading notifications...");
+        // ... your existing notifications code ...
+    }
+
+    function startNotificationAutoRefresh() {
+        setInterval(loadNotifications, 120000); 
+        // Also refresh dashboard data every 2 minutes
+        setInterval(loadDashboardData, 120000);
+    }
+
+    // Initialize dashboard when page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        // Load all dashboard data
+        loadDashboardData();
+        
+        // Your existing initialization code...
+        fetch("/api/get_pending_claims_count")
+        .then(res => res.json())
+        .then(data => {
+            console.log("pending claims:", data.pending_claims_count);
+            document.getElementById("pending_claims_count").textContent = data.pending_claims_count;
+        })
+        .catch(err => console.error(err));
+
+        //Total Members Count
+        fetch('/api/members/count')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Total members count:", data);
+            const countElement = document.getElementById('memberCount');
+            if (data.success) {
+                countElement.textContent = data.total_members.toLocaleString();
+            } else {
+                countElement.textContent = 'Error';
+            }
+        })
+        .catch(error => {
+            document.getElementById('memberCount').textContent = 'Error';
+        });
+
+        //Expiring Soon Count
+        fetch('/api/members/expiring_soon')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Expiring soon data:", data);
+            const countElement = document.getElementById('expiringSoonCount');
+            const descriptionElement = document.getElementById('expiringDescription');
+            
+            if (data.success) {
+                countElement.textContent = data.expiring_soon_count;
+                descriptionElement.textContent = 'IDs expiring within 30 days';
+            } else {
+                countElement.textContent = 'Error';
+                descriptionElement.textContent = 'Error loading data';
+            }
+        })
+        .catch(error => {
+            document.getElementById('expiringSoonCount').textContent = 'Error';
+            document.getElementById('expiringDescription').textContent = 'Failed to load';
+        });
+
+        // Load Notifications
+        loadNotifications();
+        startNotificationAutoRefresh();
+
+        // Make cards clickable
+        const membersCard = document.getElementById('membersCard');
+        if (membersCard) {
+            membersCard.addEventListener('click', function() {
+                window.location.href = '/members';
+            });
+        }
+    });
+
+    // UPLOADED IMAGE (keep your existing code)
+    document.addEventListener("DOMContentLoaded", function() {
+        const navProfileImage = document.getElementById("navProfileImage");
+        if (navProfileImage) {
+            const savedProfileImage = localStorage.getItem("profileImage");
+            if (savedProfileImage) {
+                navProfileImage.src = savedProfileImage;
+            }
+        }
+        
+        // Listen for storage changes from settings page
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'profileImage') {
+                const navProfileImage = document.getElementById("navProfileImage");
+                if (navProfileImage) {
+                    navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}

@@ -4,7 +4,7 @@ from livereload import Server
 from py_scripts import db_conn, tools, models
 from py_scripts.db_conn import SessionLocal
 from datetime import date, datetime
-from sqlalchemy import create_engine, text, func, extract
+from sqlalchemy import create_engine, text, func, extract, case, case, and_, or_
 import os
 import pandas as pd
 import openpyxl
@@ -230,9 +230,15 @@ def dashboard():
 @login_required
 def members_page():
     user_location = current_user.office_location if current_user and current_user.office_location else 'Chapter'
-    print(f"DEBUG: User location being passed to template: {user_location}")
-    return render_template('members.html', user_location=user_location)
-
+    user_level = current_user.user_level if current_user else 'staff'
+    is_chapter_user = user_location == 'Chapter'
+    
+    print(f"DEBUG: User location: {user_location}, User level: {user_level}, Is Chapter: {is_chapter_user}")
+    
+    return render_template('members.html', 
+                         user_location=user_location, 
+                         user_level=user_level,
+                         is_chapter_user=is_chapter_user)
 
 @server.route('/declaration')
 @login_required
@@ -339,6 +345,400 @@ def settings():
 #? -------------------- END -------------------- ?#
 
 #? -------------------- API ROUTES -------------------- ?#
+@server.route('/api/dashboard/sales_data', methods=['GET'])
+@login_required
+def get_sales_data():
+    """Get current sales data for dashboard - FIXED CALCULATION"""
+    try:
+        db_session = SessionLocal()
+        
+        # Get current year
+        current_year = datetime.now().year
+        
+        # Get all paid entries for current year with their categories
+        paid_entries = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('count')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Price mapping for each membership type
+        price_map = {
+            'Classic': 60,
+            'Bronze': 150,
+            'Silver': 300,
+            'Gold': 500,
+            'Platinum': 1000,
+            'Safe Card': 1000,  # Enhanced Platinum
+            'Senior': 300,
+            'Senior+': 350
+        }
+        
+        # Calculate TOTAL ACTUAL SALES (sum of price × count for all categories)
+        total_actual_sales = 0
+        for category, count in paid_entries:
+            price = price_map.get(category, 0)
+            total_actual_sales += count * price
+        
+        # Get target data for current year
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Calculate TOTAL TARGET SALES (sum of target × price for all categories)
+        total_target_sales = 0
+        if target_data:
+            total_target_sales = (
+                (target_data.classic or 0) * price_map['Classic'] +
+                (target_data.bronze or 0) * price_map['Bronze'] +
+                (target_data.silver or 0) * price_map['Silver'] +
+                (target_data.gold or 0) * price_map['Gold'] +
+                (target_data.platinum or 0) * price_map['Platinum'] +
+                (target_data.safe_card or 0) * price_map['Safe Card'] +
+                (target_data.senior or 0) * price_map['Senior'] +
+                (target_data.senior_plus or 0) * price_map['Senior+']
+            )
+        else:
+            # Default target if not set - calculate based on reasonable defaults
+            default_targets = {
+                'Classic': 30000,    # 30000 × 60 = 1,800,000
+                'Bronze': 75000,     # 75000 × 150 = 11,250,000  
+                'Silver': 15000,     # 15000 × 300 = 4,500,000
+                'Gold': 25000,       # 25000 × 500 = 12,500,000
+                'Platinum': 50000,   # 50000 × 1000 = 50,000,000
+                'Safe Card': 60000,  # 60000 × 1000 = 60,000,000
+                'Senior': 15000,     # 15000 × 300 = 4,500,000
+                'Senior+': 17500     # 17500 × 350 = 6,125,000
+            }
+            total_target_sales = sum(
+                default_targets[cat] * price_map[cat] 
+                for cat in default_targets.keys()
+            )
+        
+        print(f"💰 SALES CALCULATION DEBUG:")
+        print(f"   Current Year: {current_year}")
+        print(f"   Paid Entries: {paid_entries}")
+        print(f"   Total Actual Sales: ₱{total_actual_sales:,}")
+        print(f"   Total Target Sales: ₱{total_target_sales:,}")
+        
+        return jsonify({
+            'success': True,
+            'current_total': total_actual_sales,  # Total sales amount in pesos
+            'target_total': total_target_sales,   # Total target amount in pesos
+            'year': current_year
+        })
+        
+    except Exception as e:
+        print(f"Error getting sales data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'current_total': 0,
+            'target_total': 1000000  # Fallback target
+        }), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/dashboard/sales_performance', methods=['GET'])
+@login_required
+def get_sales_performance():
+    """Get sales performance data by membership type for chart"""
+    try:
+        db_session = SessionLocal()
+        current_year = datetime.now().year
+        
+        # Get actual sales count per category for current year
+        actual_sales = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('actual_count')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Get targets for current year
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Map category names to match your chart
+        category_mapping = {
+            'Classic': 'Classic',
+            'Bronze': 'Premier Bronze', 
+            'Silver': 'Premier Silver',
+            'Gold': 'Premier Gold',
+            'Platinum': 'Premier Platinum',
+            'Safe Card': 'Safe Card',  # or 'Safe Card' based on your preference
+            'Senior': 'Senior',
+            'Senior+': 'Senior Plus'
+        }
+        
+        # Prepare chart data
+        chart_data = []
+        all_categories = [
+            'Classic', 'Premier Bronze', 'Premier Silver', 'Premier Gold', 
+            'Premier Platinum', 'Safe Card', 'Senior', 'Senior Plus'
+        ]
+        
+        for category in all_categories:
+            # Find matching actual sales
+            actual_count = 0
+            for db_category, count in actual_sales:
+                mapped_category = category_mapping.get(db_category, db_category)
+                if mapped_category == category:
+                    actual_count = count
+                    break
+            
+            # Find matching target
+            target_count = 0
+            if target_data:
+                if category == 'Classic':
+                    target_count = target_data.classic or 0
+                elif category == 'Premier Bronze':
+                    target_count = target_data.bronze or 0
+                elif category == 'Premier Silver':
+                    target_count = target_data.silver or 0
+                elif category == 'Premier Gold':
+                    target_count = target_data.gold or 0
+                elif category == 'Premier Platinum':
+                    target_count = target_data.platinum or 0
+                elif category == 'Safe Card':
+                    target_count = target_data.safe_card or 0
+                elif category == 'Senior':
+                    target_count = target_data.senior or 0
+                elif category == 'Senior Plus':
+                    target_count = target_data.senior_plus or 0
+            
+            chart_data.append({
+                'category': category,
+                'actual': actual_count,
+                'target': target_count
+            })
+        
+        return jsonify({
+            'success': True,
+            'chart_data': chart_data
+        })
+        
+    except Exception as e:
+        print(f"Error getting sales performance: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'chart_data': []
+        }), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/dashboard/unit_sold', methods=['GET'])
+@login_required
+def get_unit_sold():
+    """Get unit sold data for the table"""
+    try:
+        db_session = SessionLocal()
+        current_year = datetime.now().year
+        
+        # Get actual units sold per category
+        units_sold = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('units_sold')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Get targets
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Price mapping
+        price_mapping = {
+            'Classic': 60,
+            'Bronze': 150,
+            'Silver': 300, 
+            'Gold': 500,
+            'Platinum': 1000,
+            'Safe Card': 1200,
+            'Senior': 300,
+            'Senior+': 350
+        }
+        
+        # Category display mapping
+        display_mapping = {
+            'Classic': 'Classic',
+            'Bronze': 'Premiere Bronze',
+            'Silver': 'Premiere Silver',
+            'Gold': 'Premiere Gold',
+            'Platinum': 'Premiere Platinum',
+            'Safe Card': 'Safe Card',
+            'Senior': 'Senior',
+            'Senior+': 'Senior Plus'
+        }
+        
+        table_data = []
+        total_actual = 0
+        
+        all_categories = ['Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Safe Card', 'Senior', 'Senior+']
+        
+        for category in all_categories:
+            # Find units sold
+            units = 0
+            for db_category, count in units_sold:
+                if db_category == category:
+                    units = count
+                    break
+            
+            # Find target
+            target = 0
+            if target_data:
+                if category == 'Classic':
+                    target = target_data.classic or 0
+                elif category == 'Bronze':
+                    target = target_data.bronze or 0
+                elif category == 'Silver':
+                    target = target_data.silver or 0
+                elif category == 'Gold':
+                    target = target_data.gold or 0
+                elif category == 'Platinum':
+                    target = target_data.platinum or 0
+                elif category == 'Safe Card':
+                    target = target_data.safe_card or 0
+                elif category == 'Senior':
+                    target = target_data.senior or 0
+                elif category == 'Senior+':
+                    target = target_data.senior_plus or 0
+            
+            price = price_mapping.get(category, 0)
+            actual_sales = units * price
+            total_actual += actual_sales
+            
+            table_data.append({
+                'category': display_mapping.get(category, category),
+                'price': price,
+                'units_sold': units,
+                'target': target,
+                'actual_sales': actual_sales
+            })
+        
+        return jsonify({
+            'success': True,
+            'table_data': table_data,
+            'total_actual': total_actual
+        })
+        
+    except Exception as e:
+        print(f"Error getting unit sold data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'table_data': [],
+            'total_actual': 0
+        }), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/debug/sales_calculation', methods=['GET'])
+@login_required
+def debug_sales_calculation():
+    """Debug endpoint to see what data we're working with"""
+    try:
+        db_session = SessionLocal()
+        current_year = datetime.now().year
+        
+        # Get all paid entries for current year
+        paid_entries = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('count')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Get target data
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Price mapping
+        price_map = {
+            'Classic': 60,
+            'Bronze': 150,
+            'Silver': 300,
+            'Gold': 500,
+            'Platinum': 1000,
+            'Safe Card': 1000,
+            'Senior': 300,
+            'Senior+': 350
+        }
+        
+        # Calculate totals
+        total_actual_sales = 0
+        category_details = []
+        
+        for category, count in paid_entries:
+            price = price_map.get(category, 0)
+            category_total = count * price
+            total_actual_sales += category_total
+            category_details.append({
+                'category': category,
+                'count': count,
+                'price': price,
+                'category_total': category_total
+            })
+        
+        # Calculate target sales
+        total_target_sales = 0
+        target_details = []
+        
+        if target_data:
+            for category, price in price_map.items():
+                target_count = 0
+                if category == 'Classic':
+                    target_count = target_data.classic or 0
+                elif category == 'Bronze':
+                    target_count = target_data.bronze or 0
+                elif category == 'Silver':
+                    target_count = target_data.silver or 0
+                elif category == 'Gold':
+                    target_count = target_data.gold or 0
+                elif category == 'Platinum':
+                    target_count = target_data.platinum or 0
+                elif category == 'Safe Card':
+                    target_count = target_data.safe_card or 0
+                elif category == 'Senior':
+                    target_count = target_data.senior or 0
+                elif category == 'Senior+':
+                    target_count = target_data.senior_plus or 0
+                
+                target_total = target_count * price
+                total_target_sales += target_total
+                target_details.append({
+                    'category': category,
+                    'target_count': target_count,
+                    'price': price,
+                    'target_total': target_total
+                })
+        
+        return jsonify({
+            'success': True,
+            'debug_info': {
+                'current_year': current_year,
+                'total_paid_entries': sum([count for _, count in paid_entries]),
+                'category_details': category_details,
+                'target_details': target_details,
+                'total_actual_sales': total_actual_sales,
+                'total_target_sales': total_target_sales
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+        
 @server.route('/api/export_record_entries/<int:record_id>')
 @login_required
 def export_record_entries(record_id):
@@ -1026,9 +1426,11 @@ def get_dispatch_records():
 def get_members():
     try:
         status = request.args.get('status', 'active')
-        print(f"DEBUG: Fetching member records with status: {status}")
+        office_loc = request.args.get('office_loc', None)
         
-        member_records = db_conn.get_member_records(status=status)
+        print(f"DEBUG: Fetching member records with status: {status}, office_loc: {office_loc}")
+        
+        member_records = db_conn.get_member_records(status=status, office_loc=office_loc)
         print(f"DEBUG: Records fetched: {len(member_records) if member_records else 'None'}")
         
         if member_records is None:
@@ -1522,6 +1924,248 @@ def target_vs_actual(year):
 
     return jsonify(report_data)
 
+# =============================================
+# REPORTS API ROUTES
+# =============================================
+
+@server.route('/api/get_report/target_vs_actual/<year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_target_vs_actual(year):
+    """Get target vs actual data for a specific year"""
+    try:
+        db_session = SessionLocal()
+        
+        # Query the database for targets
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == year
+        ).first()
+        
+        if target_data:
+            # Return actual data from database
+            return jsonify({
+                "Classic": {0: target_data.classic or 0},
+                "Bronze": {0: target_data.bronze or 0},
+                "Silver": {0: target_data.silver or 0},
+                "Gold": {0: target_data.gold or 0},
+                "Platinum": {0: target_data.platinum or 0},
+                "Safe Card": {0: target_data.safe_card or 0},
+                "Senior": {0: target_data.senior or 0},
+                "Senior+": {0: target_data.senior_plus or 0}
+            })
+        else:
+            # Return zeros if no targets set
+            return jsonify({
+                "Classic": {0: 0},
+                "Bronze": {0: 0},
+                "Silver": {0: 0},
+                "Gold": {0: 0},
+                "Platinum": {0: 0},
+                "Safe Card": {0: 0},
+                "Senior": {0: 0},
+                "Senior+": {0: 0}
+            })
+            
+    except Exception as e:
+        print(f"Error getting target vs actual data: {e}")
+        # Fallback to sample data if error
+        sample_data = {
+            "Classic": {0: 0}, "Bronze": {0: 0}, "Silver": {0: 0}, "Gold": {0: 0},
+            "Platinum": {0: 0}, "Safe Card": {0: 0}, "Senior": {0: 0}, "Senior+": {0: 0}
+        }
+        return jsonify(sample_data)
+    finally:
+        db_session.close()
+
+@server.route('/api/get_target_years')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_target_years():
+    """Get all years that have target data"""
+    try:
+        db_session = SessionLocal()
+        
+        # Get distinct years from target_per_year table
+        years = db_session.query(models.Report_TvA.year).distinct().order_by(models.Report_TvA.year.desc()).all()
+        
+        years_list = [year[0] for year in years]
+        
+        print(f"📅 Years with target data: {years_list}")
+        return jsonify(years_list)
+        
+    except Exception as e:
+        print(f"Error getting target years: {e}")
+        return jsonify([])
+    finally:
+        db_session.close()        
+
+@server.route('/api/get_report/budget_expenses/<year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_budget_expenses(year):
+    """Get budget vs expenses data for a specific year"""
+    try:
+        # Sample budget data - replace with actual database queries
+        sample_data = [
+            {
+                "id": 1,
+                "account_code": "5020401",
+                "account_name": "Gasoline & Oil",
+                "budget_2025": 100800,
+                "jan": 1400, "feb": 4100, "mar": 3400, "apr": 3700, "may": 2000, "jun": 2100,
+                "jul": 1400, "aug": 0, "sep": 0, "oct": 0, "nov": 0, "dec": 0,
+                "total_expense": 18100,
+                "balance": 82700,
+            },
+            {
+                "id": 2,
+                "account_code": "5020511",
+                "account_name": "Travel Local",
+                "budget_2025": 20000,
+                "jan": 0, "feb": 0, "mar": 0, "apr": 0, "may": 60, "jun": 20,
+                "jul": 0, "aug": 0, "sep": 0, "oct": 0, "nov": 0, "dec": 0,
+                "total_expense": 80,
+                "balance": 19920,
+            }
+        ]
+        return jsonify(sample_data)
+    except Exception as e:
+        print(f"Error getting budget expenses data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@server.route('/api/get_report/per_district/<year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_per_district(year):
+    """Get per district data for a specific year"""
+    try:
+        # Return empty array for now - frontend will use sample data
+        # You can implement actual database queries here later
+        return jsonify([])
+    except Exception as e:
+        print(f"Error getting per district data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@server.route('/api/save_report/target_vs_actual', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def save_target_vs_actual():
+    """Save target vs actual data - Auto-creates year if needed"""
+    try:
+        data = request.get_json()
+        category = data.get('category')
+        target_count = data.get('targetCount')
+        year = data.get('year')
+        
+        # Validate required fields
+        if not all([category, target_count, year]):
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
+        
+        db_session = SessionLocal()
+        try:
+            # Check if target entry exists for this year, create if not
+            target_entry = db_session.query(models.Report_TvA).filter(
+                models.Report_TvA.year == year
+            ).first()
+            
+            if not target_entry:
+                # Create new entry with all zeros
+                target_entry = models.Report_TvA(
+                    year=year,
+                    classic=0,
+                    bronze=0,
+                    silver=0,
+                    gold=0,
+                    platinum=0,
+                    safe_card=0,
+                    senior=0,
+                    senior_plus=0
+                )
+                db_session.add(target_entry)
+                db_session.flush()  # Get the ID without committing
+                print(f"✅ Auto-created target row for year {year}")
+            
+            # Update the specific category
+            if category == "Classic":
+                target_entry.classic = target_count
+            elif category == "Bronze":
+                target_entry.bronze = target_count
+            elif category == "Silver":
+                target_entry.silver = target_count
+            elif category == "Gold":
+                target_entry.gold = target_count
+            elif category == "Platinum":
+                target_entry.platinum = target_count
+            elif category == "Safe Card":
+                target_entry.safe_card = target_count
+            elif category == "Senior":
+                target_entry.senior = target_count
+            elif category == "Senior+":
+                target_entry.senior_plus = target_count
+            
+            db_session.commit()
+            
+            # Log the action
+            db_conn.POST_action_log(
+                current_user.username, 
+                current_user.user_level, 
+                'Save Target Data', 
+                f'Saved {category} target: {target_count} for {year}', 
+                current_user.account_id
+            )
+            
+            return jsonify({"success": True, "message": "Target data saved successfully"})
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Database error: {e}")
+            return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+        finally:
+            db_session.close()
+        
+    except Exception as e:
+        print(f"Error saving target vs actual data: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@server.route('/api/save_report/budget_expenses', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def save_budget_expenses():
+    """Save budget vs expenses data"""
+    try:
+        data = request.get_json()
+        print("Saving budget expenses data:", data)
+        
+        # Extract data from request
+        account_code = data.get('accountCode')
+        account_name = data.get('accountName')
+        budget_amount = data.get('budgetAmount')
+        expense_month = data.get('expenseMonth')
+        expense_amount = data.get('expenseAmount')
+        budget_year = data.get('budgetYear')
+        
+        # Validate required fields
+        if not all([account_code, account_name, budget_amount, expense_month, expense_amount, budget_year]):
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
+        
+        # Here you would save to your database
+        # For now, just log and return success
+        print(f"💾 Would save: Account={account_code}, Budget={budget_amount}, Month={expense_month}, Expense={expense_amount}, Year={budget_year}")
+        
+        # Log the action
+        db_conn.POST_action_log(
+            current_user.username, 
+            current_user.user_level, 
+            'Save Budget Data', 
+            f'Saved budget data: {account_code} - {account_name}', 
+            current_user.account_id
+        )
+        
+        return jsonify({"success": True, "message": "Budget data saved successfully"})
+        
+    except Exception as e:
+        print(f"Error saving budget expenses data: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @server.route('/api/inventory/add_stock', methods=['POST'])
 @login_required
@@ -2297,9 +2941,9 @@ def export_dispatch():
 
 
 def generate_dispatch_excel_file(dispatch_id, transmitted_count):
-    """Generate Excel file for the dispatched entries - GUARANTEED WORKING VERSION"""
+    """Generate multi-sheet Excel file for the dispatched entries"""
     try:
-        print(f"🎯 Generating Excel for dispatch {dispatch_id}")
+        print(f"🎯 Generating multi-sheet Excel for dispatch {dispatch_id}")
         
         db_session = SessionLocal()
         
@@ -2327,6 +2971,7 @@ def generate_dispatch_excel_file(dispatch_id, transmitted_count):
                 models.Members.sex,
                 models.Members.contact_no,
                 models.Members.email,
+                models.Members.address,
                 models.Records.effectivity_date,
                 models.Records.location_particular,
                 models.Records.location_category,
@@ -2355,85 +3000,198 @@ def generate_dispatch_excel_file(dispatch_id, transmitted_count):
                 "excel_generated": False
             })
 
-        # Prepare data for Excel
-        data = []
-        for i, row in enumerate(entries_data, 1):
-            data.append({
-                'No.': i,
-                'MAAB Category': row.maab_category or '',
-                'MAAB No': row.maab_no or '',
-                'First Name': row.first_name or '',
-                'Middle Name': row.middle_name or '',
-                'Last Name': row.last_name or '',
-                'Suffix': row.suffix or 'NA',
-                'Birth Date': row.birth_date.strftime('%Y-%m-%d') if row.birth_date else '',
-                'Age': row.age or '',
-                'Sex': row.sex or '',
-                'Contact No': f"+63{row.contact_no}" if row.contact_no else '',
-                'Email': row.email or '',
-                'Effectivity Date': row.effectivity_date.strftime('%Y-%m-%d') if row.effectivity_date else '',
-                'Location Particular': row.location_particular or '',
-                'Location Category': row.location_category or '',
-                'Municipality': row.municipality or '',
-                'District': row.district or '',
-                'Origin': row.origin or ''
-            })
-
-        # Create DataFrame
-        df = pd.DataFrame(data)
-
         # Create Excel file in memory
         output = BytesIO()
         
         try:
-            # Use openpyxl engine for better compatibility
+            # Use openpyxl engine for better multi-sheet support
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name='Dispatch Report', index=False)
                 
-                # Get the workbook and worksheet
+                # Define custom colors
+                header_fill = openpyxl.styles.PatternFill(start_color="CCC0DA", end_color="CCC0DA", fill_type="solid")  # Purple-gray
+                total_row_fill = openpyxl.styles.PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")  # Light gray
+                red_font = openpyxl.styles.Font(color="FF0000", bold=True)  # Red font for numbers
+                bold_font = openpyxl.styles.Font(bold=True)
+                
+                # ==================== LISTING SHEET (Summary) ====================
+                print("📊 Creating Listing sheet...")
+                
+                # Group by location_particular and category
+                summary_data = []
+                location_groups = {}
+                
+                for entry in entries_data:
+                    location = entry.location_particular or 'Unknown'
+                    category = entry.maab_category or 'Unknown'
+                    
+                    if location not in location_groups:
+                        location_groups[location] = {
+                            'location': location,
+                            'effectivity_date': entry.effectivity_date,
+                            'categories': {}
+                        }
+                    
+                    if category not in location_groups[location]['categories']:
+                        location_groups[location]['categories'][category] = 0
+                    
+                    location_groups[location]['categories'][category] += 1
+                
+                # Convert to list for DataFrame
+                categories_list = ['Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Safe Card', 'Senior', 'Senior Plus']
+                for i, (location, data) in enumerate(location_groups.items(), 1):
+                    row = {
+                        'NO.': i,
+                        'SCHOOLS/COMPANY': location,
+                        'EFFECTIVITY DATE': data['effectivity_date'].strftime('%Y-%m-%d') if data['effectivity_date'] else ''
+                    }
+                    
+                    # Add counts for each category
+                    for category in categories_list:
+                        row[category.upper()] = data['categories'].get(category, 0)
+                    
+                    summary_data.append(row)
+                
+                # Add empty row before totals
+                empty_row = {'NO.': '', 'SCHOOLS/COMPANY': '', 'EFFECTIVITY DATE': ''}
+                for category in categories_list:
+                    empty_row[category.upper()] = ''
+                summary_data.append(empty_row)
+                
+                # Add totals row
+                if summary_data:
+                    totals_row = {'NO.': '', 'SCHOOLS/COMPANY': 'TOTAL', 'EFFECTIVITY DATE': ''}
+                    for category in categories_list:
+                        totals_row[category.upper()] = sum(row[category.upper()] for row in summary_data if row['SCHOOLS/COMPANY'] != 'TOTAL' and row['SCHOOLS/COMPANY'] != '')
+                    summary_data.append(totals_row)
+                
+                # Create summary DataFrame
+                summary_df = pd.DataFrame(summary_data)
+                
+                # Write summary sheet
+                summary_df.to_excel(writer, sheet_name='Listing', index=False, startrow=2)
+                
+                # Style summary sheet
                 workbook = writer.book
-                worksheet = writer.sheets['Dispatch Report']
+                summary_sheet = writer.sheets['Listing']
                 
                 # Add title
-                worksheet.merge_cells('A1:R1')
-                title_cell = worksheet['A1']
-                title_cell.value = f'DISPATCH REPORT - {dispatch.dispatch_origin} - {current_date.strftime("%Y-%m-%d")}'
+                summary_sheet.merge_cells('A1:K1')
+                title_cell = summary_sheet['A1']
+                title_cell.value = f'DISPATCH REPORT - CHAPTER - {dispatch.dispatch_cutoff}'
                 title_cell.font = openpyxl.styles.Font(size=16, bold=True)
                 title_cell.alignment = openpyxl.styles.Alignment(horizontal='center')
                 
-                # Style headers
-                header_fill = openpyxl.styles.PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
-                header_font = openpyxl.styles.Font(bold=True)
-                
-                for col in range(1, len(df.columns) + 1):
-                    cell = worksheet.cell(row=2, column=col)  # Headers are now in row 2
+                # Style headers and NO. column
+                for col in range(1, len(summary_df.columns) + 1):
+                    cell = summary_sheet.cell(row=3, column=col)
                     cell.fill = header_fill
-                    cell.font = header_font
+                    cell.font = bold_font
+                    cell.alignment = openpyxl.styles.Alignment(horizontal='center')
                 
-                # Adjust column widths
-                column_widths = {
-                    'A': 8,   # No.
-                    'B': 15,  # MAAB Category
-                    'C': 15,  # MAAB No
-                    'D': 15,  # First Name
-                    'E': 15,  # Middle Name
-                    'F': 15,  # Last Name
-                    'G': 8,   # Suffix
-                    'H': 12,  # Birth Date
-                    'I': 6,   # Age
-                    'J': 8,   # Sex
-                    'K': 15,  # Contact No
-                    'L': 20,  # Email
-                    'M': 12,  # Effectivity Date
-                    'N': 25,  # Location Particular
-                    'O': 20,  # Location Category
-                    'P': 15,  # Municipality
-                    'Q': 10,  # District
-                    'R': 12   # Origin
+                # Style NO. column for all data rows
+                data_row_count = len(location_groups)  # Number of actual data rows (excluding empty and total)
+                for row_num in range(4, 4 + data_row_count):  # Start from row 4 (after header)
+                    no_cell = summary_sheet.cell(row=row_num, column=1)  # Column A (NO.)
+                    no_cell.fill = header_fill
+                
+                # Style totals row
+                if summary_data:
+                    total_row_num = 4 + data_row_count + 1  # +1 for the empty row
+                    for col in range(1, len(summary_df.columns) + 1):
+                        cell = summary_sheet.cell(row=total_row_num, column=col)
+                        cell.fill = total_row_fill
+                        cell.font = bold_font
+                        
+                        # Make numbers red in totals row (columns D-K)
+                        if col >= 4:  # Columns D onwards (category counts)
+                            cell.font = red_font
+                
+                # Adjust column widths for summary sheet
+                summary_widths = {
+                    'A': 8,   # NO.
+                    'B': 35,  # SCHOOLS/COMPANY
+                    'C': 15,  # EFFECTIVITY DATE
+                    'D': 10,  # CLASSIC
+                    'E': 10,  # BRONZE
+                    'F': 10,  # SILVER
+                    'G': 10,  # GOLD
+                    'H': 10,  # PLATINUM
+                    'I': 12,  # SAFE CARD
+                    'J': 10,  # SENIOR
+                    'K': 12   # SENIOR PLUS
                 }
                 
-                for col_letter, width in column_widths.items():
-                    worksheet.column_dimensions[col_letter].width = width
+                for col_letter, width in summary_widths.items():
+                    summary_sheet.column_dimensions[col_letter].width = width
+                
+                # ==================== INDIVIDUAL CATEGORY SHEETS ====================
+                categories = ['Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Safe Card', 'Senior', 'Senior Plus']
+                
+                for category in categories:
+                    print(f"📝 Creating {category} sheet...")
+                    
+                    # Filter entries for this category
+                    category_entries = [e for e in entries_data if e.maab_category == category]
+                    
+                    if not category_entries:
+                        print(f"⚠️ No entries found for {category}, creating empty sheet")
+                        # Create empty DataFrame with correct columns
+                        empty_data = []
+                        empty_df = pd.DataFrame(empty_data, columns=['NO.', 'NAME', 'PRC ID #', 'EFFECTIVITY', 'BIRTHDAY', 'ADDRESS'])
+                        empty_df.to_excel(writer, sheet_name=category, index=False, startrow=2)
+                    else:
+                        # Prepare data for this category
+                        category_data = []
+                        for i, entry in enumerate(category_entries, 1):
+                            full_name = f"{entry.first_name or ''} {entry.middle_name or ''} {entry.last_name or ''} {entry.suffix or ''}".strip()
+                            category_data.append({
+                                'NO.': i,
+                                'NAME': full_name,
+                                'PRC ID #': entry.maab_no or '',
+                                'EFFECTIVITY': entry.effectivity_date.strftime('%Y-%m-%d') if entry.effectivity_date else '',
+                                'BIRTHDAY': entry.birth_date.strftime('%Y-%m-%d') if entry.birth_date else '',
+                                'ADDRESS': entry.address or ''
+                            })
+                        
+                        # Create category DataFrame
+                        category_df = pd.DataFrame(category_data)
+                        category_df.to_excel(writer, sheet_name=category, index=False, startrow=2)
+                    
+                    # Style category sheet
+                    category_sheet = writer.sheets[category]
+                    
+                    # Add title
+                    category_sheet.merge_cells('A1:F1')
+                    title_cell = category_sheet['A1']
+                    title_cell.value = f'DISPATCH REPORT - CHAPTER - {dispatch.dispatch_cutoff}'
+                    title_cell.font = openpyxl.styles.Font(size=16, bold=True)
+                    title_cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+                    
+                    # Style headers and NO. column for category sheets
+                    for col in range(1, 7):  # A-F
+                        cell = category_sheet.cell(row=3, column=col)
+                        cell.fill = header_fill
+                        cell.font = bold_font
+                        cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+                    
+                    # Style NO. column for all data rows in category sheets
+                    if category_entries:
+                        for row_num in range(4, 4 + len(category_entries)):
+                            no_cell = category_sheet.cell(row=row_num, column=1)  # Column A (NO.)
+                            no_cell.fill = header_fill
+                    
+                    # Adjust column widths for category sheets
+                    category_widths = {
+                        'A': 8,   # NO.
+                        'B': 30,  # NAME
+                        'C': 15,  # PRC ID #
+                        'D': 12,  # EFFECTIVITY
+                        'E': 12,  # BIRTHDAY
+                        'F': 40   # ADDRESS
+                    }
+                    
+                    for col_letter, width in category_widths.items():
+                        category_sheet.column_dimensions[col_letter].width = width
 
             # Prepare file for download
             output.seek(0)
@@ -2441,7 +3199,7 @@ def generate_dispatch_excel_file(dispatch_id, transmitted_count):
             # Create filename
             filename = f"dispatch_{dispatch.dispatch_origin}_{current_date.strftime('%Y-%m-%d')}.xlsx"
             
-            print(f"✅ Excel file generated successfully: {filename}")
+            print(f"✅ Multi-sheet Excel file generated successfully: {filename}")
             
             # Return the file
             return send_file(
