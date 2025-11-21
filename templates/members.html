@@ -265,12 +265,15 @@
                                     <td>
                                         <div class="input-container">
                                             <label for="tags">Tags</label>
+                                            <input type="text" id="tags" name="tags" autocomplete="off" placeholder=" ">
+                                            <!--
                                             <select id="tags" name="tags">
                                                 <option value="" selected>No Tag</option>
                                                 <option value="Underage">Underage</option>
                                                 <option value="Overage">Overage</option>
                                                 <option value="Late-declare">Late-declare</option>
                                             </select>
+                                            -->
                                         </div>
                                     </td>
                                 </tr>
@@ -483,7 +486,7 @@
                                    <td>
                                         <div class="input-container">
                                             <label for="entry_or_date">OR Date</label>
-                                            <input type="date" id="entry_or_date" name="entry_or_date" autocomplete="off">
+                                            <input type="date" id="entry_or_date" name="entry_or_date" autocomplete="off" readonly>
                                         </div>
                                     </td>
                                 </tr>
@@ -1714,6 +1717,9 @@ function populateEntryForm(entryData) {
         document.getElementById('entry_declared').checked = Boolean(entryData.declared);
         document.getElementById('entry_paid').checked = Boolean(entryData.paid);
         
+        // Update OR Date field state based on paid status
+        updateORDateFieldState(Boolean(entryData.paid), orDateInput);
+        
         setTimeout(() => {
             const category = document.getElementById('maab_cat').value;
             if (window.populateMAABNoDropdown) {
@@ -1842,6 +1848,14 @@ function clearEntryForm() {
         const element = document.getElementById(date);
         if (element) element.value = '';
     });
+    
+    // Reset OR Date field to readonly state
+    const orDateField = document.getElementById('entry_or_date');
+    if (orDateField) {
+        orDateField.readOnly = true;
+        orDateField.style.backgroundColor = '#f5f5f5';
+        orDateField.style.cursor = 'not-allowed';
+    }
     
     clearAllValidationErrors();
 }
@@ -3495,6 +3509,12 @@ function setupButtonEventListeners() {
         entryPaidCheckbox.addEventListener('change', function() {
             updateEntryDispatchReady();
             setTimeout(() => updateRecordPaidFromEntries(), 100);
+            
+            // Update OR Date field state when paid checkbox changes
+            const orDateField = document.getElementById('entry_or_date');
+            if (orDateField) {
+                updateORDateFieldState(this.checked, orDateField);
+            }
         });
     }
 
@@ -3506,8 +3526,8 @@ function setupButtonEventListeners() {
         });
     }
     
-    const bdateInput = document.getElementById('bdate');
-    if (bdateInput) bdateInput.addEventListener('change', function() { calculateAgeFromBirthdate(); validateAge(); });
+    // Initialize OR Date field state
+    setupORDateFieldState();
 }
 
 function setupFormEventListeners() {
@@ -3533,6 +3553,9 @@ document.addEventListener('DOMContentLoaded', function() {
     populateFilterDropdowns();
     checkActiveDispatch();
     setupOriginFieldProtection();
+    
+    // Initialize OR Date field state management
+    setupORDateFieldState();
 
     setTimeout(setupOriginFilterBasedOnUser, 1000);
     
@@ -3652,6 +3675,40 @@ function setupOriginFilterBasedOnUser() {
         }, 100);
         
         setTimeout(() => clearInterval(waitForOptions), 5000);
+    }
+}
+
+function setupORDateFieldState() {
+    const paidCheckbox = document.getElementById('entry_paid');
+    const orDateField = document.getElementById('entry_or_date');
+    
+    if (!paidCheckbox || !orDateField) return;
+    
+    // Initialize state based on current paid status
+    updateORDateFieldState(paidCheckbox.checked, orDateField);
+    
+    // Add event listener for paid checkbox changes
+    paidCheckbox.addEventListener('change', function() {
+        updateORDateFieldState(this.checked, orDateField);
+    });
+}
+
+function updateORDateFieldState(isPaid, orDateField) {
+    if (isPaid) {
+        // Enable OR Date when paid is checked
+        orDateField.readOnly = false;
+        orDateField.style.backgroundColor = '';
+        orDateField.style.cursor = 'pointer';
+        orDateField.title = 'Enter OR date';
+    } else {
+        // Disable OR Date when paid is unchecked
+        orDateField.readOnly = true;
+        orDateField.style.backgroundColor = '#f5f5f5';
+        orDateField.style.cursor = 'not-allowed';
+        orDateField.title = 'OR Date is only available when Paid is checked';
+        
+        // Optional: Clear OR Date when unpaid
+        // orDateField.value = '';
     }
 }
 </script>

@@ -29,22 +29,12 @@
 
     <div>
     <!-- Filter container -->
-    <div class="filter_search_container">
-        <div class="filters_box">
-            <label for="filter_year">Filter by:</label>
-            <select id="filter_year">
-                
-                <option value="">Year</option>
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
-            </select>
-
-                <select id="filter_category">
-                    <option value="">Category</option>
-                    <option value="Public">Public</option>
-                    <option value="Private">Private</option>
+        <div class="filter_search_container">
+            <div class="filters_box">
+                <label for="filter_year">Filter by:</label>
+                <select id="filter_year">
+                    <option value="">Year</option>
+                    <!-- Years will be populated dynamically -->
                 </select>
             </div>
 
@@ -54,31 +44,16 @@
         </div>
     </div>
 
-    <!-- Reports Overlay -->
+    <!-- Updated Overlay HTML -->
 <div id="reportsOverlay" class="overlay">
     <div class="overlay-content">
         <div class="overlay-header">
-            <h2>Add Report Data</h2>
+            <h2>Set Annual Targets for <span id="currentYearDisplay"></span></h2>
             <button id="closeOverlay" class="close-btn">&times;</button>
         </div>
         
-        <div class="tabs">
-            <button class="tab-button active" data-tab="target-actual">Target vs Actual</button>
-            <button class="tab-button" data-tab="budget-expenses">Budget vs Expenses</button>
-        </div>
-        
-        <!-- Target vs Actual Tab -->
-        <div id="target-actual" class="tab-content active">
+        <div class="report-form-container">
             <form id="targetActualForm" class="report-form">
-                <div class="form-group">
-                    <label for="dataType">Data Type:</label>
-                    <select id="dataType" name="dataType" required>
-                        <option value="">Select Type</option>
-                        <option value="target">Set Annual Target</option>
-                        <option value="actual">Add Monthly Actual</option>
-                    </select>
-                </div>
-                
                 <div class="form-group">
                     <label for="idCategory">ID Category:</label>
                     <select id="idCategory" name="idCategory" required>
@@ -94,81 +69,27 @@
                     </select>
                 </div>
                 
-                <!-- Target-specific fields (shown when dataType = 'target') -->
-                <div id="targetFields" class="data-type-fields">
-                    <div class="form-group">
-                        <label for="targetCount">Target Count (Annual):</label>
-                        <input type="number" id="targetCount" name="targetCount" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="yearSelect">Year:</label>
-                        <select id="yearSelect" name="yearSelect" required>
-                            <option value="2025">2025</option>
-                            <option value="2024">2024</option>
-                            <option value="2023">2023</option>
-                            <option value="2022">2022</option>
-                        </select>
-                    </div>
-                    
-                    <div class="calculated-field">
-                        <label>Calculated Target Amount:</label>
-                        <span id="calculatedAmount">₱0.00</span>
-                    </div>
+                <div class="form-group">
+                    <label for="targetCount">Target Count (Annual):</label>
+                    <input type="number" id="targetCount" name="targetCount" min="0" required>
                 </div>
                 
-                <!-- Actual-specific fields (shown when dataType = 'actual') -->
-                <div id="actualFields" class="data-type-fields" style="display: none;">
-                    <div class="form-group">
-                        <label for="actualCount">Actual Count (Monthly):</label>
-                        <input type="number" id="actualCount" name="actualCount" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="monthSelect">Month:</label>
-                        <select id="monthSelect" name="monthSelect" required>
-                            <option value="">Select Month</option>
-                            <option value="1">January</option>
-                            <option value="2">February</option>
-                            <option value="3">March</option>
-                            <option value="4">April</option>
-                            <option value="5">May</option>
-                            <option value="6">June</option>
-                            <option value="7">July</option>
-                            <option value="8">August</option>
-                            <option value="9">September</option>
-                            <option value="10">October</option>
-                            <option value="11">November</option>
-                            <option value="12">December</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="actualYearSelect">Year:</label>
-                        <select id="actualYearSelect" name="actualYearSelect" required>
-                            <option value="2025">2025</option>
-                            <option value="2024">2024</option>
-                            <option value="2023">2023</option>
-                            <option value="2022">2022</option>
-                        </select>
-                    </div>
-                    
-                    <div class="calculated-field">
-                        <label>Calculated Actual Amount:</label>
-                        <span id="calculatedActualAmount">₱0.00</span>
-                    </div>
+                <div class="form-group">
+                    <label for="yearSelect">Year:</label>
+                    <input type="text" id="yearSelect" name="yearSelect" readonly class="readonly-field">
+                    <small class="field-note">Current year - cannot be changed</small>
+                </div>
+                
+                <div class="calculated-field">
+                    <label>Calculated Target Amount:</label>
+                    <span id="calculatedAmount">₱0.00</span>
                 </div>
                 
                 <div class="form-actions">
-                    <button type="submit" class="btn-primary">Save Data</button>
+                    <button type="submit" class="btn-primary">Save Target</button>
                     <button type="button" class="btn-secondary" id="cancelTarget">Cancel</button>
                 </div>
             </form>
-        </div>
-        
-        <!-- Budget vs Expenses Tab (keep your existing one) -->
-        <div id="budget-expenses" class="tab-content">
-            <!-- Your existing budget form here -->
         </div>
     </div>
 </div>
@@ -242,14 +163,27 @@
     let perDistrictTable;
 
     // Initialize all tables
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeBudgetExpenseTable();
-        initializeTargetVsActualTable();
-        initializePerDistrictTable();
+document.addEventListener('DOMContentLoaded', function() {
+    // Load years first, then tables
+    loadTargetYears().then(() => {
+        // Initialize tables after years are loaded
+        if (document.getElementById('budget_v_expense_table')) {
+            initializeBudgetExpenseTable();
+        }
+        
+        if (document.getElementById('target_v_actual_table')) {
+            initializeTargetVsActualTable();
+        }
+        
+        if (document.getElementById('per_district_table')) {
+            initializePerDistrictTable();
+        }
+        
         initializeOverlay();
         initializeFilters();
         initializeCollapseBoxes();
     });
+});
 
     // FIXED BUDGET VS EXPENSES TABLE
 function initializeBudgetExpenseTable() {
@@ -472,127 +406,182 @@ function initializeBudgetExpenseTable() {
         });
     }
 
-// OVERLAY FUNCTIONALITY - ENHANCED VERSION
+// OVERLAY FUNCTIONALITY - SIMPLE VERSION
 function initializeOverlay() {
     const overlay = document.getElementById('reportsOverlay');
     const openBtn = document.getElementById('openReportsOverlay');
     const closeBtn = document.getElementById('closeOverlay');
     const cancelTarget = document.getElementById('cancelTarget');
+    const currentYearDisplay = document.getElementById('currentYearDisplay');
+    const yearSelect = document.getElementById('yearSelect');
     
-    // Tab functionality
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
+    // Get current year
+    const currentYear = new Date().getFullYear();
     
     // Open overlay
     openBtn.addEventListener('click', function() {
+        // Set current year in display and hidden field
+        currentYearDisplay.textContent = currentYear;
+        yearSelect.value = currentYear;
+        
         overlay.style.display = 'flex';
     });
     
     // Define closeOverlay globally
-    window.closeOverlay = function() {
+    window.closeOverlay = function(shouldRefresh = false) {
         overlay.style.display = 'none';
-        document.getElementById('targetActualForm').reset();
-        document.getElementById('budgetExpensesForm').reset();
-        document.getElementById('calculatedAmount').textContent = '₱0.00';
-        document.getElementById('calculatedActualAmount').textContent = '₱0.00';
-        // Reset to target view
-        document.getElementById('dataType').value = '';
-        document.getElementById('targetFields').style.display = 'block';
-        document.getElementById('actualFields').style.display = 'none';
+        clearForm();
+        
+        // Refresh filter if needed (after save)
+        if (shouldRefresh) {
+            console.log('🔄 Refreshing year filter...');
+            loadTargetYears();
+        }
     };
     
-    closeBtn.addEventListener('click', window.closeOverlay);
-    cancelTarget.addEventListener('click', window.closeOverlay);
-    
-    // Close overlay when clicking outside content
-    overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) {
-            window.closeOverlay();
-        }
-    });
-    
-    // Tab switching
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const targetTab = this.getAttribute('data-tab');
-            
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-                if (content.id === targetTab) {
-                    content.classList.add('active');
-                }
-            });
-        });
-    });
-    
-    // Data type switching (Target vs Actual)
-    const dataTypeSelect = document.getElementById('dataType');
-    const targetFields = document.getElementById('targetFields');
-    const actualFields = document.getElementById('actualFields');
-    
-    dataTypeSelect.addEventListener('change', function() {
-        if (this.value === 'target') {
-            targetFields.style.display = 'block';
-            actualFields.style.display = 'none';
-        } else if (this.value === 'actual') {
-            targetFields.style.display = 'none';
-            actualFields.style.display = 'block';
-        } else {
-            targetFields.style.display = 'none';
-            actualFields.style.display = 'none';
-        }
-    });
-    
-    // Auto-calculate amounts
-    const idCategory = document.getElementById('idCategory');
-    const targetCount = document.getElementById('targetCount');
-    const actualCount = document.getElementById('actualCount');
-    const calculatedAmount = document.getElementById('calculatedAmount');
-    const calculatedActualAmount = document.getElementById('calculatedActualAmount');
-    
-    function calculateAmounts() {
-        const category = idCategory.value;
-        const cost = categoryCost[category] || 0;
-        
-        // Calculate target amount
-        const target = parseInt(targetCount.value) || 0;
-        calculatedAmount.textContent = `₱${(target * cost).toLocaleString()}`;
-        
-        // Calculate actual amount
-        const actual = parseInt(actualCount.value) || 0;
-        calculatedActualAmount.textContent = `₱${(actual * cost).toLocaleString()}`;
+    // Clear form function
+    function clearForm() {
+        document.getElementById('targetActualForm').reset();
+        document.getElementById('calculatedAmount').textContent = '₱0.00';
+        currentYearDisplay.textContent = '';
+        yearSelect.value = '';
     }
     
-    idCategory.addEventListener('change', calculateAmounts);
-    targetCount.addEventListener('input', calculateAmounts);
-    actualCount.addEventListener('input', calculateAmounts);
+    // Close buttons - clear form but don't refresh
+    closeBtn.addEventListener('click', () => {
+        clearForm();
+        overlay.style.display = 'none';
+    });
     
-    // Form submission
+    cancelTarget.addEventListener('click', () => {
+        clearForm();
+        overlay.style.display = 'none';
+    });
+    
+    // Escape key to close and clear form
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && overlay.style.display === 'flex') {
+            clearForm();
+            overlay.style.display = 'none';
+        }
+    });
+    
+    // Close overlay when clicking outside content - clear form
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            clearForm();
+            overlay.style.display = 'none';
+        }
+    });
+    
+    // Auto-calculate target amount
+    const idCategory = document.getElementById('idCategory');
+    const targetCount = document.getElementById('targetCount');
+    const calculatedAmount = document.getElementById('calculatedAmount');
+    
+    function calculateAmount() {
+        const category = idCategory.value;
+        const count = parseInt(targetCount.value) || 0;
+        const cost = categoryCost[category] || 0;
+        const total = count * cost;
+        
+        calculatedAmount.textContent = `₱${total.toLocaleString()}`;
+    }
+    
+    idCategory.addEventListener('change', calculateAmount);
+    targetCount.addEventListener('input', calculateAmount);
+    
+    // Form submission - save but don't close
     document.getElementById('targetActualForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        saveTargetOrActualData();
+        saveTargetData();
     });
 }
 
-    // FILTERS
-    function initializeFilters() {
-        const yearFilter = document.getElementById('filter_year');
-        const categoryFilter = document.getElementById('filter_category');
+// SAVE FUNCTION - SAVE WITHOUT CLOSING
+async function saveTargetData() {
+    const category = document.getElementById('idCategory').value;
+    const targetCount = parseInt(document.getElementById('targetCount').value);
+    const year = document.getElementById('yearSelect').value;
 
+    // Validate required fields
+    if (!category || !targetCount || !year) {
+        alert('Please fill in all required fields');
+        return;
+    }
+
+    const formData = {
+        category: category,
+        targetCount: targetCount,
+        year: year
+    };
+
+    console.log('Saving target:', formData);
+
+    try {
+        const response = await fetch('/api/save_report/target_vs_actual', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            // SUCCESS: Clear form but keep overlay open
+            document.getElementById('targetActualForm').reset();
+            document.getElementById('calculatedAmount').textContent = '₱0.00';
+            
+            // Show success message
+            alert('✅ Target saved successfully! Form cleared. Add another target or close the overlay.');
+            
+            // Refresh the filter to show new year if needed
+            loadTargetYears();
+            
+            // Reload table data for the current filter year
+            const currentFilterYear = document.getElementById('filter_year').value;
+            if (currentFilterYear) {
+                loadTargetVsActualData(currentFilterYear);
+            }
+            
+        } else {
+            alert('Error saving target data: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving target data:', error);
+        alert('Error saving target data: ' + error.message);
+    }
+}
+
+   // FILTERS - WITH AUTO YEAR SELECTION
+function initializeFilters() {
+    const yearFilter = document.getElementById('filter_year');
+    const categoryFilter = document.getElementById('filter_category');
+
+    // Load years from database (will auto-select current year)
+    loadTargetYears();
+
+    // Year filter event
+    if (yearFilter) {
         yearFilter.addEventListener('change', function() {
             const year = this.value;
-            // Reload all tables with filtered data
+            console.log(`🔄 Year filter changed to: ${year}`);
             loadTargetVsActualData(year);
             loadBudgetData(year);
             loadPerDistrictData(year);
         });
+    }
 
+    // Category filter (only if Per District table exists)
+    if (categoryFilter && perDistrictTable) {
         categoryFilter.addEventListener('change', function() {
             const category = this.value;
-            // Filter per district table by category
             if (category) {
                 perDistrictTable.setFilter("classification", "like", category);
             } else {
@@ -600,6 +589,66 @@ function initializeOverlay() {
             }
         });
     }
+}
+
+// LOAD YEARS FROM DATABASE - WITH AUTO CURRENT YEAR SELECTION
+async function loadTargetYears() {
+    try {
+        const yearFilter = document.getElementById('filter_year');
+        if (!yearFilter) return;
+
+        const response = await fetch('/api/get_target_years');
+        const years = await response.json();
+
+        console.log('📅 Years from database:', years);
+
+        // Clear existing options
+        yearFilter.innerHTML = '<option value="">Year</option>';
+
+        // Add years from database
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearFilter.appendChild(option);
+        });
+
+        // Get current year
+        const currentYear = new Date().getFullYear();
+        
+        // Auto-select logic:
+        if (years.length > 0) {
+            // Priority 1: Select current year if it exists in database
+            if (years.includes(currentYear)) {
+                yearFilter.value = currentYear;
+                console.log(`🎯 Auto-selected current year: ${currentYear}`);
+            } 
+            // Priority 2: Select the most recent year
+            else {
+                yearFilter.value = years[0];
+                console.log(`🎯 Auto-selected most recent year: ${years[0]} (current year ${currentYear} not in database)`);
+            }
+            
+            // Trigger change to load data
+            yearFilter.dispatchEvent(new Event('change'));
+        } else {
+            console.log('ℹ️ No target years found in database');
+        }
+
+    } catch (error) {
+        console.error('Error loading target years:', error);
+        // Fallback to current year if API fails
+        const currentYear = new Date().getFullYear();
+        const yearFilter = document.getElementById('filter_year');
+        if (yearFilter) {
+            yearFilter.innerHTML = `
+                <option value="">Year</option>
+                <option value="${currentYear}" selected>${currentYear}</option>
+            `;
+            yearFilter.dispatchEvent(new Event('change'));
+        }
+    }
+}
 
     // COLLAPSE BOXES
     function initializeCollapseBoxes() {
@@ -722,14 +771,19 @@ function initializeOverlay() {
         perDistrictTable.setData(sampleData);
     }
 
-    // SAVE FUNCTIONS - FIXED VERSION
+    // SIMPLIFIED SAVE FUNCTION FOR ANNUAL TARGETS ONLY
 async function saveTargetData() {
     const formData = {
         category: document.getElementById('idCategory').value,
         targetCount: parseInt(document.getElementById('targetCount').value),
-        month: parseInt(document.getElementById('monthSelect').value),
         year: document.getElementById('yearSelect').value
     };
+
+    // Validate required fields
+    if (!formData.category || !formData.targetCount || !formData.year) {
+        alert('Please fill in all required fields');
+        return;
+    }
 
     try {
         const response = await fetch('/api/save_report/target_vs_actual', {
@@ -744,7 +798,6 @@ async function saveTargetData() {
 
         if (result.success) {
             alert('Target data saved successfully!');
-            // Close overlay after successful save
             closeOverlay();
             loadTargetVsActualData(formData.year);
         } else {

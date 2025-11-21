@@ -1564,9 +1564,15 @@ def get_report_target_vs_actual(year):
     db_session = SessionLocal()
     try:
         categories = [
-            "Classic", "Bronze", "Silver", "Gold",
-            "Platinum", "Safe Card", "Senior", "Senior+"
+            "Classic", "Bronze", "Silver", "Gold", "Platinum", 
+            "Enhanced Platinum", "Senior", "Senior+", "Safe Card"
         ]
+
+        # DEBUG: Count total entries for the year
+        total_entries = db_session.query(models.Entries).filter(
+            extract("year", models.Entries.OR_date) == year
+        ).count()
+        print(f"🔍 DEBUG: Total entries in {year}: {total_entries}")
 
         # Query entries for monthly counts
         rows = (
@@ -1586,18 +1592,41 @@ def get_report_target_vs_actual(year):
             .all()
         )
 
-        # Query target_per_year for the year
+        print(f"🔍 DEBUG: Grouped entries found: {len(rows)}")
+        for category, month, count in rows:
+            print(f"  - {category}, Month {month}: {count}")
+
+        # DEBUG: Check for entries with NULL or different categories
+        null_category_entries = db_session.query(models.Entries).filter(
+            extract("year", models.Entries.OR_date) == year,
+            ~models.Entries.maab_category.in_(categories)
+        ).count()
+        print(f"🔍 DEBUG: Entries with non-matching categories: {null_category_entries}")
+
+        # DEBUG: Check for entries with NULL OR_date
+        null_date_entries = db_session.query(models.Entries).filter(
+            models.Entries.OR_date.is_(None)
+        ).count()
+        print(f"🔍 DEBUG: Entries with NULL OR_date: {null_date_entries}")
+
         target_row = db_session.query(models.Report_TvA).filter(models.Report_TvA.year == year).first()
 
-        cat_to_col = {
-        "Senior+": "senior_plus"
-}
+        category_to_column = {
+            "Classic": "classic",
+            "Bronze": "bronze", 
+            "Silver": "silver",
+            "Gold": "gold",
+            "Platinum": "platinum",
+            "Enhanced Platinum": "safe_card",
+            "Senior": "senior",
+            "Senior+": "senior_plus",
+            "Safe Card": "safe_card"
+        }
         
-        # Build pivot output with target at front
         output = {}
         for cat in categories:
-            target_col = cat_to_col.get(cat, cat.lower().replace(" ", "_"))
-            target_value = getattr(target_row, target_col, 0)
+            target_col = category_to_column.get(cat)
+            target_value = getattr(target_row, target_col, 0) if target_row else 0
             output[cat] = {0: target_value, **{m: 0 for m in range(1, 13)}}
 
         # Fill monthly counts from entries
@@ -1606,11 +1635,58 @@ def get_report_target_vs_actual(year):
             if category in output:
                 output[category][month] = count
 
+        # DEBUG: Calculate total detected vs expected
+        total_detected = sum(sum(cat_data.values()) for cat_data in output.values()) - sum(cat_data[0] for cat_data in output.values())
+        print(f"🔍 DEBUG: Total detected in report: {total_detected}")
+        print(f"🔍 DEBUG: Missing entries: {total_entries - total_detected}")
+
         return output
     except Exception as e:
         print(f"Error fetching report data: {e}")
-        return []
+        return {}
+    finally:
+        db_session.close()
 
+def auto_create_yearly_targets():
+    """Automatically create target rows for new year on January 1st"""
+    try:
+        from datetime import datetime
+        current_date = datetime.now()
+        current_year = current_date.year
+        
+        db_session = SessionLocal()
+        
+        # Check if target already exists for this year
+        existing_target = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        if not existing_target:
+            # Create new target row with null/zero values
+            new_target = models.Report_TvA(
+                year=current_year,
+                classic=0,
+                bronze=0,
+                silver=0,
+                gold=0,
+                platinum=0,
+                safe_card=0,
+                senior=0,
+                senior_plus=0
+            )
+            db_session.add(new_target)
+            db_session.commit()
+            print(f"✅ Auto-created target row for year {current_year}")
+            return True
+        else:
+            print(f"✅ Target row for year {current_year} already exists")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error auto-creating yearly targets: {e}")
+        return False
+    finally:
+        db_session.close()
 
 def get_current_active_dispatch(db_session=None):
     """Get current active dispatch with optional session parameter"""

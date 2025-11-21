@@ -465,3 +465,28 @@ body {
         width: 100%;
     }
 }
+
+/* Remove tab-related styles since we're not using tabs anymore */
+.tabs,
+.tab-button,
+.tab-content {
+    display: none;
+}
+
+.report-form-container {
+    padding: 20px;
+}
+
+.readonly-field {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.field-note {
+    color: #6c757d;
+    font-size: 0.875rem;
+    display: block;
+    margin-top: 4px;
+}

@@ -4,7 +4,7 @@ from livereload import Server
 from py_scripts import db_conn, tools, models
 from py_scripts.db_conn import SessionLocal
 from datetime import date, datetime
-from sqlalchemy import create_engine, text, func, extract
+from sqlalchemy import create_engine, text, func, extract, case, case, and_, or_
 import os
 import pandas as pd
 import openpyxl
@@ -345,6 +345,400 @@ def settings():
 #? -------------------- END -------------------- ?#
 
 #? -------------------- API ROUTES -------------------- ?#
+@server.route('/api/dashboard/sales_data', methods=['GET'])
+@login_required
+def get_sales_data():
+    """Get current sales data for dashboard - FIXED CALCULATION"""
+    try:
+        db_session = SessionLocal()
+        
+        # Get current year
+        current_year = datetime.now().year
+        
+        # Get all paid entries for current year with their categories
+        paid_entries = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('count')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Price mapping for each membership type
+        price_map = {
+            'Classic': 60,
+            'Bronze': 150,
+            'Silver': 300,
+            'Gold': 500,
+            'Platinum': 1000,
+            'Safe Card': 1000,  # Enhanced Platinum
+            'Senior': 300,
+            'Senior+': 350
+        }
+        
+        # Calculate TOTAL ACTUAL SALES (sum of price × count for all categories)
+        total_actual_sales = 0
+        for category, count in paid_entries:
+            price = price_map.get(category, 0)
+            total_actual_sales += count * price
+        
+        # Get target data for current year
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Calculate TOTAL TARGET SALES (sum of target × price for all categories)
+        total_target_sales = 0
+        if target_data:
+            total_target_sales = (
+                (target_data.classic or 0) * price_map['Classic'] +
+                (target_data.bronze or 0) * price_map['Bronze'] +
+                (target_data.silver or 0) * price_map['Silver'] +
+                (target_data.gold or 0) * price_map['Gold'] +
+                (target_data.platinum or 0) * price_map['Platinum'] +
+                (target_data.safe_card or 0) * price_map['Safe Card'] +
+                (target_data.senior or 0) * price_map['Senior'] +
+                (target_data.senior_plus or 0) * price_map['Senior+']
+            )
+        else:
+            # Default target if not set - calculate based on reasonable defaults
+            default_targets = {
+                'Classic': 30000,    # 30000 × 60 = 1,800,000
+                'Bronze': 75000,     # 75000 × 150 = 11,250,000  
+                'Silver': 15000,     # 15000 × 300 = 4,500,000
+                'Gold': 25000,       # 25000 × 500 = 12,500,000
+                'Platinum': 50000,   # 50000 × 1000 = 50,000,000
+                'Safe Card': 60000,  # 60000 × 1000 = 60,000,000
+                'Senior': 15000,     # 15000 × 300 = 4,500,000
+                'Senior+': 17500     # 17500 × 350 = 6,125,000
+            }
+            total_target_sales = sum(
+                default_targets[cat] * price_map[cat] 
+                for cat in default_targets.keys()
+            )
+        
+        print(f"💰 SALES CALCULATION DEBUG:")
+        print(f"   Current Year: {current_year}")
+        print(f"   Paid Entries: {paid_entries}")
+        print(f"   Total Actual Sales: ₱{total_actual_sales:,}")
+        print(f"   Total Target Sales: ₱{total_target_sales:,}")
+        
+        return jsonify({
+            'success': True,
+            'current_total': total_actual_sales,  # Total sales amount in pesos
+            'target_total': total_target_sales,   # Total target amount in pesos
+            'year': current_year
+        })
+        
+    except Exception as e:
+        print(f"Error getting sales data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'current_total': 0,
+            'target_total': 1000000  # Fallback target
+        }), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/dashboard/sales_performance', methods=['GET'])
+@login_required
+def get_sales_performance():
+    """Get sales performance data by membership type for chart"""
+    try:
+        db_session = SessionLocal()
+        current_year = datetime.now().year
+        
+        # Get actual sales count per category for current year
+        actual_sales = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('actual_count')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Get targets for current year
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Map category names to match your chart
+        category_mapping = {
+            'Classic': 'Classic',
+            'Bronze': 'Premier Bronze', 
+            'Silver': 'Premier Silver',
+            'Gold': 'Premier Gold',
+            'Platinum': 'Premier Platinum',
+            'Safe Card': 'Safe Card',  # or 'Safe Card' based on your preference
+            'Senior': 'Senior',
+            'Senior+': 'Senior Plus'
+        }
+        
+        # Prepare chart data
+        chart_data = []
+        all_categories = [
+            'Classic', 'Premier Bronze', 'Premier Silver', 'Premier Gold', 
+            'Premier Platinum', 'Safe Card', 'Senior', 'Senior Plus'
+        ]
+        
+        for category in all_categories:
+            # Find matching actual sales
+            actual_count = 0
+            for db_category, count in actual_sales:
+                mapped_category = category_mapping.get(db_category, db_category)
+                if mapped_category == category:
+                    actual_count = count
+                    break
+            
+            # Find matching target
+            target_count = 0
+            if target_data:
+                if category == 'Classic':
+                    target_count = target_data.classic or 0
+                elif category == 'Premier Bronze':
+                    target_count = target_data.bronze or 0
+                elif category == 'Premier Silver':
+                    target_count = target_data.silver or 0
+                elif category == 'Premier Gold':
+                    target_count = target_data.gold or 0
+                elif category == 'Premier Platinum':
+                    target_count = target_data.platinum or 0
+                elif category == 'Safe Card':
+                    target_count = target_data.safe_card or 0
+                elif category == 'Senior':
+                    target_count = target_data.senior or 0
+                elif category == 'Senior Plus':
+                    target_count = target_data.senior_plus or 0
+            
+            chart_data.append({
+                'category': category,
+                'actual': actual_count,
+                'target': target_count
+            })
+        
+        return jsonify({
+            'success': True,
+            'chart_data': chart_data
+        })
+        
+    except Exception as e:
+        print(f"Error getting sales performance: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'chart_data': []
+        }), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/dashboard/unit_sold', methods=['GET'])
+@login_required
+def get_unit_sold():
+    """Get unit sold data for the table"""
+    try:
+        db_session = SessionLocal()
+        current_year = datetime.now().year
+        
+        # Get actual units sold per category
+        units_sold = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('units_sold')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Get targets
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Price mapping
+        price_mapping = {
+            'Classic': 60,
+            'Bronze': 150,
+            'Silver': 300, 
+            'Gold': 500,
+            'Platinum': 1000,
+            'Safe Card': 1200,
+            'Senior': 300,
+            'Senior+': 350
+        }
+        
+        # Category display mapping
+        display_mapping = {
+            'Classic': 'Classic',
+            'Bronze': 'Premiere Bronze',
+            'Silver': 'Premiere Silver',
+            'Gold': 'Premiere Gold',
+            'Platinum': 'Premiere Platinum',
+            'Safe Card': 'Safe Card',
+            'Senior': 'Senior',
+            'Senior+': 'Senior Plus'
+        }
+        
+        table_data = []
+        total_actual = 0
+        
+        all_categories = ['Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Safe Card', 'Senior', 'Senior+']
+        
+        for category in all_categories:
+            # Find units sold
+            units = 0
+            for db_category, count in units_sold:
+                if db_category == category:
+                    units = count
+                    break
+            
+            # Find target
+            target = 0
+            if target_data:
+                if category == 'Classic':
+                    target = target_data.classic or 0
+                elif category == 'Bronze':
+                    target = target_data.bronze or 0
+                elif category == 'Silver':
+                    target = target_data.silver or 0
+                elif category == 'Gold':
+                    target = target_data.gold or 0
+                elif category == 'Platinum':
+                    target = target_data.platinum or 0
+                elif category == 'Safe Card':
+                    target = target_data.safe_card or 0
+                elif category == 'Senior':
+                    target = target_data.senior or 0
+                elif category == 'Senior+':
+                    target = target_data.senior_plus or 0
+            
+            price = price_mapping.get(category, 0)
+            actual_sales = units * price
+            total_actual += actual_sales
+            
+            table_data.append({
+                'category': display_mapping.get(category, category),
+                'price': price,
+                'units_sold': units,
+                'target': target,
+                'actual_sales': actual_sales
+            })
+        
+        return jsonify({
+            'success': True,
+            'table_data': table_data,
+            'total_actual': total_actual
+        })
+        
+    except Exception as e:
+        print(f"Error getting unit sold data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'table_data': [],
+            'total_actual': 0
+        }), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/debug/sales_calculation', methods=['GET'])
+@login_required
+def debug_sales_calculation():
+    """Debug endpoint to see what data we're working with"""
+    try:
+        db_session = SessionLocal()
+        current_year = datetime.now().year
+        
+        # Get all paid entries for current year
+        paid_entries = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('count')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Get target data
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Price mapping
+        price_map = {
+            'Classic': 60,
+            'Bronze': 150,
+            'Silver': 300,
+            'Gold': 500,
+            'Platinum': 1000,
+            'Safe Card': 1000,
+            'Senior': 300,
+            'Senior+': 350
+        }
+        
+        # Calculate totals
+        total_actual_sales = 0
+        category_details = []
+        
+        for category, count in paid_entries:
+            price = price_map.get(category, 0)
+            category_total = count * price
+            total_actual_sales += category_total
+            category_details.append({
+                'category': category,
+                'count': count,
+                'price': price,
+                'category_total': category_total
+            })
+        
+        # Calculate target sales
+        total_target_sales = 0
+        target_details = []
+        
+        if target_data:
+            for category, price in price_map.items():
+                target_count = 0
+                if category == 'Classic':
+                    target_count = target_data.classic or 0
+                elif category == 'Bronze':
+                    target_count = target_data.bronze or 0
+                elif category == 'Silver':
+                    target_count = target_data.silver or 0
+                elif category == 'Gold':
+                    target_count = target_data.gold or 0
+                elif category == 'Platinum':
+                    target_count = target_data.platinum or 0
+                elif category == 'Safe Card':
+                    target_count = target_data.safe_card or 0
+                elif category == 'Senior':
+                    target_count = target_data.senior or 0
+                elif category == 'Senior+':
+                    target_count = target_data.senior_plus or 0
+                
+                target_total = target_count * price
+                total_target_sales += target_total
+                target_details.append({
+                    'category': category,
+                    'target_count': target_count,
+                    'price': price,
+                    'target_total': target_total
+                })
+        
+        return jsonify({
+            'success': True,
+            'debug_info': {
+                'current_year': current_year,
+                'total_paid_entries': sum([count for _, count in paid_entries]),
+                'category_details': category_details,
+                'target_details': target_details,
+                'total_actual_sales': total_actual_sales,
+                'total_target_sales': total_target_sales
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+        
 @server.route('/api/export_record_entries/<int:record_id>')
 @login_required
 def export_record_entries(record_id):
@@ -1583,6 +1977,28 @@ def get_target_vs_actual(year):
     finally:
         db_session.close()
 
+@server.route('/api/get_target_years')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_target_years():
+    """Get all years that have target data"""
+    try:
+        db_session = SessionLocal()
+        
+        # Get distinct years from target_per_year table
+        years = db_session.query(models.Report_TvA.year).distinct().order_by(models.Report_TvA.year.desc()).all()
+        
+        years_list = [year[0] for year in years]
+        
+        print(f"📅 Years with target data: {years_list}")
+        return jsonify(years_list)
+        
+    except Exception as e:
+        print(f"Error getting target years: {e}")
+        return jsonify([])
+    finally:
+        db_session.close()        
+
 @server.route('/api/get_report/budget_expenses/<year>')
 @login_required
 @roles_required('admin', 'superadmin')
@@ -1634,64 +2050,58 @@ def get_per_district(year):
 @login_required
 @roles_required('admin', 'superadmin')
 def save_target_vs_actual():
-    """Save target vs actual data"""
+    """Save target vs actual data - Auto-creates year if needed"""
     try:
         data = request.get_json()
-        print("Saving target vs actual data:", data)
-        
-        # Extract data from request
         category = data.get('category')
         target_count = data.get('targetCount')
-        month = data.get('month')  # This is the month number (1-12)
         year = data.get('year')
         
         # Validate required fields
-        if not all([category, target_count, month, year]):
+        if not all([category, target_count, year]):
             return jsonify({"success": False, "error": "Missing required fields"}), 400
         
         db_session = SessionLocal()
         try:
-            # Check if target entry exists for this year
+            # Check if target entry exists for this year, create if not
             target_entry = db_session.query(models.Report_TvA).filter(
                 models.Report_TvA.year == year
             ).first()
             
-            if target_entry:
-                # Update existing entry
-                if category == "Classic":
-                    target_entry.classic = target_count
-                elif category == "Bronze":
-                    target_entry.bronze = target_count
-                elif category == "Silver":
-                    target_entry.silver = target_count
-                elif category == "Gold":
-                    target_entry.gold = target_count
-                elif category == "Platinum":
-                    target_entry.platinum = target_count
-                elif category == "Safe Card":
-                    target_entry.safe_card = target_count
-                elif category == "Senior":
-                    target_entry.senior = target_count
-                elif category == "Senior+":
-                    target_entry.senior_plus = target_count
-                
-                print(f"✅ Updated {category} target for year {year}: {target_count}")
-                
-            else:
-                # Create new entry with zeros for all categories except the one we're setting
-                new_target = models.Report_TvA(
+            if not target_entry:
+                # Create new entry with all zeros
+                target_entry = models.Report_TvA(
                     year=year,
-                    classic=target_count if category == "Classic" else 0,
-                    bronze=target_count if category == "Bronze" else 0,
-                    silver=target_count if category == "Silver" else 0,
-                    gold=target_count if category == "Gold" else 0,
-                    platinum=target_count if category == "Platinum" else 0,
-                    safe_card=target_count if category == "Safe Card" else 0,
-                    senior=target_count if category == "Senior" else 0,
-                    senior_plus=target_count if category == "Senior+" else 0
+                    classic=0,
+                    bronze=0,
+                    silver=0,
+                    gold=0,
+                    platinum=0,
+                    safe_card=0,
+                    senior=0,
+                    senior_plus=0
                 )
-                db_session.add(new_target)
-                print(f"✅ Created new target entry for year {year}: {category} = {target_count}")
+                db_session.add(target_entry)
+                db_session.flush()  # Get the ID without committing
+                print(f"✅ Auto-created target row for year {year}")
+            
+            # Update the specific category
+            if category == "Classic":
+                target_entry.classic = target_count
+            elif category == "Bronze":
+                target_entry.bronze = target_count
+            elif category == "Silver":
+                target_entry.silver = target_count
+            elif category == "Gold":
+                target_entry.gold = target_count
+            elif category == "Platinum":
+                target_entry.platinum = target_count
+            elif category == "Safe Card":
+                target_entry.safe_card = target_count
+            elif category == "Senior":
+                target_entry.senior = target_count
+            elif category == "Senior+":
+                target_entry.senior_plus = target_count
             
             db_session.commit()
             
@@ -1700,7 +2110,7 @@ def save_target_vs_actual():
                 current_user.username, 
                 current_user.user_level, 
                 'Save Target Data', 
-                f'Saved target data: {category} - {target_count} for {month}/{year}', 
+                f'Saved {category} target: {target_count} for {year}', 
                 current_user.account_id
             )
             
