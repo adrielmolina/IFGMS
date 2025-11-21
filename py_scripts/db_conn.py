@@ -1341,7 +1341,7 @@ def transmit_dispatch_entries(dispatch_id, account_id=None):
                 # Mark entry as declared with current date BUT KEEP DISPATCH_ID
                 entry.declared = True
                 entry.declaration_date = current_date
-                entry.tags = "transmitted"
+                entry.tags = "Declared"
                 # DON'T clear dispatch_id: entry.dispatch_id = None
                 
                 # Track the record ID for updating the record

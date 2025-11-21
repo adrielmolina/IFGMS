@@ -1839,15 +1839,15 @@ async function executeTransmitDispatch() {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
             
-            toastSuccess('Success', 'Dispatch transmitted successfully! Excel file download started.');
+            toastSuccess('Success', 'Dispatch Declared successfully! Excel file download started.');
             
         } else {
             // Handle JSON response
             const result = await transmitResponse.json();
             if (result.success) {
-                toastSuccess('Success', result.message || `Dispatch transmitted successfully! ${result.transmitted_count} entries processed.`);
+                toastSuccess('Success', result.message || `Dispatch Declared successfully! ${result.transmitted_count} entries processed.`);
             } else {
-                throw new Error(result.error || 'Transmission failed');
+                throw new Error(result.error || 'Declaration failed');
             }
         }
         

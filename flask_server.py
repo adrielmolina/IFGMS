@@ -2269,9 +2269,9 @@ def export_dispatch():
 
 
 def generate_dispatch_excel_file(dispatch_id, transmitted_count):
-    """Generate Excel file for the dispatched entries - GUARANTEED WORKING VERSION"""
+    """Generate multi-sheet Excel file for the dispatched entries"""
     try:
-        print(f"🎯 Generating Excel for dispatch {dispatch_id}")
+        print(f"🎯 Generating multi-sheet Excel for dispatch {dispatch_id}")
         
         db_session = SessionLocal()
         
@@ -2299,6 +2299,7 @@ def generate_dispatch_excel_file(dispatch_id, transmitted_count):
                 models.Members.sex,
                 models.Members.contact_no,
                 models.Members.email,
+                models.Members.address,
                 models.Records.effectivity_date,
                 models.Records.location_particular,
                 models.Records.location_category,
@@ -2327,85 +2328,198 @@ def generate_dispatch_excel_file(dispatch_id, transmitted_count):
                 "excel_generated": False
             })
 
-        # Prepare data for Excel
-        data = []
-        for i, row in enumerate(entries_data, 1):
-            data.append({
-                'No.': i,
-                'MAAB Category': row.maab_category or '',
-                'MAAB No': row.maab_no or '',
-                'First Name': row.first_name or '',
-                'Middle Name': row.middle_name or '',
-                'Last Name': row.last_name or '',
-                'Suffix': row.suffix or 'NA',
-                'Birth Date': row.birth_date.strftime('%Y-%m-%d') if row.birth_date else '',
-                'Age': row.age or '',
-                'Sex': row.sex or '',
-                'Contact No': f"+63{row.contact_no}" if row.contact_no else '',
-                'Email': row.email or '',
-                'Effectivity Date': row.effectivity_date.strftime('%Y-%m-%d') if row.effectivity_date else '',
-                'Location Particular': row.location_particular or '',
-                'Location Category': row.location_category or '',
-                'Municipality': row.municipality or '',
-                'District': row.district or '',
-                'Origin': row.origin or ''
-            })
-
-        # Create DataFrame
-        df = pd.DataFrame(data)
-
         # Create Excel file in memory
         output = BytesIO()
         
         try:
-            # Use openpyxl engine for better compatibility
+            # Use openpyxl engine for better multi-sheet support
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name='Dispatch Report', index=False)
                 
-                # Get the workbook and worksheet
+                # Define custom colors
+                header_fill = openpyxl.styles.PatternFill(start_color="CCC0DA", end_color="CCC0DA", fill_type="solid")  # Purple-gray
+                total_row_fill = openpyxl.styles.PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")  # Light gray
+                red_font = openpyxl.styles.Font(color="FF0000", bold=True)  # Red font for numbers
+                bold_font = openpyxl.styles.Font(bold=True)
+                
+                # ==================== LISTING SHEET (Summary) ====================
+                print("📊 Creating Listing sheet...")
+                
+                # Group by location_particular and category
+                summary_data = []
+                location_groups = {}
+                
+                for entry in entries_data:
+                    location = entry.location_particular or 'Unknown'
+                    category = entry.maab_category or 'Unknown'
+                    
+                    if location not in location_groups:
+                        location_groups[location] = {
+                            'location': location,
+                            'effectivity_date': entry.effectivity_date,
+                            'categories': {}
+                        }
+                    
+                    if category not in location_groups[location]['categories']:
+                        location_groups[location]['categories'][category] = 0
+                    
+                    location_groups[location]['categories'][category] += 1
+                
+                # Convert to list for DataFrame
+                categories_list = ['Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Safe Card', 'Senior', 'Senior Plus']
+                for i, (location, data) in enumerate(location_groups.items(), 1):
+                    row = {
+                        'NO.': i,
+                        'SCHOOLS/COMPANY': location,
+                        'EFFECTIVITY DATE': data['effectivity_date'].strftime('%Y-%m-%d') if data['effectivity_date'] else ''
+                    }
+                    
+                    # Add counts for each category
+                    for category in categories_list:
+                        row[category.upper()] = data['categories'].get(category, 0)
+                    
+                    summary_data.append(row)
+                
+                # Add empty row before totals
+                empty_row = {'NO.': '', 'SCHOOLS/COMPANY': '', 'EFFECTIVITY DATE': ''}
+                for category in categories_list:
+                    empty_row[category.upper()] = ''
+                summary_data.append(empty_row)
+                
+                # Add totals row
+                if summary_data:
+                    totals_row = {'NO.': '', 'SCHOOLS/COMPANY': 'TOTAL', 'EFFECTIVITY DATE': ''}
+                    for category in categories_list:
+                        totals_row[category.upper()] = sum(row[category.upper()] for row in summary_data if row['SCHOOLS/COMPANY'] != 'TOTAL' and row['SCHOOLS/COMPANY'] != '')
+                    summary_data.append(totals_row)
+                
+                # Create summary DataFrame
+                summary_df = pd.DataFrame(summary_data)
+                
+                # Write summary sheet
+                summary_df.to_excel(writer, sheet_name='Listing', index=False, startrow=2)
+                
+                # Style summary sheet
                 workbook = writer.book
-                worksheet = writer.sheets['Dispatch Report']
+                summary_sheet = writer.sheets['Listing']
                 
                 # Add title
-                worksheet.merge_cells('A1:R1')
-                title_cell = worksheet['A1']
-                title_cell.value = f'DISPATCH REPORT - {dispatch.dispatch_origin} - {current_date.strftime("%Y-%m-%d")}'
+                summary_sheet.merge_cells('A1:K1')
+                title_cell = summary_sheet['A1']
+                title_cell.value = f'DISPATCH REPORT - CHAPTER - {dispatch.dispatch_cutoff}'
                 title_cell.font = openpyxl.styles.Font(size=16, bold=True)
                 title_cell.alignment = openpyxl.styles.Alignment(horizontal='center')
                 
-                # Style headers
-                header_fill = openpyxl.styles.PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
-                header_font = openpyxl.styles.Font(bold=True)
-                
-                for col in range(1, len(df.columns) + 1):
-                    cell = worksheet.cell(row=2, column=col)  # Headers are now in row 2
+                # Style headers and NO. column
+                for col in range(1, len(summary_df.columns) + 1):
+                    cell = summary_sheet.cell(row=3, column=col)
                     cell.fill = header_fill
-                    cell.font = header_font
+                    cell.font = bold_font
+                    cell.alignment = openpyxl.styles.Alignment(horizontal='center')
                 
-                # Adjust column widths
-                column_widths = {
-                    'A': 8,   # No.
-                    'B': 15,  # MAAB Category
-                    'C': 15,  # MAAB No
-                    'D': 15,  # First Name
-                    'E': 15,  # Middle Name
-                    'F': 15,  # Last Name
-                    'G': 8,   # Suffix
-                    'H': 12,  # Birth Date
-                    'I': 6,   # Age
-                    'J': 8,   # Sex
-                    'K': 15,  # Contact No
-                    'L': 20,  # Email
-                    'M': 12,  # Effectivity Date
-                    'N': 25,  # Location Particular
-                    'O': 20,  # Location Category
-                    'P': 15,  # Municipality
-                    'Q': 10,  # District
-                    'R': 12   # Origin
+                # Style NO. column for all data rows
+                data_row_count = len(location_groups)  # Number of actual data rows (excluding empty and total)
+                for row_num in range(4, 4 + data_row_count):  # Start from row 4 (after header)
+                    no_cell = summary_sheet.cell(row=row_num, column=1)  # Column A (NO.)
+                    no_cell.fill = header_fill
+                
+                # Style totals row
+                if summary_data:
+                    total_row_num = 4 + data_row_count + 1  # +1 for the empty row
+                    for col in range(1, len(summary_df.columns) + 1):
+                        cell = summary_sheet.cell(row=total_row_num, column=col)
+                        cell.fill = total_row_fill
+                        cell.font = bold_font
+                        
+                        # Make numbers red in totals row (columns D-K)
+                        if col >= 4:  # Columns D onwards (category counts)
+                            cell.font = red_font
+                
+                # Adjust column widths for summary sheet
+                summary_widths = {
+                    'A': 8,   # NO.
+                    'B': 35,  # SCHOOLS/COMPANY
+                    'C': 15,  # EFFECTIVITY DATE
+                    'D': 10,  # CLASSIC
+                    'E': 10,  # BRONZE
+                    'F': 10,  # SILVER
+                    'G': 10,  # GOLD
+                    'H': 10,  # PLATINUM
+                    'I': 12,  # SAFE CARD
+                    'J': 10,  # SENIOR
+                    'K': 12   # SENIOR PLUS
                 }
                 
-                for col_letter, width in column_widths.items():
-                    worksheet.column_dimensions[col_letter].width = width
+                for col_letter, width in summary_widths.items():
+                    summary_sheet.column_dimensions[col_letter].width = width
+                
+                # ==================== INDIVIDUAL CATEGORY SHEETS ====================
+                categories = ['Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Safe Card', 'Senior', 'Senior Plus']
+                
+                for category in categories:
+                    print(f"📝 Creating {category} sheet...")
+                    
+                    # Filter entries for this category
+                    category_entries = [e for e in entries_data if e.maab_category == category]
+                    
+                    if not category_entries:
+                        print(f"⚠️ No entries found for {category}, creating empty sheet")
+                        # Create empty DataFrame with correct columns
+                        empty_data = []
+                        empty_df = pd.DataFrame(empty_data, columns=['NO.', 'NAME', 'PRC ID #', 'EFFECTIVITY', 'BIRTHDAY', 'ADDRESS'])
+                        empty_df.to_excel(writer, sheet_name=category, index=False, startrow=2)
+                    else:
+                        # Prepare data for this category
+                        category_data = []
+                        for i, entry in enumerate(category_entries, 1):
+                            full_name = f"{entry.first_name or ''} {entry.middle_name or ''} {entry.last_name or ''} {entry.suffix or ''}".strip()
+                            category_data.append({
+                                'NO.': i,
+                                'NAME': full_name,
+                                'PRC ID #': entry.maab_no or '',
+                                'EFFECTIVITY': entry.effectivity_date.strftime('%Y-%m-%d') if entry.effectivity_date else '',
+                                'BIRTHDAY': entry.birth_date.strftime('%Y-%m-%d') if entry.birth_date else '',
+                                'ADDRESS': entry.address or ''
+                            })
+                        
+                        # Create category DataFrame
+                        category_df = pd.DataFrame(category_data)
+                        category_df.to_excel(writer, sheet_name=category, index=False, startrow=2)
+                    
+                    # Style category sheet
+                    category_sheet = writer.sheets[category]
+                    
+                    # Add title
+                    category_sheet.merge_cells('A1:F1')
+                    title_cell = category_sheet['A1']
+                    title_cell.value = f'DISPATCH REPORT - CHAPTER - {dispatch.dispatch_cutoff}'
+                    title_cell.font = openpyxl.styles.Font(size=16, bold=True)
+                    title_cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+                    
+                    # Style headers and NO. column for category sheets
+                    for col in range(1, 7):  # A-F
+                        cell = category_sheet.cell(row=3, column=col)
+                        cell.fill = header_fill
+                        cell.font = bold_font
+                        cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+                    
+                    # Style NO. column for all data rows in category sheets
+                    if category_entries:
+                        for row_num in range(4, 4 + len(category_entries)):
+                            no_cell = category_sheet.cell(row=row_num, column=1)  # Column A (NO.)
+                            no_cell.fill = header_fill
+                    
+                    # Adjust column widths for category sheets
+                    category_widths = {
+                        'A': 8,   # NO.
+                        'B': 30,  # NAME
+                        'C': 15,  # PRC ID #
+                        'D': 12,  # EFFECTIVITY
+                        'E': 12,  # BIRTHDAY
+                        'F': 40   # ADDRESS
+                    }
+                    
+                    for col_letter, width in category_widths.items():
+                        category_sheet.column_dimensions[col_letter].width = width
 
             # Prepare file for download
             output.seek(0)
@@ -2413,7 +2527,7 @@ def generate_dispatch_excel_file(dispatch_id, transmitted_count):
             # Create filename
             filename = f"dispatch_{dispatch.dispatch_origin}_{current_date.strftime('%Y-%m-%d')}.xlsx"
             
-            print(f"✅ Excel file generated successfully: {filename}")
+            print(f"✅ Multi-sheet Excel file generated successfully: {filename}")
             
             # Return the file
             return send_file(
