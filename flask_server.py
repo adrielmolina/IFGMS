@@ -244,6 +244,8 @@ def members_page():
 @login_required
 @roles_required('admin', 'superadmin')
 def declaration_page():
+    if current_user.office_location != 'Chapter':
+        abort(403)
     
     active_dispatch = db_conn.get_current_active_dispatch()
     if active_dispatch:
@@ -330,8 +332,10 @@ def audit_trails():
 
 @server.route('/accounts')
 @login_required
-@roles_required('admin', 'superadmin')
+@roles_required('superadmin')
 def show_user_accounts():
+    if current_user.office_location != 'Chapter':
+        abort(403)
     return render_template('accounts.html')
 
 
