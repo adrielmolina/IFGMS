@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/claims_v2.css') }}">
+    <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/claims_v2.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/handsontable.min.css" />
@@ -703,6 +703,48 @@
 <!--TODO fix the flickering when scrolling-->
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/input-restrictions.js')}}"></script>
+<script>
+    // Dark Mode Functionality for Module
+    document.addEventListener("DOMContentLoaded", function() {
+        const themeLink = document.getElementById("theme-link");
+        const savedTheme = localStorage.getItem("baseTheme") || "light";
+        
+        if (savedTheme === "dark") {
+            switchToDarkMode();
+        }
+        
+        window.addEventListener('themeChanged', function(e) {
+            if (e.detail.theme === "dark") {
+                switchToDarkMode();
+            } else {
+                switchToLightMode();
+            }
+        });
+        
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'baseTheme') {
+                if (e.newValue === "dark") {
+                    switchToDarkMode();
+                } else {
+                    switchToLightMode();
+                }
+            }
+        });
+        
+        function switchToDarkMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('claims_v2.css', 'claims_v2-dark.css');
+            themeLink.setAttribute('href', newHref);
+        }
+        
+        function switchToLightMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('claims_v2-dark.css', 'claims_v2.css');
+            themeLink.setAttribute('href', newHref);
+        }
+    });
+</script>
+
 <script>
 
     function checkStatusAndDisableOverlay() {
