@@ -1344,6 +1344,76 @@ def get_members_count():
             'success': False,
             'error': str(e)
         }), 500
+        
+@server.route('/api/delete_entry', methods=['DELETE'])
+@login_required
+def delete_entry():
+    try:
+        data = request.get_json()
+        entry_id = data.get('entry_id')
+        
+        print(f"🔍 DELETE ENTRY API CALLED - Entry ID: {entry_id}")
+        
+        if not entry_id:
+            return jsonify({"success": False, "error": "No entry ID provided"}), 400
+        
+        db_session = SessionLocal()
+        try:
+            # Find the entry
+            entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
+            if not entry:
+                return jsonify({"success": False, "error": "Entry not found"}), 404
+            
+            # Get member info for logging before deletion
+            member = db_session.query(models.Members).filter_by(member_id=entry.member_id).first()
+            member_name = f"{member.first_name} {member.last_name}" if member else "Unknown"
+            
+            # Store the MAAB number before deletion for inventory update
+            maab_no = entry.maab_no
+            
+            # Delete the entry
+            db_session.delete(entry)
+            db_session.commit()
+            
+            # If there's a MAAB number, mark it as available in inventory
+            if maab_no:
+                try:
+                    inventory_item = db_session.query(models.Inventory).filter_by(maab_no=maab_no).first()
+                    if inventory_item:
+                        inventory_item.used = 0  # Mark as available
+                        inventory_item.allocated_to = None
+                        inventory_item.updated_at = datetime.now()
+                        db_session.commit()
+                        print(f"✅ MAAB number {maab_no} marked as available in inventory")
+                except Exception as inventory_error:
+                    print(f"⚠️ Error updating inventory for {maab_no}: {inventory_error}")
+                    # Don't fail the whole operation if inventory update fails
+            
+            # Log the action
+            db_conn.POST_action_log(
+                current_user.username, 
+                current_user.user_level, 
+                'Delete Entry', 
+                f'Deleted entry for {member_name} (Entry ID: {entry_id})', 
+                current_user.account_id
+            )
+            
+            print(f"✅ Entry {entry_id} deleted successfully")
+            return jsonify({
+                "success": True, 
+                "message": "Entry deleted successfully"
+            })
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Error deleting entry: {e}")
+            return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in delete_entry route: {e}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 @server.route('/api/members/expiring_soon', methods=['GET'])
 def get_expiring_soon_count():

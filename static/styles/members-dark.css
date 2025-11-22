@@ -1524,3 +1524,11 @@ div.table-container {
     color: #777 !important;
     cursor: not-allowed !important;
 }
+
+.delete_entry.show {
+    display: inline-block !important;
+}
+
+#back_to_add.show {
+    display: inline-block !important;
+}
