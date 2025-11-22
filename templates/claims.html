@@ -747,22 +747,42 @@
 
 <script>
 
-    function checkStatusAndDisableOverlay() {
-        const statusEl = document.getElementById('claim_status');
-        if (!statusEl) return;
+function checkStatusAndDisableOverlay() {
+    const statusEl = document.getElementById('claim_status');
+    if (!statusEl) return;
 
-        const status = statusEl.value;
-        const overlay = document.getElementById('overlay');
-        if (!overlay) return;
+    const status = statusEl.value;
+    const overlay = document.getElementById('overlay');
+    if (!overlay) return;
 
-        const inputs = overlay.querySelectorAll('input, select, textarea, button');
-
-        if (status === 'Approved' || status === 'Denied') {
-            inputs.forEach(el => el.disabled = true);
-        } else {
-            inputs.forEach(el => el.disabled = false);
-        }
+    // Get all inputs in the overlay except the status dropdown and save button
+    const inputs = overlay.querySelectorAll('input:not([readonly]):not(#save_claim_record), select:not([readonly]), textarea:not([readonly]), button:not(#save_claim_record)');
+    
+    // For Approved/Denied status, disable all editable fields EXCEPT save button
+    if (status === 'Approved' || status === 'Denied') {
+        inputs.forEach(el => {
+            // Don't disable the status dropdown itself
+            if (el.id !== 'claim_status') {
+                el.disabled = true;
+            }
+        });
+        // Don't disable save button here - let updateSaveButtonState handle it
+    } else {
+        // For Pending status, enable all fields (they'll be further controlled by the status change handler)
+        inputs.forEach(el => {
+            if (el.id !== 'claim_status') {
+                el.disabled = false;
+            }
+        });
+        
+        // Now trigger the status change handler to set the correct field states for Pending
+        const statusEvent = new Event('change');
+        document.getElementById('claim_status').dispatchEvent(statusEvent);
     }
+    
+    // Always update save button state after status change
+    updateSaveButtonState();
+}
 
     // page load functions
 document.addEventListener('DOMContentLoaded', function () {
@@ -844,152 +864,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
         .catch(err => console.error("Failed to load MAAB numbers:", err));    
-
-
-    // conditions for the requirements checkboxes
-    const claimTypeEl = document.getElementById('claim_type');
-    const sameAsEl = document.getElementById('same_as_insureed');
-    const claimStatusEl = document.getElementById('claim_status');
-
-    // --- your existing listeners here ---
-    claimTypeEl.addEventListener('change', function() {
-    const claimType = this.value;
-    const same_as_insured_box = document.getElementById('same_as_insureed');
-
-    const birth_cert = document.getElementById('req_birth_cert');
-    const marriage_cert = document.getElementById('req_marriage_cert');
-    const death_cert = document.getElementById('req_death_cert');
-    const burial_receipts = document.getElementById('req_burial_receipts');
-
-    if (claimType === 'DEATH') {
-        same_as_insured_box.checked = false;
-        same_as_insured_box.disabled = true;
-
-        // Enable death-related documents
-        death_cert.disabled = false;
-        burial_receipts.disabled = false;
-        birth_cert.disabled = false;
-        marriage_cert.disabled = false;
-    } else {
-        // For ACCIDENT or DENGUE
-        same_as_insured_box.disabled = false;
-
-        // Disable and uncheck death-related documents
-        death_cert.checked = false;
-        burial_receipts.checked = false;
-        death_cert.disabled = true;
-        burial_receipts.disabled = true;
-        
-        // Keep birth and marriage certs enabled for other claim types
-        birth_cert.disabled = false;
-        marriage_cert.disabled = false;
-    }
-});
-
-    sameAsEl.addEventListener('change', function() {
-        const birth_cert = document.getElementById('req_birth_cert');
-        const marriage_cert = document.getElementById('req_marriage_cert');
-        const death_cert = document.getElementById('req_death_cert');
-        const burial_receipts = document.getElementById('req_burial_receipts');
-
-        if (this.checked) {
-            birth_cert.checked = false;
-            marriage_cert.checked = false;
-            death_cert.checked = false;
-            burial_receipts.checked = false;
-
-            //birth_cert.disabled = true;
-            marriage_cert.disabled = true;
-            death_cert.disabled = true;
-            burial_receipts.disabled = true;
-        } else {
-            birth_cert.disabled = false;
-            marriage_cert.disabled = false;
-
-            if (claimTypeEl.value === 'DEATH') {
-                death_cert.disabled = false;
-                burial_receipts.disabled = false;
-            } else {
-                death_cert.disabled = true;
-                burial_receipts.disabled = true;
-            }
-        }
-    });
-
-    claimStatusEl.addEventListener('change', function() {
-        const status = this.value;
-
-        const pickup_check = document.getElementById('picked_up');
-        const date_pickup = document.getElementById('date_picked_up');
-        const released = document.getElementById('date_released');
-        const chinabank = document.getElementById('chinabank_check_no');
-        const chinabank_amount = document.getElementById('chinabank_amount');
-        const bpi = document.getElementById('bpi_check_no');
-        const bpi_amount = document.getElementById('bpi_amount');
-        const release_rem = document.getElementById('release_remarks');
-
-        if (status === 'approved') {
-            pickup_check.disabled = false;
-            date_pickup.disabled = false;
-            released.disabled = false;
-            released.value = new Date().toISOString().slice(0, 10);
-
-            chinabank.disabled = false;
-            chinabank_amount.disabled = false;
-            bpi.disabled = false;
-            bpi_amount.disabled = false;
-
-            release_rem.disabled = false;
-
-        } else if (status === 'denied') {
-            pickup_check.checked = false;
-            pickup_check.disabled = true;
-            date_pickup.value = '';
-            date_pickup.disabled = true;
-
-            released.disabled = false;
-            released.value = new Date().toISOString().slice(0, 10);
-
-            chinabank.value = '';
-            chinabank.disabled = true;
-            chinabank_amount.value = '';
-            chinabank_amount.disabled = true;
-
-            bpi.value = '';
-            bpi.disabled = true;
-            bpi_amount.value = '';
-            bpi_amount.disabled = true;
-
-        } else if (status === 'pending') {
-            pickup_check.checked = false;
-            pickup_check.disabled = true;
-            date_pickup.value = '';
-            date_pickup.disabled = true;
-
-            released.value = '';
-            released.disabled = true;
-
-            chinabank.value = '';
-            chinabank.disabled = true;
-            chinabank_amount.value = '';
-            chinabank_amount.disabled = true;
-
-            bpi.value = '';
-            bpi.disabled = true;
-            bpi_amount.value = '';
-            bpi_amount.disabled = true;
-
-            release_rem.value = '';
-            release_rem.disabled = true;
-        }
-    });
-
-    // --- manually trigger the logic on load ---
-    //claimTypeEl.dispatchEvent(new Event("change"));
-    //sameAsEl.dispatchEvent(new Event("change"));
-    //claimStatusEl.dispatchEvent(new Event("change"));
-
-
 });
 
 
@@ -1061,8 +935,11 @@ function clearOverlay() {
     
     // ✅ Set as new record and update button state
     isNewRecord = true;
+    console.log('New record created - isNewRecord set to true');
+    
     setTimeout(() => {
         originalFormData = captureFormState();
+        console.log('New record - original form data captured:', originalFormData);
         updateSaveButtonState();
     }, 50);
 }
@@ -1136,11 +1013,11 @@ function statusRenderer(instance, td, row, col, prop, value, cellProperties) {
     // Add appropriate class based on status value
     if (value) {
         const status = value.toLowerCase();
-        if (status === 'approved') {
+        if (status === 'Approved') {
             td.classList.add('status-approved');
-        } else if (status === 'denied') {
+        } else if (status === 'Denied') {
             td.classList.add('status-denied');
-        } else if (status === 'pending') {
+        } else if (status === 'Pending') {
             td.classList.add('status-pending');
         }
     }
@@ -1296,10 +1173,18 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             isNewRecord = false;
             setTimeout(() => {
                 originalFormData = captureFormState();
+                console.log('Original form data captured:', originalFormData);
                 updateSaveButtonState();
             }, 100);
 
-            checkStatusAndDisableOverlay()
+            // ✅ CRITICAL FIX: Apply status-based field states after loading the record
+            setTimeout(() => {
+                const statusEvent = new Event('change');
+                document.getElementById('claim_status').dispatchEvent(statusEvent);
+                // Don't call checkStatusAndDisableOverlay here as it will disable save button
+                // Let the status change handler and updateSaveButtonState handle it
+            }, 150);
+
         } else {
             // Clear all fields if no record is found
             clearOverlay();
@@ -1343,6 +1228,7 @@ function handleClaimTypeChange() {
 document.addEventListener('DOMContentLoaded', function() {
     // Get the claim type dropdown
     const claimTypeDropdown = document.getElementById('claim_type');
+    
     
     // Add change event listener
     if (claimTypeDropdown) {
@@ -2161,25 +2047,32 @@ document.addEventListener("DOMContentLoaded", () => {
         
 
         fetch('/api/save_claim_record', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                alert('Record details saved!');
-                refreshMembersTable();
-                checkStatusAndDisableOverlay();
-            } else {
-                alert('Failed to save record details.');
-            }
-            document.getElementById('save_claim_record').innerHTML = 'Save';
-        })
-        .catch(error => {
-            alert('Error saving record details.');
-            console.error(error);
-        });
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+})
+.then(response => response.json())
+.then(result => {
+    if (result.success) {
+        alert('Record details saved!');
+        refreshMembersTable();
+        
+        if (isNewRecord) {
+            // For new records, set as existing record after first save
+            isNewRecord = false;
+            console.log('New record saved - setting isNewRecord to false');
+        }
+        
+        // ✅ Update the original form data to the new state
+        originalFormData = captureFormState();
+        
+        // ✅ Now disable the overlay if status is Approved/Denied
+        checkStatusAndDisableOverlay();
+    } else {
+        alert('Failed to save record details.');
+    }
+    document.getElementById('save_claim_record').innerHTML = 'Save';
+})
         
     });
 });
@@ -2211,19 +2104,6 @@ const saveBtn = document.getElementById("save_claim_record");
 const overlay  = document.getElementById("overlay");
 //console.log(saveBtn.disabled); 
 
-overlay .addEventListener("input", enableSaveBTN);
-overlay .addEventListener("change", enableSaveBTN);
-
-function enableSaveBTN(event) {
-    console.log("Change/input detected on:", event.target); // logs the element
-    console.log("Element value:", event.target.value);
-    console.log("Element checked:", event.target.checked);
-
-
-    if (event.target && !event.target.disabled) {
-        saveBtn.disabled = false;
-    }
-}
 
 
 // for x button in overlay
@@ -2379,6 +2259,82 @@ document.getElementById('claim_type').addEventListener('change', function() {
 
     });
 */
+
+document.getElementById('claim_status').addEventListener('change', function() {
+    const status = this.value;
+    console.log('Status changed to:', status);
+
+    const pickup_check = document.getElementById('picked_up');
+    const date_pickup = document.getElementById('date_picked_up');
+    const released = document.getElementById('date_released');
+    const chinabank = document.getElementById('chinabank_check_no');
+    const chinabank_amount = document.getElementById('chinabank_amount');
+    const bpi = document.getElementById('bpi_check_no');
+    const bpi_amount = document.getElementById('bpi_amount');
+    const release_rem = document.getElementById('release_remarks');
+    
+
+    if (status === 'Approved') {
+        pickup_check.disabled = false;
+        date_pickup.disabled = false;
+        released.disabled = false;
+        released.value = new Date().toISOString().slice(0, 10); // Set to today
+
+        chinabank.disabled = false;
+        chinabank_amount.disabled = false;
+
+        bpi.disabled = false;
+        bpi_amount.disabled = false;
+        
+        release_rem.disabled = false;
+
+    } else if (status === 'Denied') {
+        pickup_check.checked = false;
+        pickup_check.disabled = true;
+        date_pickup.value = '';
+        date_pickup.disabled = true;
+
+        released.disabled = false;
+        released.value = new Date().toISOString().slice(0, 10); // Set to today
+        
+        chinabank.value = '';
+        chinabank.disabled = true;
+        chinabank_amount.value = '';
+        chinabank_amount.disabled = true;
+
+        bpi.value = '';
+        bpi.disabled = true;
+        bpi_amount.value = '';
+        bpi_amount.disabled = true;
+
+    } else if (status === 'Pending') {
+        pickup_check.checked = false;
+        pickup_check.disabled = true;
+        date_pickup.value = '';
+        date_pickup.disabled = true;
+
+        released.value = '';
+        released.disabled = true;
+
+        chinabank.value = '';
+        chinabank.disabled = true;
+        chinabank_amount.value = '';
+        chinabank_amount.disabled = true;
+
+        bpi.value = '';
+        bpi.disabled = true;
+        bpi_amount.value = '';
+        bpi_amount.disabled = true;
+
+        release_rem.value = '';
+        release_rem.disabled = true;
+    }
+    
+    console.log('Calling updateSaveButtonState from status change handler');
+    // ✅ CRITICAL: Update save button state after status change
+    updateSaveButtonState();
+});
+
 // Function to capture current form state
 function captureFormState() {
     const formData = {};
@@ -2400,11 +2356,20 @@ function captureFormState() {
 function hasFormChanged() {
     const currentData = captureFormState();
     
+    console.log('Checking form changes...');
+    console.log('Original status:', originalFormData['claim_status']);
+    console.log('Current status:', currentData['claim_status']);
+    
     for (const key in currentData) {
         if (currentData[key] !== originalFormData[key]) {
+            console.log('Change detected in field:', key, 
+                        'Original:', originalFormData[key], 
+                        'Current:', currentData[key]);
             return true;
         }
     }
+    
+    console.log('No changes detected');
     return false;
 }
 
@@ -2412,8 +2377,10 @@ function hasFormChanged() {
 function updateSaveButtonState() {
     const saveBtn = document.getElementById('save_claim_record');
     
+    console.log('updateSaveButtonState called - isNewRecord:', isNewRecord);
+    
     if (isNewRecord) {
-        // For new records, enable only if specific user-actionable fields have content
+        // For new records, enable if ANY field has user content (more permissive)
         const currentData = captureFormState();
         
         // Define which fields should trigger save button for new records
@@ -2427,7 +2394,9 @@ function updateSaveButtonState() {
             'claimant_contact_no',
             'claimant_email',
             'claim_remarks',
-            'relation'
+            'relation',
+            'claim_type',
+            'claim_origin'
         ];
         
         // Also include requirement checkboxes
@@ -2452,12 +2421,31 @@ function updateSaveButtonState() {
         });
         
         console.log('New record check - hasUserContent (tracked fields only):', hasUserContent);
-        saveBtn.disabled = !hasUserContent;
+        
+        // Also check if claim_type or claim_origin have been changed from default
+        const claimTypeChanged = currentData['claim_type'] !== 'ACCIDENT'; // Default is ACCIDENT
+        const claimOriginChanged = currentData['claim_origin'] !== 'Chapter'; // Default is Chapter
+        
+        // Enable save button if any user content OR if dropdowns were changed from default
+        const shouldEnable = hasUserContent || claimTypeChanged || claimOriginChanged;
+        
+        console.log('New record - shouldEnable:', shouldEnable, 
+                   'claimTypeChanged:', claimTypeChanged, 
+                   'claimOriginChanged:', claimOriginChanged);
+        
+        saveBtn.disabled = !shouldEnable;
     } else {
         // For existing records, enable only if changes were made
         const changed = hasFormChanged();
-        console.log('Existing record check - hasChanged:', changed);
+        const status = document.getElementById('claim_status').value;
+        
+        console.log('Existing record check - hasChanged:', changed, 'status:', status);
+        
+        // Enable save button if changes were made, regardless of status
+        // The status will be locked AFTER saving, not during editing
         saveBtn.disabled = !changed;
+        
+        console.log('Save button will be disabled:', saveBtn.disabled);
     }
     
     console.log('Save button disabled:', saveBtn.disabled);
@@ -2467,14 +2455,30 @@ function updateSaveButtonState() {
 function initializeFormStateTracking() {
     const overlay = document.getElementById('overlay');
     
-    // Listen for all input events in the overlay
+    // Listen for all input events in the overlay (INCLUDING status field)
     overlay.addEventListener('input', function(event) {
-        updateSaveButtonState();
+        // Don't trigger on readonly fields
+        if (!event.target.readOnly && !event.target.disabled) {
+            updateSaveButtonState();
+        }
     });
     
     overlay.addEventListener('change', function(event) {
-        updateSaveButtonState();
+        // Don't trigger on readonly fields, but DO include status field
+        if (!event.target.readOnly && !event.target.disabled) {
+            updateSaveButtonState();
+        }
+        
+        // Special case: always update save button when status changes
+        if (event.target.id === 'claim_status') {
+            updateSaveButtonState();
+        }
     });
 }
+
+// Call this in DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    initializeFormStateTracking();
+});
 </script>
 {% endblock %}

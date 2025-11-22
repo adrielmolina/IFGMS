@@ -1854,6 +1854,117 @@ def save_entry_details():
     finally:
         db_session.close()
 
+@server.route('/api/change-password', methods=['POST'])
+@login_required
+def change_password_api():
+    """API endpoint to change user password"""
+    # Store user info before any database operations
+    user_id = current_user.account_id
+    username = current_user.username
+    user_level = current_user.user_level
+    
+    db_session = None
+    try:
+        print("🔑 ========== CHANGE PASSWORD API CALLED ==========")
+        print(f"🔑 User: {username} (ID: {user_id})")
+        
+        # Check if we're receiving JSON data
+        if not request.is_json:
+            print("❌ Request is not JSON")
+            return jsonify({"success": False, "error": "Request must be JSON"}), 400
+            
+        data = request.get_json()
+        print(f"🔑 Received data: {data}")
+        
+        if not data:
+            print("❌ No data received")
+            return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        current_password = data.get('currentPassword')
+        new_password = data.get('newPassword')
+        
+        print(f"🔑 Current password provided: {bool(current_password)}")
+        print(f"🔑 New password provided: {bool(new_password)}")
+        
+        if not current_password or not new_password:
+            print("❌ Missing password fields")
+            return jsonify({"success": False, "error": "Current password and new password are required"}), 400
+        
+        # Validate new password strength (simplified - no special chars)
+        if len(new_password) < 8:
+            print("❌ New password too short")
+            return jsonify({"success": False, "error": "New password must be at least 8 characters long"}), 400
+        
+        if not any(c.isupper() for c in new_password):
+            print("❌ New password missing uppercase")
+            return jsonify({"success": False, "error": "New password must contain at least one uppercase letter"}), 400
+            
+        if not any(c.islower() for c in new_password):
+            print("❌ New password missing lowercase")
+            return jsonify({"success": False, "error": "New password must contain at least one lowercase letter"}), 400
+            
+        if not any(c.isdigit() for c in new_password):
+            print("❌ New password missing number")
+            return jsonify({"success": False, "error": "New password must contain at least one number"}), 400
+        
+        # Verify current password
+        db_session = SessionLocal()
+        print(f"🔑 Querying user from database...")
+        user = db_session.query(models.Accounts).filter_by(account_id=user_id).first()
+        
+        if not user:
+            print("❌ User not found in database")
+            return jsonify({"success": False, "error": "User not found"}), 404
+        
+        print(f"🔑 User found: {user.username}")
+        print(f"🔑 Stored password hash: {user.password[:20]}...")
+        
+        # Check if current password is correct
+        print("🔑 Verifying current password...")
+        password_correct = tools.check_password(current_password, user.password)
+        print(f"🔑 Current password verification: {password_correct}")
+        
+        if not password_correct:
+            print("❌ Current password is incorrect")
+            return jsonify({"success": False, "error": "Current password is incorrect"}), 400
+        
+        # Update password
+        print("🔑 Hashing new password...")
+        hashed_new_password = tools.hash_password(new_password)
+        print(f"🔑 New password hash: {hashed_new_password[:20]}...")
+        
+        user.password = hashed_new_password
+        print("🔑 Password updated in user object")
+        
+        db_session.commit()
+        print("✅ Database committed successfully")
+        
+        # Log the action - use the stored variables, not current_user
+        db_conn.POST_action_log(
+            username,
+            user_level,
+            'Change Password',
+            'User changed their password successfully',
+            user_id
+        )
+        
+        print(f"✅ Password changed successfully for user: {username}")
+        return jsonify({
+            "success": True, 
+            "message": "Password changed successfully"
+        })
+            
+    except Exception as e:
+        if db_session:
+            db_session.rollback()
+        print(f"❌ Error during password change: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": "Internal server error"}), 500
+    finally:
+        if db_session:
+            db_session.close()
+            print("🔑 Database session closed")
 
 @server.route('/api/save_entry_update', methods=['POST'])
 @login_required

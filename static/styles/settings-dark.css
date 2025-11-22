@@ -287,7 +287,7 @@ button:hover {
 }
 
 .form-buttons button,
-#editButton {
+#editButton, #changePasswordButton {
     padding: 10px 20px;
     background-color: #339af0;
     color: white;
@@ -299,7 +299,7 @@ button:hover {
 }
 
 .form-buttons button:hover,
-#editButton:hover {
+#editButton:hover, #changePasswordButton:hover{
     opacity: 0.85;
 }
 
@@ -504,4 +504,302 @@ th {
 .left-container,
 .profile-container {
   margin: 40px 0;
+}
+
+/* Change Password Modal Styles - Dark Mode */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #2d2d2d;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease-out;
+    z-index: 10001;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #444;
+    background: rgba(45, 45, 45, 0.9);
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #e0e0e0;
+    font-size: 1.25rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    color: #e0e0e0;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #444;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    background: rgba(45, 45, 45, 0.9);
+}
+
+/* Password Form Styles */
+.password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.password-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.password-form label {
+    font-weight: 600;
+    color: #e0e0e0;
+    font-size: 0.875rem;
+}
+
+.password-form input {
+    padding: 12px;
+    border: 2px solid #444;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+    background: #333;
+    color: #e0e0e0;
+}
+
+.password-form input:focus {
+    border-color: #4dabf7;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
+}
+
+.password-form input::placeholder {
+    color: #888;
+}
+
+/* Password Requirements Styles */
+.password-requirements {
+    background: rgba(45, 45, 45, 0.8);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 10px;
+    border: 1px solid #444;
+}
+
+.password-requirements p {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    color: #e0e0e0;
+    font-size: 0.875rem;
+}
+
+.password-requirements ul {
+    margin: 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.password-requirements li {
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    transition: color 0.3s ease;
+}
+
+.requirement-met {
+    color: #10b981;
+}
+
+.requirement-not-met {
+    color: #888;
+}
+
+.requirement-met::before {
+    content: "✓ ";
+    font-weight: bold;
+}
+
+.requirement-not-met::before {
+    content: "○ ";
+}
+
+/* Button Styles for Modal */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(
+        225deg,
+        rgba(77, 171, 247, 0.8),
+        rgba(51, 154, 240, 0.8),
+        rgba(41, 143, 232, 0.85)
+    );
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(
+        225deg,
+        rgba(102, 184, 255, 0.9),
+        rgba(77, 171, 247, 0.9),
+        rgba(61, 163, 242, 0.9)
+    );
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary {
+    background: #555;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary:hover {
+    background: #666;
+    transform: translateY(-1px);
+}
+
+/* CRITICAL FIX: Force inputs to be clickable */
+#changePasswordModal input[type="password"] {
+    pointer-events: auto !important;
+    cursor: text !important;
+}
+
+/* Ensure all interactive elements in modal are clickable */
+#changePasswordModal .form-group,
+#changePasswordModal input,
+#changePasswordModal button,
+#changePasswordModal label {
+    pointer-events: auto !important;
+}
+
+/* Remove any inherited pointer-events blocking */
+.modal-content * {
+    pointer-events: auto !important;
+}
+
+/* Specific fix for password inputs */
+#currentPassword, 
+#newPassword, 
+#confirmPassword {
+    pointer-events: auto !important;
+    cursor: text !important;
+    position: relative;
+    z-index: 10002 !important;
+}
+
+/* Loading state for buttons */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn .fa-spinner {
+    margin-right: 8px;
+}
+
+/* Success state */
+.password-success {
+    border-color: #10b981 !important;
+    background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+/* Error state */
+.password-error {
+    border-color: #ef4444 !important;
+    background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Focus states for accessibility */
+.password-form input:focus {
+    background: #3a3a3a;
+}
+
+/* Scrollbar styling for modal */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #2d2d2d;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #666;
 }
