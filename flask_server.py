@@ -1853,7 +1853,149 @@ def save_entry_details():
         return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
     finally:
         db_session.close()
+    
+# # ===== GET ALL MEMBER IDs FROM members_info TABLE =====
+# @server.route('/api/members/all_member_ids')
+# def get_all_member_ids():
+#     try:
+#         db_session = SessionLocal()
+        
+#         try:
+#             # Query all distinct member_id from members_info
+#             cursor = db_session.execute(text("""
+#                 SELECT DISTINCT member_id 
+#                 FROM members_info 
+#                 ORDER BY member_id
+#             """))
+#             member_ids = [row[0] for row in cursor.fetchall()]
+            
+#             print(f"✅ Retrieved {len(member_ids)} member IDs from members_info")
+            
+#             return jsonify({
+#                 'success': True,
+#                 'member_ids': member_ids,
+#                 'count': len(member_ids)
+#             })
+            
+#         except Exception as e:
+#             print(f"❌ Database error in get_all_member_ids: {e}")
+#             import traceback
+#             traceback.print_exc()
+#             return jsonify({
+#                 'success': False,
+#                 'error': 'Database error occurred'
+#             }), 500
+            
+#         finally:
+#             db_session.close()
+            
+#     except Exception as e:
+#         print(f"❌ Error in get_all_member_ids route: {e}")
+#         import traceback
+#         traceback.print_exc()
+#         return jsonify({
+#             'success': False,
+#             'error': 'Internal server error'
+#         }), 500
 
+# # Modified route to get ALL member data
+# @server.route('/api/members/all_members_complete')
+# def get_all_members_complete():
+#     try:
+#         db_session = SessionLocal()
+        
+#         try:
+#             # Query ALL member data including birthdate, sex, suffix
+#             cursor = db_session.execute(text("""
+#                 SELECT member_id, first_name, middle_name, last_name, sex
+#                 FROM members_info 
+#                 ORDER BY member_id
+#             """))
+            
+#             members = cursor.fetchall()
+            
+#             # Convert to list of dictionaries
+#             members_list = []
+#             for member in members:
+#                 members_list.append({
+#                     'member_id': member[0],
+#                     'first_name': member[1],
+#                     'middle_name': member[2],
+#                     'last_name': member[3],
+#                     'sex': member[4]
+#                 })
+            
+#             print(f"✅ Retrieved {len(members_list)} members with complete data")
+#             return jsonify({'success': True, 'members': members_list, 'count': len(members_list)})
+            
+#         except Exception as e:
+#             print(f"❌ Database error: {e}")
+#             return jsonify({'success': False, 'error': str(e)}), 500
+#         finally:
+#             db_session.close()
+            
+#     except Exception as e:
+#         print(f"❌ Route error: {e}")
+#         return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+# Modified route to get ALL member data including all columns
+@server.route('/api/members/all_members_complete')
+def get_all_members_complete():
+    try:
+        db_session = SessionLocal()
+        
+        try:
+            # Query ALL member data including all columns
+            cursor = db_session.execute(text("""
+                SELECT member_id, first_name, middle_name, last_name, suffix, 
+                       birth_date, age, sex, contact_no, email, address, blood_type
+                FROM members_info 
+                ORDER BY member_id
+            """))
+            
+            members = cursor.fetchall()
+            
+            # Convert to list of dictionaries
+            members_list = []
+            for member in members:
+                members_list.append({
+                    'member_id': member[0],
+                    'first_name': member[1],
+                    'middle_name': member[2],
+                    'last_name': member[3],
+                    'suffix': member[4],
+                    'birth_date': member[5],
+                    'age': member[6],
+                    'sex': member[7],
+                    'contact_no': member[8],
+                    'email': member[9],
+                    'address': member[10],
+                    'blood_type': member[11]
+                })
+            
+            print(f"✅ Retrieved {len(members_list)} members with complete data")
+            return jsonify({
+                'success': True, 
+                'members': members_list, 
+                'count': len(members_list)
+            })
+            
+        except Exception as e:
+            print(f"❌ Database error: {e}")
+            return jsonify({
+                'success': False, 
+                'error': str(e)
+            }), 500
+            
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Route error: {e}")
+        return jsonify({
+            'success': False, 
+            'error': 'Internal server error'
+        }), 500
 
 @server.route('/api/save_entry_update', methods=['POST'])
 @login_required

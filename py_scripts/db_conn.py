@@ -23,6 +23,7 @@ else:
     load_dotenv(env_loc)
 
     DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'local').lower()
+    
 
 # FOR AIVEN DB CONNECTION
 AIVEN_URI = os.getenv('AIVEN_URI')
