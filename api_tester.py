@@ -84,7 +84,10 @@ def mailjet_test():
     
     print(result.json())
 
-
+def check_pass():
+    passw = tools.check_password('q', '$2b$12$5fYrn4y8MtlDhc85UxMHdeRzYkBK4Lm4B4jK9fGcJeesiCZFRP3UK')
+    print('Password match:', passw)
+    
 if __name__ == "__main__":
     #test_db_connection_time()
     #print(test_db_latency())
@@ -92,6 +95,6 @@ if __name__ == "__main__":
     #get_claim_id_test()
     #mailjet_test()
     
-    target_vs_actual_test()
-    
+    #target_vs_actual_test()
+    check_pass()
     
