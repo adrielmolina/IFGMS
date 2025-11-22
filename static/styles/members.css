@@ -1570,6 +1570,12 @@ div.table-container {
     cursor: not-allowed !important;
 }
 
+.delete_entry.show {
+    display: inline-block !important;
+}
+
+#back_to_add.show {
+    display: inline-block !important;
 /* Fixed size specifically for renew overlay */
 #renewOverlay.overlay {
     display: none;

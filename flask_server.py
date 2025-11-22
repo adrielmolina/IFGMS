@@ -1348,6 +1348,76 @@ def get_members_count():
             'success': False,
             'error': str(e)
         }), 500
+        
+@server.route('/api/delete_entry', methods=['DELETE'])
+@login_required
+def delete_entry():
+    try:
+        data = request.get_json()
+        entry_id = data.get('entry_id')
+        
+        print(f"🔍 DELETE ENTRY API CALLED - Entry ID: {entry_id}")
+        
+        if not entry_id:
+            return jsonify({"success": False, "error": "No entry ID provided"}), 400
+        
+        db_session = SessionLocal()
+        try:
+            # Find the entry
+            entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
+            if not entry:
+                return jsonify({"success": False, "error": "Entry not found"}), 404
+            
+            # Get member info for logging before deletion
+            member = db_session.query(models.Members).filter_by(member_id=entry.member_id).first()
+            member_name = f"{member.first_name} {member.last_name}" if member else "Unknown"
+            
+            # Store the MAAB number before deletion for inventory update
+            maab_no = entry.maab_no
+            
+            # Delete the entry
+            db_session.delete(entry)
+            db_session.commit()
+            
+            # If there's a MAAB number, mark it as available in inventory
+            if maab_no:
+                try:
+                    inventory_item = db_session.query(models.Inventory).filter_by(maab_no=maab_no).first()
+                    if inventory_item:
+                        inventory_item.used = 0  # Mark as available
+                        inventory_item.allocated_to = None
+                        inventory_item.updated_at = datetime.now()
+                        db_session.commit()
+                        print(f"✅ MAAB number {maab_no} marked as available in inventory")
+                except Exception as inventory_error:
+                    print(f"⚠️ Error updating inventory for {maab_no}: {inventory_error}")
+                    # Don't fail the whole operation if inventory update fails
+            
+            # Log the action
+            db_conn.POST_action_log(
+                current_user.username, 
+                current_user.user_level, 
+                'Delete Entry', 
+                f'Deleted entry for {member_name} (Entry ID: {entry_id})', 
+                current_user.account_id
+            )
+            
+            print(f"✅ Entry {entry_id} deleted successfully")
+            return jsonify({
+                "success": True, 
+                "message": "Entry deleted successfully"
+            })
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Error deleting entry: {e}")
+            return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in delete_entry route: {e}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 @server.route('/api/members/expiring_soon', methods=['GET'])
 def get_expiring_soon_count():
@@ -1942,6 +2012,119 @@ def save_entry_details():
 #         print(f"❌ Route error: {e}")
 #         return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
+@server.route('/api/change-password', methods=['POST'])
+@login_required
+def change_password_api():
+    """API endpoint to change user password"""
+    # Store user info before any database operations
+    user_id = current_user.account_id
+    username = current_user.username
+    user_level = current_user.user_level
+    
+    db_session = None
+    try:
+        print("🔑 ========== CHANGE PASSWORD API CALLED ==========")
+        print(f"🔑 User: {username} (ID: {user_id})")
+        
+        # Check if we're receiving JSON data
+        if not request.is_json:
+            print("❌ Request is not JSON")
+            return jsonify({"success": False, "error": "Request must be JSON"}), 400
+            
+        data = request.get_json()
+        print(f"🔑 Received data: {data}")
+        
+        if not data:
+            print("❌ No data received")
+            return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        current_password = data.get('currentPassword')
+        new_password = data.get('newPassword')
+        
+        print(f"🔑 Current password provided: {bool(current_password)}")
+        print(f"🔑 New password provided: {bool(new_password)}")
+        
+        if not current_password or not new_password:
+            print("❌ Missing password fields")
+            return jsonify({"success": False, "error": "Current password and new password are required"}), 400
+        
+        # Validate new password strength (simplified - no special chars)
+        if len(new_password) < 8:
+            print("❌ New password too short")
+            return jsonify({"success": False, "error": "New password must be at least 8 characters long"}), 400
+        
+        if not any(c.isupper() for c in new_password):
+            print("❌ New password missing uppercase")
+            return jsonify({"success": False, "error": "New password must contain at least one uppercase letter"}), 400
+            
+        if not any(c.islower() for c in new_password):
+            print("❌ New password missing lowercase")
+            return jsonify({"success": False, "error": "New password must contain at least one lowercase letter"}), 400
+            
+        if not any(c.isdigit() for c in new_password):
+            print("❌ New password missing number")
+            return jsonify({"success": False, "error": "New password must contain at least one number"}), 400
+        
+        # Verify current password
+        db_session = SessionLocal()
+        print(f"🔑 Querying user from database...")
+        user = db_session.query(models.Accounts).filter_by(account_id=user_id).first()
+        
+        if not user:
+            print("❌ User not found in database")
+            return jsonify({"success": False, "error": "User not found"}), 404
+        
+        print(f"🔑 User found: {user.username}")
+        print(f"🔑 Stored password hash: {user.password[:20]}...")
+        
+        # Check if current password is correct
+        print("🔑 Verifying current password...")
+        password_correct = tools.check_password(current_password, user.password)
+        print(f"🔑 Current password verification: {password_correct}")
+        
+        if not password_correct:
+            print("❌ Current password is incorrect")
+            return jsonify({"success": False, "error": "Current password is incorrect"}), 400
+        
+        # Update password
+        print("🔑 Hashing new password...")
+        hashed_new_password = tools.hash_password(new_password)
+        print(f"🔑 New password hash: {hashed_new_password[:20]}...")
+        
+        user.password = hashed_new_password
+        print("🔑 Password updated in user object")
+        
+        db_session.commit()
+        print("✅ Database committed successfully")
+        
+        # Log the action - use the stored variables, not current_user
+        db_conn.POST_action_log(
+            username,
+            user_level,
+            'Change Password',
+            'User changed their password successfully',
+            user_id
+        )
+        
+        print(f"✅ Password changed successfully for user: {username}")
+        return jsonify({
+            "success": True, 
+            "message": "Password changed successfully"
+        })
+            
+    except Exception as e:
+        if db_session:
+            db_session.rollback()
+        print(f"❌ Error during password change: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": "Internal server error"}), 500
+    finally:
+        if db_session:
+            db_session.close()
+            print("🔑 Database session closed")
+            
+            
 # Modified route to get ALL member data including all columns
 @server.route('/api/members/all_members_complete')
 def get_all_members_complete():
