@@ -12,6 +12,7 @@ from random import randint
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import resend
 
 if os.getenv('FLASK_ENV') == 'production' or os.getenv('FLASK_ENV') == 'development':
     DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'aiven').lower()
@@ -40,6 +41,9 @@ SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+
+RESEND_SENDER_EMAIL = os.getenv("RESEND_SENDER_EMAIL")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 # todo remove on deployment
 # print(f'SQL CONNECTION DEBUG\nHost={SQL_HOST}\nUser={SQL_USER}\nPass={SQL_PASS}\nDB={SQL_DB}')
@@ -302,7 +306,41 @@ def save_otp(email, otp):
         raise
     
 # TODO update email icon
+
+# Set API key
+resend.api_key = RESEND_API_KEY
 def send_otp_email(email, otp):
+    
+    """Send OTP to the user's email using Resend API."""
+    subject = "Your OTP Code for Password Reset"
+
+    # Same message as before, but wrapped in light HTML styling
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+        <p>Your OTP code for <strong>FGMS</strong> password reset is: <strong>{otp}</strong></p>
+        <p style="color: #555;">This OTP will expire in 5 minutes.</p>
+        <p>If you didn't request this password reset, please ignore this email.</p>
+        <br>
+        <p>Thank you,<br><strong>FGMS Team</strong></p>
+    </div>
+    """
+
+    try:
+        resend.Emails.send({
+            "from": RESEND_SENDER_EMAIL,
+            "to": email,
+            "subject": subject,
+            "html": html_body
+        })
+        print("✅ OTP sent successfully!")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send OTP: {e}")
+        return False
+    
+    # OLD SMTP METHOD
+    '''
+    
     """Send OTP to the user's email. Returns True if successful, False otherwise."""
     subject = "Your OTP Code for Password Reset"
     body = f"""
@@ -332,6 +370,9 @@ def send_otp_email(email, otp):
     except Exception as e:
         print(f"❌ Failed to send OTP: {e}")
         return False  # Return False on failure
+    '''
+    
+    
 
 def verifying_otp(email, otp_input):
     """Verify OTP against the database (original version with added debug prints)"""
