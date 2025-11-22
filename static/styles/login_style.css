@@ -149,12 +149,12 @@ body {
 .glass-card {
     position: relative;
     z-index: 2;
-    background: linear-gradient(225deg, rgba(249,102,92,0.8),
+    background: linear-gradient(225deg, rgba(249,102,92,0.50),
                                         rgba(238,80,52,0.9),
                                         rgba(231,138,138,1),
                                         rgba(231,86,75,0.9),
                                         rgba(230,77,77,0.9),
-                                        rgba(232,57,57,0.9));
+                                        rgba(232,57,57,0.50));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 25px;
@@ -164,7 +164,7 @@ body {
     color: white;
     box-shadow: 0 8px 32px rgba(0,0,0,0.8),
                 inset 0 0 10px rgba(255,255,255,0.4);
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 2px solid rgba(0, 0, 0, 0.14);
     text-align: center;
     display: flex;
     flex-direction: column;
