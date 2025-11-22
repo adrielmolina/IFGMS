@@ -500,7 +500,7 @@
 
                                     <td>
                                         <div class="input-container">
-                                            <button>Renew</button>
+                                            <button id="renew_overlay_btn" disabled>Renew</button>
                                         </div>
                                     </td> 
                                 </tr>
@@ -4691,5 +4691,21 @@ function updateORDateFieldState(isPaid, orDateField) {
         // orDateField.value = '';
     }
 }
+
+document.getElementById('renew').addEventListener('change', function() {
+    const renew_overlay_btn = document.getElementById('renew_overlay_btn');
+    const tag = document.getElementById('entry_tags');
+
+    if (this.checked) {
+        renew_overlay_btn.disabled = false;
+        tag.value = 'renew';
+    }
+    else {
+        renew_overlay_btn.disabled = true;
+        tag.value = '';
+    }
+
+});
+
 </script>
 {% endblock %}

@@ -1576,6 +1576,18 @@ div.table-container {
 
 #back_to_add.show {
     display: inline-block !important;
+}
+
+#renew_overlay_btn:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+
 /* Fixed size specifically for renew overlay */
 #renewOverlay.overlay {
     display: none;
