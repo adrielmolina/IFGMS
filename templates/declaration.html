@@ -3,7 +3,7 @@
 {% block title %}Declaration{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
+<link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/toast.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
@@ -13,8 +13,8 @@
 
 <!-- Include Toastify -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script src="/static/js/toast.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="/static/js/toast.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -458,6 +458,47 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
+<script>
+    // Dark Mode Functionality for Module
+    document.addEventListener("DOMContentLoaded", function() {
+        const themeLink = document.getElementById("theme-link");
+        const savedTheme = localStorage.getItem("baseTheme") || "light";
+        
+        if (savedTheme === "dark") {
+            switchToDarkMode();
+        }
+        
+        window.addEventListener('themeChanged', function(e) {
+            if (e.detail.theme === "dark") {
+                switchToDarkMode();
+            } else {
+                switchToLightMode();
+            }
+        });
+        
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'baseTheme') {
+                if (e.newValue === "dark") {
+                    switchToDarkMode();
+                } else {
+                    switchToLightMode();
+                }
+            }
+        });
+        
+        function switchToDarkMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('declaration.css', 'declaration-dark.css');
+            themeLink.setAttribute('href', newHref);
+        }
+        
+        function switchToLightMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('declaration-dark.css', 'declaration.css');
+            themeLink.setAttribute('href', newHref);
+        }
+    });
+</script>
 
 <!-- ✅ Main JavaScript Code -->
 <script>

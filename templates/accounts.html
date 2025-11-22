@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
+    <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <!-- Tabulator CSS -->
     <link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator.min.css" rel="stylesheet">
@@ -17,26 +17,6 @@
 
     <link rel="stylesheet" href="/static/styles/toast.css">
     <script src="/static/js/toast.js"></script>
-    
-    <style>
-        .required-field::after {
-            content: " *";
-            color: #ff0000;
-            font-weight: bold;
-        }
-        
-        .error-message {
-            color: #ff0000;
-            font-size: 12px;
-            margin-top: 5px;
-            display: none;
-        }
-        
-        .input-error {
-            border-color: #ff0000 !important;
-            background-color: #fff5f5 !important;
-        }
-    </style>
 {% endblock %}
 
 
@@ -235,6 +215,47 @@
 
 
 {% block extra_scripts %}
+<script>
+    // Dark Mode Functionality for Module
+    document.addEventListener("DOMContentLoaded", function() {
+        const themeLink = document.getElementById("theme-link");
+        const savedTheme = localStorage.getItem("baseTheme") || "light";
+        
+        if (savedTheme === "dark") {
+            switchToDarkMode();
+        }
+        
+        window.addEventListener('themeChanged', function(e) {
+            if (e.detail.theme === "dark") {
+                switchToDarkMode();
+            } else {
+                switchToLightMode();
+            }
+        });
+        
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'baseTheme') {
+                if (e.newValue === "dark") {
+                    switchToDarkMode();
+                } else {
+                    switchToLightMode();
+                }
+            }
+        });
+        
+        function switchToDarkMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('accounts.css', 'accounts-dark.css');
+            themeLink.setAttribute('href', newHref);
+        }
+        
+        function switchToLightMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('accounts-dark.css', 'accounts.css');
+            themeLink.setAttribute('href', newHref);
+        }
+    });
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // ====================== VARIABLES ======================

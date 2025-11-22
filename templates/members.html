@@ -3,7 +3,7 @@
 {% block title %}Members Management{% endblock %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/members.css') }}">
+    <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/members.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
@@ -557,6 +557,89 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/input-restrictions.js')}}"></script>
 <script src="{{ url_for('static', filename='js/entries_table.js')}}"></script>
+
+<script>
+    // Dark Mode Functionality for Members Module
+    document.addEventListener("DOMContentLoaded", function() {
+        const themeLink = document.getElementById("theme-link");
+        const savedTheme = localStorage.getItem("baseTheme") || "light";
+        
+        // Apply dark mode if needed on page load
+        if (savedTheme === "dark") {
+            switchToDarkMode();
+        }
+        
+        // Listen for theme changes from settings page
+        window.addEventListener('themeChanged', function(e) {
+            if (e.detail.theme === "dark") {
+                switchToDarkMode();
+            } else {
+                switchToLightMode();
+            }
+        });
+        
+        // Also listen for storage events
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'baseTheme') {
+                if (e.newValue === "dark") {
+                    switchToDarkMode();
+                } else {
+                    switchToLightMode();
+                }
+            }
+        });
+        
+        function switchToDarkMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('members.css', 'members-dark.css');
+            themeLink.setAttribute('href', newHref);
+            
+            // Update Handsontable for dark mode
+            updateHandsontableForDarkMode();
+        }
+        
+        function switchToLightMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('members-dark.css', 'members.css');
+            themeLink.setAttribute('href', newHref);
+            
+            // Update Handsontable for light mode
+            updateHandsontableForLightMode();
+        }
+        
+        function updateHandsontableForDarkMode() {
+            if (hotInstance) {
+                hotInstance.updateSettings({
+                    className: 'ht-theme-dark'
+                });
+                hotInstance.render();
+            }
+            
+            if (window.entriesHotInstance) {
+                window.entriesHotInstance.updateSettings({
+                    className: 'ht-theme-dark'
+                });
+                window.entriesHotInstance.render();
+            }
+        }
+        
+        function updateHandsontableForLightMode() {
+            if (hotInstance) {
+                hotInstance.updateSettings({
+                    className: 'ht-theme-main'
+                });
+                hotInstance.render();
+            }
+            
+            if (window.entriesHotInstance) {
+                window.entriesHotInstance.updateSettings({
+                    className: 'ht-theme-main'
+                });
+                window.entriesHotInstance.render();
+            }
+        }
+    });
+</script>
 
 <script>
 let hotInstance = null;

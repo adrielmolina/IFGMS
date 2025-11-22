@@ -3,7 +3,7 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/dashboard.css') }}">
+    <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/dashboard.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.6.0/css/all.min.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
@@ -109,250 +109,312 @@
 
 {% block extra_scripts %}
 <script>
-    // Load all dashboard data
-    function loadDashboardData() {
-        loadSalesData();
-        loadSalesPerformance();
-        loadUnitSoldData();
-        loadNotifications();
-    }
-
-    // Load sales card data
-function loadSalesData() {
-    fetch('/api/dashboard/sales_data')
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Format numbers with commas and peso sign
-            const formatCurrency = (amount) => {
-                return '₱' + parseFloat(amount).toLocaleString();
-            };
-            
-            const currentTotal = formatCurrency(data.current_total);
-            const targetTotal = formatCurrency(data.target_total);
-            
-            // Update sales card
-            document.getElementById('salesCurrentTotal').textContent = currentTotal;
-            document.getElementById('currentTotalSubtext').textContent = currentTotal;
-            document.getElementById('targetTotalSubtext').textContent = targetTotal;
-            
-            console.log("💰 Sales data loaded:", {
-                currentTotal: currentTotal,
-                targetTotal: targetTotal,
-                rawData: data
-            });
-        } else {
-            console.error("❌ Failed to load sales data:", data.error);
-            setFallbackSalesData();
+    // Dark Mode Functionality for Dashboard
+    document.addEventListener("DOMContentLoaded", function() {
+        const themeLink = document.getElementById("theme-link");
+        const savedTheme = localStorage.getItem("baseTheme") || "light";
+        
+        // Apply dark mode if needed on page load
+        if (savedTheme === "dark") {
+            switchToDarkMode();
         }
-    })
-    .catch(error => {
-        console.error("❌ Error loading sales data:", error);
-        setFallbackSalesData();
-    });
-}
-
-    // Load sales performance chart
-    function loadSalesPerformance() {
-        fetch('/api/dashboard/sales_performance')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                drawStacked(data.chart_data);
-                console.log("✅ Sales performance data loaded:", data.chart_data);
+        
+        // Listen for theme changes from settings page
+        window.addEventListener('themeChanged', function(e) {
+            if (e.detail.theme === "dark") {
+                switchToDarkMode();
             } else {
-                console.error("❌ Failed to load sales performance:", data.error);
+                switchToLightMode();
+            }
+        });
+        
+        // Also listen for storage events
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'baseTheme') {
+                if (e.newValue === "dark") {
+                    switchToDarkMode();
+                } else {
+                    switchToLightMode();
+                }
+            }
+        });
+        
+        function switchToDarkMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('dashboard.css', 'dashboard-dark.css');
+            themeLink.setAttribute('href', newHref);
+            
+            // Update Google Charts for dark mode
+            updateChartForDarkMode();
+        }
+        
+        function switchToLightMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('dashboard-dark.css', 'dashboard.css');
+            themeLink.setAttribute('href', newHref);
+            
+            // Update Google Charts for light mode
+            updateChartForLightMode();
+        }
+        
+        function updateChartForDarkMode() {
+            // This will be called when we redraw the chart
+            console.log("Updating chart for dark mode");
+        }
+        
+        function updateChartForLightMode() {
+            // This will be called when we redraw the chart
+            console.log("Updating chart for light mode");
+        }
+
+        // Your existing dashboard JavaScript functions below...
+        // Load all dashboard data
+        function loadDashboardData() {
+            loadSalesData();
+            loadSalesPerformance();
+            loadUnitSoldData();
+            loadNotifications();
+        }
+
+        // Load sales card data
+        function loadSalesData() {
+            fetch('/api/dashboard/sales_data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Format numbers with commas and peso sign
+                    const formatCurrency = (amount) => {
+                        return '₱' + parseFloat(amount).toLocaleString();
+                    };
+                    
+                    const currentTotal = formatCurrency(data.current_total);
+                    const targetTotal = formatCurrency(data.target_total);
+                    
+                    // Update sales card
+                    document.getElementById('salesCurrentTotal').textContent = currentTotal;
+                    document.getElementById('currentTotalSubtext').textContent = currentTotal;
+                    document.getElementById('targetTotalSubtext').textContent = targetTotal;
+                    
+                    console.log("💰 Sales data loaded:", {
+                        currentTotal: currentTotal,
+                        targetTotal: targetTotal,
+                        rawData: data
+                    });
+                } else {
+                    console.error("❌ Failed to load sales data:", data.error);
+                    setFallbackSalesData();
+                }
+            })
+            .catch(error => {
+                console.error("❌ Error loading sales data:", error);
+                setFallbackSalesData();
+            });
+        }
+
+        // Load sales performance chart
+        function loadSalesPerformance() {
+            fetch('/api/dashboard/sales_performance')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    drawStacked(data.chart_data);
+                    console.log("✅ Sales performance data loaded:", data.chart_data);
+                } else {
+                    console.error("❌ Failed to load sales performance:", data.error);
+                    // Fallback to sample data
+                    drawStacked([]);
+                }
+            })
+            .catch(error => {
+                console.error("❌ Error loading sales performance:", error);
                 // Fallback to sample data
                 drawStacked([]);
-            }
-        })
-        .catch(error => {
-            console.error("❌ Error loading sales performance:", error);
-            // Fallback to sample data
-            drawStacked([]);
-        });
-    }
+            });
+        }
 
-    // Load unit sold table data
-    function loadUnitSoldData() {
-        fetch('/api/dashboard/unit_sold')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                updateUnitSoldTable(data.table_data, data.total_actual);
-                console.log("✅ Unit sold data loaded:", data.table_data);
-            } else {
-                console.error("❌ Failed to load unit sold data:", data.error);
+        // Load unit sold table data
+        function loadUnitSoldData() {
+            fetch('/api/dashboard/unit_sold')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateUnitSoldTable(data.table_data, data.total_actual);
+                    console.log("✅ Unit sold data loaded:", data.table_data);
+                } else {
+                    console.error("❌ Failed to load unit sold data:", data.error);
+                    // Calculate from existing table as fallback
+                    calculateTableTotals();
+                }
+            })
+            .catch(error => {
+                console.error("❌ Error loading unit sold data:", error);
                 // Calculate from existing table as fallback
                 calculateTableTotals();
-            }
-        })
-        .catch(error => {
-            console.error("❌ Error loading unit sold data:", error);
-            // Calculate from existing table as fallback
-            calculateTableTotals();
-        });
-    }
-
-    // Update unit sold table with real data
-    function updateUnitSoldTable(tableData, totalActual) {
-        const tableBody = document.querySelector('#unitTable tbody');
-        const totalCell = document.getElementById('totalCell');
-        
-        // Clear existing rows (except header and total row)
-        const rows = tableBody.querySelectorAll('tr');
-        for (let i = rows.length - 1; i >= 0; i--) {
-            if (i !== 0 && i !== rows.length - 1) {
-                tableBody.removeChild(rows[i]);
-            }
+            });
         }
-        
-        // Add new rows
-        tableData.forEach(item => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${item.category}</td>
-                <td>${item.price}</td>
-                <td>${item.units_sold.toLocaleString()}</td>
-                <td>${item.target.toLocaleString()}</td>
-                <td>₱${item.actual_sales.toLocaleString()}</td>
-            `;
-            // Insert before the total row
-            tableBody.insertBefore(row, tableBody.lastElementChild);
-        });
-        
-        // Update total
-        totalCell.textContent = '₱' + totalActual.toLocaleString();
-    }
 
-    // Fallback function to calculate totals from existing table
-    function calculateTableTotals() {
-        let total = 0;
-        const rows = document.querySelectorAll("#unitTable tr");
-        rows.forEach((row, index) => {
-            if (index === 0 || index === rows.length - 1) return; // skip header & total
-            const cells = row.querySelectorAll("td");
-            const price = parseFloat(cells[1].textContent.replace(/,/g, ''));
-            const units = parseFloat(cells[2].textContent.replace(/,/g, ''));
-            const actualCell = cells[4];
-            if (!isNaN(price) && !isNaN(units)) {
-                const actual = price * units;
-                actualCell.textContent = '₱' + actual.toLocaleString();
-                total += actual;
+        // Update unit sold table with real data
+        function updateUnitSoldTable(tableData, totalActual) {
+            const tableBody = document.querySelector('#unitTable tbody');
+            const totalCell = document.getElementById('totalCell');
+            
+            // Clear existing rows (except header and total row)
+            const rows = tableBody.querySelectorAll('tr');
+            for (let i = rows.length - 1; i >= 0; i--) {
+                if (i !== 0 && i !== rows.length - 1) {
+                    tableBody.removeChild(rows[i]);
+                }
             }
-        });
-        document.getElementById("totalCell").textContent = '₱' + total.toLocaleString();
-    }
-
-    // Google Charts - Updated to use real data
-    google.charts.load('current', {packages: ['corechart', 'bar']});
-    google.charts.setOnLoadCallback(loadSalesPerformance);
-
-    function drawStacked(chartData) {
-    // If no data, use empty chart
-    if (!chartData || chartData.length === 0) {
-        chartData = [
-            {category: 'Classic', actual: 0, target: 0},
-            {category: 'Premier Bronze', actual: 0, target: 0},
-            {category: 'Premier Silver', actual: 0, target: 0},
-            {category: 'Premier Gold', actual: 0, target: 0},
-            {category: 'Premier Platinum', actual: 0, target: 0},
-            {category: 'Safe Card', actual: 0, target: 0},
-            {category: 'Senior', actual: 0, target: 0},
-            {category: 'Senior Plus', actual: 0, target: 0}
-        ];
-    }
-
-    var data = new google.visualization.DataTable();
-    data.addColumn('string', 'Membership Type');
-    data.addColumn('number', 'Actual');
-    data.addColumn('number', 'Target');
-
-    // Add rows from chartData
-    var rows = chartData.map(item => [
-        item.category, 
-        item.actual, 
-        item.target
-    ]);
-    
-    data.addRows(rows);
-
-    // ⚠️ REMOVE THESE LINES - Don't update sales card from chart data
-    // var totalActual = 0;
-    // var totalTarget = 0;
-    // for (var i = 0; i < data.getNumberOfRows(); i++) {
-    //     totalActual += data.getValue(i, 1);
-    //     totalTarget += data.getValue(i, 2); 
-    // }
-    // 
-    // // Update sales card with calculated totals
-    // document.getElementById('currentTotalSubtext').textContent = '₱' + totalActual.toLocaleString();
-    // document.getElementById('salesCurrentTotal').textContent = '₱' + totalActual.toLocaleString();
-    // document.getElementById('targetTotalSubtext').textContent = '₱' + totalTarget.toLocaleString();
-
-    var options = {
-        title: 'Sales Performance by Membership Type - ' + new Date().getFullYear(),
-        isStacked: false,
-        chartArea: { width: '70%' }, 
-        width: 1000, 
-        height: 400,
-        tooltip: {
-            textStyle: {
-                fontSize: 16,
-                bold: true,
-                color: '#333',
-            },
-            showColorCode: true,
-            isHtml: true
-        },
-        backgroundColor: '#fff',
-        animation: {
-            startup: true,    
-            duration: 1200,   
-            easing: 'easeOutCubic'
-        },
-        bar: {
-            groupWidth: '60%',
-        },
-        colors: ['#e74c3c', '#0049e6'],
-        vAxis: {
-            viewWindow: {
-                min: 0
-            },
-            format: '#,###',
-            textStyle: {
-                fontSize: 14,
-                color: '#444444'
-            }
-        },
-        series: {
-            0: { 
-                dataOpacity: 0.9 
-            },
-            1: { 
-                dataOpacity: 0.7 
-            }
+            
+            // Add new rows
+            tableData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.category}</td>
+                    <td>${item.price}</td>
+                    <td>${item.units_sold.toLocaleString()}</td>
+                    <td>${item.target.toLocaleString()}</td>
+                    <td>₱${item.actual_sales.toLocaleString()}</td>
+                `;
+                // Insert before the total row
+                tableBody.insertBefore(row, tableBody.lastElementChild);
+            });
+            
+            // Update total
+            totalCell.textContent = '₱' + totalActual.toLocaleString();
         }
-    };
 
-    var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-}
+        // Fallback function to calculate totals from existing table
+        function calculateTableTotals() {
+            let total = 0;
+            const rows = document.querySelectorAll("#unitTable tr");
+            rows.forEach((row, index) => {
+                if (index === 0 || index === rows.length - 1) return; // skip header & total
+                const cells = row.querySelectorAll("td");
+                const price = parseFloat(cells[1].textContent.replace(/,/g, ''));
+                const units = parseFloat(cells[2].textContent.replace(/,/g, ''));
+                const actualCell = cells[4];
+                if (!isNaN(price) && !isNaN(units)) {
+                    const actual = price * units;
+                    actualCell.textContent = '₱' + actual.toLocaleString();
+                    total += actual;
+                }
+            });
+            document.getElementById("totalCell").textContent = '₱' + total.toLocaleString();
+        }
 
-    // NOTIFICATIONS SYSTEM (keep your existing code)
-    function loadNotifications() {
-        console.log("🔄 Loading notifications...");
-        // ... your existing notifications code ...
-    }
+        // Google Charts - Updated to use real data
+        google.charts.load('current', {packages: ['corechart', 'bar']});
+        google.charts.setOnLoadCallback(loadSalesPerformance);
 
-    function startNotificationAutoRefresh() {
-        setInterval(loadNotifications, 120000); 
-        // Also refresh dashboard data every 2 minutes
-        setInterval(loadDashboardData, 120000);
-    }
+        function drawStacked(chartData) {
+            // Check current theme for chart styling
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            
+            // If no data, use empty chart
+            if (!chartData || chartData.length === 0) {
+                chartData = [
+                    {category: 'Classic', actual: 0, target: 0},
+                    {category: 'Premier Bronze', actual: 0, target: 0},
+                    {category: 'Premier Silver', actual: 0, target: 0},
+                    {category: 'Premier Gold', actual: 0, target: 0},
+                    {category: 'Premier Platinum', actual: 0, target: 0},
+                    {category: 'Safe Card', actual: 0, target: 0},
+                    {category: 'Senior', actual: 0, target: 0},
+                    {category: 'Senior Plus', actual: 0, target: 0}
+                ];
+            }
 
-    // Initialize dashboard when page loads
-    document.addEventListener('DOMContentLoaded', function () {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Membership Type');
+            data.addColumn('number', 'Actual');
+            data.addColumn('number', 'Target');
+
+            // Add rows from chartData
+            var rows = chartData.map(item => [
+                item.category, 
+                item.actual, 
+                item.target
+            ]);
+            
+            data.addRows(rows);
+
+            var options = {
+                title: 'Sales Performance by Membership Type - ' + new Date().getFullYear(),
+                isStacked: false,
+                chartArea: { width: '70%' }, 
+                width: 1000, 
+                height: 400,
+                tooltip: {
+                    textStyle: {
+                        fontSize: 16,
+                        bold: true,
+                        color: isDarkMode ? '#e0e0e0' : '#333',
+                    },
+                    showColorCode: true,
+                    isHtml: true
+                },
+                backgroundColor: isDarkMode ? '#1e1e2e' : '#fff',
+                titleTextStyle: {
+                    color: isDarkMode ? '#e0e0e0' : '#333',
+                    fontSize: 18
+                },
+                hAxis: {
+                    textStyle: {
+                        color: isDarkMode ? '#e0e0e0' : '#333'
+                    }
+                },
+                vAxis: {
+                    viewWindow: {
+                        min: 0
+                    },
+                    format: '#,###',
+                    textStyle: {
+                        fontSize: 14,
+                        color: isDarkMode ? '#e0e0e0' : '#444444'
+                    }
+                },
+                legend: {
+                    textStyle: {
+                        color: isDarkMode ? '#e0e0e0' : '#333'
+                    }
+                },
+                animation: {
+                    startup: true,    
+                    duration: 1200,   
+                    easing: 'easeOutCubic'
+                },
+                bar: {
+                    groupWidth: '60%',
+                },
+                colors: ['#e74c3c', '#0049e6'],
+                series: {
+                    0: { 
+                        dataOpacity: 0.9 
+                    },
+                    1: { 
+                        dataOpacity: 0.7 
+                    }
+                }
+            };
+
+            var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+            chart.draw(data, options);
+        }
+
+        // NOTIFICATIONS SYSTEM (keep your existing code)
+        function loadNotifications() {
+            console.log("🔄 Loading notifications...");
+            // ... your existing notifications code ...
+        }
+
+        function startNotificationAutoRefresh() {
+            setInterval(loadNotifications, 120000); 
+            // Also refresh dashboard data every 2 minutes
+            setInterval(loadDashboardData, 120000);
+        }
+
+        // Initialize dashboard when page loads
         // Load all dashboard data
         loadDashboardData();
         
@@ -413,10 +475,8 @@ function loadSalesData() {
                 window.location.href = '/members';
             });
         }
-    });
 
-    // UPLOADED IMAGE (keep your existing code)
-    document.addEventListener("DOMContentLoaded", function() {
+        // UPLOADED IMAGE (keep your existing code)
         const navProfileImage = document.getElementById("navProfileImage");
         if (navProfileImage) {
             const savedProfileImage = localStorage.getItem("profileImage");
