@@ -853,32 +853,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- your existing listeners here ---
     claimTypeEl.addEventListener('change', function() {
-        const claimType = this.value;
-        const same_as_insured_box = document.getElementById('same_as_insureed');
+    const claimType = this.value;
+    const same_as_insured_box = document.getElementById('same_as_insureed');
 
-        const birth_cert = document.getElementById('req_birth_cert');
-        const marriage_cert = document.getElementById('req_marriage_cert');
-        const death_cert = document.getElementById('req_death_cert');
-        const burial_receipts = document.getElementById('req_burial_receipts');
+    const birth_cert = document.getElementById('req_birth_cert');
+    const marriage_cert = document.getElementById('req_marriage_cert');
+    const death_cert = document.getElementById('req_death_cert');
+    const burial_receipts = document.getElementById('req_burial_receipts');
 
-        if (claimType === 'DEATH') {
-            same_as_insured_box.checked = false;
-            same_as_insured_box.disabled = true;
+    if (claimType === 'DEATH') {
+        same_as_insured_box.checked = false;
+        same_as_insured_box.disabled = true;
 
-            death_cert.disabled = false;
-            burial_receipts.disabled = false;
-            birth_cert.disabled = false;
-            marriage_cert.disabled = false;
-        } else {
-            same_as_insured_box.disabled = false;
+        // Enable death-related documents
+        death_cert.disabled = false;
+        burial_receipts.disabled = false;
+        birth_cert.disabled = false;
+        marriage_cert.disabled = false;
+    } else {
+        // For ACCIDENT or DENGUE
+        same_as_insured_box.disabled = false;
 
-            death_cert.checked = false;
-            burial_receipts.checked = false;
-
-            death_cert.disabled = true;
-            burial_receipts.disabled = true;
-        }
-    });
+        // Disable and uncheck death-related documents
+        death_cert.checked = false;
+        burial_receipts.checked = false;
+        death_cert.disabled = true;
+        burial_receipts.disabled = true;
+        
+        // Keep birth and marriage certs enabled for other claim types
+        birth_cert.disabled = false;
+        marriage_cert.disabled = false;
+    }
+});
 
     sameAsEl.addEventListener('change', function() {
         const birth_cert = document.getElementById('req_birth_cert');
@@ -988,14 +994,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 function clearOverlay() {
-
     //document.getElementById('overlay').scrollTop = 0;
     window.scrollTo(0, 0);
     
     // Clear all fields if no record is found
     document.getElementById('claim_id').value = '';
     document.getElementById('date_filed').value = '';
-    document.getElementById('received_by').value = '';
+    document.getElementById('received_by').value = ''; // ✅ Clear this field too
     document.getElementById('claim_origin').selectedIndex = 0;
     document.getElementById('date_of_loss').value = '';
     document.getElementById('maab_no').value = '';
@@ -1044,7 +1049,6 @@ function clearOverlay() {
     document.getElementById('req_police_rep').checked = false;
     document.getElementById('req_brgy_rep').checked = false;
 
-
     document.getElementById('req_drivers_lic').checked = false;
 
     document.getElementById('req_birth_cert').checked = false;
@@ -1054,6 +1058,13 @@ function clearOverlay() {
 
     document.getElementById('sent_advanced_notice').checked = false;
     document.getElementById('claim_type').selectedIndex = 0;
+    
+    // ✅ Set as new record and update button state
+    isNewRecord = true;
+    setTimeout(() => {
+        originalFormData = captureFormState();
+        updateSaveButtonState();
+    }, 50);
 }
 
 // ------------------------
@@ -1066,6 +1077,9 @@ let currentPage = 1;       // current page number
 let entriesPerPage = parseInt(document.getElementById("entriesPerPage").value || 10);
 let statusFilter = null;
 let currentSearchQuery = '';
+let originalFormData = {};
+let isNewRecord = true;
+
 
 // ------------------------
 // Filter functionality
@@ -1135,7 +1149,7 @@ function statusRenderer(instance, td, row, col, prop, value, cellProperties) {
 }
 
 function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
-    Handsontable.renderers.TextRenderer.apply(this, arguments); // Use default text renderer
+    Handsontable.renderers.TextRenderer.apply(this, arguments);
     td.innerHTML = '<a href="javascript:void(0);" class="open-link">Open</a>';
 
     td.querySelector('.open-link').addEventListener('click', function () {
@@ -1169,7 +1183,6 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
         let converted_date_picked_up = '';
 
         if (claimDetails) {
-
             if (claimDetails.date_filed) {
                 converted_date_filed = convertToYYYYMMDD(claimDetails.date_filed);
             }
@@ -1186,6 +1199,7 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
                 converted_date_picked_up = convertToYYYYMMDD(claimDetails.date_picked_up);
             }
 
+            // Populate all form fields
             document.getElementById('claim_id').value = claimDetails.claim_id || '';
             document.getElementById('date_filed').value = converted_date_filed || '';
             document.getElementById('received_by').value = claimDetails.received_by || '';
@@ -1228,6 +1242,7 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('claimant_contact_no').value = claimDetails.contact_no || '';
             document.getElementById('claimant_email').value = claimDetails.email || '';
             document.getElementById('claim_remarks').value = claimDetails.claim_remarks || '';
+            
             console.log("Claim Status:", claimDetails.status);
             document.getElementById('claim_status').value = claimDetails.status || '';
             document.getElementById('date_released').value = converted_date_released || '';
@@ -1244,6 +1259,7 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('picked_up').checked = !!claimDetails.picked_up;
             document.getElementById('date_picked_up').value = converted_date_picked_up || '';
 
+            // Requirements checkboxes
             document.getElementById('req_claim_form').checked = !!claimDetails.req_claim_form;
             document.getElementById('req_prc_id').checked = !!claimDetails.req_prc_id;
             document.getElementById('req_med_cert').checked = !!claimDetails.req_med_cert;
@@ -1253,10 +1269,10 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('req_purchased_meds').checked = !!claimDetails.req_purchased_meds;
             document.getElementById('req_med_records').checked = !!claimDetails.req_med_records;
             
-            document.getElementById('req_animal_bite_treat_rec').checked = !!claimDetails.req_animal_bite_treat_rec,
-            document.getElementById('req_incident_rep').checked = !!claimDetails.req_incident_rep,
-            document.getElementById('req_police_rep').checked = !!claimDetails.req_police_rep,
-            document.getElementById('req_brgy_rep').checked = !!claimDetails.req_brgy_rep,
+            document.getElementById('req_animal_bite_treat_rec').checked = !!claimDetails.req_animal_bite_treat_rec;
+            document.getElementById('req_incident_rep').checked = !!claimDetails.req_incident_rep;
+            document.getElementById('req_police_rep').checked = !!claimDetails.req_police_rep;
+            document.getElementById('req_brgy_rep').checked = !!claimDetails.req_brgy_rep;
 
             document.getElementById('req_drivers_lic').checked = !!claimDetails.req_drivers_lic;
 
@@ -1265,63 +1281,28 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('req_death_cert').checked = !!claimDetails.req_death_cert;
             document.getElementById('req_burial_receipts').checked = !!claimDetails.req_burial_receipts;
             document.getElementById('sent_advanced_notice').checked = !!claimDetails.sent_advanced_notice;
+            
+            // ✅ CRITICAL: Set claim type and update checkbox states
             document.getElementById('claim_type').value = claimDetails.claim_type || '';
+            
+            // ✅ Update the requirement checkboxes based on claim type
+            setTimeout(() => {
+                handleClaimTypeChange();
+            }, 50);
 
             document.getElementById('sent_advanced_notice').checked = !!claimDetails.sent_advanced_notice;
 
+            // ✅ Set as existing record and capture original state
+            isNewRecord = false;
+            setTimeout(() => {
+                originalFormData = captureFormState();
+                updateSaveButtonState();
+            }, 100);
+
             checkStatusAndDisableOverlay()
         } else {
-            
             // Clear all fields if no record is found
             clearOverlay();
-            /*
-            document.getElementById('claim_id').value = '';
-            document.getElementById('date_filed').value = '';
-            document.getElementById('received_by').value = '';
-            document.getElementById('claim_origin').value = '';
-            document.getElementById('date_of_loss').value = '';
-            document.getElementById('maab_no').value = '';
-
-            document.getElementById('eff_date').value = '';
-            document.getElementById('prpl_insured_fname').value = '';
-            document.getElementById('prpl_insured_mname').value = '';
-            document.getElementById('prpl_insured_lname').value = '';
-            document.getElementById('prpl_insured_suffix').value = '';
-
-            document.getElementById('same_as_insureed').checked = false;
-            document.getElementById('claimant_fname').value = '';
-            document.getElementById('claimant_mname').value = '';
-            document.getElementById('claimant_lname').value = '';
-            document.getElementById('claimant_suffix').value = '';
-            document.getElementById('relation').value = '';
-            document.getElementById('claimant_contact_no').value = '';
-            document.getElementById('claimant_email').value = '';
-            document.getElementById('claim_remarks').value = '';
-            document.getElementById('claim_status').value = '';
-            document.getElementById('date_released').value = '';
-            document.getElementById('chinabank_check_no').value = '';
-            document.getElementById('chinabank_amount').value = '';
-            document.getElementById('bpi_check_no').value = '';
-            document.getElementById('bpi_amount').value = '';
-            document.getElementById('release_remarks').value = '';
-            document.getElementById('scanned_docs').value = '';
-            document.getElementById('prm_file').value = '';
-            document.getElementById('quit_claim_file').value = '';
-            document.getElementById('picked_up').checked = false;
-            document.getElementById('date_picked_up').value = '';
-            document.getElementById('req_claim_form').checked = false;
-            document.getElementById('req_prc_id').checked = false;
-            document.getElementById('req_med_cert').checked = false;
-            document.getElementById('req_hos_bill_or').checked = false;
-            document.getElementById('req_state_of_acc').checked = false;
-            document.getElementById('req_doctor_pres').checked = false;
-            document.getElementById('req_purchased_meds').checked = false;
-            document.getElementById('req_med_records').checked = false;
-            document.getElementById('req_incident_rep').checked = false;
-            document.getElementById('req_police_rep').checked = false;
-            document.getElementById('req_drivers_lic').checked = false;
-            document.getElementById('sent_advanced_notice').checked = false;
-            */
         }
 
         document.getElementById('overlay').style.display = 'flex';
@@ -1329,6 +1310,48 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
 
     return td;
 }
+
+// Function to handle claim type change and toggle requirement checkboxes
+function handleClaimTypeChange() {
+    const claimType = document.getElementById('claim_type').value;
+    const deathCertCheckbox = document.getElementById('req_death_cert');
+    const burialReceiptsCheckbox = document.getElementById('req_burial_receipts');
+    const sameAsInsuredBox = document.getElementById('same_as_insureed');
+    
+    // Disable/enable based on claim type
+    if (claimType === 'ACCIDENT' || claimType === 'DENGUE') {
+        // Disable and uncheck the checkboxes
+        deathCertCheckbox.disabled = true;
+        deathCertCheckbox.checked = false;
+        burialReceiptsCheckbox.disabled = true;
+        burialReceiptsCheckbox.checked = false;
+        
+        // Enable same as insured for non-death claims
+        sameAsInsuredBox.disabled = false;
+    } else if (claimType === 'DEATH') {
+        // Enable the checkboxes (don't auto-check them)
+        deathCertCheckbox.disabled = false;
+        burialReceiptsCheckbox.disabled = false;
+        
+        // Disable and uncheck same as insured for death claims
+        sameAsInsuredBox.checked = false;
+        sameAsInsuredBox.disabled = true;
+    }
+}
+
+// Add event listener when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the claim type dropdown
+    const claimTypeDropdown = document.getElementById('claim_type');
+    
+    // Add change event listener
+    if (claimTypeDropdown) {
+        claimTypeDropdown.addEventListener('change', handleClaimTypeChange);
+        
+        // Also trigger on page load to set initial state
+        handleClaimTypeChange();
+    }
+});
 
 // ------------------------
 // Table height and scroll functions
@@ -2356,6 +2379,102 @@ document.getElementById('claim_type').addEventListener('change', function() {
 
     });
 */
+// Function to capture current form state
+function captureFormState() {
+    const formData = {};
+    
+    // Capture all input fields
+    const inputs = document.querySelectorAll('#overlay input, #overlay select, #overlay textarea');
+    inputs.forEach(input => {
+        if (input.type === 'checkbox') {
+            formData[input.name || input.id] = input.checked;
+        } else {
+            formData[input.name || input.id] = input.value;
+        }
+    });
+    
+    return formData;
+}
 
+// Function to compare current state with original state
+function hasFormChanged() {
+    const currentData = captureFormState();
+    
+    for (const key in currentData) {
+        if (currentData[key] !== originalFormData[key]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to update save button state
+function updateSaveButtonState() {
+    const saveBtn = document.getElementById('save_claim_record');
+    
+    if (isNewRecord) {
+        // For new records, enable only if specific user-actionable fields have content
+        const currentData = captureFormState();
+        
+        // Define which fields should trigger save button for new records
+        const userActionableFields = [
+            'date_filed',
+            'date_of_loss',
+            'maab_no',
+            'claimant_fname', 
+            'claimant_mname',
+            'claimant_lname',
+            'claimant_contact_no',
+            'claimant_email',
+            'claim_remarks',
+            'relation'
+        ];
+        
+        // Also include requirement checkboxes
+        const requirementFields = [
+            'req_claim_form', 'req_prc_id', 'req_med_cert', 'req_hos_bill_or',
+            'req_state_of_acc', 'req_doctor_pres', 'req_purchased_meds', 'req_med_records',
+            'req_animal_bite_treat_rec', 'req_incident_rep', 'req_police_rep', 'req_brgy_rep',
+            'req_drivers_lic', 'req_birth_cert', 'req_marriage_cert', 'req_death_cert',
+            'req_burial_receipts', 'sent_advanced_notice'
+        ];
+        
+        const allTrackedFields = [...userActionableFields, ...requirementFields];
+        
+        const hasUserContent = allTrackedFields.some(field => {
+            const value = currentData[field];
+            if (field.startsWith('req_') || field === 'sent_advanced_notice') {
+                // For checkboxes, true means user checked it
+                return value === true;
+            }
+            // For other fields, any non-empty value counts
+            return value !== '' && value !== null && value !== undefined;
+        });
+        
+        console.log('New record check - hasUserContent (tracked fields only):', hasUserContent);
+        saveBtn.disabled = !hasUserContent;
+    } else {
+        // For existing records, enable only if changes were made
+        const changed = hasFormChanged();
+        console.log('Existing record check - hasChanged:', changed);
+        saveBtn.disabled = !changed;
+    }
+    
+    console.log('Save button disabled:', saveBtn.disabled);
+}
+
+// Function to initialize form state tracking
+function initializeFormStateTracking() {
+    const overlay = document.getElementById('overlay');
+    
+    // Listen for all input events in the overlay
+    overlay.addEventListener('input', function(event) {
+        updateSaveButtonState();
+    });
+    
+    overlay.addEventListener('change', function(event) {
+        updateSaveButtonState();
+    });
+}
 </script>
 {% endblock %}
