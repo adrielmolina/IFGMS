@@ -321,6 +321,8 @@ def send_otp_email(email, otp):
         <p style="color: #555;">This OTP will expire in 5 minutes.</p>
         <p>If you didn't request this password reset, please ignore this email.</p>
         <br>
+        <p style="font-style: italic;">This is an automated email, please do not reply.</p>
+        <br>
         <p>Thank you,<br><strong>FGMS Team</strong></p>
     </div>
     """
