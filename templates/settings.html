@@ -197,315 +197,213 @@
 {% block extra_scripts %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const fontStyleSelect = document.getElementById("fontStyleSelect");
-        const fontSizeSelect = document.getElementById("fontSizeSelect");
-
-        // Restore saved preferences (or defaults)
-        const savedFontKey = localStorage.getItem("appFontKey") || "default";
-        const savedSizeKey = localStorage.getItem("appFontSizeKey") || "medium";
-
-        fontStyleSelect.value = savedFontKey;
-        fontSizeSelect.value = savedSizeKey;
-
-        // Apply preferences immediately
-        applyFontStyle(savedFontKey);
-        applyFontSize(savedSizeKey);
-
-        // Handlers
-        fontStyleSelect.addEventListener("change", e => {
-            applyFontStyle(e.target.value);
-            localStorage.setItem("appFontKey", e.target.value);
-            toastSuccess("Font Style Updated",`Font style changed to: ${fontStyleSelect.options[fontStyleSelect.selectedIndex].text}`);
-        });
-
-        fontSizeSelect.addEventListener("change", e => {
-            applyFontSize(e.target.value);
-            localStorage.setItem("appFontSizeKey", e.target.value);
-            toastSuccess("Font Style Updated",`Font size changed to: ${fontSizeSelect.options[fontSizeSelect.selectedIndex].text}`);
-        });
-
-        // Helpers
-        // function applyFontStyle(key) {
-        //     const map = {
-        //         "georgia": "Georgia, serif",
-        //         "century-gothic": "'Century Gothic', sans-serif",
-        //         "jetbrains-mono": "'JetBrains Mono', monospace",
-        //         "default": "'Montserrat', sans-serif"
-        //     };
-        //     document.documentElement.style.setProperty("--app-font", map[key] || map["default"]);
-        //     localStorage.setItem("appFontFamily", map[key] || map["default"]);
-        // }
-
-        // function applyFontSize(key) {
-        //     const map = {
-        //         "small": "0.875rem",   // ~14px
-        //         "medium": "1rem",      // ~16px
-        //         "large": "1.125rem"    // ~18px
-        //     };
-        //     document.documentElement.style.setProperty("--app-font-size", map[key] || map["medium"]);
-        //     localStorage.setItem("appFontSize", map[key] || map["medium"]);
-        // }
-        function applyFontStyle(key) {
-            const map = {
-                "georgia": "Georgia, serif",
-                "century-gothic": "'Century Gothic', sans-serif",
-                "jetbrains-mono": "'JetBrains Mono', monospace",
-                "default": "'Montserrat', sans-serif"
-            };
-            
-            const selectedFont = map[key] || map["default"];
-            
-            // Update CSS variable
-            document.documentElement.style.setProperty("--app-font", selectedFont);
-            
-            // Force apply to all elements immediately
-            const allElements = document.querySelectorAll('*');
-            allElements.forEach(element => {
-                element.style.fontFamily = selectedFont + ' !important';
-            });
-            
-            // Save to localStorage
-            localStorage.setItem("appFont", selectedFont);
-            localStorage.setItem("appFontKey", key);
+        const darkModeToggle = document.getElementById("darkmode-toggle");
+        const themeLink = document.getElementById("theme-link");
+        
+        // Check for saved theme preference or default to light
+        const currentTheme = localStorage.getItem("theme") || "light";
+        
+        // Set initial state
+        if (currentTheme === "dark") {
+            darkModeToggle.checked = true;
+            switchToDarkMode();
         }
-
-        function applyFontSize(key) {
-            const map = {
-                "small": "0.875rem",   // ~14px
-                "medium": "1rem",      // ~16px
-                "large": "1.125rem"    // ~18px
-            };
+        
+        // Toggle theme when switch is clicked
+        darkModeToggle.addEventListener("change", function() {
+            if (this.checked) {
+                switchToDarkMode();
+                localStorage.setItem("theme", "dark");
+                toastSuccess("Theme Updated", "Dark mode enabled");
+            } else {
+                switchToLightMode();
+                localStorage.setItem("theme", "light");
+                toastSuccess("Theme Updated", "Light mode enabled");
+            }
+        });
+        
+        function switchToDarkMode() {
+            // Replace the CSS file with dark version
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('settings.css', 'settings-dark.css');
+            themeLink.setAttribute('href', newHref);
             
-            const selectedSize = map[key] || map["medium"];
+            // Update base theme as well
+            updateBaseTheme('dark');
+        }
+        
+        function switchToLightMode() {
+            // Replace the CSS file with light version
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('settings-dark.css', 'settings.css');
+            themeLink.setAttribute('href', newHref);
             
-            // Update CSS variable
-            document.documentElement.style.setProperty("--app-font-size", selectedSize);
+            // Update base theme as well
+            updateBaseTheme('light');
+        }
+        
+        function updateBaseTheme(theme) {
+            // Update base theme in localStorage so other pages can access it
+            localStorage.setItem("baseTheme", theme);
             
-            // Force apply to body immediately
-            document.body.style.fontSize = selectedSize;
-            
-            // Save to localStorage
-            localStorage.setItem("appFontSize", selectedSize);
-            localStorage.setItem("appFontSizeKey", key);
+            // Dispatch event for other components to listen to
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
         }
     });
 
+    // Your existing functions remain the same...
     let originalValues = {};
 
     function enableEditMode() {
-    document.querySelectorAll('.form-group input').forEach(input => {
-        input.removeAttribute('readonly');
-        input.removeAttribute('disabled');
-        input.classList.add('editable'); // Add class here
-        originalValues[input.id] = input.value;
-    });
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.removeAttribute('readonly');
+            input.removeAttribute('disabled');
+            input.classList.add('editable');
+            originalValues[input.id] = input.value;
+        });
 
-    document.getElementById('formButtons').style.display = 'flex';
-    document.getElementById('editButton').style.display = 'none';
-}
+        document.getElementById('formButtons').style.display = 'flex';
+        document.getElementById('editButton').style.display = 'none';
+    }
 
-function saveChanges() {
-    // Submit the form programmatically
-    document.querySelector('.profile-form').submit();
+    function saveChanges() {
+        document.querySelector('.profile-form').submit();
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.setAttribute('readonly', true);
+            input.setAttribute('disabled', true);
+            input.classList.remove('editable');
+        });
 
-    // After submitting, reset the form to readonly and disabled
-    document.querySelectorAll('.form-group input').forEach(input => {
-        input.setAttribute('readonly', true);
-        input.setAttribute('disabled', true);
-        input.classList.remove('editable'); // Remove class here
-    });
+        document.getElementById('formButtons').style.display = 'none';
+        document.getElementById('editButton').style.display = 'inline-block';
+    }
 
-    document.getElementById('formButtons').style.display = 'none';
-    document.getElementById('editButton').style.display = 'inline-block';
-}
+    function cancelChanges() {
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.value = originalValues[input.id];
+            input.setAttribute('readonly', true);
+            input.setAttribute('disabled', true);
+            input.classList.remove('editable');
+        });
 
-
-function cancelChanges() {
-    document.querySelectorAll('.form-group input').forEach(input => {
-        input.value = originalValues[input.id];
-        input.setAttribute('readonly', true);
-        input.setAttribute('disabled', true);
-        input.classList.remove('editable'); // Remove class here
-    });
-
-    document.getElementById('formButtons').style.display = 'none';
-    document.getElementById('editButton').style.display = 'inline-block';
-}
+        document.getElementById('formButtons').style.display = 'none';
+        document.getElementById('editButton').style.display = 'inline-block';
+    }
 
     function toggleLoginHistory() {
         const history = document.getElementById('loginHistory');
         history.style.display = (history.style.display === 'none') ? 'block' : 'none';
     }
 
-    // Upload Image Function
-    // document.addEventListener("DOMContentLoaded", function() {
-    //     const profileImageInput = document.getElementById("profileImageInput");
-    //     const profileImage = document.getElementById("profileImage");
-    //     const successMessage = document.getElementById("successMessage");
-
-    //     // Load saved profile image if exists
-    //     const savedProfileImage = localStorage.getItem("profileImage");
-    //     if (savedProfileImage) {
-    //         profileImage.src = savedProfileImage;
-    //         // Also update navigation bar image
-    //         updateNavigationBarImage(savedProfileImage);
-    //     }
-
-    //     // Handle profile picture upload
-    //     profileImageInput.addEventListener("change", async function (e) {
-    //     const file = e.target.files[0];
-    //     if (file) {
-    //         if (file.size > 5 * 1024 * 1024) {
-    //             toastAlert("File size exceeds 5MB limit.");
-    //             return;
-    //         }
-
-    //         const formData = new FormData();
-    //         formData.append("profile_pic", file);
-
-    //         const response = await fetch("/api/upload_profile_pic", {
-    //             method: "POST",
-    //             body: formData
-    //         });
-
-    //         const result = await response.json();
-
-    //         if (result.success) {
-    //             // Update image preview instantly
-    //             const reader = new FileReader();
-    //             reader.onload = e => profileImage.src = e.target.result;
-    //             reader.readAsDataURL(file);
-
-    //             toastSuccess("Profile picture updated successfully!");
-    //         } else {
-    //             toastAlert("Failed to update picture: " + result.error);
-    //         }
-    //     }
-    // Upload Image Function
-
-    // RELOADS THE PAGE AFTER UPLOADING NEW PROFILE PICTURE
+    // Upload Image Functions (your existing code remains the same)
     document.addEventListener("DOMContentLoaded", function() {
         const profileImageInput = document.getElementById("profileImageInput");
         const profileImage = document.getElementById("profileImage");
         const successMessage = document.getElementById("successMessage");
 
-        // Load saved profile image if exists
         const savedProfileImage = localStorage.getItem("profileImage");
         if (savedProfileImage) {
             profileImage.src = savedProfileImage;
-            // Also update navigation bar image
             updateNavigationBarImage(savedProfileImage);
         }
 
-        // Handle profile picture upload
         profileImageInput.addEventListener("change", async function (e) {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                toastAlert("File size exceeds 5MB limit.");
-                return;
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    toastAlert("File size exceeds 5MB limit.");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("profile_pic", file);
+
+                const response = await fetch("/api/upload_profile_pic", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const reader = new FileReader();
+                    reader.onload = e => profileImage.src = e.target.result;
+                    reader.readAsDataURL(file);
+
+                    toastSuccess("Profile picture updated successfully!");
+                    location.reload();
+                } else {
+                    toastAlert("Failed to update picture: " + result.error);
+                }
             }
+        });
+    });
 
-            const formData = new FormData();
-            formData.append("profile_pic", file);
+    function updateNavigationBarImage(imageUrl) {
+        const navProfileImage = document.getElementById("navProfileImage");
+        if (navProfileImage) {
+            navProfileImage.src = imageUrl;
+        }
+    }
 
-            const response = await fetch("/api/upload_profile_pic", {
-                method: "POST",
-                body: formData
-            });
+    function showImageOptions() {
+        const hasProfilePic = {{ has_profile_pic | tojson }};
+        
+        if (hasProfilePic) {
+            document.getElementById('imageOptionsPopup').style.display = 'flex';
+        } else {
+            document.getElementById('profileImageInput').click();
+        }
+    }
 
+    function uploadNewPhoto() {
+        closeOptionsPopup();
+        document.getElementById('profileImageInput').click();
+    }
+
+    async function deleteCurrentPhoto() {
+        closeOptionsPopup();
+
+        try {
+            const response = await fetch("/api/delete_profile_pic", { method: "DELETE" });
             const result = await response.json();
 
             if (result.success) {
-                // Update image preview instantly
-                const reader = new FileReader();
-                reader.onload = e => profileImage.src = e.target.result;
-                reader.readAsDataURL(file);
-
-                toastSuccess("Profile picture updated successfully!");
-                
-                // ADD THIS LINE - Refresh the page after successful upload
+                const defaultImage = "/static/assets/pfp.jpg";
                 location.reload();
+
+                document.getElementById("profileImage").src = defaultImage;
+                updateNavigationBarImage(defaultImage);
+                localStorage.removeItem("profileImage");
+                
+                window.dispatchEvent(new StorageEvent("storage", {
+                    key: "profileImage",
+                    newValue: null
+                }));
+
+                toastSuccess("Profile picture deleted successfully!");
             } else {
-                toastAlert("Failed to update picture: " + result.error);
+                toastAlert("Failed to delete photo: " + (result.error || "Unknown error"));
             }
+        } catch (error) {
+            console.error("Error deleting photo:", error);
+            toastAlert("An error occurred while deleting the photo.");
         }
-    });
-});
-
-
-
-function updateNavigationBarImage(imageUrl) {
-    const navProfileImage = document.getElementById("navProfileImage");
-    if (navProfileImage) {
-        navProfileImage.src = imageUrl;
     }
-}
 
-  function showImageOptions() {
-      const hasProfilePic = {{ has_profile_pic | tojson }};
-      
-      if (hasProfilePic) {
-          document.getElementById('imageOptionsPopup').style.display = 'flex';
-      } else {
-          document.getElementById('profileImageInput').click();
-      }
-  }
-
-function uploadNewPhoto() {
-    closeOptionsPopup();
-    document.getElementById('profileImageInput').click();
-}
-
-async function deleteCurrentPhoto() {
-    closeOptionsPopup();
-
-    try {
-        const response = await fetch("/api/delete_profile_pic", { method: "DELETE" });
-        const result = await response.json();
-
-        if (result.success) {
-            const defaultImage = "/static/assets/pfp.jpg";
-            location.reload();
-
-            // Reset to default image locally
-            document.getElementById("profileImage").src = defaultImage;
-            updateNavigationBarImage(defaultImage);
-            localStorage.removeItem("profileImage");
-            
-
-            // Trigger UI update
-            window.dispatchEvent(new StorageEvent("storage", {
-                key: "profileImage",
-                newValue: null
-            }));
-
-            toastSuccess("Profile picture deleted successfully!");
-        } else {
-            toastAlert("Failed to delete photo: " + (result.error || "Unknown error"));
-        }
-    } catch (error) {
-        console.error("Error deleting photo:", error);
-        toastAlert("An error occurred while deleting the photo.");
+    function closeOptionsPopup() {
+        document.getElementById('imageOptionsPopup').style.display = 'none';
     }
-}
 
-
-function closeOptionsPopup() {
-    document.getElementById('imageOptionsPopup').style.display = 'none';
-}
-
-function showSuccessMessage() {
-    const successMessage = document.getElementById('successMessage');
-    successMessage.style.display = 'block';
-    
-    // Hide after 3 seconds
-    setTimeout(() => {
-        successMessage.style.display = 'none';
-    }, 3000);
-}
+    function showSuccessMessage() {
+        const successMessage = document.getElementById('successMessage');
+        successMessage.style.display = 'block';
+        
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 3000);
+    }
 </script>
-
 {% endblock %}
 
 {% endblock %}
