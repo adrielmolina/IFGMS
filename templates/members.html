@@ -383,7 +383,7 @@
                                             <input type="date" id="bdate" name="bdate" required autocomplete="off">
                                         </div>
                                     </td>
-
+                                    
                                     <td>
                                         <div class="input-container">
                                             <label for="age">Age</label>
@@ -489,7 +489,22 @@
                                             <input type="date" id="entry_or_date" name="entry_or_date" autocomplete="off" readonly>
                                         </div>
                                     </td>
+
+                                    <!-- RENEW -->
+                                     <td>
+                                        <div class="input-container checkbox-container">
+                                            <label for="renew">Renew</label>
+                                            <input type="checkbox" id="renew" name="renew" autocomplete="off">
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="input-container">
+                                            <button>Renew</button>
+                                        </div>
+                                    </td> 
                                 </tr>
+
 
                                 <tr>
                                     <td colspan="5">
@@ -551,6 +566,73 @@
                             </div>
                         </div>
                     </div>
+
+<!-- <div id="renewOverlay" class="overlay">
+    <div class="overlay-content">
+        <span class="close-overlay" id="closeRenewOverlay">&times;</span>
+        <div class="overlay-body">
+            <h3>Renew Member</h3>
+            
+                                <div class="search_box" style="margin: 20px 0;">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <input id="renew_search_input" type="text" placeholder="Search members...">
+                                </div>
+
+                                <div class="table-container">
+                                    <table style="width: 100%;">
+                                        <thead>
+                                            <tr>
+                                                <th>Member ID</th>
+                                                <th>First Name</th>
+                                                <th>Middle Name</th>
+                                                <th>Last Name</th>
+                                                <th>Suffix</th>
+                                                <th>Birthdate</th>
+                                                <th>Sex</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+
+<div id="renewOverlay" class="overlay">
+    <div class="overlay-content">
+        <span class="close-overlay" id="closeRenewOverlay">&times;</span>
+        <div class="overlay-body">
+            <h3>Members Information</h3>
+            
+            <!-- Search Bar -->
+            <div class="search_box" style="margin: 20px 0;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="renew_search_input" type="text" placeholder="Search members...">
+            </div>
+
+            <!-- Table with 5 columns (removed suffix and birthdate) -->
+            <div class="table-container">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Member ID</th>
+                            <th>First Name</th>
+                            <th>Middle Name</th>
+                            <th>Last Name</th>
+                            <th>Birth Date</th>
+                            <th>Sex</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be populated here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
                 </div>
             </div>
         </div>
@@ -562,6 +644,719 @@
 <script src="{{ url_for('static', filename='js/entries_table.js')}}"></script>
 
 <script>
+    // Renew button overlay functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add click event to Renew button
+        document.querySelector('.input-container button').addEventListener('click', function() {
+            document.getElementById('renewOverlay').style.display = 'flex';
+        });
+        
+        // Close overlay when close button is clicked
+        document.getElementById('closeRenewOverlay').addEventListener('click', function() {
+            document.getElementById('renewOverlay').style.display = 'none';
+        });
+        
+        // Close overlay when clicking outside content
+        document.getElementById('renewOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                document.getElementById('renewOverlay').style.display = 'none';
+            }
+        });
+        
+        // Close overlay with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === "Escape") {
+                document.getElementById('renewOverlay').style.display = 'none';
+            }
+        });
+    });
+
+//  // Global variable to store all members data
+// let allMembers = [];
+
+// // Function to load members and display in overlay
+// async function loadMembersForOverlay() {
+//     try {
+//         console.log('🔄 Loading members for overlay...');
+        
+//         // Show loading state
+//         const tbody = document.querySelector('#renewOverlay tbody');
+//         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading members...</td></tr>';
+        
+//         // Fetch from your Flask route
+//         const response = await fetch('/api/members/all_members_complete');
+//         const data = await response.json();
+        
+//         console.log('📊 Received members data:', data);
+        
+//         if (data.success) {
+//             allMembers = data.members;
+//             console.log(`✅ Loaded ${allMembers.length} members`);
+//             displayMembersInOverlay(allMembers);
+//         } else {
+//             throw new Error(data.message || 'Failed to load members');
+//         }
+//     } catch (error) {
+//         console.error('❌ Error loading members:', error);
+//         const tbody = document.querySelector('#renewOverlay tbody');
+//         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error loading members</td></tr>';
+//     }
+// }
+
+// // Function to display members in the overlay table
+// function displayMembersInOverlay(members) {
+//     const tbody = document.querySelector('#renewOverlay tbody');
+    
+//     if (members.length === 0) {
+//         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No members found</td></tr>';
+//         return;
+//     }
+    
+//     // Clear existing content
+//     tbody.innerHTML = '';
+    
+//     // Add each member as a table row
+//     members.forEach(member => {
+//         const row = document.createElement('tr');
+//         row.style.cursor = 'pointer'; // Show it's clickable
+        
+//         row.innerHTML = `
+//             <td>${member.member_id || ''}</td>
+//             <td>${member.first_name || ''}</td>
+//             <td>${member.middle_name || ''}</td>
+//             <td>${member.last_name || ''}</td>
+//             <td>${member.birth_date || ''}</td>
+//             <td>${member.sex || ''}</td>
+//         `;
+        
+//         // Add click event to populate form
+//         row.addEventListener('click', function() {
+//             populateEntryFormWithMemberData(member);
+//         });
+        
+//         // Add hover effects
+//         row.addEventListener('mouseenter', function() {
+//             this.style.backgroundColor = '#f0f8ff';
+//         });
+        
+//         row.addEventListener('mouseleave', function() {
+//             this.style.backgroundColor = '';
+//         });
+        
+//         tbody.appendChild(row);
+//     });
+    
+//     console.log(`✅ Displayed ${members.length} members in overlay`);
+// }
+
+// // Function to populate entry form with member data
+// function populateEntryFormWithMemberData(member) {
+//     console.log('🎯 Populating form with member data:', member);
+    
+//     // Populate the form fields
+//     document.getElementById('fname').value = member.first_name || '';
+//     document.getElementById('mname').value = member.middle_name || '';
+//     document.getElementById('lname').value = member.last_name || '';
+    
+//     // Set suffix (handle 'NA' value)
+//     const suffixSelect = document.getElementById('suffix');
+//     const memberSuffix = member.suffix || 'NA';
+//     suffixSelect.value = memberSuffix === 'NA' ? 'NA' : memberSuffix;
+    
+//     // Set birthdate (format if needed)
+//     if (member.birth_date) {
+//         const birthDate = new Date(member.birth_date);
+//         if (!isNaN(birthDate.getTime())) {
+//             document.getElementById('bdate').value = birthDate.toISOString().split('T')[0];
+//         }
+//     }
+    
+//     // Set age
+//     document.getElementById('age').value = member.age || '';
+    
+//     // Set sex
+//     const sexSelect = document.getElementById('sex');
+//     sexSelect.value = member.sex || '';
+    
+//     // Set contact number (remove +63 prefix if present)
+//     let contactNo = member.contact_no || '';
+//     if (contactNo.startsWith('+63')) {
+//         contactNo = contactNo.substring(3);
+//     } else if (contactNo.startsWith('63')) {
+//         contactNo = contactNo.substring(2);
+//     }
+//     document.getElementById('contact').value = contactNo;
+    
+//     // Set email and address
+//     document.getElementById('email').value = member.email || '';
+//     document.getElementById('address').value = member.address || '';
+    
+//     // Set blood type
+//     const bloodTypeSelect = document.getElementById('blood_type');
+//     bloodTypeSelect.value = member.blood_type || '';
+    
+//     // Show success message and close overlay
+//     toastAlert("Member Data Loaded", "Member information has been populated in the form. Please verify and save the entry.");
+    
+//     // Close the renew overlay
+//     document.getElementById('renewOverlay').style.display = 'none';
+    
+//     // Optional: Scroll to the entry form
+//     document.getElementById('entry_details').scrollIntoView({ behavior: 'smooth' });
+    
+//     console.log('✅ Form populated with member data');
+// }
+
+    // Global variable to store all members data
+// let allMembers = [];
+
+// // Function to load members and display in overlay
+// async function loadMembersForOverlay() {
+//     try {
+//         console.log('🔄 Loading members for overlay...');
+        
+//         // Show loading state
+//         const tbody = document.querySelector('#renewOverlay tbody');
+//         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Loading members...</td></tr>';
+        
+//         // Fetch from your Flask route
+//         const response = await fetch('/api/members/all_members_complete');
+//         const data = await response.json();
+        
+//         console.log('📊 Received members data:', data);
+        
+//         if (data.success) {
+//             allMembers = data.members;
+//             console.log(`✅ Loaded ${allMembers.length} members`);
+//             displayMembersInOverlay(allMembers);
+//         } else {
+//             throw new Error(data.message || 'Failed to load members');
+//         }
+//     } catch (error) {
+//         console.error('❌ Error loading members:', error);
+//         const tbody = document.querySelector('#renewOverlay tbody');
+//         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error loading members</td></tr>';
+//     }
+// }
+
+// // Function to display members in the overlay table
+// function displayMembersInOverlay(members) {
+//     const tbody = document.querySelector('#renewOverlay tbody');
+    
+//     if (members.length === 0) {
+//         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No members found</td></tr>';
+//         return;
+//     }
+    
+//     // Clear existing content
+//     tbody.innerHTML = '';
+    
+//     // Add each member as a table row
+//     members.forEach(member => {
+//         const row = document.createElement('tr');
+//         row.style.cursor = 'pointer';
+        
+//         // Format birth date for display
+//         let formattedBirthDate = '';
+//         if (member.birth_date) {
+//             const birthDate = new Date(member.birth_date);
+//             if (!isNaN(birthDate.getTime())) {
+//                 formattedBirthDate = birthDate.toISOString().split('T')[0];
+//             }
+//         }
+        
+//         row.innerHTML = `
+//             <td>${member.member_id || ''}</td>
+//             <td>${member.first_name || ''}</td>
+//             <td>${member.middle_name || ''}</td>
+//             <td>${member.last_name || ''}</td>
+//             <td>${formattedBirthDate}</td>
+//             <td>${member.sex || ''}</td>
+//         `;
+        
+//         // Add click event to populate form
+//         row.addEventListener('click', function() {
+//             populateEntryFormWithMemberData(member);
+//         });
+        
+//         // Add hover effects
+//         row.addEventListener('mouseenter', function() {
+//             this.style.backgroundColor = '#f0f8ff';
+//         });
+        
+//         row.addEventListener('mouseleave', function() {
+//             this.style.backgroundColor = '';
+//         });
+        
+//         tbody.appendChild(row);
+//     });
+    
+//     console.log(`✅ Displayed ${members.length} members in overlay`);
+// }
+
+// // Function to populate entry form with member data
+// function populateEntryFormWithMemberData(member) {
+//     console.log('🎯 Populating form with member data:', member);
+    
+//     try {
+//         // Populate the basic form fields
+//         document.getElementById('fname').value = member.first_name || '';
+//         document.getElementById('mname').value = member.middle_name || '';
+//         document.getElementById('lname').value = member.last_name || '';
+        
+//         // Set suffix (handle 'NA' value)
+//         const suffixSelect = document.getElementById('suffix');
+//         const memberSuffix = member.suffix || 'NA';
+//         suffixSelect.value = memberSuffix === 'NA' ? 'NA' : memberSuffix;
+        
+//         // Set birthdate (format if needed)
+//         if (member.birth_date) {
+//             const birthDate = new Date(member.birth_date);
+//             if (!isNaN(birthDate.getTime())) {
+//                 document.getElementById('bdate').value = birthDate.toISOString().split('T')[0];
+//             }
+//         }
+        
+//         // Set age
+//         document.getElementById('age').value = member.age || '';
+        
+//         // Set sex
+//         const sexSelect = document.getElementById('sex');
+//         sexSelect.value = member.sex || '';
+        
+//         // Set contact number (remove +63 prefix if present)
+//         let contactNo = member.contact_no || '';
+//         if (contactNo.startsWith('+63')) {
+//             contactNo = contactNo.substring(3);
+//         } else if (contactNo.startsWith('63')) {
+//             contactNo = contactNo.substring(2);
+//         }
+//         document.getElementById('contact').value = contactNo;
+        
+//         // Set email and address
+//         document.getElementById('email').value = member.email || '';
+//         document.getElementById('address').value = member.address || '';
+        
+//         // Set blood type
+//         const bloodTypeSelect = document.getElementById('blood_type');
+//         bloodTypeSelect.value = member.blood_type || '';
+        
+//         // Show success message
+//         toastAlert("Member Data Loaded", "Member information has been populated in the form. Please verify and save the entry.");
+        
+//         // Close the renew overlay
+//         document.getElementById('renewOverlay').style.display = 'none';
+        
+//         // Scroll to the entry form for better UX
+//         setTimeout(() => {
+//             document.getElementById('entry_details').scrollIntoView({ behavior: 'smooth' });
+//         }, 500);
+        
+//         console.log('✅ Form populated with member data');
+        
+//     } catch (error) {
+//         console.error('❌ Error populating form:', error);
+//         toastAlert("Error", "Failed to populate form with member data. Please try again.");
+//     }
+// }
+
+// // Function to search members (client-side filtering)
+// function searchMembers(searchTerm) {
+//     const searchLower = searchTerm.toLowerCase().trim();
+    
+//     if (searchLower === '') {
+//         displayMembersInOverlay(allMembers);
+//         return;
+//     }
+    
+//     const filteredMembers = allMembers.filter(member => 
+//         (member.member_id && member.member_id.toString().toLowerCase().includes(searchLower)) ||
+//         (member.first_name && member.first_name.toLowerCase().includes(searchLower)) ||
+//         (member.middle_name && member.middle_name.toLowerCase().includes(searchLower)) ||
+//         (member.last_name && member.last_name.toLowerCase().includes(searchLower)) ||
+//         (member.sex && member.sex.toLowerCase().includes(searchLower)) ||
+//         (member.birth_date && new Date(member.birth_date).toISOString().includes(searchLower))
+//     );
+    
+//     displayMembersInOverlay(filteredMembers);
+// }
+
+// // Single consolidated DOMContentLoaded event listener
+// document.addEventListener('DOMContentLoaded', function() {
+//     console.log('🔧 Initializing renew overlay...');
+    
+//     // Add click event to Renew button in the ENTRY FORM
+//     const renewButton = document.querySelector('button[onclick*="renew"], .input-container button:last-child');
+//     if (renewButton) {
+//         console.log('✅ Found renew button in entry form');
+//         renewButton.addEventListener('click', function(e) {
+//             e.preventDefault();
+//             console.log('🎯 Renew button clicked - opening overlay and loading data');
+//             document.getElementById('renewOverlay').style.display = 'flex';
+//             loadMembersForOverlay();
+//         });
+//     } else {
+//         console.log('❌ Could not find renew button in entry form');
+//         // Alternative: Look for any button that says "Renew"
+//         const allButtons = document.querySelectorAll('button');
+//         allButtons.forEach(button => {
+//             if (button.textContent.includes('Renew')) {
+//                 console.log('✅ Found renew button by text content');
+//                 button.addEventListener('click', function(e) {
+//                     e.preventDefault();
+//                     document.getElementById('renewOverlay').style.display = 'flex';
+//                     loadMembersForOverlay();
+//                 });
+//             }
+//         });
+//     }
+    
+//     // Close overlay when close button is clicked
+//     const closeBtn = document.getElementById('closeRenewOverlay');
+//     if (closeBtn) {
+//         closeBtn.addEventListener('click', function() {
+//             document.getElementById('renewOverlay').style.display = 'none';
+//         });
+//     }
+    
+//     // Close overlay when clicking outside content
+//     const overlay = document.getElementById('renewOverlay');
+//     if (overlay) {
+//         overlay.addEventListener('click', function(e) {
+//             if (e.target === this) {
+//                 document.getElementById('renewOverlay').style.display = 'none';
+//             }
+//         });
+//     }
+    
+//     // Close overlay with ESC key
+//     document.addEventListener('keydown', function(e) {
+//         if (e.key === "Escape") {
+//             document.getElementById('renewOverlay').style.display = 'none';
+//         }
+//     });
+    
+//     // Search input event listener
+//     const searchInput = document.getElementById('renew_search_input');
+//     if (searchInput) {
+//         searchInput.addEventListener('input', function(e) {
+//             searchMembers(e.target.value);
+//         });
+//     }
+// });
+
+let allMembers = [];
+
+// Function to clear search and reset overlay
+function resetRenewOverlay() {
+    const searchInput = document.getElementById('renew_search_input');
+    if (searchInput) {
+        searchInput.value = ''; // Clear the search input
+    }
+    // If we already have members data, display all of them
+    if (allMembers.length > 0) {
+        displayMembersInOverlay(allMembers);
+    }
+}
+
+// Function to close renew overlay and clear search
+function closeRenewOverlay() {
+    document.getElementById('renewOverlay').style.display = 'none';
+    resetRenewOverlay(); // Clear search when closing
+}
+
+// Function to load members and display in overlay
+async function loadMembersForOverlay() {
+    try {
+        console.log('🔄 Loading members for overlay...');
+        
+        // Clear search bar when opening overlay
+        resetRenewOverlay();
+        
+        // Show loading state
+        const tbody = document.querySelector('#renewOverlay tbody');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Loading members...</td></tr>';
+        
+        // Fetch from your Flask route
+        const response = await fetch('/api/members/all_members_complete');
+        const data = await response.json();
+        
+        console.log('📊 Received members data:', data);
+        
+        if (data.success) {
+            allMembers = data.members;
+            console.log(`✅ Loaded ${allMembers.length} members`);
+            displayMembersInOverlay(allMembers);
+        } else {
+            throw new Error(data.message || 'Failed to load members');
+        }
+    } catch (error) {
+        console.error('❌ Error loading members:', error);
+        const tbody = document.querySelector('#renewOverlay tbody');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error loading members</td></tr>';
+    }
+}
+
+// Function to display members in the overlay table
+function displayMembersInOverlay(members) {
+    const tbody = document.querySelector('#renewOverlay tbody');
+    
+    if (members.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No members found</td></tr>';
+        return;
+    }
+    
+    // Clear existing content
+    tbody.innerHTML = '';
+    
+    // Add each member as a table row
+    members.forEach(member => {
+        const row = document.createElement('tr');
+        row.style.cursor = 'pointer';
+        
+        // Format birth date for display
+        let formattedBirthDate = '';
+        if (member.birth_date) {
+            const birthDate = new Date(member.birth_date);
+            if (!isNaN(birthDate.getTime())) {
+                formattedBirthDate = birthDate.toISOString().split('T')[0];
+            }
+        }
+        
+        row.innerHTML = `
+            <td>${member.member_id || ''}</td>
+            <td>${member.first_name || ''}</td>
+            <td>${member.middle_name || ''}</td>
+            <td>${member.last_name || ''}</td>
+            <td>${formattedBirthDate}</td>
+            <td>${member.sex || ''}</td>
+        `;
+        
+        // Add click event to populate form
+        row.addEventListener('click', function() {
+            populateEntryFormWithMemberData(member);
+        });
+        
+        // Add hover effects
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f0f8ff';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+        
+        tbody.appendChild(row);
+    });
+    
+    console.log(`✅ Displayed ${members.length} members in overlay`);
+}
+
+// Function to populate entry form with member data
+function populateEntryFormWithMemberData(member) {
+    console.log('🎯 Populating form with member data:', member);
+    
+    try {
+        // Populate the basic form fields
+        document.getElementById('fname').value = member.first_name || '';
+        document.getElementById('mname').value = member.middle_name || '';
+        document.getElementById('lname').value = member.last_name || '';
+        
+        // Set suffix (handle 'NA' value)
+        const suffixSelect = document.getElementById('suffix');
+        const memberSuffix = member.suffix || 'NA';
+        suffixSelect.value = memberSuffix === 'NA' ? 'NA' : memberSuffix;
+        
+        // Set birthdate (format if needed)
+        if (member.birth_date) {
+            const birthDate = new Date(member.birth_date);
+            if (!isNaN(birthDate.getTime())) {
+                document.getElementById('bdate').value = birthDate.toISOString().split('T')[0];
+            }
+        }
+        
+        // Set age
+        document.getElementById('age').value = member.age || '';
+        
+        // Set sex
+        const sexSelect = document.getElementById('sex');
+        sexSelect.value = member.sex || '';
+        
+        // Set contact number (remove +63 prefix if present)
+        let contactNo = member.contact_no || '';
+        if (contactNo.startsWith('+63')) {
+            contactNo = contactNo.substring(3);
+        } else if (contactNo.startsWith('63')) {
+            contactNo = contactNo.substring(2);
+        }
+        document.getElementById('contact').value = contactNo;
+        
+        // Set email and address
+        document.getElementById('email').value = member.email || '';
+        document.getElementById('address').value = member.address || '';
+        
+        // Set blood type
+        const bloodTypeSelect = document.getElementById('blood_type');
+        bloodTypeSelect.value = member.blood_type || '';
+        
+        // Show success message
+        toastAlert("Member Data Loaded", "Member information has been populated in the form. Please verify and save the entry.");
+        
+        // Close the renew overlay and clear search
+        closeRenewOverlay();
+        
+        // Scroll to the entry form for better UX
+        setTimeout(() => {
+            document.getElementById('entry_details').scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+        
+        console.log('✅ Form populated with member data');
+        
+    } catch (error) {
+        console.error('❌ Error populating form:', error);
+        toastAlert("Error", "Failed to populate form with member data. Please try again.");
+    }
+}
+
+// Function to search members (client-side filtering)
+function searchMembers(searchTerm) {
+    const searchLower = searchTerm.toLowerCase().trim();
+    
+    if (searchLower === '') {
+        displayMembersInOverlay(allMembers);
+        return;
+    }
+    
+    const filteredMembers = allMembers.filter(member => 
+        (member.member_id && member.member_id.toString().toLowerCase().includes(searchLower)) ||
+        (member.first_name && member.first_name.toLowerCase().includes(searchLower)) ||
+        (member.middle_name && member.middle_name.toLowerCase().includes(searchLower)) ||
+        (member.last_name && member.last_name.toLowerCase().includes(searchLower)) ||
+        (member.sex && member.sex.toLowerCase().includes(searchLower)) ||
+        (member.birth_date && new Date(member.birth_date).toISOString().includes(searchLower))
+    );
+    
+    displayMembersInOverlay(filteredMembers);
+}
+
+// Single consolidated DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Initializing renew overlay...');
+    
+    // DEBUG: Let's find ALL buttons and see what we have
+    console.log('🔍 Searching for Renew button...');
+    const allButtons = document.querySelectorAll('button');
+    allButtons.forEach((button, index) => {
+        console.log(`Button ${index}:`, button.textContent.trim(), button);
+    });
+    
+    // Try multiple ways to find the Renew button
+    function findAndAttachRenewButton() {
+        let renewButton = null;
+        
+        // Method 1: Look for button with "Renew" text
+        allButtons.forEach(button => {
+            if (button.textContent && button.textContent.trim().toLowerCase() === 'renew') {
+                renewButton = button;
+                console.log('✅ Found renew button by exact text match');
+            }
+        });
+        
+        // Method 2: Look for button in the entry form table
+        if (!renewButton) {
+            const entryFormButtons = document.querySelectorAll('#entry_details button');
+            entryFormButtons.forEach(button => {
+                if (button.textContent && button.textContent.trim().toLowerCase().includes('renew')) {
+                    renewButton = button;
+                    console.log('✅ Found renew button in entry form');
+                }
+            });
+        }
+        
+        // Method 3: Look for the last button in a table row
+        if (!renewButton) {
+            const tableRows = document.querySelectorAll('#entry_details tr');
+            tableRows.forEach(row => {
+                const buttons = row.querySelectorAll('button');
+                if (buttons.length > 0) {
+                    const lastButton = buttons[buttons.length - 1];
+                    if (lastButton.textContent && lastButton.textContent.trim().toLowerCase().includes('renew')) {
+                        renewButton = lastButton;
+                        console.log('✅ Found renew button as last button in table row');
+                    }
+                }
+            });
+        }
+        
+        // If we found the button, attach the event listener
+        if (renewButton) {
+            renewButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('🎯 Renew button clicked - opening overlay and loading data');
+                document.getElementById('renewOverlay').style.display = 'flex';
+                loadMembersForOverlay();
+            });
+            console.log('✅ Renew button event listener attached');
+        } else {
+            console.log('❌ Could not find renew button. Please check the button HTML structure.');
+            
+            // Last resort: Add a manual button for testing
+            console.log('💡 Adding manual renew button for testing...');
+            const manualRenewButton = document.createElement('button');
+            manualRenewButton.textContent = 'Renew (Manual)';
+            manualRenewButton.style.position = 'fixed';
+            manualRenewButton.style.top = '10px';
+            manualRenewButton.style.right = '10px';
+            manualRenewButton.style.zIndex = '9999';
+            manualRenewButton.style.background = 'red';
+            manualRenewButton.style.color = 'white';
+            manualRenewButton.style.padding = '10px';
+            document.body.appendChild(manualRenewButton);
+            
+            manualRenewButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('🎯 Manual renew button clicked - opening overlay and loading data');
+                document.getElementById('renewOverlay').style.display = 'flex';
+                loadMembersForOverlay();
+            });
+        }
+    }
+    
+    // Wait a bit for the page to fully load, then try to find the button
+    setTimeout(findAndAttachRenewButton, 1000);
+    
+    // Close overlay when close button is clicked
+    const closeBtn = document.getElementById('closeRenewOverlay');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeRenewOverlay);
+    }
+    
+    // Close overlay when clicking outside content
+    const overlay = document.getElementById('renewOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRenewOverlay();
+            }
+        });
+    }
+    
+    // Close overlay with ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === "Escape") {
+            closeRenewOverlay();
+        }
+    });
+    
+    // Search input event listener
+    const searchInput = document.getElementById('renew_search_input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            searchMembers(e.target.value);
+        });
+    }
+});
+
     // Dark Mode Functionality for Members Module
     document.addEventListener("DOMContentLoaded", function() {
         const themeLink = document.getElementById("theme-link");
