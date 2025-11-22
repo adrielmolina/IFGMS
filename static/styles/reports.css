@@ -12,7 +12,7 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     background-color: #fff;
     margin-bottom: 10px;
-    color: #B92F2F
+    color: #B92F2F;
 }
 
 body {
@@ -24,7 +24,7 @@ body {
 
 /* Collapse headers */
 .collapse_box_header {
-  background-color: #f07474; /* full red header */
+  background-color: #f07474;
   color: #fff;
   font-weight: 600;
   font-size: 16px;
@@ -62,8 +62,8 @@ body {
 #budget_v_expense_table .tabulator-col,
 #target_v_actual_table .tabulator-col,
 #per_district_table .tabulator-col {
-    background-color: #ffffff !important;  /* white header */
-    color: #1f1313 !important;             /* dark text */
+    background-color: #ffffff !important;
+    color: #1f1313 !important;
 }
 
 /* Center header text */
@@ -90,10 +90,10 @@ body {
 
 .collapse_box_label {
     cursor: pointer;
-    font-size: 5rem; /* updated font size */
+    font-size: 5rem;
     user-select: none;
     margin: 1%;
-    font-weight: 600; /* matches previous inline style */
+    font-weight: 600;
 }
 
 .collapse_box_label::before {
@@ -189,3 +189,304 @@ body {
   background-size: 14px 14px;
 }
 
+/* Overlay Styles */
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.overlay-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.overlay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #f8f9fa;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.overlay-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    color: #333;
+    background: #e9ecef;
+    border-radius: 50%;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    background: #f8f9fa;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.tab-button.active {
+    color: #B92F2F;
+    border-bottom-color: #B92F2F;
+    background: white;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Form Styles */
+.report-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #B92F2F;
+    box-shadow: 0 0 0 2px rgba(185, 47, 47, 0.1);
+}
+
+.calculated-field {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.calculated-field label {
+    font-weight: 600;
+    color: #333;
+    display: block;
+    margin-bottom: 4px;
+}
+
+#calculatedAmount {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #B92F2F;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.btn-primary {
+    background: #B92F2F;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #9a2626;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+/* Module header button */
+.module_name {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#openReportsOverlay {
+    background: #B92F2F;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s ease;
+}
+
+#openReportsOverlay:hover {
+    background: #9a2626;
+}
+
+/* Tabulator enhancements */
+.tabulator .tabulator-row.odd {
+    background-color: #f8f9fa !important;
+}
+
+.tabulator .tabulator-row.even {
+    background-color: #ffffff !important;
+}
+
+.tabulator .tabulator-row:hover {
+    background-color: #e9ecef !important;
+}
+
+.bold-text {
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .overlay-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .tabs {
+        flex-direction: column;
+    }
+    
+    .tab-button {
+        text-align: left;
+    }
+    
+    .collapse_box_header {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+    }
+    
+    .filter_search_container {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .filters_box {
+        flex-direction: column;
+        width: 100%;
+    }
+}
+
+/* Remove tab-related styles since we're not using tabs anymore */
+.tabs,
+.tab-button,
+.tab-content {
+    display: none;
+}
+
+.report-form-container {
+    padding: 20px;
+}
+
+.readonly-field {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.field-note {
+    color: #6c757d;
+    font-size: 0.875rem;
+    display: block;
+    margin-top: 4px;
+}

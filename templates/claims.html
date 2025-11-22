@@ -70,9 +70,10 @@
     entries
 
      <div class="controls_box">
+        <br>
         <button id="add_record_btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Record</button>
     </div>
-  </div>
+</div>
 
     <div class="table-container">
         <div class="table-title"></div>
@@ -97,6 +98,7 @@
                     <h1>Claim Details</h1>
                 </div>
 
+       
                 <div class="controls_box">
                     <!-- 
                     <div class="controls_box_left" style="display: none;">
@@ -105,12 +107,15 @@
                     </div>
                     -->
 
+                    <!-- moved below the page -->
+                    <!-- 
                     <div class="controls_box_right">
                         <button id="save_claim_record" class="btn-save" disabled >Save</button>
                         <button id="delete_claim_record" class="btn-delete">Delete</button>
                     </div>
+                    -->
                 </div>
-
+                
 
                 <!-- TODO add credits and help buttons in sidebar -->
                 <div class="collapse_box_header">
@@ -156,6 +161,7 @@
                         <label for="claim_type">Claim Type</label>
                         <select id="claim_type" name="claim_type" required>
                             <option value="ACCIDENT">Accident</option>
+                            <option value="DENGUE">Dengue</option>
                             <option value="DEATH">Death</option>
                         </select>
                     </div>
@@ -172,8 +178,12 @@
                 <div id="principal_insured_info" class="collapse_group">      
                     <div class="input_set">
                         <!-- <input type="text" id="maab_no" name="maab_no" autocomplete="off" required> -->
-                        <select id="maab_no" name="maab_no"></select>
+                        <!-- <select id="maab_no" name="maab_no"></select> -->
                         
+                        <!-- changed to a datalist -->
+                        <input id="maab_no" name="maab_no" list="maab_list" placeholder="Enter MAAB No.">
+                        <datalist id="maab_list"></datalist>
+
                         <label for="maab_no">MAAB No.</label>
                         <input type="text" id="maab_no" name="maab_no" autocomplete="off" required>
                         <button id="verify_maab_no" class="verify_maab_no">Verify</button>
@@ -597,13 +607,15 @@
                         <!-- <h4>Release Section</h4>
                         <p>For the release of the claim, please ensure that all requirements are met and the claimant has signed the Quit Claim.</p>
                         <p>For any questions or concerns, please contact the claims department.</p> -->
+
+                        <p> Approved or Denied claims will be locked from editing. </p>
                         <div class="columns">
                             <div class="release_sectin_column">
                                 <label for="claim_status">Status</label>
                                 <select name="claim_status" id="claim_status">
-                                    <option value="pending">Pending</option>
-                                    <option value="approved">Approved</option>
-                                    <option value="denied">Denied</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Approved">Approved</option>
+                                    <option value="Denied">Denied</option>
                                 </select>
 
                                 <label for="chinabank_check_no">Chinabank Check No.</label>
@@ -667,6 +679,20 @@
                 <div class="bottom_section" id="bottom_section">
                 </div>
 
+                <div class="controls_box">
+                    <!-- 
+                    <div class="controls_box_left" style="display: none;">
+                        <button class="btn-expand" hidden>Expand all groups</button>
+                        <button class="btn-expand" hidden>Collapse all groups</button>
+                    </div>
+                    -->
+
+                    <div class="controls_box_right">
+                        <button id="save_claim_record" class="btn-save" disabled >Save</button>
+                        <button id="delete_claim_record" class="btn-delete">Delete</button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -677,8 +703,28 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/input-restrictions.js')}}"></script>
 <script>
+
+    function checkStatusAndDisableOverlay() {
+        const statusEl = document.getElementById('claim_status');
+        if (!statusEl) return;
+
+        const status = statusEl.value;
+        const overlay = document.getElementById('overlay');
+        if (!overlay) return;
+
+        const inputs = overlay.querySelectorAll('input, select, textarea, button');
+
+        if (status === 'Approved' || status === 'Denied') {
+            inputs.forEach(el => el.disabled = true);
+        } else {
+            inputs.forEach(el => el.disabled = false);
+        }
+    }
+
     // page load functions
 document.addEventListener('DOMContentLoaded', function () {
+
+
     // clear the search input field
     document.getElementById('search_input').value = '';
 
@@ -743,21 +789,156 @@ document.addEventListener('DOMContentLoaded', function () {
     fetch('/api/get_maab_numbers')
         .then(response => response.json())
         .then(data => {
-            if (data.maab_numbers && data.maab_numbers.length) {
-                // Clear existing options except placeholder
-                maabSelect.innerHTML = '<option value="">Select MAAB No.</option>';
-                
-                data.maab_numbers.forEach(maab => {
-                    const option = document.createElement('option');
-                    option.value = maab;
-                    option.textContent = maab;
-                    maabSelect.appendChild(option);
-                });
+            const maabList = document.getElementById('maab_list');
+        if (data.maab_numbers && data.maab_numbers.length) {
+            maabList.innerHTML = ''; // Clear old options
+
+            data.maab_numbers.forEach(maab => {
+                const option = document.createElement('option');
+                option.value = maab;  // value is what datalist uses
+                maabList.appendChild(option);
+            });
             }
         })
         .catch(err => console.error("Failed to load MAAB numbers:", err));    
 
 
+    // conditions for the requirements checkboxes
+    const claimTypeEl = document.getElementById('claim_type');
+    const sameAsEl = document.getElementById('same_as_insureed');
+    const claimStatusEl = document.getElementById('claim_status');
+
+    // --- your existing listeners here ---
+    claimTypeEl.addEventListener('change', function() {
+        const claimType = this.value;
+        const same_as_insured_box = document.getElementById('same_as_insureed');
+
+        const birth_cert = document.getElementById('req_birth_cert');
+        const marriage_cert = document.getElementById('req_marriage_cert');
+        const death_cert = document.getElementById('req_death_cert');
+        const burial_receipts = document.getElementById('req_burial_receipts');
+
+        if (claimType === 'DEATH') {
+            same_as_insured_box.checked = false;
+            same_as_insured_box.disabled = true;
+
+            death_cert.disabled = false;
+            burial_receipts.disabled = false;
+            birth_cert.disabled = false;
+            marriage_cert.disabled = false;
+        } else {
+            same_as_insured_box.disabled = false;
+
+            death_cert.checked = false;
+            burial_receipts.checked = false;
+
+            death_cert.disabled = true;
+            burial_receipts.disabled = true;
+        }
+    });
+
+    sameAsEl.addEventListener('change', function() {
+        const birth_cert = document.getElementById('req_birth_cert');
+        const marriage_cert = document.getElementById('req_marriage_cert');
+        const death_cert = document.getElementById('req_death_cert');
+        const burial_receipts = document.getElementById('req_burial_receipts');
+
+        if (this.checked) {
+            birth_cert.checked = false;
+            marriage_cert.checked = false;
+            death_cert.checked = false;
+            burial_receipts.checked = false;
+
+            //birth_cert.disabled = true;
+            marriage_cert.disabled = true;
+            death_cert.disabled = true;
+            burial_receipts.disabled = true;
+        } else {
+            birth_cert.disabled = false;
+            marriage_cert.disabled = false;
+
+            if (claimTypeEl.value === 'DEATH') {
+                death_cert.disabled = false;
+                burial_receipts.disabled = false;
+            } else {
+                death_cert.disabled = true;
+                burial_receipts.disabled = true;
+            }
+        }
+    });
+
+    claimStatusEl.addEventListener('change', function() {
+        const status = this.value;
+
+        const pickup_check = document.getElementById('picked_up');
+        const date_pickup = document.getElementById('date_picked_up');
+        const released = document.getElementById('date_released');
+        const chinabank = document.getElementById('chinabank_check_no');
+        const chinabank_amount = document.getElementById('chinabank_amount');
+        const bpi = document.getElementById('bpi_check_no');
+        const bpi_amount = document.getElementById('bpi_amount');
+        const release_rem = document.getElementById('release_remarks');
+
+        if (status === 'approved') {
+            pickup_check.disabled = false;
+            date_pickup.disabled = false;
+            released.disabled = false;
+            released.value = new Date().toISOString().slice(0, 10);
+
+            chinabank.disabled = false;
+            chinabank_amount.disabled = false;
+            bpi.disabled = false;
+            bpi_amount.disabled = false;
+
+            release_rem.disabled = false;
+
+        } else if (status === 'denied') {
+            pickup_check.checked = false;
+            pickup_check.disabled = true;
+            date_pickup.value = '';
+            date_pickup.disabled = true;
+
+            released.disabled = false;
+            released.value = new Date().toISOString().slice(0, 10);
+
+            chinabank.value = '';
+            chinabank.disabled = true;
+            chinabank_amount.value = '';
+            chinabank_amount.disabled = true;
+
+            bpi.value = '';
+            bpi.disabled = true;
+            bpi_amount.value = '';
+            bpi_amount.disabled = true;
+
+        } else if (status === 'pending') {
+            pickup_check.checked = false;
+            pickup_check.disabled = true;
+            date_pickup.value = '';
+            date_pickup.disabled = true;
+
+            released.value = '';
+            released.disabled = true;
+
+            chinabank.value = '';
+            chinabank.disabled = true;
+            chinabank_amount.value = '';
+            chinabank_amount.disabled = true;
+
+            bpi.value = '';
+            bpi.disabled = true;
+            bpi_amount.value = '';
+            bpi_amount.disabled = true;
+
+            release_rem.value = '';
+            release_rem.disabled = true;
+        }
+    });
+
+    // --- manually trigger the logic on load ---
+    //claimTypeEl.dispatchEvent(new Event("change"));
+    //sameAsEl.dispatchEvent(new Event("change"));
+    //claimStatusEl.dispatchEvent(new Event("change"));
 
 
 });
@@ -1004,6 +1185,7 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('claimant_contact_no').value = claimDetails.contact_no || '';
             document.getElementById('claimant_email').value = claimDetails.email || '';
             document.getElementById('claim_remarks').value = claimDetails.claim_remarks || '';
+            console.log("Claim Status:", claimDetails.status);
             document.getElementById('claim_status').value = claimDetails.status || '';
             document.getElementById('date_released').value = converted_date_released || '';
             document.getElementById('chinabank_check_no').value = claimDetails.chinabank_check_no || '';
@@ -1043,6 +1225,8 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('claim_type').value = claimDetails.claim_type || '';
 
             document.getElementById('sent_advanced_notice').checked = !!claimDetails.sent_advanced_notice;
+
+            checkStatusAndDisableOverlay()
         } else {
             
             // Clear all fields if no record is found
@@ -1153,6 +1337,9 @@ function updateClaimsTableHeight() {
 // Create Handsontable + initial fetch
 // ------------------------
 document.addEventListener("DOMContentLoaded", function () {
+
+
+
     const container = document.getElementById('claims_table');
 
     hotInstance = new Handsontable(container, {
@@ -1462,6 +1649,9 @@ document.addEventListener('click', function(e){
     }
 });
 
+//TODO fix the save button enabling on load without explicit changes
+//TODO fix the  conditions on claim type not loading properly on open overlay
+
 // ------------------------
 // refreshMembersTable: refetch and update allClaims
 // ------------------------
@@ -1656,12 +1846,13 @@ document.getElementById('verify_maab_no').addEventListener('click', function () 
                 document.getElementById('prpl_insured_contact').value = data.contact_no || '';
                 document.getElementById('prpl_insured_email').value = data.email || '';
 
-                document.getElementById('verify_maab_no').innerHTML = 'Verify';
-                document.getElementById('verify_maab_no').disabled = false;
+                
 
             } else {
                 alert('MAAB No. does not exist in the database.');
             }
+            document.getElementById('verify_maab_no').innerHTML = 'Verify';
+            document.getElementById('verify_maab_no').disabled = false;
         })
         .catch(error => {
             console.error('Error verifying MAAB No:', error);
@@ -1797,6 +1988,9 @@ document.getElementById('delete_claim_record').addEventListener('click', functio
 // Input restrictions for claimant names (keeps original logic)
 // ------------------------
 document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById('save_claim_record').disabled = true;
+    //TODO this is not working. something triggers the change listener on  save buton
+
     const claimantNameFields = ["claimant_fname", "claimant_mname", "claimant_lname"];
 
     claimantNameFields.forEach(id => {
@@ -1832,6 +2026,17 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('save_claim_record').addEventListener('click', function () {
         document.getElementById('save_claim_record').innerHTML = 'Saving...';
         document.getElementById('save_claim_record').disabled = true
+
+        const status = document.getElementById('claim_status').value;
+
+        // Check for approved/denied status
+        if (status === 'Approved' || status === 'Denied') {
+            const confirmed = confirm(`Claim status set to "${status}". This will make this record read-only. Do you want to continue?`);
+            if (!confirmed) {
+                document.getElementById('save_claim_record').innerHTML = 'Save';
+                return; // stop if user cancels
+            }
+        }
 
         const payload = {
             claim_id: document.getElementById('claim_id').value,
@@ -1899,6 +2104,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (result.success) {
                 alert('Record details saved!');
                 refreshMembersTable();
+                checkStatusAndDisableOverlay();
             } else {
                 alert('Failed to save record details.');
             }
@@ -1942,7 +2148,12 @@ const overlay  = document.getElementById("overlay");
 overlay .addEventListener("input", enableSaveBTN);
 overlay .addEventListener("change", enableSaveBTN);
 
-function enableSaveBTN() {
+function enableSaveBTN(event) {
+    console.log("Change/input detected on:", event.target); // logs the element
+    console.log("Element value:", event.target.value);
+    console.log("Element checked:", event.target.checked);
+
+
     if (event.target && !event.target.disabled) {
         saveBtn.disabled = false;
     }
@@ -1965,19 +2176,37 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+
+/*
 document.getElementById('claim_type').addEventListener('change', function() {
     const claimType = this.value;
     const same_as_insured_box = document.getElementById('same_as_insureed');
 
+    const birth_cert = document.getElementById('req_birth_cert');
+    const marriage_cert = document.getElementById('req_marriage_cert');
+    const death_cert = document.getElementById('req_death_cert');
+    const burial_receipts = document.getElementById('req_burial_receipts');
+
+
     if (claimType === 'DEATH') {
         same_as_insured_box.checked = false;
         same_as_insured_box.disabled = true;
+
+        death_cert.disabled = false;
+        burial_receipts.disabled = false;
+        birth_cert.disabled = false;
+        marriage_cert.disabled = false;
     } else {
         same_as_insured_box.disabled = false;
+
+        death_cert.checked = false;
+        burial_receipts.checked = false;
+
+        death_cert.disabled = true;
+        burial_receipts.disabled = true;
     }
 });
 
-    //TODO not wokring again fix this b4 sat
     document.getElementById('same_as_insureed').addEventListener('change', function() {
         const birth_cert = document.getElementById('req_birth_cert');
         const marriage_cert = document.getElementById('req_marriage_cert');
@@ -1998,8 +2227,14 @@ document.getElementById('claim_type').addEventListener('change', function() {
         else {
             birth_cert.disabled = false;
             marriage_cert.disabled = false;
-            death_cert.disabled = false;
-            burial_receipts.disabled = false;
+
+            if (document.getElementById('claim_type').value === 'DEATH') {
+                death_cert.disabled = false;
+                burial_receipts.disabled = false;
+            } else {
+                death_cert.disabled = true;
+                burial_receipts.disabled = true;
+            } 
         }
 
     });
@@ -2077,7 +2312,7 @@ document.getElementById('claim_type').addEventListener('change', function() {
         }
 
     });
-
+*/
 
 </script>
 {% endblock %}
