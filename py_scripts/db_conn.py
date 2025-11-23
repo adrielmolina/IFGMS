@@ -395,7 +395,7 @@ def send_birthday_greeting_email(member_email, member_name):
         """
 
         resend.Emails.send({
-            "from": RESEND_SENDER_EMAIL,
+            "from": RESEND_SENDER_EMAIL_GEN,
             "to": member_email,
             "subject": subject,
             "html": html_body
@@ -424,7 +424,7 @@ def send_renewal_reminder_email(member_email, member_name, days_left, maab_no=No
         """
 
         resend.Emails.send({
-            "from": RESEND_SENDER_EMAIL,
+            "from": RESEND_SENDER_EMAIL_GEN,
             "to": member_email,
             "subject": subject,
             "html": html_body
