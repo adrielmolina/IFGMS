@@ -19,7 +19,7 @@ h2 {
     display: flex;
     justify-content: space-between; 
     align-items: center;
-    padding: 15px 20px;
+    padding: 25px 25px;
     margin-left: 0; 
     margin-right: 0; 
     position: relative;
@@ -94,7 +94,8 @@ h2 {
   justify-content: center;
   align-items: flex-start;
   gap: 40px; /* space between left and right containers */
-  margin-top: 3.2%;
+  margin-top: 10px;
+  margin-bottom: 30px;
 }
 
 /*------------------------------------- LEFT FORM -----------------------------*/
