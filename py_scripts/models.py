@@ -60,6 +60,18 @@ class Accounts(Base, UserMixin):
             'acct_status': self.acct_status,
             'acct_review_date': self.acct_review_date.strftime('%Y-%m-%d') if self.acct_review_date else None
         }
+    
+# Add to your models.py (optional)
+class EmailLog(Base):
+    __tablename__ = 'email_logs'
+    
+    log_id = Column(Integer, primary_key=True)
+    email = Column(String(255), nullable=False)
+    member_name = Column(String(255))
+    email_type = Column(String(50))  # 'birthday' or 'renewal'
+    sent_date = Column(Date, default=datetime.now)
+    status = Column(String(20))  # 'sent', 'failed'
+    days_until_expiry = Column(Integer, nullable=True)
 
 class OTPs(Base):
     __tablename__ = 'otp_verifications'

@@ -402,11 +402,94 @@
             chart.draw(data, options);
         }
 
-        // NOTIFICATIONS SYSTEM (keep your existing code)
-        function loadNotifications() {
-            console.log("🔄 Loading notifications...");
-            // ... your existing notifications code ...
-        }
+        // In the loadNotifications function, remove the actions HTML completely
+function loadNotifications() {
+    console.log("🔄 Loading notifications...");
+    
+    const notificationList = document.getElementById('notificationList');
+    const notificationCount = document.getElementById('notificationCount');
+    
+    // Show loading state
+    notificationList.innerHTML = `
+        <div class="notification-item loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading notifications...
+        </div>
+    `;
+    
+    fetch('/api/notifications')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("📨 Notifications data:", data);
+            
+            if (data.success && data.notifications && data.notifications.length > 0) {
+                // Update notification count
+                notificationCount.textContent = data.notifications.length;
+                
+                // Clear loading state
+                notificationList.innerHTML = '';
+                
+                // Add notifications to the list
+                data.notifications.forEach(notification => {
+                    const notificationItem = document.createElement('div');
+                    notificationItem.className = `notification-item ${notification.type} ${notification.priority}`;
+                    
+                    // SIMPLIFIED - No action buttons, just the message
+                    notificationItem.innerHTML = `
+                        <div class="notification-message">${notification.message}</div>
+                    `;
+                    
+                    notificationList.appendChild(notificationItem);
+                });
+            } else {
+                // No notifications
+                notificationList.innerHTML = `
+                    <div class="notification-item empty">
+                        <i class="fas fa-check-circle"></i> No new notifications
+                    </div>
+                `;
+                notificationCount.textContent = '0';
+            }
+        })
+        .catch(error => {
+            console.error("❌ Error loading notifications:", error);
+            notificationList.innerHTML = `
+                <div class="notification-item error">
+                    <i class="fas fa-exclamation-triangle"></i> Failed to load notifications
+                </div>
+            `;
+            notificationCount.textContent = '0';
+        });
+}
+
+// Optional: Add these helper functions for notification actions
+function sendBirthdayGreeting(email, name) {
+    console.log(`Sending birthday greeting to ${name} at ${email}`);
+    // Implement birthday email sending logic here
+    Toastify({
+        text: `Birthday greeting sent to ${name}`,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#4CAF50",
+    }).showToast();
+}
+
+function sendRenewalReminder(email, name, daysLeft) {
+    console.log(`Sending renewal reminder to ${name} at ${email} (${daysLeft} days left)`);
+    // Implement renewal reminder logic here
+    Toastify({
+        text: `Renewal reminder sent to ${name}`,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#FF9800",
+    }).showToast();
+}
 
         function startNotificationAutoRefresh() {
             setInterval(loadNotifications, 120000); 
