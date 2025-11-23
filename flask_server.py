@@ -4897,114 +4897,161 @@ def get_notifications():
         
         print("🔍 Starting notifications check...")
         
-        # Get all member records
-        all_records = db_conn.get_member_records()
-        print(f"📊 Found {len(all_records)} records")
+        db_session = SessionLocal()
         
-        # 1. Check for birthdays today
-        birthday_count = 0
-        for record in all_records:
-            try:
-                # Get record ID safely
-                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
-                if not record_id:
-                    continue
-                    
-                # Get entries for this record
-                entries = db_conn.get_entries(record_id)
+        try:
+            # 1. Check for birthdays today - INCLUDE ALL members (even without emails)
+            print("🎂 Checking birthdays for current members...")
+            birthday_entries = db_session.query(
+                models.Members.member_id,
+                models.Members.first_name,
+                models.Members.last_name,
+                models.Members.birth_date,
+                models.Members.email,
+                models.Entries.entry_id
+            ).join(
+                models.Entries, models.Members.member_id == models.Entries.member_id
+            ).filter(
+                extract('month', models.Members.birth_date) == today.month,
+                extract('day', models.Members.birth_date) == today.day,
+                models.Entries.paid == True
+            ).distinct().all()
+            
+            birthday_count = len(birthday_entries)
+            print(f"🎂 Found {birthday_count} birthdays today for active members")
+            
+            for member in birthday_entries:
+                member_name = f"{member.first_name} {member.last_name}"
+                member_email = member.email
                 
-                for entry in entries:
-                    # Check if entry has birth_date
-                    birth_date = getattr(entry, 'birth_date', None)
-                    if birth_date:
-                        # Convert to date object if string
-                        if isinstance(birth_date, str):
-                            try:
-                                birth_date = datetime.strptime(birth_date, '%Y-%m-%d').date()
-                            except:
-                                continue
-                        elif isinstance(birth_date, datetime):
-                            birth_date = birth_date.date()
-                        
-                        # Check if birthday is today
-                        if birth_date.month == today.month and birth_date.day == today.day:
-                            first_name = getattr(entry, 'first_name', '')
-                            last_name = getattr(entry, 'last_name', '')
-                            email = getattr(entry, 'email', '')
-                            
-                            notifications.append({
-                                'type': 'birthday',
-                                'message': f"🎂 {first_name} {last_name} has birthday today!",
-                                'member_name': f"{first_name} {last_name}",
-                                'member_email': email,
-                                'priority': 'high'
-                            })
-                            birthday_count += 1
-            except Exception as e:
-                print(f"❌ Error processing record: {e}")
-                continue
-        
-        print(f"🎂 Found {birthday_count} birthdays today")
-        
-        # 2. Check for expiring memberships (30 days)
-        expiring_count = 0
-        thirty_days_from_now = today + timedelta(days=30)
-        
-        for record in all_records:
-            try:
-                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
-                if not record_id:
-                    continue
-                    
-                entries = db_conn.get_entries(record_id)
+                # AUTO-SEND BIRTHDAY GREETING (only if email exists)
+                email_sent = False
+                email_status = "❌ No email"
                 
-                for entry in entries:
-                    or_date = getattr(entry, 'OR_date', None)
-                    if or_date:
-                        # Convert to date object if string
-                        if isinstance(or_date, str):
-                            try:
-                                or_date = datetime.strptime(or_date, '%Y-%m-%d').date()
-                            except:
-                                continue
-                        elif isinstance(or_date, datetime):
-                            or_date = or_date.date()
+                if member_email and member_email.strip():
+                    try:
+                        email_sent = db_conn.send_birthday_greeting_email(member_email, member_name)
+                        email_status = "✅ Sent" if email_sent else "❌ Failed"
+                    except Exception as e:
+                        print(f"❌ Error sending birthday email: {e}")
+                        email_status = "❌ Error"
+                else:
+                    email_status = "❌ No email address"
+                
+                notifications.append({
+                    'type': 'birthday',
+                    'message': f"🎂 {member_name} has birthday today! {email_status}",
+                    'member_name': member_name,
+                    'member_email': member_email or 'No email',
+                    'priority': 'high',
+                    'email_sent': email_sent
+                })
+            
+            # 2. Check for expiring memberships (extend to 120 days for testing)
+            print("⏰ Checking expiring memberships...")
+            days_threshold = 120  # Extended for testing since your closest is 129 days
+            future_date = today + timedelta(days=days_threshold)
+            
+            # Get entries that are paid and have OR_date
+            expiring_entries = db_session.query(
+                models.Entries.entry_id,
+                models.Entries.OR_date,
+                models.Entries.maab_no,
+                models.Entries.maab_category,
+                models.Members.first_name,
+                models.Members.last_name,
+                models.Members.email
+            ).join(
+                models.Members, models.Entries.member_id == models.Entries.member_id
+            ).filter(
+                models.Entries.OR_date.isnot(None),
+                models.Entries.paid == True,
+                models.Members.email.isnot(None),
+                models.Members.email != ''
+            ).all()
+            
+            expiring_count = 0
+            
+            for entry in expiring_entries:
+                if entry.OR_date:
+                    try:
+                        # Calculate expiration date (OR_date + 1 year)
+                        if isinstance(entry.OR_date, str):
+                            or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
+                        else:
+                            or_date = entry.OR_date
                         
-                        # Calculate expiration (OR_date + 1 year)
                         expiration_date = or_date + timedelta(days=365)
                         days_until_expiry = (expiration_date - today).days
                         
-                        # Check if expiring within 30 days
-                        if 0 <= days_until_expiry <= 30:
-                            first_name = getattr(entry, 'first_name', '')
-                            last_name = getattr(entry, 'last_name', '')
-                            email = getattr(entry, 'email', '')
+                        # Check if expiring within threshold (including already expired)
+                        if 0 <= days_until_expiry <= days_threshold:
+                            member_name = f"{entry.first_name} {entry.last_name}"
+                            member_email = entry.email
+                            
+                            # AUTO-SEND RENEWAL REMINDER
+                            email_sent = False
+                            email_status = "❌ No email"
+                            
+                            if member_email and member_email.strip():
+                                try:
+                                    email_sent = db_conn.send_renewal_reminder_email(
+                                        member_email, 
+                                        member_name, 
+                                        days_until_expiry,
+                                        entry.maab_no
+                                    )
+                                    email_status = "✅ Sent" if email_sent else "❌ Failed"
+                                except Exception as e:
+                                    print(f"❌ Error sending renewal email: {e}")
+                                    email_status = "❌ Error"
+                            else:
+                                email_status = "❌ No email address"
+                            
+                            status_text = "EXPIRED" if days_until_expiry <= 0 else f"expires in {days_until_expiry} days"
+                            priority = 'high' if days_until_expiry <= 30 else 'medium'
                             
                             notifications.append({
                                 'type': 'expiring',
-                                'message': f"⏰ {first_name} {last_name} membership expires in {days_until_expiry} days",
-                                'member_name': f"{first_name} {last_name}",
-                                'member_email': email,
+                                'message': f"⏰ {member_name} membership {status_text}. {email_status}",
+                                'member_name': member_name,
+                                'member_email': member_email or 'No email',
                                 'additional_data': {'days_left': days_until_expiry},
-                                'priority': 'medium'
+                                'priority': priority,
+                                'email_sent': email_sent
                             })
                             expiring_count += 1
-            except Exception as e:
-                print(f"❌ Error processing record for expiring: {e}")
-                continue
-        
-        print(f"⏰ Found {expiring_count} expiring memberships")
-        print(f"📨 Total notifications: {len(notifications)}")
-        
-        return jsonify({
-            'success': True,
-            'notifications': notifications,
-            'total_count': len(notifications),
-            'summary': {
-                'birthdays': birthday_count,
-                'expiring': expiring_count
-            }
-        })
+                            
+                    except Exception as e:
+                        print(f"❌ Error processing entry {entry.entry_id}: {e}")
+                        continue
+            
+            print(f"⏰ Found {expiring_count} expiring memberships (within {days_threshold} days)")
+            print(f"📨 Total notifications: {len(notifications)}")
+            
+            return jsonify({
+                'success': True,
+                'notifications': notifications,
+                'total_count': len(notifications),
+                'summary': {
+                    'birthdays': birthday_count,
+                    'expiring': expiring_count
+                }
+            })
+            
+        except Exception as e:
+            print(f"❌ Database error in get_notifications: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': f'Database error: {str(e)}',
+                'notifications': [],
+                'total_count': 0
+            }), 500
+            
+        finally:
+            db_session.close()
         
     except Exception as e:
         print(f"❌ Major error in get_notifications: {e}")
@@ -5018,10 +5065,6 @@ def get_notifications():
             'total_count': 0
         }), 500
 
-# TEST ROUTE - OPTIONAL
-@server.route('/api/notifications/test', methods=['GET'])
-def test_notifications_route():
-    return jsonify({"message": "Notifications route is working", "success": True})
 
 #? -------------------- MISC ROUTES -------------------- ?#
 

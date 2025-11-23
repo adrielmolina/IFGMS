@@ -377,6 +377,63 @@ def send_otp_email(email, otp):
     '''
     
     
+# Add these functions to your db_conn.py
+
+def send_birthday_greeting_email(member_email, member_name):
+    """Send automatic birthday greeting email"""
+    try:
+        subject = "🎂 Happy Birthday from FGMS!"
+        
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+            <h2 style="color: #e74c3c;">Happy Birthday, {member_name}! 🎂</h2>
+            <p>Wishing you a wonderful birthday filled with joy and happiness!</p>
+            <p>Thank you for being a valued member of our community.</p>
+            <br>
+            <p>Best regards,<br><strong>FGMS Team</strong></p>
+        </div>
+        """
+
+        resend.Emails.send({
+            "from": RESEND_SENDER_EMAIL_GEN,
+            "to": member_email,
+            "subject": subject,
+            "html": html_body
+        })
+        print(f"✅ Birthday greeting sent to {member_name} at {member_email}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send birthday greeting: {e}")
+        return False
+
+def send_renewal_reminder_email(member_email, member_name, days_left, maab_no=None):
+    """Send automatic renewal reminder email"""
+    try:
+        subject = f"⏰ Membership Renewal Reminder - {days_left} days left"
+        
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+            <h2 style="color: #FF9800;">Membership Renewal Reminder</h2>
+            <p>Dear {member_name},</p>
+            <p>Your FGMS membership will expire in <strong>{days_left} days</strong>.</p>
+            {"<p>MAAB Number: <strong>" + maab_no + "</strong></p>" if maab_no else ""}
+            <p>Please renew your membership to continue enjoying our services.</p>
+            <br>
+            <p>Best regards,<br><strong>FGMS Team</strong></p>
+        </div>
+        """
+
+        resend.Emails.send({
+            "from": RESEND_SENDER_EMAIL_GEN,
+            "to": member_email,
+            "subject": subject,
+            "html": html_body
+        })
+        print(f"✅ Renewal reminder sent to {member_name} at {member_email} ({days_left} days left)")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send renewal reminder: {e}")
+        return False
 
 def verifying_otp(email, otp_input):
     """Verify OTP against the database (original version with added debug prints)"""
