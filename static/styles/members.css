@@ -206,6 +206,10 @@ label {
 /* ====================== UNIFIED BUTTON STYLES ====================== */
 /* All buttons will now use the same blue color scheme */
 
+#export {
+    display: none !important;
+}
+
 /* BASE BUTTON STYLES - APPLIES TO ALL BUTTONS EXCEPT HANDSONTABLE SORT AND PAGINATION */
 button:not(.changeType):not(.ht_master .htCore button):not(.pagination-controls button),
 .btn-declare,
