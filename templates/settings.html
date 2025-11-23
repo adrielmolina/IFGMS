@@ -658,6 +658,67 @@ document.addEventListener('DOMContentLoaded', function() {
             successMessage.style.display = 'none';
         }, 3000);
     }
+
+        document.addEventListener('DOMContentLoaded', function() {
+        const fontStyleSelect = document.getElementById('fontStyleSelect');
+        const fontSizeSelect = document.getElementById('fontSizeSelect');
+        
+        // Load saved settings
+        const savedFont = localStorage.getItem('appFont') || 'default';
+        const savedFontSize = localStorage.getItem('appFontSize') || 'medium';
+        
+        fontStyleSelect.value = savedFont;
+        fontSizeSelect.value = savedFontSize;
+        
+        // Apply current settings to settings page itself
+        applyFontSettings();
+        
+        // Add event listeners
+        fontStyleSelect.addEventListener('change', function() {
+            const font = this.value;
+            localStorage.setItem('appFont', font);
+            applyFontSettings();
+            // Notify other pages
+            window.dispatchEvent(new CustomEvent('fontSettingsChanged'));
+        });
+        
+        fontSizeSelect.addEventListener('change', function() {
+            const size = this.value;
+            localStorage.setItem('appFontSize', size);
+            applyFontSettings();
+            // Notify other pages
+            window.dispatchEvent(new CustomEvent('fontSettingsChanged'));
+        });
+        
+        function applyFontSettings() {
+            const currentFont = localStorage.getItem('appFont') || 'default';
+            const currentSize = localStorage.getItem('appFontSize') || 'medium';
+            
+            const fontMap = {
+                'default': 'Poppins, sans-serif',
+                'georgia': 'Georgia, serif',
+                'century-gothic': '"Century Gothic", CenturyGothic, AppleGothic, sans-serif',
+                'jetbrains-mono': '"JetBrains Mono", Consolas, monospace'
+            };
+            
+            const sizeMap = {
+                'small': '14px',
+                'medium': '16px',
+                'large': '18px'
+            };
+            
+            const fontFamily = fontMap[currentFont];
+            const fontSize = sizeMap[currentSize];
+            
+            // Update CSS variables with important flag
+            document.documentElement.style.setProperty('--app-font', fontFamily, 'important');
+            document.documentElement.style.setProperty('--app-font-size', fontSize, 'important');
+            
+            // Also apply directly to body
+            document.body.style.fontFamily = fontFamily + ' !important';
+            document.body.style.fontSize = fontSize + ' !important';
+        }
+    });
 </script>
 {% endblock %}
 
