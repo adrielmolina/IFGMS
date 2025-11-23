@@ -53,7 +53,7 @@
             <table class="editableTable">
                 <thead>
                     <tr>
-                        <th> </th>
+                        <!-- <th> </th> -->
                         <th>ID</th>
                         <th>Date</th>
                         <th>Username</th>
@@ -67,7 +67,7 @@
                     {% for log in logs%}
                     <tr>
                         <!-- TODO enlarge checkboxes / change to custom cell-->
-                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ log.action_id }}"></td>
+                        <!-- <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ log.action_id }}"></td> -->
                         <td>{{ log.action_id }}</td>
                         <td>{{ log.date }}</td>
                         <td>{{ log.staff_name }}</td>
