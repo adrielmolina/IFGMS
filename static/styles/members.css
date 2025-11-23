@@ -1594,6 +1594,87 @@ div.table-container {
     display: inline-block !important;
 }
 
+#renew_overlay_btn:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+
+/* Fixed size specifically for renew overlay */
+#renewOverlay.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+}
+
+#renewOverlay .overlay-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 1200px;
+    height: 80vh; /* Fixed height */
+    min-height: 600px; /* Minimum height */
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column; /* This makes the content stack properly */
+}
+
+#renewOverlay .overlay-body {
+    flex: 1; /* Takes up remaining space */
+    display: flex;
+    flex-direction: column;
+}
+
+#renewOverlay .table-container {
+    flex: 1; /* Takes up available space */
+    max-height: none; /* Remove max-height constraint */
+    overflow-y: auto; /* Scroll only the table, not the entire overlay */
+    border: 1px solid #ddd;
+}
+
+#renewOverlay .close-overlay {
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#renewOverlay .close-overlay:hover {
+    color: red;
+}
+
+#renewOverlay .table-container table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed; /* ADDED - Forces even column distribution */
+}
+
+#renewOverlay .table-container th,
+#renewOverlay .table-container td {
+    width: 20%; /* ADDED - Each column takes exactly 20% width */
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    word-wrap: break-word; /* ADDED - Handle long text content */
+}
+
+#renewOverlay .table-container th {
+    background-color: #dc3545;
+    position: sticky;
+    top: 0;
+}
+
+
 /* Ensure proper button spacing in entry details controls */
 .entry_details .controls_box {
     display: flex !important;
