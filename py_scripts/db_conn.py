@@ -2356,7 +2356,7 @@ def check_user_authorized(email):
 def GET_audit_logs():
     db_session = SessionLocal()
     try:
-        logs = db_session.query(models.Logs).order_by(models.Logs.date.desc()).all()
+        logs = db_session.query(models.Logs).order_by(models.Logs.action_id.desc()).all()
         return logs
     except Exception as e:
         print(f"Error fetching audit logs: {e}")

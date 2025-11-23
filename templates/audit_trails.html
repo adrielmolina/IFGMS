@@ -133,7 +133,10 @@
 $(document).ready(function() {
     // Initialize DataTable for tables with the "editableTable" class
     $('.editableTable').each(function() {
-        var table = $(this).DataTable();
+        var table = $(this).DataTable({
+        "ordering": false,  // This prevents DataTable from re-sorting
+        "order": []         // Explicitly no order
+    });
         
     // Move "Show entries" outside the table
     var lengthControl = $(this)

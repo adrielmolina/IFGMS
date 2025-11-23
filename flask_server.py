@@ -1419,6 +1419,8 @@ def delete_entry():
         print(f"❌ Error in delete_entry route: {e}")
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
+
+'''
 @server.route('/api/members/expiring_soon', methods=['GET'])
 def get_expiring_soon_count():
     try:
@@ -1470,6 +1472,66 @@ def get_expiring_soon_count():
             'percentage_change': round(percentage_change, 2),
             'timeframe_days': 30
         })
+    except Exception as e:
+        print(f"Error in get_expiring_soon_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+        
+'''
+
+@server.route('/api/members/expiring_soon', methods=['GET'])
+def get_expiring_soon_count():
+    try:
+        from datetime import datetime, timedelta
+        from sqlalchemy import and_, or_
+        
+        db_session = SessionLocal()
+        
+        today = datetime.now().date()
+        thirty_days_from_now = today + timedelta(days=30)
+        last_month_start = today - timedelta(days=60)
+        last_month_end = today - timedelta(days=30)
+        
+        # Calculate expiration dates in Python for ORM query
+        current_start = today
+        current_end = thirty_days_from_now
+        previous_start = last_month_start  
+        previous_end = last_month_end
+        
+        # Current period: members whose OR_date + 1 year falls in next 30 days
+        current_expiring = db_session.query(models.Entries).filter(
+            models.Entries.OR_date.isnot(None),
+            and_(
+                (models.Entries.OR_date + timedelta(days=365)) >= current_start,
+                (models.Entries.OR_date + timedelta(days=365)) <= current_end
+            )
+        ).count()
+        
+        # Previous period: members whose OR_date + 1 year fell in previous 30-day window
+        previous_expiring = db_session.query(models.Entries).filter(
+            models.Entries.OR_date.isnot(None), 
+            and_(
+                (models.Entries.OR_date + timedelta(days=365)) >= previous_start,
+                (models.Entries.OR_date + timedelta(days=365)) <= previous_end
+            )
+        ).count()
+        
+        # Calculate percentage change
+        if previous_expiring > 0:
+            percentage_change = ((current_expiring - previous_expiring) / previous_expiring) * 100
+        else:
+            percentage_change = 100 if current_expiring > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'expiring_soon_count': current_expiring,
+            'previous_period_count': previous_expiring,
+            'percentage_change': round(percentage_change, 2),
+            'timeframe_days': 30
+        })
+        
     except Exception as e:
         print(f"Error in get_expiring_soon_count: {e}")
         return jsonify({
@@ -4924,19 +4986,43 @@ def get_notifications():
                 member_name = f"{member.first_name} {member.last_name}"
                 member_email = member.email
                 
-                # AUTO-SEND BIRTHDAY GREETING (only if email exists)
+                # CHECK IF EMAIL WAS ALREADY SENT TODAY
+                email_already_sent = db_session.query(models.EmailLog).filter(
+                    models.EmailLog.email == member_email,
+                    models.EmailLog.email_type == 'birthday',
+                    models.EmailLog.sent_date == today
+                ).first()
+                
+                # AUTO-SEND BIRTHDAY GREETING (only if email exists AND not already sent today)
                 email_sent = False
-                email_status = "❌ No email"
+                email_status = " | No email"
                 
                 if member_email and member_email.strip():
-                    try:
-                        email_sent = db_conn.send_birthday_greeting_email(member_email, member_name)
-                        email_status = "✅ Sent" if email_sent else "❌ Failed"
-                    except Exception as e:
-                        print(f"❌ Error sending birthday email: {e}")
-                        email_status = "❌ Error"
+                    if email_already_sent:
+                        email_status = " | Already sent today"
+                        email_sent = True
+                    else:
+                        try:
+                            email_sent = db_conn.send_birthday_greeting_email(member_email, member_name)
+                            if email_sent:
+                                # LOG THE EMAIL SENDING
+                                email_log = models.EmailLog(
+                                    email=member_email,
+                                    member_name=member_name,
+                                    email_type='birthday',
+                                    sent_date=today,
+                                    status='sent'
+                                )
+                                db_session.add(email_log)
+                                db_session.commit()
+                                email_status = " | Sent"
+                            else:
+                                email_status = " | Failed"
+                        except Exception as e:
+                            print(f"Error sending birthday email: {e}")
+                            email_status = " | Error"
                 else:
-                    email_status = "❌ No email address"
+                    email_status = " | No email address"
                 
                 notifications.append({
                     'type': 'birthday',
@@ -4947,12 +5033,11 @@ def get_notifications():
                     'email_sent': email_sent
                 })
             
-            # 2. Check for expiring memberships (extend to 120 days for testing)
+            # 2. Check for expiring memberships - SIMILAR FIX FOR RENEWAL REMINDERS
             print("⏰ Checking expiring memberships...")
-            days_threshold = 120  # Extended for testing since your closest is 129 days
+            days_threshold = 120
             future_date = today + timedelta(days=days_threshold)
             
-            # Get entries that are paid and have OR_date
             expiring_entries = db_session.query(
                 models.Entries.entry_id,
                 models.Entries.OR_date,
@@ -4975,7 +5060,6 @@ def get_notifications():
             for entry in expiring_entries:
                 if entry.OR_date:
                     try:
-                        # Calculate expiration date (OR_date + 1 year)
                         if isinstance(entry.OR_date, str):
                             or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
                         else:
@@ -4984,29 +5068,54 @@ def get_notifications():
                         expiration_date = or_date + timedelta(days=365)
                         days_until_expiry = (expiration_date - today).days
                         
-                        # Check if expiring within threshold (including already expired)
                         if 0 <= days_until_expiry <= days_threshold:
                             member_name = f"{entry.first_name} {entry.last_name}"
                             member_email = entry.email
                             
-                            # AUTO-SEND RENEWAL REMINDER
+                            # CHECK IF RENEWAL EMAIL WAS ALREADY SENT TODAY
+                            renewal_already_sent = db_session.query(models.EmailLog).filter(
+                                models.EmailLog.email == member_email,
+                                models.EmailLog.email_type == 'renewal',
+                                models.EmailLog.sent_date == today,
+                                models.EmailLog.days_until_expiry == days_until_expiry
+                            ).first()
+                            
+                            # AUTO-SEND RENEWAL REMINDER (only if not already sent today)
                             email_sent = False
-                            email_status = "❌ No email"
+                            email_status = " | No email"
                             
                             if member_email and member_email.strip():
-                                try:
-                                    email_sent = db_conn.send_renewal_reminder_email(
-                                        member_email, 
-                                        member_name, 
-                                        days_until_expiry,
-                                        entry.maab_no
-                                    )
-                                    email_status = "✅ Sent" if email_sent else "❌ Failed"
-                                except Exception as e:
-                                    print(f"❌ Error sending renewal email: {e}")
-                                    email_status = "❌ Error"
+                                if renewal_already_sent:
+                                    email_status = " | Already sent today"
+                                    email_sent = True
+                                else:
+                                    try:
+                                        email_sent = db_conn.send_renewal_reminder_email(
+                                            member_email, 
+                                            member_name, 
+                                            days_until_expiry,
+                                            entry.maab_no
+                                        )
+                                        if email_sent:
+                                            # LOG THE EMAIL SENDING
+                                            email_log = models.EmailLog(
+                                                email=member_email,
+                                                member_name=member_name,
+                                                email_type='renewal',
+                                                sent_date=today,
+                                                status='sent',
+                                                days_until_expiry=days_until_expiry
+                                            )
+                                            db_session.add(email_log)
+                                            db_session.commit()
+                                            email_status = " | Sent"
+                                        else:
+                                            email_status = " | Failed"
+                                    except Exception as e:
+                                        print(f"Error sending renewal email: {e}")
+                                        email_status = " | Error"
                             else:
-                                email_status = "❌ No email address"
+                                email_status = " | No email address"
                             
                             status_text = "EXPIRED" if days_until_expiry <= 0 else f"expires in {days_until_expiry} days"
                             priority = 'high' if days_until_expiry <= 30 else 'medium'
@@ -5023,7 +5132,7 @@ def get_notifications():
                             expiring_count += 1
                             
                     except Exception as e:
-                        print(f"❌ Error processing entry {entry.entry_id}: {e}")
+                        print(f"Error processing entry {entry.entry_id}: {e}")
                         continue
             
             print(f"⏰ Found {expiring_count} expiring memberships (within {days_threshold} days)")
@@ -5040,7 +5149,7 @@ def get_notifications():
             })
             
         except Exception as e:
-            print(f"❌ Database error in get_notifications: {e}")
+            print(f"Database error in get_notifications: {e}")
             import traceback
             traceback.print_exc()
             return jsonify({
@@ -5054,7 +5163,7 @@ def get_notifications():
             db_session.close()
         
     except Exception as e:
-        print(f"❌ Major error in get_notifications: {e}")
+        print(f"Major error in get_notifications: {e}")
         import traceback
         traceback.print_exc()
         
