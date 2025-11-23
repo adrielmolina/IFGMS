@@ -2878,7 +2878,6 @@ def save_budget_expenses():
 
 @server.route('/api/inventory/add_stock', methods=['POST'])
 @login_required
-@roles_required('admin', 'superadmin')
 def add_inventory_stock():
     try:
         # ✅ FIX: Save user data to variables first

@@ -826,7 +826,7 @@ function populateEntryFormWithMemberData(member) {
         bloodTypeSelect.value = member.blood_type || '';
         
         // Show success message
-        toastAlert("Member Data Loaded", "Member information has been populated in the form. Please verify and save the entry.");
+        toastInfo("Member Data Loaded", "Member information has been populated in the form. Please verify and save the entry.");
         
         // Close the renew overlay and clear search
         closeRenewOverlay();
