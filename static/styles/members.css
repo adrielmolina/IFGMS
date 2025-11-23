@@ -203,13 +203,29 @@ label {
     margin-top: 18px;
     color: #2b2b2b;
 }
-/* ---------- BUTTONS SA LABAS NG OVERLAY ---------- */
-.controls_box button:not(.save_record_details):not(.delete_record):not(.add_entry_details),
+/* ====================== UNIFIED BUTTON STYLES ====================== */
+/* All buttons will now use the same blue color scheme */
+
+/* BASE BUTTON STYLES - APPLIES TO ALL BUTTONS EXCEPT HANDSONTABLE SORT AND PAGINATION */
+button:not(.changeType):not(.ht_master .htCore button):not(.pagination-controls button),
 .btn-declare,
-.btn-export {
-  background: #3b82f6 !important; /* Blue for other buttons */
+.btn-export,
+.btn-add,
+.btn-archive,
+.btn-back,
+.btn-secondary,
+.btn-reset,
+#create,
+#archive,
+#reset,
+#create_account_btn,
+.input-container button,
+.save_record_details,
+.delete_record,
+.add_entry_details {
+  background: #3b82f6 !important; /* Consistent blue color */
   color: white !important;
-  padding: 8px 12px !important;
+  padding: 8px 16px !important;
   border: none !important;
   border-radius: 8px !important;
   font-weight: 500 !important;
@@ -223,58 +239,86 @@ label {
   margin-bottom: 10px;
 }
 
-.controls_box button:not(.save_record_details):not(.delete_record):not(.add_entry_details):hover,
+/* HOVER EFFECTS - APPLIES TO ALL BUTTONS EXCEPT HANDSONTABLE SORT AND PAGINATION */
+button:not(.changeType):not(.ht_master .htCore button):not(.pagination-controls button):hover,
 .btn-declare:hover,
-.btn-export:hover {
-  background: #2563eb !important;
+.btn-export:hover,
+.btn-add:hover,
+.btn-archive:hover,
+.btn-back:hover,
+.btn-secondary:hover,
+.btn-reset:hover,
+#create:hover,
+#archive:hover,
+#reset:hover,
+#create_account_btn:hover,
+.input-container button:hover,
+.save_record_details:hover,
+.delete_record:hover,
+.add_entry_details:hover {
+  background: #2563eb !important; /* Darker blue on hover */
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
   color: white !important;
 }
 
-/* ADD BUTTON - GREEN */
-.btn-add {
-  background: #22c55e !important; 
-  color: white !important;
-  padding: 8px 12px !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease-in-out !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
+/* DISABLED STATE - APPLIES TO ALL BUTTONS EXCEPT HANDSONTABLE SORT AND PAGINATION */
+button:not(.changeType):not(.ht_master .htCore button):not(.pagination-controls button):disabled,
+.btn-declare:disabled,
+.btn-export:disabled,
+.btn-add:disabled,
+.btn-archive:disabled,
+.btn-back:disabled,
+.btn-secondary:disabled,
+.btn-reset:disabled,
+#create:disabled,
+#archive:disabled,
+#reset:disabled,
+#create_account_btn:disabled,
+.input-container button:disabled,
+.save_record_details:disabled,
+.delete_record:disabled,
+.add_entry_details:disabled {
+  background-color: #cccccc !important;
+  color: #666666 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-.btn-add:hover {
-  background-color: #16a34a !important; 
-  color:hsl(0, 0%, 21%); 
+/* HOVER FOR DISABLED BUTTONS EXCEPT HANDSONTABLE SORT AND PAGINATION */
+button:not(.changeType):not(.ht_master .htCore button):not(.pagination-controls button):disabled:hover,
+.btn-declare:disabled:hover,
+.btn-export:disabled:hover,
+.btn-add:disabled:hover,
+.btn-archive:disabled:hover,
+.btn-back:disabled:hover,
+.btn-secondary:disabled:hover,
+.btn-reset:disabled:hover,
+#create:disabled:hover,
+#archive:disabled:hover,
+#reset:disabled:hover,
+#create_account_btn:disabled:hover,
+.input-container button:disabled:hover,
+.save_record_details:disabled:hover,
+.delete_record:disabled:hover,
+.add_entry_details:disabled:hover {
+  background-color: #cccccc !important;
+  color: #666666 !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
-.btn-declare {
-  background-color: #3b82f6 !important;
-  color:#fff; 
+
+/* SPECIAL BUTTON STATES */
+/* Update mode for save button */
+.save_record_details.update-mode {
+  background-color: #3b82f6 !important; /* Same blue */
+  color: white !important;
 }
-.btn-declare:hover {
-  background-color: #2563eb !important;
-  color:hsl(0, 0%, 21%); 
-}
-.btn-archive {
-  background-color: #ffd001 !important;
-  color:#fff; 
-}
-.btn-archive:hover {
-  background-color: #ffbb00 !important;
-  color:hsl(0, 0%, 21%); 
-}
-.btn-back {
-  background-color: #f85050 !important;
-  color:#fff; 
-}
-.btn-back:hover {
-  background-color: #ff3636 !important;
-  color:hsl(0, 0%, 21%); 
+
+.save_record_details.update-mode:hover {
+  background-color: #2563eb !important; /* Same hover effect */
 }
 
 /* Add to Dispatch button disabled state */
@@ -293,82 +337,10 @@ label {
     transform: none !important;
     box-shadow: none !important;
 }
-/* ----------- BUTTONS SA OVERLAY (ORIGINAL STYLES) ------------- */
-.save_record_details,
-.delete_record,
-.add_entry_details {
-  background-color: #8cf9b4 !important;
-  color: #0fa408 !important;
-  padding: 8px 12px !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease-in-out !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
-}
-
-.input-container button {
-    background: #3b82f6 !important;
-    color: white !important;
-    padding: 8px 12px !important;
-    border: none !important;
-    border-radius: 8px !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease-in-out !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    font-size: 14px !important;
-    margin-top: 24px; /* Aligns with other inputs */
-    width: 100%;
-    height: 38px; /* Matches your input field height */
-    justify-content: center;
-}
-
-.input-container button:hover {
-    background: #2563eb !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
-    color: white !important;
-}
-
-.save_record_details:hover,
-.add_entry_details:hover {
-  background-color: #00ff5e !important;
-  color: hsl(0, 0%, 21%) !important;
-}
-
-.delete_record:hover {
-  background-color: #ff3636 !important;
-  color: hsl(0, 0%, 21%);
-}
-
-.btn-export {
-  background-color: #ffb47e !important;
-  color:#ea580c; 
-}
-.btn-export:hover {
-  background-color: #ea580c !important;
-  color:hsl(0, 0%, 21%); 
-}
-
-.add_entry_details {
-  background-color: #8cf9b4 !important; /* same as Save */
-  color: #0fa408;                       /* match Save text color */
-}
-
-.add_entry_details:hover {
-  background-color: #00ff5e !important;
-  color: hsl(0, 0%, 21%);
-}
 
 /* -------- ICON + BUTTON LAYOUT -------- */
-button, 
+/* Exclude Handsontable and pagination buttons from general button layout */
+button:not(.changeType):not(.ht_master .htCore button):not(.pagination-controls button), 
 .add_entry_details {
   display: flex;
   align-items: center;
@@ -392,6 +364,73 @@ button,
   margin-top: 15px;
   margin-left: 300px !important;
 }
+
+/* ====================== HANDSONTABLE SORT BUTTONS STYLING ====================== */
+/* Keep Handsontable sort buttons with default styling */
+.ht_master .htCore button,
+.changeType {
+    background: transparent !important;
+    color: inherit !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    display: inline !important;
+    font-size: inherit !important;
+    font-weight: normal !important;
+}
+
+.ht_master .htCore button:hover,
+.changeType:hover {
+    background: transparent !important;
+    color: inherit !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.ht_master .htCore button:disabled,
+.changeType:disabled {
+    background: transparent !important;
+    color: inherit !important;
+    opacity: 1 !important;
+}
+
+/* ====================== PAGINATION BUTTONS STYLING ====================== */
+/* Keep pagination buttons with their original styling */
+.pagination-controls button {
+    background: #f9f9f9 !important;
+    color: #333 !important;
+    border: 1px solid #ccc !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    transform: none !important;
+    box-shadow: none !important;
+    display: inline-block !important;
+    font-size: 14px !important;
+    font-weight: normal !important;
+    margin: 0 2px !important;
+}
+
+.pagination-controls button:hover {
+    background: #ffeaea !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.pagination-controls button.active {
+    background: #d9534f !important;
+    color: white !important;
+    border-color: #d43f3a !important;
+}
+
+.pagination-controls button:disabled {
+    background: #f5f5f5 !important;
+    color: #ccc !important;
+    cursor: not-allowed !important;
+}
+
 
 /* ---------- CARDS STYLE ---------- */
 .record_details, .entry_details, #entries_table {
