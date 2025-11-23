@@ -1419,6 +1419,8 @@ def delete_entry():
         print(f"❌ Error in delete_entry route: {e}")
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
+
+'''
 @server.route('/api/members/expiring_soon', methods=['GET'])
 def get_expiring_soon_count():
     try:
@@ -1470,6 +1472,66 @@ def get_expiring_soon_count():
             'percentage_change': round(percentage_change, 2),
             'timeframe_days': 30
         })
+    except Exception as e:
+        print(f"Error in get_expiring_soon_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+        
+'''
+
+@server.route('/api/members/expiring_soon', methods=['GET'])
+def get_expiring_soon_count():
+    try:
+        from datetime import datetime, timedelta
+        from sqlalchemy import and_, or_
+        
+        db_session = SessionLocal()
+        
+        today = datetime.now().date()
+        thirty_days_from_now = today + timedelta(days=30)
+        last_month_start = today - timedelta(days=60)
+        last_month_end = today - timedelta(days=30)
+        
+        # Calculate expiration dates in Python for ORM query
+        current_start = today
+        current_end = thirty_days_from_now
+        previous_start = last_month_start  
+        previous_end = last_month_end
+        
+        # Current period: members whose OR_date + 1 year falls in next 30 days
+        current_expiring = db_session.query(models.Entries).filter(
+            models.Entries.OR_date.isnot(None),
+            and_(
+                (models.Entries.OR_date + timedelta(days=365)) >= current_start,
+                (models.Entries.OR_date + timedelta(days=365)) <= current_end
+            )
+        ).count()
+        
+        # Previous period: members whose OR_date + 1 year fell in previous 30-day window
+        previous_expiring = db_session.query(models.Entries).filter(
+            models.Entries.OR_date.isnot(None), 
+            and_(
+                (models.Entries.OR_date + timedelta(days=365)) >= previous_start,
+                (models.Entries.OR_date + timedelta(days=365)) <= previous_end
+            )
+        ).count()
+        
+        # Calculate percentage change
+        if previous_expiring > 0:
+            percentage_change = ((current_expiring - previous_expiring) / previous_expiring) * 100
+        else:
+            percentage_change = 100 if current_expiring > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'expiring_soon_count': current_expiring,
+            'previous_period_count': previous_expiring,
+            'percentage_change': round(percentage_change, 2),
+            'timeframe_days': 30
+        })
+        
     except Exception as e:
         print(f"Error in get_expiring_soon_count: {e}")
         return jsonify({
