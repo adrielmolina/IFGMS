@@ -285,7 +285,7 @@ button:hover {
         }
 
         .form-buttons button,
-        #editButton {
+        #editButton, #changePasswordButton {
             padding: 10px 20px;
             background-color: #e03e3e;
             color: white;
@@ -297,7 +297,7 @@ button:hover {
         }
 
         .form-buttons button:hover,
-        #editButton:hover {
+        #editButton:hover, #changePasswordButton:hover {
             opacity: 0.85;
         }
 
@@ -508,4 +508,255 @@ th {
 .left-container,
 .profile-container {
   margin: 40px 0; /* remove auto centering */
+}
+
+/* Change Password Modal Styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+    z-index: 10001;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e1e5e9;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.25rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #64748b;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    color: #374151;
+    background: #f1f5f9;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e1e5e9;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* Password Form Styles */
+.password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.password-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.password-form label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.password-form input {
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.password-form input:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Password Requirements Styles */
+.password-requirements {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 10px;
+}
+
+.password-requirements p {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.password-requirements ul {
+    margin: 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.password-requirements li {
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    transition: color 0.3s ease;
+}
+
+.requirement-met {
+    color: #10b981;
+}
+
+.requirement-not-met {
+    color: #6b7280;
+}
+
+.requirement-met::before {
+    content: "✓ ";
+    font-weight: bold;
+}
+
+.requirement-not-met::before {
+    content: "○ ";
+}
+
+/* Button Styles for Modal */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-1px);
+}
+
+/* CRITICAL FIX: Force inputs to be clickable */
+#changePasswordModal input[type="password"] {
+    pointer-events: auto !important;
+    cursor: text !important;
+}
+
+/* Ensure all interactive elements in modal are clickable */
+#changePasswordModal .form-group,
+#changePasswordModal input,
+#changePasswordModal button,
+#changePasswordModal label {
+    pointer-events: auto !important;
+}
+
+/* Remove any inherited pointer-events blocking */
+.modal-content * {
+    pointer-events: auto !important;
+}
+
+/* Specific fix for password inputs */
+#currentPassword, 
+#newPassword, 
+#confirmPassword {
+    pointer-events: auto !important;
+    cursor: text !important;
+    position: relative;
+    z-index: 10002 !important;
+}
+
+/* Loading state for buttons */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn .fa-spinner {
+    margin-right: 8px;
+}
+
+/* Success state */
+.password-success {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4 !important;
+}
+
+/* Error state */
+.password-error {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
 }

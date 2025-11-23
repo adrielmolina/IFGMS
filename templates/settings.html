@@ -68,6 +68,44 @@
     Profile picture changed successfully!
 </div>
 
+<!-- Change Password Modal -->
+<div id="changePasswordModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Change Password</h3>
+            <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="changePasswordForm" class="password-form">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" name="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <div class="password-requirements">
+                    <p>Password must contain:</p>
+                    <ul>
+                        <li id="lengthReq">At least 8 characters</li>
+                        <li id="uppercaseReq">One uppercase letter</li>
+                        <li id="lowercaseReq">One lowercase letter</li>
+                        <li id="numberReq">One number</li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="submitPasswordChange()">Change Password</button>
+        </div>
+    </div>
+</div>
 
     <div class="profile-container">
     <form action="{{ url_for('settings_save_changes') }}" method="POST" class="profile-form">
@@ -118,10 +156,13 @@
 </form>
 
 <div class="form-buttons" id="formButtons">
-        <button type="button" onclick="saveChanges()">Save</button>
-        <button type="button" onclick="cancelChanges()">Cancel</button>
-    </div>
-    <button type="button" id="editButton" onclick="enableEditMode()">Edit</button>
+    <button type="button" onclick="saveChanges()">Save</button>
+    <button type="button" onclick="cancelChanges()">Cancel</button>
+</div>
+<div class="action-buttons">
+    <button type="button" id="editButton" onclick="enableEditMode()">Edit Info</button>
+    <button type="button" id="changePasswordButton" onclick="changePassword()">Change Password</button>
+</div>
 
 <div class="setting-row">
             <span>View Login History</span>
@@ -196,316 +237,428 @@
 
 {% block extra_scripts %}
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const fontStyleSelect = document.getElementById("fontStyleSelect");
-        const fontSizeSelect = document.getElementById("fontSizeSelect");
-
-        // Restore saved preferences (or defaults)
-        const savedFontKey = localStorage.getItem("appFontKey") || "default";
-        const savedSizeKey = localStorage.getItem("appFontSizeKey") || "medium";
-
-        fontStyleSelect.value = savedFontKey;
-        fontSizeSelect.value = savedSizeKey;
-
-        // Apply preferences immediately
-        applyFontStyle(savedFontKey);
-        applyFontSize(savedSizeKey);
-
-        // Handlers
-        fontStyleSelect.addEventListener("change", e => {
-            applyFontStyle(e.target.value);
-            localStorage.setItem("appFontKey", e.target.value);
-            toastSuccess("Font Style Updated",`Font style changed to: ${fontStyleSelect.options[fontStyleSelect.selectedIndex].text}`);
-        });
-
-        fontSizeSelect.addEventListener("change", e => {
-            applyFontSize(e.target.value);
-            localStorage.setItem("appFontSizeKey", e.target.value);
-            toastSuccess("Font Style Updated",`Font size changed to: ${fontSizeSelect.options[fontSizeSelect.selectedIndex].text}`);
-        });
-
-        // Helpers
-        // function applyFontStyle(key) {
-        //     const map = {
-        //         "georgia": "Georgia, serif",
-        //         "century-gothic": "'Century Gothic', sans-serif",
-        //         "jetbrains-mono": "'JetBrains Mono', monospace",
-        //         "default": "'Montserrat', sans-serif"
-        //     };
-        //     document.documentElement.style.setProperty("--app-font", map[key] || map["default"]);
-        //     localStorage.setItem("appFontFamily", map[key] || map["default"]);
-        // }
-
-        // function applyFontSize(key) {
-        //     const map = {
-        //         "small": "0.875rem",   // ~14px
-        //         "medium": "1rem",      // ~16px
-        //         "large": "1.125rem"    // ~18px
-        //     };
-        //     document.documentElement.style.setProperty("--app-font-size", map[key] || map["medium"]);
-        //     localStorage.setItem("appFontSize", map[key] || map["medium"]);
-        // }
-        function applyFontStyle(key) {
-            const map = {
-                "georgia": "Georgia, serif",
-                "century-gothic": "'Century Gothic', sans-serif",
-                "jetbrains-mono": "'JetBrains Mono', monospace",
-                "default": "'Montserrat', sans-serif"
-            };
-            
-            const selectedFont = map[key] || map["default"];
-            
-            // Update CSS variable
-            document.documentElement.style.setProperty("--app-font", selectedFont);
-            
-            // Force apply to all elements immediately
-            const allElements = document.querySelectorAll('*');
-            allElements.forEach(element => {
-                element.style.fontFamily = selectedFont + ' !important';
-            });
-            
-            // Save to localStorage
-            localStorage.setItem("appFont", selectedFont);
-            localStorage.setItem("appFontKey", key);
+    // Enhanced password change functions
+function changePassword() {
+    const modal = document.getElementById('changePasswordModal');
+    console.log('🔑 Opening password modal...');
+    
+    // Force display and high z-index
+    modal.style.display = 'flex';
+    modal.style.zIndex = '10000';
+    document.body.style.overflow = 'hidden';
+    
+    // Clear any previous values
+    document.getElementById('changePasswordForm').reset();
+    resetPasswordRequirements();
+    
+    // Focus on the first input field after a short delay
+    setTimeout(() => {
+        const currentPasswordInput = document.getElementById('currentPassword');
+        if (currentPasswordInput) {
+            currentPasswordInput.focus();
+            console.log('🔑 Focused on current password input');
         }
+    }, 100);
+}
 
-        function applyFontSize(key) {
-            const map = {
-                "small": "0.875rem",   // ~14px
-                "medium": "1rem",      // ~16px
-                "large": "1.125rem"    // ~18px
-            };
+function closeChangePasswordModal() {
+    const modal = document.getElementById('changePasswordModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    // Clear form
+    document.getElementById('changePasswordForm').reset();
+    resetPasswordRequirements();
+    console.log('🔑 Password modal closed');
+}
+
+function submitPasswordChange() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    console.log('🔑 ========== SUBMITTING PASSWORD CHANGE ==========');
+    console.log('🔑 Current password length:', currentPassword.length);
+    console.log('🔑 New password length:', newPassword.length);
+    console.log('🔑 Confirm password length:', confirmPassword.length);
+
+    if (!validatePasswordForm(currentPassword, newPassword, confirmPassword)) {
+        console.log('❌ Form validation failed');
+        return;
+    }
+
+    console.log('✅ Form validation passed, calling API...');
+    submitPasswordChangeRequest(currentPassword, newPassword);
+}
+
+function validatePasswordForm(currentPassword, newPassword, confirmPassword) {
+    console.log('🔑 Validating form...');
+    
+    if (!currentPassword) {
+        console.log('❌ No current password');
+        toastAlert('Current Password Required', 'Please enter your current password to continue');
+        document.getElementById('currentPassword').focus();
+        return false;
+    }
+
+    if (!validatePasswordRequirements(newPassword)) {
+        console.log('❌ Password requirements not met');
+        toastAlert('Password Requirements', 'Please make sure your new password meets all the security requirements');
+        document.getElementById('newPassword').focus();
+        return false;
+    }
+
+    if (newPassword !== confirmPassword) {
+        console.log('❌ Passwords do not match');
+        toastAlert('Passwords Don\'t Match', 'Your new passwords don\'t match. Please enter them again');
+        document.getElementById('confirmPassword').focus();
+        return false;
+    }
+
+    console.log('✅ Form validation successful');
+    return true;
+}
+
+function validatePasswordRequirements(password) {
+    const requirements = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /[0-9]/.test(password)
+    };
+
+    console.log('🔑 Password requirements check:', requirements);
+    updateRequirementIndicators(requirements);
+    
+    const allMet = Object.values(requirements).every(req => req);
+    console.log('🔑 All requirements met:', allMet);
+    return allMet;
+}
+
+function updateRequirementIndicators(requirements) {
+    const indicators = {
+        lengthReq: requirements.length,
+        uppercaseReq: requirements.uppercase,
+        lowercaseReq: requirements.lowercase,
+        numberReq: requirements.number,
+        specialReq: requirements.special
+    };
+
+    for (const [id, met] of Object.entries(indicators)) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.className = met ? 'requirement-met' : 'requirement-not-met';
+        }
+    }
+}
+
+function resetPasswordRequirements() {
+    const requirements = ['lengthReq', 'uppercaseReq', 'lowercaseReq', 'numberReq', 'specialReq'];
+    requirements.forEach(req => {
+        const element = document.getElementById(req);
+        if (element) {
+            element.className = 'requirement-not-met';
+        }
+    });
+}
+
+function submitPasswordChangeRequest(currentPassword, newPassword) {
+    console.log('🔑 ========== CALLING PASSWORD CHANGE API ==========');
+    
+    // Show loading state
+    const submitBtn = document.querySelector('#changePasswordModal .btn-primary');
+    const originalText = submitBtn.textContent;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Changing...';
+    submitBtn.disabled = true;
+    
+    console.log('🔑 Making fetch request to /api/change-password...');
+    
+    fetch('/api/change-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            currentPassword: currentPassword,
+            newPassword: newPassword
+        })
+    })
+    .then(response => {
+        console.log('🔑 Response received. Status:', response.status);
+        console.log('🔑 Response OK:', response.ok);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('🔑 Response data:', data);
+        if (data.success) {
+            console.log('✅ Password change successful');
+            toastSuccess('Password Changed', 'Your password has been updated successfully!');
+            closeChangePasswordModal();
+        } else {
+            console.log('❌ Password change failed:', data.error);
+            // More user-friendly error messages
+            let errorTitle = 'Password Change Failed';
+            let errorMessage = 'We were unable to change your password';
             
-            const selectedSize = map[key] || map["medium"];
+            if (data.error && data.error.includes('current password')) {
+                errorTitle = 'Incorrect Password';
+                errorMessage = 'The current password you entered is incorrect';
+            } else if (data.error && data.error.includes('same')) {
+                errorTitle = 'Same Password';
+                errorMessage = 'New password cannot be the same as your current password';
+            } else if (data.error) {
+                errorMessage = data.error;
+            }
+            toastAlert(errorTitle, errorMessage);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Fetch error:', error);
+        toastAlert('Connection Error', 'We encountered an issue while changing your password. Please check your connection and try again.');
+    })
+    .finally(() => {
+        // Re-enable button regardless of outcome
+        console.log('🔑 Resetting button state');
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Enhanced event listeners for real-time password validation
+document.addEventListener('DOMContentLoaded', function() {
+    const newPasswordInput = document.getElementById('newPassword');
+    
+    if (newPasswordInput) {
+        newPasswordInput.addEventListener('input', function() {
+            console.log('🔑 New password input:', this.value);
+            validatePasswordRequirements(this.value);
+        });
+    }
+    
+    // Allow Enter key to submit the form
+    const passwordForm = document.getElementById('changePasswordForm');
+    if (passwordForm) {
+        passwordForm.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                console.log('🔑 Enter key pressed, submitting form...');
+                submitPasswordChange();
+            }
+        });
+    }
+});
+
+    // Your existing functions remain the same...
+    document.addEventListener("DOMContentLoaded", function() {
+        const darkModeToggle = document.getElementById("darkmode-toggle");
+        const themeLink = document.getElementById("theme-link");
+        
+        // Check for saved theme preference or default to light
+        const currentTheme = localStorage.getItem("theme") || "light";
+        
+        // Set initial state
+        if (currentTheme === "dark") {
+            darkModeToggle.checked = true;
+            switchToDarkMode();
+        }
+        
+        // Toggle theme when switch is clicked
+        darkModeToggle.addEventListener("change", function() {
+            if (this.checked) {
+                switchToDarkMode();
+                localStorage.setItem("theme", "dark");
+                toastSuccess("Theme Updated", "Dark mode is now enabled");
+            } else {
+                switchToLightMode();
+                localStorage.setItem("theme", "light");
+                toastSuccess("Theme Updated", "Light mode is now enabled");
+            }
+        });
+        
+        function switchToDarkMode() {
+            // Replace the CSS file with dark version
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('settings.css', 'settings-dark.css');
+            themeLink.setAttribute('href', newHref);
             
-            // Update CSS variable
-            document.documentElement.style.setProperty("--app-font-size", selectedSize);
+            // Update base theme as well
+            updateBaseTheme('dark');
+        }
+        
+        function switchToLightMode() {
+            // Replace the CSS file with light version
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('settings-dark.css', 'settings.css');
+            themeLink.setAttribute('href', newHref);
             
-            // Force apply to body immediately
-            document.body.style.fontSize = selectedSize;
+            // Update base theme as well
+            updateBaseTheme('light');
+        }
+        
+        function updateBaseTheme(theme) {
+            // Update base theme in localStorage so other pages can access it
+            localStorage.setItem("baseTheme", theme);
             
-            // Save to localStorage
-            localStorage.setItem("appFontSize", selectedSize);
-            localStorage.setItem("appFontSizeKey", key);
+            // Dispatch event for other components to listen to
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
         }
     });
 
     let originalValues = {};
 
     function enableEditMode() {
-    document.querySelectorAll('.form-group input').forEach(input => {
-        input.removeAttribute('readonly');
-        input.removeAttribute('disabled');
-        input.classList.add('editable'); // Add class here
-        originalValues[input.id] = input.value;
-    });
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.removeAttribute('readonly');
+            input.removeAttribute('disabled');
+            input.classList.add('editable');
+            originalValues[input.id] = input.value;
+        });
 
-    document.getElementById('formButtons').style.display = 'flex';
-    document.getElementById('editButton').style.display = 'none';
-}
+        document.getElementById('formButtons').style.display = 'flex';
+        document.getElementById('editButton').style.display = 'none';
+    }
 
-function saveChanges() {
-    // Submit the form programmatically
-    document.querySelector('.profile-form').submit();
+    function saveChanges() {
+        document.querySelector('.profile-form').submit();
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.setAttribute('readonly', true);
+            input.setAttribute('disabled', true);
+            input.classList.remove('editable');
+        });
 
-    // After submitting, reset the form to readonly and disabled
-    document.querySelectorAll('.form-group input').forEach(input => {
-        input.setAttribute('readonly', true);
-        input.setAttribute('disabled', true);
-        input.classList.remove('editable'); // Remove class here
-    });
+        document.getElementById('formButtons').style.display = 'none';
+        document.getElementById('editButton').style.display = 'inline-block';
+    }
 
-    document.getElementById('formButtons').style.display = 'none';
-    document.getElementById('editButton').style.display = 'inline-block';
-}
+    function cancelChanges() {
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.value = originalValues[input.id];
+            input.setAttribute('readonly', true);
+            input.setAttribute('disabled', true);
+            input.classList.remove('editable');
+        });
 
-
-function cancelChanges() {
-    document.querySelectorAll('.form-group input').forEach(input => {
-        input.value = originalValues[input.id];
-        input.setAttribute('readonly', true);
-        input.setAttribute('disabled', true);
-        input.classList.remove('editable'); // Remove class here
-    });
-
-    document.getElementById('formButtons').style.display = 'none';
-    document.getElementById('editButton').style.display = 'inline-block';
-}
+        document.getElementById('formButtons').style.display = 'none';
+        document.getElementById('editButton').style.display = 'inline-block';
+    }
 
     function toggleLoginHistory() {
         const history = document.getElementById('loginHistory');
         history.style.display = (history.style.display === 'none') ? 'block' : 'none';
     }
 
-    // Upload Image Function
-    // document.addEventListener("DOMContentLoaded", function() {
-    //     const profileImageInput = document.getElementById("profileImageInput");
-    //     const profileImage = document.getElementById("profileImage");
-    //     const successMessage = document.getElementById("successMessage");
-
-    //     // Load saved profile image if exists
-    //     const savedProfileImage = localStorage.getItem("profileImage");
-    //     if (savedProfileImage) {
-    //         profileImage.src = savedProfileImage;
-    //         // Also update navigation bar image
-    //         updateNavigationBarImage(savedProfileImage);
-    //     }
-
-    //     // Handle profile picture upload
-    //     profileImageInput.addEventListener("change", async function (e) {
-    //     const file = e.target.files[0];
-    //     if (file) {
-    //         if (file.size > 5 * 1024 * 1024) {
-    //             toastAlert("File size exceeds 5MB limit.");
-    //             return;
-    //         }
-
-    //         const formData = new FormData();
-    //         formData.append("profile_pic", file);
-
-    //         const response = await fetch("/api/upload_profile_pic", {
-    //             method: "POST",
-    //             body: formData
-    //         });
-
-    //         const result = await response.json();
-
-    //         if (result.success) {
-    //             // Update image preview instantly
-    //             const reader = new FileReader();
-    //             reader.onload = e => profileImage.src = e.target.result;
-    //             reader.readAsDataURL(file);
-
-    //             toastSuccess("Profile picture updated successfully!");
-    //         } else {
-    //             toastAlert("Failed to update picture: " + result.error);
-    //         }
-    //     }
-    // Upload Image Function
-
-    // RELOADS THE PAGE AFTER UPLOADING NEW PROFILE PICTURE
+    // Upload Image Functions (your existing code remains the same)
     document.addEventListener("DOMContentLoaded", function() {
         const profileImageInput = document.getElementById("profileImageInput");
         const profileImage = document.getElementById("profileImage");
         const successMessage = document.getElementById("successMessage");
 
-        // Load saved profile image if exists
         const savedProfileImage = localStorage.getItem("profileImage");
         if (savedProfileImage) {
             profileImage.src = savedProfileImage;
-            // Also update navigation bar image
             updateNavigationBarImage(savedProfileImage);
         }
 
-        // Handle profile picture upload
         profileImageInput.addEventListener("change", async function (e) {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                toastAlert("File size exceeds 5MB limit.");
-                return;
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    toastAlert('File Too Large', 'The image file is too large. Please choose a file smaller than 5MB.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("profile_pic", file);
+
+                const response = await fetch("/api/upload_profile_pic", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const reader = new FileReader();
+                    reader.onload = e => profileImage.src = e.target.result;
+                    reader.readAsDataURL(file);
+
+                    toastSuccess('Profile Picture Updated', 'Your profile picture has been updated successfully!');
+                    location.reload();
+                } else {
+                    toastAlert('Upload Failed', 'We couldn\'t update your profile picture. Please try again.');
+                }
             }
+        });
+    });
 
-            const formData = new FormData();
-            formData.append("profile_pic", file);
+    function updateNavigationBarImage(imageUrl) {
+        const navProfileImage = document.getElementById("navProfileImage");
+        if (navProfileImage) {
+            navProfileImage.src = imageUrl;
+        }
+    }
 
-            const response = await fetch("/api/upload_profile_pic", {
-                method: "POST",
-                body: formData
-            });
+    function showImageOptions() {
+        const hasProfilePic = {{ has_profile_pic | tojson }};
+        
+        if (hasProfilePic) {
+            document.getElementById('imageOptionsPopup').style.display = 'flex';
+        } else {
+            document.getElementById('profileImageInput').click();
+        }
+    }
 
+    function uploadNewPhoto() {
+        closeOptionsPopup();
+        document.getElementById('profileImageInput').click();
+    }
+
+    async function deleteCurrentPhoto() {
+        closeOptionsPopup();
+
+        try {
+            const response = await fetch("/api/delete_profile_pic", { method: "DELETE" });
             const result = await response.json();
 
             if (result.success) {
-                // Update image preview instantly
-                const reader = new FileReader();
-                reader.onload = e => profileImage.src = e.target.result;
-                reader.readAsDataURL(file);
-
-                toastSuccess("Profile picture updated successfully!");
-                
-                // ADD THIS LINE - Refresh the page after successful upload
+                const defaultImage = "/static/assets/pfp.jpg";
                 location.reload();
+
+                document.getElementById("profileImage").src = defaultImage;
+                updateNavigationBarImage(defaultImage);
+                localStorage.removeItem("profileImage");
+                
+                window.dispatchEvent(new StorageEvent("storage", {
+                    key: "profileImage",
+                    newValue: null
+                }));
+
+                toastSuccess('Profile Picture Removed', 'Your profile picture has been removed successfully!');
             } else {
-                toastAlert("Failed to update picture: " + result.error);
+                toastAlert('Delete Failed', 'We couldn\'t remove your profile picture at this time. Please try again.');
             }
+        } catch (error) {
+            console.error("Error deleting photo:", error);
+            toastAlert('Something Went Wrong', 'We encountered an issue while removing your photo. Please try again.');
         }
-    });
-});
-
-
-
-function updateNavigationBarImage(imageUrl) {
-    const navProfileImage = document.getElementById("navProfileImage");
-    if (navProfileImage) {
-        navProfileImage.src = imageUrl;
     }
-}
 
-  function showImageOptions() {
-      const hasProfilePic = {{ has_profile_pic | tojson }};
-      
-      if (hasProfilePic) {
-          document.getElementById('imageOptionsPopup').style.display = 'flex';
-      } else {
-          document.getElementById('profileImageInput').click();
-      }
-  }
-
-function uploadNewPhoto() {
-    closeOptionsPopup();
-    document.getElementById('profileImageInput').click();
-}
-
-async function deleteCurrentPhoto() {
-    closeOptionsPopup();
-
-    try {
-        const response = await fetch("/api/delete_profile_pic", { method: "DELETE" });
-        const result = await response.json();
-
-        if (result.success) {
-            const defaultImage = "/static/assets/pfp.jpg";
-            location.reload();
-
-            // Reset to default image locally
-            document.getElementById("profileImage").src = defaultImage;
-            updateNavigationBarImage(defaultImage);
-            localStorage.removeItem("profileImage");
-            
-
-            // Trigger UI update
-            window.dispatchEvent(new StorageEvent("storage", {
-                key: "profileImage",
-                newValue: null
-            }));
-
-            toastSuccess("Profile picture deleted successfully!");
-        } else {
-            toastAlert("Failed to delete photo: " + (result.error || "Unknown error"));
-        }
-    } catch (error) {
-        console.error("Error deleting photo:", error);
-        toastAlert("An error occurred while deleting the photo.");
+    function closeOptionsPopup() {
+        document.getElementById('imageOptionsPopup').style.display = 'none';
     }
-}
 
-
-function closeOptionsPopup() {
-    document.getElementById('imageOptionsPopup').style.display = 'none';
-}
-
-function showSuccessMessage() {
-    const successMessage = document.getElementById('successMessage');
-    successMessage.style.display = 'block';
-    
-    // Hide after 3 seconds
-    setTimeout(() => {
-        successMessage.style.display = 'none';
-    }, 3000);
-}
+    function showSuccessMessage() {
+        const successMessage = document.getElementById('successMessage');
+        successMessage.style.display = 'block';
+        
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 3000);
+    }
 </script>
-
 {% endblock %}
 
 {% endblock %}
