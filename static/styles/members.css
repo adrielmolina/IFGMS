@@ -311,6 +311,32 @@ label {
   font-size: 14px !important;
 }
 
+.input-container button {
+    background: #3b82f6 !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 14px !important;
+    margin-top: 24px; /* Aligns with other inputs */
+    width: 100%;
+    height: 38px; /* Matches your input field height */
+    justify-content: center;
+}
+
+.input-container button:hover {
+    background: #2563eb !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+    color: white !important;
+}
+
 .save_record_details:hover,
 .add_entry_details:hover {
   background-color: #00ff5e !important;
