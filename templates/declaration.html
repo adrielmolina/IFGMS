@@ -3,7 +3,7 @@
 {% block title %}Declaration{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
+<link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/declaration.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/toast.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
@@ -13,8 +13,8 @@
 
 <!-- Include Toastify -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script src="/static/js/toast.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="/static/js/toast.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -62,14 +62,7 @@
     </button>
 
     <button type="button" class="btn transmit">
-        <i class="fa-solid fa-paper-plane"></i>
-        {% if current_user.office_location == 'Chapter' %}
-          Declare
-        {% elif current_user.office_location in ['Dasmarinas', 'Silang'] %}
-          Dispatch
-        {% else %}
-          Action
-        {% endif %}
+        <i class="fa-solid fa-paper-plane"></i> Declare
     </button>
 
     <button type="button" class="btn select-all" onclick="selectAllRows()">
@@ -412,15 +405,8 @@
   <div class="dispatch-modal">
     <div class="dispatch-header">
       <h3>
-        <i class="fa-solid fa-paper-plane"></i>
-        {% if current_user.office_location == 'Chapter' %}
-          Confirm Declaration
-        {% elif current_user.office_location in ['Dasmarinas', 'Silang'] %}
-          Confirm Dispatch Transmission
-        {% else %}
-          Confirm Action
-        {% endif %}
-      </h3>
+        <i class="fa-solid fa-paper-plane"></i> Confirm Declaration
+    </h3>
       <button class="close-btn" onclick="closeTransmitConfirmation()">&times;</button>
     </div>
     
@@ -456,15 +442,8 @@
     
     <div class="dispatch-footer">
       <button type="button" class="btn btn-primary" onclick="confirmTransmit()">
-        <i class="fa-solid fa-check"></i>
-        {% if current_user.office_location == 'Chapter' %}
-          Yes, Declare
-        {% elif current_user.office_location in ['Dasmarinas', 'Silang'] %}
-          Yes, Transmit
-        {% else %}
-          Yes, Proceed
-        {% endif %}
-      </button>
+        <i class="fa-solid fa-check"></i> Yes, Declare
+    </button>
       <button type="button" class="btn btn-secondary" onclick="closeTransmitConfirmation()">
         <i class="fa-solid fa-xmark"></i> Cancel
       </button>
@@ -479,6 +458,47 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
+<script>
+    // Dark Mode Functionality for Module
+    document.addEventListener("DOMContentLoaded", function() {
+        const themeLink = document.getElementById("theme-link");
+        const savedTheme = localStorage.getItem("baseTheme") || "light";
+        
+        if (savedTheme === "dark") {
+            switchToDarkMode();
+        }
+        
+        window.addEventListener('themeChanged', function(e) {
+            if (e.detail.theme === "dark") {
+                switchToDarkMode();
+            } else {
+                switchToLightMode();
+            }
+        });
+        
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'baseTheme') {
+                if (e.newValue === "dark") {
+                    switchToDarkMode();
+                } else {
+                    switchToLightMode();
+                }
+            }
+        });
+        
+        function switchToDarkMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('declaration.css', 'declaration-dark.css');
+            themeLink.setAttribute('href', newHref);
+        }
+        
+        function switchToLightMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('declaration-dark.css', 'declaration.css');
+            themeLink.setAttribute('href', newHref);
+        }
+    });
+</script>
 
 <!-- ✅ Main JavaScript Code -->
 <script>
@@ -572,7 +592,7 @@ function setupEventListeners() {
         removeBtn.addEventListener('click', removeFromDispatch);
     }
 }
-
+/* auto generate text for transmit button
 function updateTransmitButtonText() {
     const transmitBtn = document.querySelector('.btn.transmit');
     if (transmitBtn) {
@@ -586,6 +606,7 @@ function updateTransmitButtonText() {
         }
     }
 }
+    */
 
 // ✅ Reset form when opening overlay
 function openCreateOverlay() {
@@ -878,7 +899,7 @@ function setupOverlayListeners() {
         }
     });
 }
-
+/* auto generate text for transmit button
 function updateTransmitButtonText() {
     const transmitBtn = document.querySelector('.btn.transmit');
     if (transmitBtn) {
@@ -894,7 +915,7 @@ function updateTransmitButtonText() {
         // Ensure the button is always enabled for modal access
         transmitBtn.disabled = false;
     }
-}
+}*/
 
 function initializeCheckboxListeners() {
     const rowChecks = document.querySelectorAll(".row-check");
@@ -1078,7 +1099,7 @@ function updateSelection() {
     const transmitBtn = document.querySelector(".btn.transmit");
     if (transmitBtn) {
         transmitBtn.disabled = false;
-        transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Transmit`;
+        transmitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Declare`;
     }
     
     // Update remove button state - only enabled when items are selected
@@ -1687,7 +1708,7 @@ function openTransmitConfirmation() {
         document.getElementById('modalDispatchId').textContent = 
             "{{ active_dispatch.dispatch_id if active_dispatch else 'N/A' }}";
         
-        // Update confirmation text based on user location
+        /* Update confirmation text based on user location - PAUSE
         const confirmationText = document.getElementById('transmitConfirmationText');
         const userLocation = '{{ current_user.office_location }}';
         
@@ -1697,7 +1718,10 @@ function openTransmitConfirmation() {
             confirmationText.innerHTML = `This will transmit the entire dispatch containing <span id="dispatchEntryCount">${entryCount}</span> entries. This action cannot be undone.`;
         } else {
             confirmationText.innerHTML = `This will process the entire dispatch containing <span id="dispatchEntryCount">${entryCount}</span> entries. This action cannot be undone.`;
-        }
+        }*/
+
+        const confirmationText = document.getElementById('transmitConfirmationText');
+        confirmationText.innerHTML = `This will declare the entire dispatch containing <span id="dispatchEntryCount">${entryCount}</span> entries. This action cannot be undone.`;
         
         overlay.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -1856,15 +1880,15 @@ async function executeTransmitDispatch() {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
             
-            toastSuccess('Success', 'Dispatch transmitted successfully! Excel file download started.');
+            toastSuccess('Success', 'Dispatch Declared successfully! Excel file download started.');
             
         } else {
             // Handle JSON response
             const result = await transmitResponse.json();
             if (result.success) {
-                toastSuccess('Success', result.message || `Dispatch transmitted successfully! ${result.transmitted_count} entries processed.`);
+                toastSuccess('Success', result.message || `Dispatch Declared successfully! ${result.transmitted_count} entries processed.`);
             } else {
-                throw new Error(result.error || 'Transmission failed');
+                throw new Error(result.error || 'Declaration failed');
             }
         }
         

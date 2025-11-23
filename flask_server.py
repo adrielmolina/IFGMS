@@ -4,21 +4,35 @@ from livereload import Server
 from py_scripts import db_conn, tools, models
 from py_scripts.db_conn import SessionLocal
 from datetime import date, datetime
-from sqlalchemy import create_engine, text, func, extract
+from sqlalchemy import create_engine, text, func, extract, case, case, and_, or_
 import os
 import pandas as pd
 import openpyxl
 from functools import wraps
 from io import BytesIO
 from flask import send_file
+import requests
 
 
 server = Flask(__name__)
 server.jinja_env.auto_reload = True
 server.secret_key = os.urandom(24)
+#reCaptcha
+SITE_KEY = os.getenv("SITE_KEY")
+if not SITE_KEY:
+    print("reCaptcha site key not set.")
+    raise ValueError("SITE_KEY environment variable not set.")
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    print("reCaptcha secret key not set.")
+    raise ValueError("SECRET_KEY environment variable not set.")
+
 
 # CACHE CONTROL FOR STATIC FILES
-if os.getenv("FLASK_ENV") == "production":
+cache_bypass = True
+
+if cache_bypass or os.getenv("FLASK_ENV") == "production":
     server.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
 else:
     server.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -88,7 +102,30 @@ def auto_login():
 def login():
     username = request.form.get("username")
     password = request.form.get("password")
+    token = request.form.get("g-recaptcha-response")
 
+    # 2️⃣ Verify captcha first
+    if not token:
+        flash({
+            "title": "Login Error!",
+            "text": "Please complete the CAPTCHA.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        return render_template('index.html')
+
+    resp = requests.post(
+        "https://www.google.com/recaptcha/api/siteverify",
+        data={"secret": SECRET_KEY, "response": token}
+    ).json()
+
+    if not resp.get("success"):
+        flash({
+            "title": "Login Error!",
+            "text": "CAPTCHA verification failed. Try again.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        return render_template('index.html')
+    
     user = db_conn.sign_in(username, password)
 
     if user:
@@ -152,7 +189,7 @@ def landing_page():
     else:
         env = 'Development'
     
-    return render_template('index.html', env=env)
+    return render_template('index.html', env=env, site_key=SITE_KEY)
 
 
 @server.route('/create_account')
@@ -167,7 +204,7 @@ def forgot_password():
 
 @server.route('/membership_register')
 def membership_register():
-    return render_template('membership_register.html')
+    return render_template('membership_register.html', site_key=SITE_KEY)
 
 
 @server.route('/profile_settings')
@@ -193,14 +230,22 @@ def dashboard():
 @login_required
 def members_page():
     user_location = current_user.office_location if current_user and current_user.office_location else 'Chapter'
-    print(f"DEBUG: User location being passed to template: {user_location}")
-    return render_template('members.html', user_location=user_location)
-
+    user_level = current_user.user_level if current_user else 'staff'
+    is_chapter_user = user_location == 'Chapter'
+    
+    print(f"DEBUG: User location: {user_location}, User level: {user_level}, Is Chapter: {is_chapter_user}")
+    
+    return render_template('members.html', 
+                         user_location=user_location, 
+                         user_level=user_level,
+                         is_chapter_user=is_chapter_user)
 
 @server.route('/declaration')
 @login_required
 @roles_required('admin', 'superadmin')
 def declaration_page():
+    if current_user.office_location != 'Chapter':
+        abort(403)
     
     active_dispatch = db_conn.get_current_active_dispatch()
     if active_dispatch:
@@ -287,8 +332,10 @@ def audit_trails():
 
 @server.route('/accounts')
 @login_required
-@roles_required('admin', 'superadmin')
+@roles_required('superadmin')
 def show_user_accounts():
+    if current_user.office_location != 'Chapter':
+        abort(403)
     return render_template('accounts.html')
 
 
@@ -302,6 +349,400 @@ def settings():
 #? -------------------- END -------------------- ?#
 
 #? -------------------- API ROUTES -------------------- ?#
+@server.route('/api/dashboard/sales_data', methods=['GET'])
+@login_required
+def get_sales_data():
+    """Get current sales data for dashboard - FIXED CALCULATION"""
+    try:
+        db_session = SessionLocal()
+        
+        # Get current year
+        current_year = datetime.now().year
+        
+        # Get all paid entries for current year with their categories
+        paid_entries = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('count')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Price mapping for each membership type
+        price_map = {
+            'Classic': 60,
+            'Bronze': 150,
+            'Silver': 300,
+            'Gold': 500,
+            'Platinum': 1000,
+            'Safe Card': 1000,  # Enhanced Platinum
+            'Senior': 300,
+            'Senior+': 350
+        }
+        
+        # Calculate TOTAL ACTUAL SALES (sum of price × count for all categories)
+        total_actual_sales = 0
+        for category, count in paid_entries:
+            price = price_map.get(category, 0)
+            total_actual_sales += count * price
+        
+        # Get target data for current year
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Calculate TOTAL TARGET SALES (sum of target × price for all categories)
+        total_target_sales = 0
+        if target_data:
+            total_target_sales = (
+                (target_data.classic or 0) * price_map['Classic'] +
+                (target_data.bronze or 0) * price_map['Bronze'] +
+                (target_data.silver or 0) * price_map['Silver'] +
+                (target_data.gold or 0) * price_map['Gold'] +
+                (target_data.platinum or 0) * price_map['Platinum'] +
+                (target_data.safe_card or 0) * price_map['Safe Card'] +
+                (target_data.senior or 0) * price_map['Senior'] +
+                (target_data.senior_plus or 0) * price_map['Senior+']
+            )
+        else:
+            # Default target if not set - calculate based on reasonable defaults
+            default_targets = {
+                'Classic': 30000,    # 30000 × 60 = 1,800,000
+                'Bronze': 75000,     # 75000 × 150 = 11,250,000  
+                'Silver': 15000,     # 15000 × 300 = 4,500,000
+                'Gold': 25000,       # 25000 × 500 = 12,500,000
+                'Platinum': 50000,   # 50000 × 1000 = 50,000,000
+                'Safe Card': 60000,  # 60000 × 1000 = 60,000,000
+                'Senior': 15000,     # 15000 × 300 = 4,500,000
+                'Senior+': 17500     # 17500 × 350 = 6,125,000
+            }
+            total_target_sales = sum(
+                default_targets[cat] * price_map[cat] 
+                for cat in default_targets.keys()
+            )
+        
+        print(f"💰 SALES CALCULATION DEBUG:")
+        print(f"   Current Year: {current_year}")
+        print(f"   Paid Entries: {paid_entries}")
+        print(f"   Total Actual Sales: ₱{total_actual_sales:,}")
+        print(f"   Total Target Sales: ₱{total_target_sales:,}")
+        
+        return jsonify({
+            'success': True,
+            'current_total': total_actual_sales,  # Total sales amount in pesos
+            'target_total': total_target_sales,   # Total target amount in pesos
+            'year': current_year
+        })
+        
+    except Exception as e:
+        print(f"Error getting sales data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'current_total': 0,
+            'target_total': 1000000  # Fallback target
+        }), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/dashboard/sales_performance', methods=['GET'])
+@login_required
+def get_sales_performance():
+    """Get sales performance data by membership type for chart"""
+    try:
+        db_session = SessionLocal()
+        current_year = datetime.now().year
+        
+        # Get actual sales count per category for current year
+        actual_sales = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('actual_count')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Get targets for current year
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Map category names to match your chart
+        category_mapping = {
+            'Classic': 'Classic',
+            'Bronze': 'Premier Bronze', 
+            'Silver': 'Premier Silver',
+            'Gold': 'Premier Gold',
+            'Platinum': 'Premier Platinum',
+            'Safe Card': 'Safe Card',  # or 'Safe Card' based on your preference
+            'Senior': 'Senior',
+            'Senior+': 'Senior Plus'
+        }
+        
+        # Prepare chart data
+        chart_data = []
+        all_categories = [
+            'Classic', 'Premier Bronze', 'Premier Silver', 'Premier Gold', 
+            'Premier Platinum', 'Safe Card', 'Senior', 'Senior Plus'
+        ]
+        
+        for category in all_categories:
+            # Find matching actual sales
+            actual_count = 0
+            for db_category, count in actual_sales:
+                mapped_category = category_mapping.get(db_category, db_category)
+                if mapped_category == category:
+                    actual_count = count
+                    break
+            
+            # Find matching target
+            target_count = 0
+            if target_data:
+                if category == 'Classic':
+                    target_count = target_data.classic or 0
+                elif category == 'Premier Bronze':
+                    target_count = target_data.bronze or 0
+                elif category == 'Premier Silver':
+                    target_count = target_data.silver or 0
+                elif category == 'Premier Gold':
+                    target_count = target_data.gold or 0
+                elif category == 'Premier Platinum':
+                    target_count = target_data.platinum or 0
+                elif category == 'Safe Card':
+                    target_count = target_data.safe_card or 0
+                elif category == 'Senior':
+                    target_count = target_data.senior or 0
+                elif category == 'Senior Plus':
+                    target_count = target_data.senior_plus or 0
+            
+            chart_data.append({
+                'category': category,
+                'actual': actual_count,
+                'target': target_count
+            })
+        
+        return jsonify({
+            'success': True,
+            'chart_data': chart_data
+        })
+        
+    except Exception as e:
+        print(f"Error getting sales performance: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'chart_data': []
+        }), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/dashboard/unit_sold', methods=['GET'])
+@login_required
+def get_unit_sold():
+    """Get unit sold data for the table"""
+    try:
+        db_session = SessionLocal()
+        current_year = datetime.now().year
+        
+        # Get actual units sold per category
+        units_sold = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('units_sold')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Get targets
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Price mapping
+        price_mapping = {
+            'Classic': 60,
+            'Bronze': 150,
+            'Silver': 300, 
+            'Gold': 500,
+            'Platinum': 1000,
+            'Safe Card': 1200,
+            'Senior': 300,
+            'Senior+': 350
+        }
+        
+        # Category display mapping
+        display_mapping = {
+            'Classic': 'Classic',
+            'Bronze': 'Premiere Bronze',
+            'Silver': 'Premiere Silver',
+            'Gold': 'Premiere Gold',
+            'Platinum': 'Premiere Platinum',
+            'Safe Card': 'Safe Card',
+            'Senior': 'Senior',
+            'Senior+': 'Senior Plus'
+        }
+        
+        table_data = []
+        total_actual = 0
+        
+        all_categories = ['Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Safe Card', 'Senior', 'Senior+']
+        
+        for category in all_categories:
+            # Find units sold
+            units = 0
+            for db_category, count in units_sold:
+                if db_category == category:
+                    units = count
+                    break
+            
+            # Find target
+            target = 0
+            if target_data:
+                if category == 'Classic':
+                    target = target_data.classic or 0
+                elif category == 'Bronze':
+                    target = target_data.bronze or 0
+                elif category == 'Silver':
+                    target = target_data.silver or 0
+                elif category == 'Gold':
+                    target = target_data.gold or 0
+                elif category == 'Platinum':
+                    target = target_data.platinum or 0
+                elif category == 'Safe Card':
+                    target = target_data.safe_card or 0
+                elif category == 'Senior':
+                    target = target_data.senior or 0
+                elif category == 'Senior+':
+                    target = target_data.senior_plus or 0
+            
+            price = price_mapping.get(category, 0)
+            actual_sales = units * price
+            total_actual += actual_sales
+            
+            table_data.append({
+                'category': display_mapping.get(category, category),
+                'price': price,
+                'units_sold': units,
+                'target': target,
+                'actual_sales': actual_sales
+            })
+        
+        return jsonify({
+            'success': True,
+            'table_data': table_data,
+            'total_actual': total_actual
+        })
+        
+    except Exception as e:
+        print(f"Error getting unit sold data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'table_data': [],
+            'total_actual': 0
+        }), 500
+    finally:
+        db_session.close()
+
+@server.route('/api/debug/sales_calculation', methods=['GET'])
+@login_required
+def debug_sales_calculation():
+    """Debug endpoint to see what data we're working with"""
+    try:
+        db_session = SessionLocal()
+        current_year = datetime.now().year
+        
+        # Get all paid entries for current year
+        paid_entries = db_session.query(
+            models.Entries.maab_category,
+            func.count(models.Entries.entry_id).label('count')
+        ).filter(
+            extract('year', models.Entries.OR_date) == current_year,
+            models.Entries.paid == True
+        ).group_by(models.Entries.maab_category).all()
+        
+        # Get target data
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        # Price mapping
+        price_map = {
+            'Classic': 60,
+            'Bronze': 150,
+            'Silver': 300,
+            'Gold': 500,
+            'Platinum': 1000,
+            'Safe Card': 1000,
+            'Senior': 300,
+            'Senior+': 350
+        }
+        
+        # Calculate totals
+        total_actual_sales = 0
+        category_details = []
+        
+        for category, count in paid_entries:
+            price = price_map.get(category, 0)
+            category_total = count * price
+            total_actual_sales += category_total
+            category_details.append({
+                'category': category,
+                'count': count,
+                'price': price,
+                'category_total': category_total
+            })
+        
+        # Calculate target sales
+        total_target_sales = 0
+        target_details = []
+        
+        if target_data:
+            for category, price in price_map.items():
+                target_count = 0
+                if category == 'Classic':
+                    target_count = target_data.classic or 0
+                elif category == 'Bronze':
+                    target_count = target_data.bronze or 0
+                elif category == 'Silver':
+                    target_count = target_data.silver or 0
+                elif category == 'Gold':
+                    target_count = target_data.gold or 0
+                elif category == 'Platinum':
+                    target_count = target_data.platinum or 0
+                elif category == 'Safe Card':
+                    target_count = target_data.safe_card or 0
+                elif category == 'Senior':
+                    target_count = target_data.senior or 0
+                elif category == 'Senior+':
+                    target_count = target_data.senior_plus or 0
+                
+                target_total = target_count * price
+                total_target_sales += target_total
+                target_details.append({
+                    'category': category,
+                    'target_count': target_count,
+                    'price': price,
+                    'target_total': target_total
+                })
+        
+        return jsonify({
+            'success': True,
+            'debug_info': {
+                'current_year': current_year,
+                'total_paid_entries': sum([count for _, count in paid_entries]),
+                'category_details': category_details,
+                'target_details': target_details,
+                'total_actual_sales': total_actual_sales,
+                'total_target_sales': total_target_sales
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+        
 @server.route('/api/export_record_entries/<int:record_id>')
 @login_required
 def export_record_entries(record_id):
@@ -556,6 +997,7 @@ def forgot_password_otp():
             print(f"✅ DEBUG: SUCCESS! OTP process completed for: {email}")
             print(f"✅ DEBUG: Redirecting to verify_otp page")
             
+            session.pop('_flashes', None)
             # Success
             flash({
                 "title": "OTP Sent!",
@@ -906,7 +1348,79 @@ def get_members_count():
             'success': False,
             'error': str(e)
         }), 500
+        
+@server.route('/api/delete_entry', methods=['DELETE'])
+@login_required
+def delete_entry():
+    try:
+        data = request.get_json()
+        entry_id = data.get('entry_id')
+        
+        print(f"🔍 DELETE ENTRY API CALLED - Entry ID: {entry_id}")
+        
+        if not entry_id:
+            return jsonify({"success": False, "error": "No entry ID provided"}), 400
+        
+        db_session = SessionLocal()
+        try:
+            # Find the entry
+            entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
+            if not entry:
+                return jsonify({"success": False, "error": "Entry not found"}), 404
+            
+            # Get member info for logging before deletion
+            member = db_session.query(models.Members).filter_by(member_id=entry.member_id).first()
+            member_name = f"{member.first_name} {member.last_name}" if member else "Unknown"
+            
+            # Store the MAAB number before deletion for inventory update
+            maab_no = entry.maab_no
+            
+            # Delete the entry
+            db_session.delete(entry)
+            db_session.commit()
+            
+            # If there's a MAAB number, mark it as available in inventory
+            if maab_no:
+                try:
+                    inventory_item = db_session.query(models.Inventory).filter_by(maab_no=maab_no).first()
+                    if inventory_item:
+                        inventory_item.used = 0  # Mark as available
+                        inventory_item.allocated_to = None
+                        inventory_item.updated_at = datetime.now()
+                        db_session.commit()
+                        print(f"✅ MAAB number {maab_no} marked as available in inventory")
+                except Exception as inventory_error:
+                    print(f"⚠️ Error updating inventory for {maab_no}: {inventory_error}")
+                    # Don't fail the whole operation if inventory update fails
+            
+            # Log the action
+            db_conn.POST_action_log(
+                current_user.username, 
+                current_user.user_level, 
+                'Delete Entry', 
+                f'Deleted entry for {member_name} (Entry ID: {entry_id})', 
+                current_user.account_id
+            )
+            
+            print(f"✅ Entry {entry_id} deleted successfully")
+            return jsonify({
+                "success": True, 
+                "message": "Entry deleted successfully"
+            })
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Error deleting entry: {e}")
+            return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+        finally:
+            db_session.close()
+            
+    except Exception as e:
+        print(f"❌ Error in delete_entry route: {e}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
+
+'''
 @server.route('/api/members/expiring_soon', methods=['GET'])
 def get_expiring_soon_count():
     try:
@@ -964,6 +1478,66 @@ def get_expiring_soon_count():
             'success': False,
             'error': str(e)
         }), 500
+        
+'''
+
+@server.route('/api/members/expiring_soon', methods=['GET'])
+def get_expiring_soon_count():
+    try:
+        from datetime import datetime, timedelta
+        from sqlalchemy import and_, or_
+        
+        db_session = SessionLocal()
+        
+        today = datetime.now().date()
+        thirty_days_from_now = today + timedelta(days=30)
+        last_month_start = today - timedelta(days=60)
+        last_month_end = today - timedelta(days=30)
+        
+        # Calculate expiration dates in Python for ORM query
+        current_start = today
+        current_end = thirty_days_from_now
+        previous_start = last_month_start  
+        previous_end = last_month_end
+        
+        # Current period: members whose OR_date + 1 year falls in next 30 days
+        current_expiring = db_session.query(models.Entries).filter(
+            models.Entries.OR_date.isnot(None),
+            and_(
+                (models.Entries.OR_date + timedelta(days=365)) >= current_start,
+                (models.Entries.OR_date + timedelta(days=365)) <= current_end
+            )
+        ).count()
+        
+        # Previous period: members whose OR_date + 1 year fell in previous 30-day window
+        previous_expiring = db_session.query(models.Entries).filter(
+            models.Entries.OR_date.isnot(None), 
+            and_(
+                (models.Entries.OR_date + timedelta(days=365)) >= previous_start,
+                (models.Entries.OR_date + timedelta(days=365)) <= previous_end
+            )
+        ).count()
+        
+        # Calculate percentage change
+        if previous_expiring > 0:
+            percentage_change = ((current_expiring - previous_expiring) / previous_expiring) * 100
+        else:
+            percentage_change = 100 if current_expiring > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'expiring_soon_count': current_expiring,
+            'previous_period_count': previous_expiring,
+            'percentage_change': round(percentage_change, 2),
+            'timeframe_days': 30
+        })
+        
+    except Exception as e:
+        print(f"Error in get_expiring_soon_count: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
     
 @server.route('/api/get_pending_claims_count')
 def get_pending_claims_count():
@@ -988,9 +1562,11 @@ def get_dispatch_records():
 def get_members():
     try:
         status = request.args.get('status', 'active')
-        print(f"DEBUG: Fetching member records with status: {status}")
+        office_loc = request.args.get('office_loc', None)
         
-        member_records = db_conn.get_member_records(status=status)
+        print(f"DEBUG: Fetching member records with status: {status}, office_loc: {office_loc}")
+        
+        member_records = db_conn.get_member_records(status=status, office_loc=office_loc)
         print(f"DEBUG: Records fetched: {len(member_records) if member_records else 'None'}")
         
         if member_records is None:
@@ -1349,6 +1925,170 @@ def save_entry_details():
             except ValueError:
                 pass
 
+        # Check if member already exists
+        existing_member = db_session.query(models.Members).filter(
+            models.Members.first_name == first_name,
+            models.Members.last_name == last_name,
+            models.Members.birth_date == birthdate,
+            models.Members.sex == data.get('sex')
+        ).first()
+
+        if existing_member:
+            # Use existing member
+            member_id = existing_member.member_id
+            print(f"Found existing member with ID: {member_id}")
+            
+            # Update existing member information if needed
+            update_fields = []
+            if middle_name and middle_name != existing_member.middle_name:
+                existing_member.middle_name = middle_name
+                update_fields.append('middle_name')
+            if suffix and suffix != existing_member.suffix:
+                existing_member.suffix = suffix
+                update_fields.append('suffix')
+            if data.get('contact_no') and data.get('contact_no') != existing_member.contact_no:
+                existing_member.contact_no = data.get('contact_no')
+                update_fields.append('contact_no')
+            if data.get('email') and data.get('email') != existing_member.email:
+                existing_member.email = data.get('email')
+                update_fields.append('email')
+            if data.get('address') and data.get('address') != existing_member.address:
+                existing_member.address = data.get('address')
+                update_fields.append('address')
+            if data.get('blood_type') and data.get('blood_type') != existing_member.blood_type:
+                existing_member.blood_type = data.get('blood_type')
+                update_fields.append('blood_type')
+            
+            if update_fields:
+                print(f"Updated member fields: {', '.join(update_fields)}")
+                db_session.flush()
+        else:
+            # Create new member with proper None handling for all fields
+            new_member = models.Members(
+                first_name=first_name,
+                middle_name=middle_name or None,  # Convert empty string back to None
+                last_name=last_name,
+                suffix=suffix,
+                birth_date=birthdate,
+                age=data.get('age'),
+                sex=data.get('sex'),
+                contact_no=data.get('contact_no'),
+                email=data.get('email'),
+                address=data.get('address'),
+                blood_type=data.get('blood_type')
+            )
+            db_session.add(new_member)
+            db_session.flush()  # Get member_id without committing
+            
+            member_id = new_member.member_id
+            print(f"Created new member with ID: {member_id}")
+
+        # Create new entry
+        new_entry = models.Entries(
+            record_id=record_id,
+            maab_category=data.get('maab_category', 'Classic'),
+            maab_no=data.get('maab_no'),
+            member_id=member_id,
+            id_received=bool(data.get('id_received', False)),
+            declared=bool(data.get('declared', False)),
+            declaration_date=declaration_date,
+            paid=bool(data.get('paid', False)),
+            OR_num=data.get('OR_num'),
+            OR_date=OR_date,
+            remarks=data.get('remarks'),
+            tags=data.get('tags'),
+            dispatch_ready=bool(data.get('dispatch_ready', False))
+        )
+        db_session.add(new_entry)
+        db_session.flush()
+        
+        entry_id = new_entry.entry_id
+        print(f"Created new entry with ID: {entry_id}")
+
+        # Commit both member and entry
+        db_session.commit()
+        
+        print("=== ENTRY SAVE SUCCESS ===")
+        action_type = 'Add Entry (Existing Member)' if existing_member else 'Add Entry (New Member)'
+        db_conn.POST_action_log(current_user.username, current_user.user_level, action_type, f'Added entry for {first_name} {last_name}', current_user.account_id)
+        return jsonify({
+            "success": True, 
+            "message": "Entry added successfully",
+            "entry_id": entry_id,
+            "member_id": member_id,
+            "member_existed": bool(existing_member)
+        })
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"=== ENTRY SAVE ERROR ===")
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry Failed', f'Failed to add entry for {first_name} {last_name}', current_user.account_id)
+        return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+    finally:
+        db_session.close()
+    
+    #OLD QUERY. NO EXISTING MEMBER CHECK
+    '''
+    data = request.get_json()
+    print("=== ENTRY SAVE REQUEST ===")
+    print("Received data:", data)
+    
+    if not data:
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry Failed', 'No data provided', current_user.account_id)
+        return jsonify({"success": False, "error": "No data provided"}), 400
+    
+    db_session = SessionLocal()
+    try:
+        # Extract and validate required fields
+        record_id = data.get('record_id')
+        if not record_id:
+            return jsonify({"success": False, "error": "Record ID is required"}), 400
+
+        # Extract member data with proper None handling
+        first_name = data.get('first_name')
+        middle_name = data.get('middle_name')
+        last_name = data.get('last_name')
+        suffix = data.get('suffix', 'NA')
+        
+        # Validate required fields
+        if not first_name or not last_name:
+            return jsonify({"success": False, "error": "First name and last name are required"}), 400
+
+        # Handle string fields - convert None to empty string, then strip
+        first_name = (first_name or '').strip().upper()
+        middle_name = (middle_name or '').strip().upper()
+        last_name = (last_name or '').strip().upper()
+        
+        # Parse birthdate
+        birthdate = None
+        birthdate_string = data.get('birth_date')
+        if birthdate_string:
+            try:
+                birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
+            except ValueError as e:
+                print(f"Birthdate parsing error: {e}")
+                # Continue without birthdate rather than failing
+
+        # Parse other dates
+        declaration_date = None
+        declaration_date_string = data.get('declaration_date')
+        if declaration_date_string:
+            try:
+                declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+
+        OR_date = None
+        OR_date_string = data.get('OR_date')
+        if OR_date_string:
+            try:
+                OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+
         # Create new member with proper None handling for all fields
         new_member = models.Members(
             first_name=first_name,
@@ -1413,8 +2153,417 @@ def save_entry_details():
         return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
     finally:
         db_session.close()
+        
+    '''
+    
+# # ===== GET ALL MEMBER IDs FROM members_info TABLE =====
+# @server.route('/api/members/all_member_ids')
+# def get_all_member_ids():
+#     try:
+#         db_session = SessionLocal()
+        
+#         try:
+#             # Query all distinct member_id from members_info
+#             cursor = db_session.execute(text("""
+#                 SELECT DISTINCT member_id 
+#                 FROM members_info 
+#                 ORDER BY member_id
+#             """))
+#             member_ids = [row[0] for row in cursor.fetchall()]
+            
+#             print(f"✅ Retrieved {len(member_ids)} member IDs from members_info")
+            
+#             return jsonify({
+#                 'success': True,
+#                 'member_ids': member_ids,
+#                 'count': len(member_ids)
+#             })
+            
+#         except Exception as e:
+#             print(f"❌ Database error in get_all_member_ids: {e}")
+#             import traceback
+#             traceback.print_exc()
+#             return jsonify({
+#                 'success': False,
+#                 'error': 'Database error occurred'
+#             }), 500
+            
+#         finally:
+#             db_session.close()
+            
+#     except Exception as e:
+#         print(f"❌ Error in get_all_member_ids route: {e}")
+#         import traceback
+#         traceback.print_exc()
+#         return jsonify({
+#             'success': False,
+#             'error': 'Internal server error'
+#         }), 500
+
+# # Modified route to get ALL member data
+# @server.route('/api/members/all_members_complete')
+# def get_all_members_complete():
+#     try:
+#         db_session = SessionLocal()
+        
+#         try:
+#             # Query ALL member data including birthdate, sex, suffix
+#             cursor = db_session.execute(text("""
+#                 SELECT member_id, first_name, middle_name, last_name, sex
+#                 FROM members_info 
+#                 ORDER BY member_id
+#             """))
+            
+#             members = cursor.fetchall()
+            
+#             # Convert to list of dictionaries
+#             members_list = []
+#             for member in members:
+#                 members_list.append({
+#                     'member_id': member[0],
+#                     'first_name': member[1],
+#                     'middle_name': member[2],
+#                     'last_name': member[3],
+#                     'sex': member[4]
+#                 })
+            
+#             print(f"✅ Retrieved {len(members_list)} members with complete data")
+#             return jsonify({'success': True, 'members': members_list, 'count': len(members_list)})
+            
+#         except Exception as e:
+#             print(f"❌ Database error: {e}")
+#             return jsonify({'success': False, 'error': str(e)}), 500
+#         finally:
+#             db_session.close()
+            
+#     except Exception as e:
+#         print(f"❌ Route error: {e}")
+#         return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@server.route('/api/change-password', methods=['POST'])
+@login_required
+def change_password_api():
+    """API endpoint to change user password"""
+    # Store user info before any database operations
+    user_id = current_user.account_id
+    username = current_user.username
+    user_level = current_user.user_level
+    
+    db_session = None
+    try:
+        print("🔑 ========== CHANGE PASSWORD API CALLED ==========")
+        print(f"🔑 User: {username} (ID: {user_id})")
+        
+        # Check if we're receiving JSON data
+        if not request.is_json:
+            print("❌ Request is not JSON")
+            return jsonify({"success": False, "error": "Request must be JSON"}), 400
+            
+        data = request.get_json()
+        print(f"🔑 Received data: {data}")
+        
+        if not data:
+            print("❌ No data received")
+            return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        current_password = data.get('currentPassword')
+        new_password = data.get('newPassword')
+        
+        print(f"🔑 Current password provided: {bool(current_password)}")
+        print(f"🔑 New password provided: {bool(new_password)}")
+        
+        if not current_password or not new_password:
+            print("❌ Missing password fields")
+            return jsonify({"success": False, "error": "Current password and new password are required"}), 400
+        
+        # Validate new password strength (simplified - no special chars)
+        if len(new_password) < 8:
+            print("❌ New password too short")
+            return jsonify({"success": False, "error": "New password must be at least 8 characters long"}), 400
+        
+        if not any(c.isupper() for c in new_password):
+            print("❌ New password missing uppercase")
+            return jsonify({"success": False, "error": "New password must contain at least one uppercase letter"}), 400
+            
+        if not any(c.islower() for c in new_password):
+            print("❌ New password missing lowercase")
+            return jsonify({"success": False, "error": "New password must contain at least one lowercase letter"}), 400
+            
+        if not any(c.isdigit() for c in new_password):
+            print("❌ New password missing number")
+            return jsonify({"success": False, "error": "New password must contain at least one number"}), 400
+        
+        # Verify current password
+        db_session = SessionLocal()
+        print(f"🔑 Querying user from database...")
+        user = db_session.query(models.Accounts).filter_by(account_id=user_id).first()
+        
+        if not user:
+            print("❌ User not found in database")
+            return jsonify({"success": False, "error": "User not found"}), 404
+        
+        print(f"🔑 User found: {user.username}")
+        print(f"🔑 Stored password hash: {user.password[:20]}...")
+        
+        # Check if current password is correct
+        print("🔑 Verifying current password...")
+        password_correct = tools.check_password(current_password, user.password)
+        print(f"🔑 Current password verification: {password_correct}")
+        
+        if not password_correct:
+            print("❌ Current password is incorrect")
+            return jsonify({"success": False, "error": "Current password is incorrect"}), 400
+        
+        # Update password
+        print("🔑 Hashing new password...")
+        hashed_new_password = tools.hash_password(new_password)
+        print(f"🔑 New password hash: {hashed_new_password[:20]}...")
+        
+        user.password = hashed_new_password
+        print("🔑 Password updated in user object")
+        
+        db_session.commit()
+        print("✅ Database committed successfully")
+        
+        # Log the action - use the stored variables, not current_user
+        db_conn.POST_action_log(
+            username,
+            user_level,
+            'Change Password',
+            'User changed their password successfully',
+            user_id
+        )
+        
+        print(f"✅ Password changed successfully for user: {username}")
+        return jsonify({
+            "success": True, 
+            "message": "Password changed successfully"
+        })
+            
+    except Exception as e:
+        if db_session:
+            db_session.rollback()
+        print(f"❌ Error during password change: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": "Internal server error"}), 500
+    finally:
+        if db_session:
+            db_session.close()
+            print("🔑 Database session closed")
+            
+            
+# # Modified route to get ALL member data including all columns
+# @server.route('/api/members/all_members_complete')
+# def get_all_members_complete():
+#     try:
+#         db_session = SessionLocal()
+        
+#         try:
+#             # Query ALL member data including all columns
+#             cursor = db_session.execute(text("""
+#                 SELECT member_id, first_name, middle_name, last_name, suffix, 
+#                        birth_date, age, sex, contact_no, email, address, blood_type
+#                 FROM members_info 
+#                 ORDER BY member_id
+#             """))
+            
+#             members = cursor.fetchall()
+            
+#             # Convert to list of dictionaries
+#             members_list = []
+#             for member in members:
+#                 members_list.append({
+#                     'member_id': member[0],
+#                     'first_name': member[1],
+#                     'middle_name': member[2],
+#                     'last_name': member[3],
+#                     'suffix': member[4],
+#                     'birth_date': member[5],
+#                     'age': member[6],
+#                     'sex': member[7],
+#                     'contact_no': member[8],
+#                     'email': member[9],
+#                     'address': member[10],
+#                     'blood_type': member[11]
+#                 })
+            
+#             print(f"✅ Retrieved {len(members_list)} members with complete data")
+#             return jsonify({
+#                 'success': True, 
+#                 'members': members_list, 
+#                 'count': len(members_list)
+#             })
+            
+#         except Exception as e:
+#             print(f"❌ Database error: {e}")
+#             return jsonify({
+#                 'success': False, 
+#                 'error': str(e)
+#             }), 500
+            
+#         finally:
+#             db_session.close()
+            
+#     except Exception as e:
+#         print(f"❌ Route error: {e}")
+#         return jsonify({
+#             'success': False, 
+#             'error': 'Internal server error'
+#         }), 500
 
 
+# Test route to check if the server is working
+# @server.route('/api/test')
+# def test():
+#     return jsonify({"message": "Test route works!"})
+
+# # The route for all members complete
+# @server.route('/api/members/all_members_complete')
+# def get_all_members_complete():
+#     try:
+#         db_session = SessionLocal()
+        
+#         try:
+#             # Query ALL member data including all columns and maab_no from entry_contents
+#             cursor = db_session.execute(text("""
+#                 SELECT 
+#                     mi.member_id, 
+#                     mi.first_name, 
+#                     mi.middle_name, 
+#                     mi.last_name, 
+#                     mi.suffix, 
+#                     mi.birth_date, 
+#                     mi.age, 
+#                     mi.sex, 
+#                     mi.contact_no, 
+#                     mi.email, 
+#                     mi.address, 
+#                     mi.blood_type,
+#                     ec.maab_no
+#                 FROM members_info mi
+#                 LEFT JOIN entry_contents ec ON mi.member_id = ec.member_id
+#                 ORDER BY mi.member_id
+#             """))
+            
+#             members = cursor.fetchall()
+            
+#             # Convert to list of dictionaries
+#             members_list = []
+#             for member in members:
+#                 members_list.append({
+#                     'member_id': member[0],
+#                     'first_name': member[1],
+#                     'middle_name': member[2],
+#                     'last_name': member[3],
+#                     'suffix': member[4],
+#                     'birth_date': member[5].strftime('%Y-%m-%d') if member[5] else None,
+#                     'age': member[6],
+#                     'sex': member[7],
+#                     'contact_no': member[8],
+#                     'email': member[9],
+#                     'address': member[10],
+#                     'blood_type': member[11],
+#                     'maab_no': member[12]  # This comes from entry_contents table
+#                 })
+            
+#             print(f"✅ Retrieved {len(members_list)} members with complete data including maab_no")
+#             return jsonify({
+#                 'success': True, 
+#                 'members': members_list, 
+#                 'count': len(members_list)
+#             })
+            
+#         except Exception as e:
+#             print(f"❌ Database error: {e}")
+#             return jsonify({
+#                 'success': False, 
+#                 'error': str(e)
+#             }), 500
+            
+#         finally:
+#             db_session.close()
+            
+#     except Exception as e:
+#         print(f"❌ Route error: {e}")
+#         return jsonify({
+#             'success': False, 
+#             'error': 'Internal server error'
+#         }), 500
+
+# TODO adriel 
+@server.route('/api/members/all_members_complete', methods=['GET'])
+def get_all_members_complete():
+    try:
+        print("🔄 API endpoint called: /api/members/all_members_complete")
+        db_session = SessionLocal()
+        
+        # Subquery to get the latest entry for each member with OR_date
+        latest_entries_subquery = (
+            db_session.query(
+                models.Entries.member_id,
+                models.Entries.maab_no,
+                models.Entries.OR_date,
+                func.row_number().over(
+                    partition_by=models.Entries.member_id,
+                    order_by=models.Entries.OR_date.desc()
+                ).label('row_num')
+            )
+            .filter(models.Entries.OR_date.isnot(None))
+            .subquery()
+        )
+        
+        # Main query to get members who have OR dates with their latest maab_no
+        results = (
+            db_session.query(
+                models.Members,
+                latest_entries_subquery.c.maab_no,
+                latest_entries_subquery.c.OR_date
+            )
+            .join(
+                latest_entries_subquery,
+                models.Members.member_id == latest_entries_subquery.c.member_id
+            )
+            .filter(latest_entries_subquery.c.row_num == 1)
+            .order_by(latest_entries_subquery.c.OR_date.desc())
+            .all()
+        )
+        
+        members_list = []
+        for member, maab_no, or_date in results:
+            # Using OrderedDict to ensure maab_no is first
+            member_data = {
+                'maab_no': maab_no,  # First field as requested
+                'member_id': member.member_id,
+                'first_name': member.first_name,
+                'middle_name': member.middle_name,
+                'last_name': member.last_name,
+                'suffix': member.suffix,
+                'birth_date': member.birth_date.strftime('%Y-%m-%d') if member.birth_date else None,
+                'age': member.age,
+                'sex': member.sex,
+                'contact_no': member.contact_no,
+                'email': member.email,
+                'address': member.address,
+                'blood_type': member.blood_type,
+                'OR_date': or_date.strftime('%Y-%m-%d') if or_date else None
+            }
+            members_list.append(member_data)
+        
+        print(f"✅ Successfully returned {len(members_list)} members with OR dates")
+        return jsonify({
+            'success': True, 
+            'members': members_list, 
+            'count': len(members_list)
+        })
+        
+    except Exception as e:
+        print(f"❌ Error in API: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+            
+            
+            
+            
 @server.route('/api/save_entry_update', methods=['POST'])
 @login_required
 def save_entry_update():
@@ -1484,6 +2633,248 @@ def target_vs_actual(year):
 
     return jsonify(report_data)
 
+# =============================================
+# REPORTS API ROUTES
+# =============================================
+
+@server.route('/api/get_report/target_vs_actual/<year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_target_vs_actual(year):
+    """Get target vs actual data for a specific year"""
+    try:
+        db_session = SessionLocal()
+        
+        # Query the database for targets
+        target_data = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == year
+        ).first()
+        
+        if target_data:
+            # Return actual data from database
+            return jsonify({
+                "Classic": {0: target_data.classic or 0},
+                "Bronze": {0: target_data.bronze or 0},
+                "Silver": {0: target_data.silver or 0},
+                "Gold": {0: target_data.gold or 0},
+                "Platinum": {0: target_data.platinum or 0},
+                "Safe Card": {0: target_data.safe_card or 0},
+                "Senior": {0: target_data.senior or 0},
+                "Senior+": {0: target_data.senior_plus or 0}
+            })
+        else:
+            # Return zeros if no targets set
+            return jsonify({
+                "Classic": {0: 0},
+                "Bronze": {0: 0},
+                "Silver": {0: 0},
+                "Gold": {0: 0},
+                "Platinum": {0: 0},
+                "Safe Card": {0: 0},
+                "Senior": {0: 0},
+                "Senior+": {0: 0}
+            })
+            
+    except Exception as e:
+        print(f"Error getting target vs actual data: {e}")
+        # Fallback to sample data if error
+        sample_data = {
+            "Classic": {0: 0}, "Bronze": {0: 0}, "Silver": {0: 0}, "Gold": {0: 0},
+            "Platinum": {0: 0}, "Safe Card": {0: 0}, "Senior": {0: 0}, "Senior+": {0: 0}
+        }
+        return jsonify(sample_data)
+    finally:
+        db_session.close()
+
+@server.route('/api/get_target_years')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_target_years():
+    """Get all years that have target data"""
+    try:
+        db_session = SessionLocal()
+        
+        # Get distinct years from target_per_year table
+        years = db_session.query(models.Report_TvA.year).distinct().order_by(models.Report_TvA.year.desc()).all()
+        
+        years_list = [year[0] for year in years]
+        
+        print(f"📅 Years with target data: {years_list}")
+        return jsonify(years_list)
+        
+    except Exception as e:
+        print(f"Error getting target years: {e}")
+        return jsonify([])
+    finally:
+        db_session.close()        
+
+@server.route('/api/get_report/budget_expenses/<year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_budget_expenses(year):
+    """Get budget vs expenses data for a specific year"""
+    try:
+        # Sample budget data - replace with actual database queries
+        sample_data = [
+            {
+                "id": 1,
+                "account_code": "5020401",
+                "account_name": "Gasoline & Oil",
+                "budget_2025": 100800,
+                "jan": 1400, "feb": 4100, "mar": 3400, "apr": 3700, "may": 2000, "jun": 2100,
+                "jul": 1400, "aug": 0, "sep": 0, "oct": 0, "nov": 0, "dec": 0,
+                "total_expense": 18100,
+                "balance": 82700,
+            },
+            {
+                "id": 2,
+                "account_code": "5020511",
+                "account_name": "Travel Local",
+                "budget_2025": 20000,
+                "jan": 0, "feb": 0, "mar": 0, "apr": 0, "may": 60, "jun": 20,
+                "jul": 0, "aug": 0, "sep": 0, "oct": 0, "nov": 0, "dec": 0,
+                "total_expense": 80,
+                "balance": 19920,
+            }
+        ]
+        return jsonify(sample_data)
+    except Exception as e:
+        print(f"Error getting budget expenses data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@server.route('/api/get_report/per_district/<year>')
+@login_required
+@roles_required('admin', 'superadmin')
+def get_per_district(year):
+    """Get per district data for a specific year"""
+    try:
+        # Return empty array for now - frontend will use sample data
+        # You can implement actual database queries here later
+        return jsonify([])
+    except Exception as e:
+        print(f"Error getting per district data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@server.route('/api/save_report/target_vs_actual', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def save_target_vs_actual():
+    """Save target vs actual data - Auto-creates year if needed"""
+    try:
+        data = request.get_json()
+        category = data.get('category')
+        target_count = data.get('targetCount')
+        year = data.get('year')
+        
+        # Validate required fields
+        if not all([category, target_count, year]):
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
+        
+        db_session = SessionLocal()
+        try:
+            # Check if target entry exists for this year, create if not
+            target_entry = db_session.query(models.Report_TvA).filter(
+                models.Report_TvA.year == year
+            ).first()
+            
+            if not target_entry:
+                # Create new entry with all zeros
+                target_entry = models.Report_TvA(
+                    year=year,
+                    classic=0,
+                    bronze=0,
+                    silver=0,
+                    gold=0,
+                    platinum=0,
+                    safe_card=0,
+                    senior=0,
+                    senior_plus=0
+                )
+                db_session.add(target_entry)
+                db_session.flush()  # Get the ID without committing
+                print(f"✅ Auto-created target row for year {year}")
+            
+            # Update the specific category
+            if category == "Classic":
+                target_entry.classic = target_count
+            elif category == "Bronze":
+                target_entry.bronze = target_count
+            elif category == "Silver":
+                target_entry.silver = target_count
+            elif category == "Gold":
+                target_entry.gold = target_count
+            elif category == "Platinum":
+                target_entry.platinum = target_count
+            elif category == "Safe Card":
+                target_entry.safe_card = target_count
+            elif category == "Senior":
+                target_entry.senior = target_count
+            elif category == "Senior+":
+                target_entry.senior_plus = target_count
+            
+            db_session.commit()
+            
+            # Log the action
+            db_conn.POST_action_log(
+                current_user.username, 
+                current_user.user_level, 
+                'Save Target Data', 
+                f'Saved {category} target: {target_count} for {year}', 
+                current_user.account_id
+            )
+            
+            return jsonify({"success": True, "message": "Target data saved successfully"})
+            
+        except Exception as e:
+            db_session.rollback()
+            print(f"❌ Database error: {e}")
+            return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+        finally:
+            db_session.close()
+        
+    except Exception as e:
+        print(f"Error saving target vs actual data: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@server.route('/api/save_report/budget_expenses', methods=['POST'])
+@login_required
+@roles_required('admin', 'superadmin')
+def save_budget_expenses():
+    """Save budget vs expenses data"""
+    try:
+        data = request.get_json()
+        print("Saving budget expenses data:", data)
+        
+        # Extract data from request
+        account_code = data.get('accountCode')
+        account_name = data.get('accountName')
+        budget_amount = data.get('budgetAmount')
+        expense_month = data.get('expenseMonth')
+        expense_amount = data.get('expenseAmount')
+        budget_year = data.get('budgetYear')
+        
+        # Validate required fields
+        if not all([account_code, account_name, budget_amount, expense_month, expense_amount, budget_year]):
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
+        
+        # Here you would save to your database
+        # For now, just log and return success
+        print(f"💾 Would save: Account={account_code}, Budget={budget_amount}, Month={expense_month}, Expense={expense_amount}, Year={budget_year}")
+        
+        # Log the action
+        db_conn.POST_action_log(
+            current_user.username, 
+            current_user.user_level, 
+            'Save Budget Data', 
+            f'Saved budget data: {account_code} - {account_name}', 
+            current_user.account_id
+        )
+        
+        return jsonify({"success": True, "message": "Budget data saved successfully"})
+        
+    except Exception as e:
+        print(f"Error saving budget expenses data: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @server.route('/api/inventory/add_stock', methods=['POST'])
 @login_required
@@ -2259,9 +3650,9 @@ def export_dispatch():
 
 
 def generate_dispatch_excel_file(dispatch_id, transmitted_count):
-    """Generate Excel file for the dispatched entries - GUARANTEED WORKING VERSION"""
+    """Generate multi-sheet Excel file for the dispatched entries"""
     try:
-        print(f"🎯 Generating Excel for dispatch {dispatch_id}")
+        print(f"🎯 Generating multi-sheet Excel for dispatch {dispatch_id}")
         
         db_session = SessionLocal()
         
@@ -2289,6 +3680,7 @@ def generate_dispatch_excel_file(dispatch_id, transmitted_count):
                 models.Members.sex,
                 models.Members.contact_no,
                 models.Members.email,
+                models.Members.address,
                 models.Records.effectivity_date,
                 models.Records.location_particular,
                 models.Records.location_category,
@@ -2317,85 +3709,198 @@ def generate_dispatch_excel_file(dispatch_id, transmitted_count):
                 "excel_generated": False
             })
 
-        # Prepare data for Excel
-        data = []
-        for i, row in enumerate(entries_data, 1):
-            data.append({
-                'No.': i,
-                'MAAB Category': row.maab_category or '',
-                'MAAB No': row.maab_no or '',
-                'First Name': row.first_name or '',
-                'Middle Name': row.middle_name or '',
-                'Last Name': row.last_name or '',
-                'Suffix': row.suffix or 'NA',
-                'Birth Date': row.birth_date.strftime('%Y-%m-%d') if row.birth_date else '',
-                'Age': row.age or '',
-                'Sex': row.sex or '',
-                'Contact No': f"+63{row.contact_no}" if row.contact_no else '',
-                'Email': row.email or '',
-                'Effectivity Date': row.effectivity_date.strftime('%Y-%m-%d') if row.effectivity_date else '',
-                'Location Particular': row.location_particular or '',
-                'Location Category': row.location_category or '',
-                'Municipality': row.municipality or '',
-                'District': row.district or '',
-                'Origin': row.origin or ''
-            })
-
-        # Create DataFrame
-        df = pd.DataFrame(data)
-
         # Create Excel file in memory
         output = BytesIO()
         
         try:
-            # Use openpyxl engine for better compatibility
+            # Use openpyxl engine for better multi-sheet support
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name='Dispatch Report', index=False)
                 
-                # Get the workbook and worksheet
+                # Define custom colors
+                header_fill = openpyxl.styles.PatternFill(start_color="CCC0DA", end_color="CCC0DA", fill_type="solid")  # Purple-gray
+                total_row_fill = openpyxl.styles.PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")  # Light gray
+                red_font = openpyxl.styles.Font(color="FF0000", bold=True)  # Red font for numbers
+                bold_font = openpyxl.styles.Font(bold=True)
+                
+                # ==================== LISTING SHEET (Summary) ====================
+                print("📊 Creating Listing sheet...")
+                
+                # Group by location_particular and category
+                summary_data = []
+                location_groups = {}
+                
+                for entry in entries_data:
+                    location = entry.location_particular or 'Unknown'
+                    category = entry.maab_category or 'Unknown'
+                    
+                    if location not in location_groups:
+                        location_groups[location] = {
+                            'location': location,
+                            'effectivity_date': entry.effectivity_date,
+                            'categories': {}
+                        }
+                    
+                    if category not in location_groups[location]['categories']:
+                        location_groups[location]['categories'][category] = 0
+                    
+                    location_groups[location]['categories'][category] += 1
+                
+                # Convert to list for DataFrame
+                categories_list = ['Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Safe Card', 'Senior', 'Senior Plus']
+                for i, (location, data) in enumerate(location_groups.items(), 1):
+                    row = {
+                        'NO.': i,
+                        'SCHOOLS/COMPANY': location,
+                        'EFFECTIVITY DATE': data['effectivity_date'].strftime('%Y-%m-%d') if data['effectivity_date'] else ''
+                    }
+                    
+                    # Add counts for each category
+                    for category in categories_list:
+                        row[category.upper()] = data['categories'].get(category, 0)
+                    
+                    summary_data.append(row)
+                
+                # Add empty row before totals
+                empty_row = {'NO.': '', 'SCHOOLS/COMPANY': '', 'EFFECTIVITY DATE': ''}
+                for category in categories_list:
+                    empty_row[category.upper()] = ''
+                summary_data.append(empty_row)
+                
+                # Add totals row
+                if summary_data:
+                    totals_row = {'NO.': '', 'SCHOOLS/COMPANY': 'TOTAL', 'EFFECTIVITY DATE': ''}
+                    for category in categories_list:
+                        totals_row[category.upper()] = sum(row[category.upper()] for row in summary_data if row['SCHOOLS/COMPANY'] != 'TOTAL' and row['SCHOOLS/COMPANY'] != '')
+                    summary_data.append(totals_row)
+                
+                # Create summary DataFrame
+                summary_df = pd.DataFrame(summary_data)
+                
+                # Write summary sheet
+                summary_df.to_excel(writer, sheet_name='Listing', index=False, startrow=2)
+                
+                # Style summary sheet
                 workbook = writer.book
-                worksheet = writer.sheets['Dispatch Report']
+                summary_sheet = writer.sheets['Listing']
                 
                 # Add title
-                worksheet.merge_cells('A1:R1')
-                title_cell = worksheet['A1']
-                title_cell.value = f'DISPATCH REPORT - {dispatch.dispatch_origin} - {current_date.strftime("%Y-%m-%d")}'
+                summary_sheet.merge_cells('A1:K1')
+                title_cell = summary_sheet['A1']
+                title_cell.value = f'DISPATCH REPORT - CHAPTER - {dispatch.dispatch_cutoff}'
                 title_cell.font = openpyxl.styles.Font(size=16, bold=True)
                 title_cell.alignment = openpyxl.styles.Alignment(horizontal='center')
                 
-                # Style headers
-                header_fill = openpyxl.styles.PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
-                header_font = openpyxl.styles.Font(bold=True)
-                
-                for col in range(1, len(df.columns) + 1):
-                    cell = worksheet.cell(row=2, column=col)  # Headers are now in row 2
+                # Style headers and NO. column
+                for col in range(1, len(summary_df.columns) + 1):
+                    cell = summary_sheet.cell(row=3, column=col)
                     cell.fill = header_fill
-                    cell.font = header_font
+                    cell.font = bold_font
+                    cell.alignment = openpyxl.styles.Alignment(horizontal='center')
                 
-                # Adjust column widths
-                column_widths = {
-                    'A': 8,   # No.
-                    'B': 15,  # MAAB Category
-                    'C': 15,  # MAAB No
-                    'D': 15,  # First Name
-                    'E': 15,  # Middle Name
-                    'F': 15,  # Last Name
-                    'G': 8,   # Suffix
-                    'H': 12,  # Birth Date
-                    'I': 6,   # Age
-                    'J': 8,   # Sex
-                    'K': 15,  # Contact No
-                    'L': 20,  # Email
-                    'M': 12,  # Effectivity Date
-                    'N': 25,  # Location Particular
-                    'O': 20,  # Location Category
-                    'P': 15,  # Municipality
-                    'Q': 10,  # District
-                    'R': 12   # Origin
+                # Style NO. column for all data rows
+                data_row_count = len(location_groups)  # Number of actual data rows (excluding empty and total)
+                for row_num in range(4, 4 + data_row_count):  # Start from row 4 (after header)
+                    no_cell = summary_sheet.cell(row=row_num, column=1)  # Column A (NO.)
+                    no_cell.fill = header_fill
+                
+                # Style totals row
+                if summary_data:
+                    total_row_num = 4 + data_row_count + 1  # +1 for the empty row
+                    for col in range(1, len(summary_df.columns) + 1):
+                        cell = summary_sheet.cell(row=total_row_num, column=col)
+                        cell.fill = total_row_fill
+                        cell.font = bold_font
+                        
+                        # Make numbers red in totals row (columns D-K)
+                        if col >= 4:  # Columns D onwards (category counts)
+                            cell.font = red_font
+                
+                # Adjust column widths for summary sheet
+                summary_widths = {
+                    'A': 8,   # NO.
+                    'B': 35,  # SCHOOLS/COMPANY
+                    'C': 15,  # EFFECTIVITY DATE
+                    'D': 10,  # CLASSIC
+                    'E': 10,  # BRONZE
+                    'F': 10,  # SILVER
+                    'G': 10,  # GOLD
+                    'H': 10,  # PLATINUM
+                    'I': 12,  # SAFE CARD
+                    'J': 10,  # SENIOR
+                    'K': 12   # SENIOR PLUS
                 }
                 
-                for col_letter, width in column_widths.items():
-                    worksheet.column_dimensions[col_letter].width = width
+                for col_letter, width in summary_widths.items():
+                    summary_sheet.column_dimensions[col_letter].width = width
+                
+                # ==================== INDIVIDUAL CATEGORY SHEETS ====================
+                categories = ['Classic', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Safe Card', 'Senior', 'Senior Plus']
+                
+                for category in categories:
+                    print(f"📝 Creating {category} sheet...")
+                    
+                    # Filter entries for this category
+                    category_entries = [e for e in entries_data if e.maab_category == category]
+                    
+                    if not category_entries:
+                        print(f"⚠️ No entries found for {category}, creating empty sheet")
+                        # Create empty DataFrame with correct columns
+                        empty_data = []
+                        empty_df = pd.DataFrame(empty_data, columns=['NO.', 'NAME', 'PRC ID #', 'EFFECTIVITY', 'BIRTHDAY', 'ADDRESS'])
+                        empty_df.to_excel(writer, sheet_name=category, index=False, startrow=2)
+                    else:
+                        # Prepare data for this category
+                        category_data = []
+                        for i, entry in enumerate(category_entries, 1):
+                            full_name = f"{entry.first_name or ''} {entry.middle_name or ''} {entry.last_name or ''} {entry.suffix or ''}".strip()
+                            category_data.append({
+                                'NO.': i,
+                                'NAME': full_name,
+                                'PRC ID #': entry.maab_no or '',
+                                'EFFECTIVITY': entry.effectivity_date.strftime('%Y-%m-%d') if entry.effectivity_date else '',
+                                'BIRTHDAY': entry.birth_date.strftime('%Y-%m-%d') if entry.birth_date else '',
+                                'ADDRESS': entry.address or ''
+                            })
+                        
+                        # Create category DataFrame
+                        category_df = pd.DataFrame(category_data)
+                        category_df.to_excel(writer, sheet_name=category, index=False, startrow=2)
+                    
+                    # Style category sheet
+                    category_sheet = writer.sheets[category]
+                    
+                    # Add title
+                    category_sheet.merge_cells('A1:F1')
+                    title_cell = category_sheet['A1']
+                    title_cell.value = f'DISPATCH REPORT - CHAPTER - {dispatch.dispatch_cutoff}'
+                    title_cell.font = openpyxl.styles.Font(size=16, bold=True)
+                    title_cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+                    
+                    # Style headers and NO. column for category sheets
+                    for col in range(1, 7):  # A-F
+                        cell = category_sheet.cell(row=3, column=col)
+                        cell.fill = header_fill
+                        cell.font = bold_font
+                        cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+                    
+                    # Style NO. column for all data rows in category sheets
+                    if category_entries:
+                        for row_num in range(4, 4 + len(category_entries)):
+                            no_cell = category_sheet.cell(row=row_num, column=1)  # Column A (NO.)
+                            no_cell.fill = header_fill
+                    
+                    # Adjust column widths for category sheets
+                    category_widths = {
+                        'A': 8,   # NO.
+                        'B': 30,  # NAME
+                        'C': 15,  # PRC ID #
+                        'D': 12,  # EFFECTIVITY
+                        'E': 12,  # BIRTHDAY
+                        'F': 40   # ADDRESS
+                    }
+                    
+                    for col_letter, width in category_widths.items():
+                        category_sheet.column_dimensions[col_letter].width = width
 
             # Prepare file for download
             output.seek(0)
@@ -2403,7 +3908,7 @@ def generate_dispatch_excel_file(dispatch_id, transmitted_count):
             # Create filename
             filename = f"dispatch_{dispatch.dispatch_origin}_{current_date.strftime('%Y-%m-%d')}.xlsx"
             
-            print(f"✅ Excel file generated successfully: {filename}")
+            print(f"✅ Multi-sheet Excel file generated successfully: {filename}")
             
             # Return the file
             return send_file(
@@ -3454,117 +4959,211 @@ def get_notifications():
         
         print("🔍 Starting notifications check...")
         
-        # Get all member records
-        all_records = db_conn.get_member_records()
-        print(f"📊 Found {len(all_records)} records")
+        db_session = SessionLocal()
         
-        # 1. Check for birthdays today
-        birthday_count = 0
-        for record in all_records:
-            try:
-                # Get record ID safely
-                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
-                if not record_id:
-                    continue
-                    
-                # Get entries for this record
-                entries = db_conn.get_entries(record_id)
+        try:
+            # 1. Check for birthdays today - INCLUDE ALL members (even without emails)
+            print("🎂 Checking birthdays for current members...")
+            birthday_entries = db_session.query(
+                models.Members.member_id,
+                models.Members.first_name,
+                models.Members.last_name,
+                models.Members.birth_date,
+                models.Members.email,
+                models.Entries.entry_id
+            ).join(
+                models.Entries, models.Members.member_id == models.Entries.member_id
+            ).filter(
+                extract('month', models.Members.birth_date) == today.month,
+                extract('day', models.Members.birth_date) == today.day,
+                models.Entries.paid == True
+            ).distinct().all()
+            
+            birthday_count = len(birthday_entries)
+            print(f"🎂 Found {birthday_count} birthdays today for active members")
+            
+            for member in birthday_entries:
+                member_name = f"{member.first_name} {member.last_name}"
+                member_email = member.email
                 
-                for entry in entries:
-                    # Check if entry has birth_date
-                    birth_date = getattr(entry, 'birth_date', None)
-                    if birth_date:
-                        # Convert to date object if string
-                        if isinstance(birth_date, str):
-                            try:
-                                birth_date = datetime.strptime(birth_date, '%Y-%m-%d').date()
-                            except:
-                                continue
-                        elif isinstance(birth_date, datetime):
-                            birth_date = birth_date.date()
-                        
-                        # Check if birthday is today
-                        if birth_date.month == today.month and birth_date.day == today.day:
-                            first_name = getattr(entry, 'first_name', '')
-                            last_name = getattr(entry, 'last_name', '')
-                            email = getattr(entry, 'email', '')
-                            
-                            notifications.append({
-                                'type': 'birthday',
-                                'message': f"🎂 {first_name} {last_name} has birthday today!",
-                                'member_name': f"{first_name} {last_name}",
-                                'member_email': email,
-                                'priority': 'high'
-                            })
-                            birthday_count += 1
-            except Exception as e:
-                print(f"❌ Error processing record: {e}")
-                continue
-        
-        print(f"🎂 Found {birthday_count} birthdays today")
-        
-        # 2. Check for expiring memberships (30 days)
-        expiring_count = 0
-        thirty_days_from_now = today + timedelta(days=30)
-        
-        for record in all_records:
-            try:
-                record_id = getattr(record, 'record_id', getattr(record, 'id', None))
-                if not record_id:
-                    continue
-                    
-                entries = db_conn.get_entries(record_id)
+                # CHECK IF EMAIL WAS ALREADY SENT TODAY
+                email_already_sent = db_session.query(models.EmailLog).filter(
+                    models.EmailLog.email == member_email,
+                    models.EmailLog.email_type == 'birthday',
+                    models.EmailLog.sent_date == today
+                ).first()
                 
-                for entry in entries:
-                    or_date = getattr(entry, 'OR_date', None)
-                    if or_date:
-                        # Convert to date object if string
-                        if isinstance(or_date, str):
-                            try:
-                                or_date = datetime.strptime(or_date, '%Y-%m-%d').date()
-                            except:
-                                continue
-                        elif isinstance(or_date, datetime):
-                            or_date = or_date.date()
+                # AUTO-SEND BIRTHDAY GREETING (only if email exists AND not already sent today)
+                email_sent = False
+                email_status = " | No email"
+                
+                if member_email and member_email.strip():
+                    if email_already_sent:
+                        email_status = " | Already sent today"
+                        email_sent = True
+                    else:
+                        try:
+                            email_sent = db_conn.send_birthday_greeting_email(member_email, member_name)
+                            if email_sent:
+                                # LOG THE EMAIL SENDING
+                                email_log = models.EmailLog(
+                                    email=member_email,
+                                    member_name=member_name,
+                                    email_type='birthday',
+                                    sent_date=today,
+                                    status='sent'
+                                )
+                                db_session.add(email_log)
+                                db_session.commit()
+                                email_status = " | Sent"
+                            else:
+                                email_status = " | Failed"
+                        except Exception as e:
+                            print(f"Error sending birthday email: {e}")
+                            email_status = " | Error"
+                else:
+                    email_status = " | No email address"
+                
+                notifications.append({
+                    'type': 'birthday',
+                    'message': f"🎂 {member_name} has birthday today! {email_status}",
+                    'member_name': member_name,
+                    'member_email': member_email or 'No email',
+                    'priority': 'high',
+                    'email_sent': email_sent
+                })
+            
+            # 2. Check for expiring memberships - SIMILAR FIX FOR RENEWAL REMINDERS
+            print("⏰ Checking expiring memberships...")
+            days_threshold = 120
+            future_date = today + timedelta(days=days_threshold)
+            
+            expiring_entries = db_session.query(
+                models.Entries.entry_id,
+                models.Entries.OR_date,
+                models.Entries.maab_no,
+                models.Entries.maab_category,
+                models.Members.first_name,
+                models.Members.last_name,
+                models.Members.email
+            ).join(
+                models.Members, models.Entries.member_id == models.Entries.member_id
+            ).filter(
+                models.Entries.OR_date.isnot(None),
+                models.Entries.paid == True,
+                models.Members.email.isnot(None),
+                models.Members.email != ''
+            ).all()
+            
+            expiring_count = 0
+            
+            for entry in expiring_entries:
+                if entry.OR_date:
+                    try:
+                        if isinstance(entry.OR_date, str):
+                            or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
+                        else:
+                            or_date = entry.OR_date
                         
-                        # Calculate expiration (OR_date + 1 year)
                         expiration_date = or_date + timedelta(days=365)
                         days_until_expiry = (expiration_date - today).days
                         
-                        # Check if expiring within 30 days
-                        if 0 <= days_until_expiry <= 30:
-                            first_name = getattr(entry, 'first_name', '')
-                            last_name = getattr(entry, 'last_name', '')
-                            email = getattr(entry, 'email', '')
+                        if 0 <= days_until_expiry <= days_threshold:
+                            member_name = f"{entry.first_name} {entry.last_name}"
+                            member_email = entry.email
+                            
+                            # CHECK IF RENEWAL EMAIL WAS ALREADY SENT TODAY
+                            renewal_already_sent = db_session.query(models.EmailLog).filter(
+                                models.EmailLog.email == member_email,
+                                models.EmailLog.email_type == 'renewal',
+                                models.EmailLog.sent_date == today,
+                                models.EmailLog.days_until_expiry == days_until_expiry
+                            ).first()
+                            
+                            # AUTO-SEND RENEWAL REMINDER (only if not already sent today)
+                            email_sent = False
+                            email_status = " | No email"
+                            
+                            if member_email and member_email.strip():
+                                if renewal_already_sent:
+                                    email_status = " | Already sent today"
+                                    email_sent = True
+                                else:
+                                    try:
+                                        email_sent = db_conn.send_renewal_reminder_email(
+                                            member_email, 
+                                            member_name, 
+                                            days_until_expiry,
+                                            entry.maab_no
+                                        )
+                                        if email_sent:
+                                            # LOG THE EMAIL SENDING
+                                            email_log = models.EmailLog(
+                                                email=member_email,
+                                                member_name=member_name,
+                                                email_type='renewal',
+                                                sent_date=today,
+                                                status='sent',
+                                                days_until_expiry=days_until_expiry
+                                            )
+                                            db_session.add(email_log)
+                                            db_session.commit()
+                                            email_status = " | Sent"
+                                        else:
+                                            email_status = " | Failed"
+                                    except Exception as e:
+                                        print(f"Error sending renewal email: {e}")
+                                        email_status = " | Error"
+                            else:
+                                email_status = " | No email address"
+                            
+                            status_text = "EXPIRED" if days_until_expiry <= 0 else f"expires in {days_until_expiry} days"
+                            priority = 'high' if days_until_expiry <= 30 else 'medium'
                             
                             notifications.append({
                                 'type': 'expiring',
-                                'message': f"⏰ {first_name} {last_name} membership expires in {days_until_expiry} days",
-                                'member_name': f"{first_name} {last_name}",
-                                'member_email': email,
+                                'message': f"⏰ {member_name} membership {status_text}. {email_status}",
+                                'member_name': member_name,
+                                'member_email': member_email or 'No email',
                                 'additional_data': {'days_left': days_until_expiry},
-                                'priority': 'medium'
+                                'priority': priority,
+                                'email_sent': email_sent
                             })
                             expiring_count += 1
-            except Exception as e:
-                print(f"❌ Error processing record for expiring: {e}")
-                continue
-        
-        print(f"⏰ Found {expiring_count} expiring memberships")
-        print(f"📨 Total notifications: {len(notifications)}")
-        
-        return jsonify({
-            'success': True,
-            'notifications': notifications,
-            'total_count': len(notifications),
-            'summary': {
-                'birthdays': birthday_count,
-                'expiring': expiring_count
-            }
-        })
+                            
+                    except Exception as e:
+                        print(f"Error processing entry {entry.entry_id}: {e}")
+                        continue
+            
+            print(f"⏰ Found {expiring_count} expiring memberships (within {days_threshold} days)")
+            print(f"📨 Total notifications: {len(notifications)}")
+            
+            return jsonify({
+                'success': True,
+                'notifications': notifications,
+                'total_count': len(notifications),
+                'summary': {
+                    'birthdays': birthday_count,
+                    'expiring': expiring_count
+                }
+            })
+            
+        except Exception as e:
+            print(f"Database error in get_notifications: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': f'Database error: {str(e)}',
+                'notifications': [],
+                'total_count': 0
+            }), 500
+            
+        finally:
+            db_session.close()
         
     except Exception as e:
-        print(f"❌ Major error in get_notifications: {e}")
+        print(f"Major error in get_notifications: {e}")
         import traceback
         traceback.print_exc()
         
@@ -3575,10 +5174,6 @@ def get_notifications():
             'total_count': 0
         }), 500
 
-# TEST ROUTE - OPTIONAL
-@server.route('/api/notifications/test', methods=['GET'])
-def test_notifications_route():
-    return jsonify({"message": "Notifications route is working", "success": True})
 
 #? -------------------- MISC ROUTES -------------------- ?#
 

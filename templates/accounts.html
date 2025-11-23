@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
+    <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <!-- Tabulator CSS -->
     <link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator.min.css" rel="stylesheet">
@@ -17,26 +17,6 @@
 
     <link rel="stylesheet" href="/static/styles/toast.css">
     <script src="/static/js/toast.js"></script>
-    
-    <style>
-        .required-field::after {
-            content: " *";
-            color: #ff0000;
-            font-weight: bold;
-        }
-        
-        .error-message {
-            color: #ff0000;
-            font-size: 12px;
-            margin-top: 5px;
-            display: none;
-        }
-        
-        .input-error {
-            border-color: #ff0000 !important;
-            background-color: #fff5f5 !important;
-        }
-    </style>
 {% endblock %}
 
 
@@ -66,7 +46,7 @@
         <select id="officeFilter" class="filter-select">
             <option value="">All Offices</option>
             <option value="Chapter">Chapter</option>
-            <option value="Dasmarinas">Dasmarinas</option>
+            <option value="Dasmarinas">Dasmariñas</option>
             <option value="Silang">Silang</option>
         </select>
 
@@ -202,8 +182,8 @@
                             <div class="error-message" id="contact_no-error">Contact number is required (10 digits)</div>
                         </div>
                         <div class="div16">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" autocomplete="off">
+                            <label for="email" class="required-field">Email Address</label>
+                            <input type="email" id="email" name="email" required autocomplete="off">
                             <div class="error-message" id="email-error">Please enter a valid email address</div>
                         </div>
                         <div class="div17">
@@ -217,7 +197,7 @@
                             <select name="branch" id="branch" required>
                                 <option value="">Select Branch</option>
                                 <option value="chapter">Cavite Chapter</option>
-                                <option value="dasma">Dasmariñas</option>
+                                <option value="dasmarinas">Dasmarinas</option>
                                 <option value="silang">Silang</option>
                             </select>
                             <div class="error-message" id="branch-error">Please select an office branch</div>
@@ -235,6 +215,47 @@
 
 
 {% block extra_scripts %}
+<script>
+    // Dark Mode Functionality for Module
+    document.addEventListener("DOMContentLoaded", function() {
+        const themeLink = document.getElementById("theme-link");
+        const savedTheme = localStorage.getItem("baseTheme") || "light";
+        
+        if (savedTheme === "dark") {
+            switchToDarkMode();
+        }
+        
+        window.addEventListener('themeChanged', function(e) {
+            if (e.detail.theme === "dark") {
+                switchToDarkMode();
+            } else {
+                switchToLightMode();
+            }
+        });
+        
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'baseTheme') {
+                if (e.newValue === "dark") {
+                    switchToDarkMode();
+                } else {
+                    switchToLightMode();
+                }
+            }
+        });
+        
+        function switchToDarkMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('accounts.css', 'accounts-dark.css');
+            themeLink.setAttribute('href', newHref);
+        }
+        
+        function switchToLightMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('accounts-dark.css', 'accounts.css');
+            themeLink.setAttribute('href', newHref);
+        }
+    });
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // ====================== VARIABLES ======================
@@ -274,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const requiredFields = [
             {id: 'fname', name: 'First Name'},
             {id: 'lname', name: 'Last Name'},
-            {id: 'contact_no', name: 'Contact Number'},
+            {id: 'email', name: 'Email Address'},
             {id: 'username', name: 'Username'},
             {id: 'branch', name: 'Office Branch'}
         ];
@@ -695,16 +716,64 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ====================== EDIT CELL EVENTS ======================
     activeTable.on("cellEdited", function(cell) {
+        const oldValue = cell.getOldValue();
+        const newValue = cell.getValue();
         const rowData = cell.getRow().getData();
         let url, payload;
+        const currentUserId = {{ current_user.account_id }}; 
+
+        // 0. Prevent demoting yourself
+        if (rowData.account_id === currentUserId && oldValue === 'superadmin' && newValue !== 'superadmin') {
+            toastError('Invalid Update', 'You cannot demote your own superadmin account.');
+            cell.restoreOldValue();
+            return;
+        }
 
         if (cell.getField() === "user_level") {
+            // 1. Superadmin must be in Chapter
+            if (newValue === 'superadmin' && rowData.office_location !== 'Chapter') {
+                toastError('Invalid Update', 'Superadmin account must have office location as "Chapter".');
+                cell.restoreOldValue();
+                return;
+            }
+
+            // Count superadmins **excluding this row if it’s being demoted**
+            const superadminCount = activeTable.getData()
+                .filter(r => r.user_level === 'superadmin' && r.account_id !== rowData.account_id)
+                .length + (newValue === 'superadmin' ? 1 : 0);
+
+            // 2. Maximum 2 superadmins
+            if (newValue === 'superadmin' && superadminCount > 2) {
+                toastError('Invalid Update', 'There can only be a maximum of 2 superadmin accounts.');
+                cell.restoreOldValue();
+                return;
+            }
+
+            // 3. At least 1 superadmin
+            if (oldValue === 'superadmin' && newValue !== 'superadmin' && superadminCount < 1) {
+                toastError('Invalid Update', 'There must be at least one superadmin account.');
+                cell.restoreOldValue();
+                return;
+            }
+
             url = '/api/accounts/update_userlvl';
-            payload = { id: rowData.account_id, user_level: cell.getValue() };
+            payload = { id: rowData.account_id, user_level: newValue };
+
         } else if (cell.getField() === "office_location") {
+            const newOffice = newValue;
+
+            // Superadmin must remain in Chapter
+            if (rowData.user_level === 'superadmin' && newOffice !== 'Chapter') {
+                toastError('Invalid Update', 'Superadmin account must have office location as "Chapter".');
+                cell.restoreOldValue();
+                return;
+            }
+
             url = '/api/accounts/update_ofc';
-            payload = { id: rowData.account_id, office_location: cell.getValue() };
+            payload = { id: rowData.account_id, office_location: newOffice };
+
         } else return;
+
 
         fetch(url, {
             method: 'PATCH',

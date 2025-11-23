@@ -1,54 +1,118 @@
 body {
-    font-family: Arial, sans-serif;
     margin: 20;
     padding: 1rem;
-    background: linear-gradient(135deg, #0e0f31, #392e9c); /* BACKGROUND */
+    background: #1a1a1a;
     display: flex;
     flex-direction: column;
     min-height: 100vh; 
 }
 
-
 h2 {
     margin-top: 1rem;
     margin-bottom: 1rem;
     font-size: 1.5rem;
-    color: #2c3e50;
+    color: #e0e0e0;
 }
 
 .module_name {
-    position: absolute;
-    margin-top: 1.5%;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);  /* Centers horizontally */
-    color: rgb(232, 57, 57);
-    text-align: center;  /* Ensures the text inside is centered */
-    width: 100%;  /* Makes sure the element stretches across the container */
-  }
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    padding: 15px 20px;
+    margin-left: 0; 
+    margin-right: 0; 
+    position: relative;
+    z-index: 1;
+    margin-top: 0; 
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    background-color: #2d2d2d;
+    margin-bottom: 10px;
+    color: #4dabf7;
+}
 
-  /*--------------------------------- MAIN CONTAINER ------------------------*/
-.main-container{
+.search_box {
   display: flex;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  margin-top: 10px;
+  margin-left: auto; 
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.search_box i.fa-magnifying-glass {
+  position: absolute;
+  left: 12px;
+  color: #888;
+  font-size: 16px;
+}
+
+.search_box input {
+  width: 550px !important;
+  padding: 10px 35px 10px 35px;
+  border: 1px solid #444;
+  border-radius: 15px;
+  font-size: 16px;
+  background-color: #333;
+  color: #e0e0e0;
+}
+
+#search_clear {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+  opacity: 0; 
+  pointer-events: none;
+}
+
+#search_clear.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#search_clear:hover {
+  color: #4dabf7;
+}
+
+.search_box input:focus {
+  outline: 2px solid #339af0;
+  transition: 0.2s;
+}
+
+/*--------------------------------- MAIN CONTAINER ------------------------*/
+.main-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
   margin-top: 3.2%;
 }
 
 /*------------------------------------- LEFT FORM -----------------------------*/
 .left-container {
-  width: 56.75368898978434vh;
+  width: 58vh;
   height: 58vh;
-  background: rgba(255, 255, 255, 0.7); /* translucent white */
+  background: rgba(45, 45, 45, 0.8);
   border-radius: 12px;
   margin-bottom: 2rem;
-  box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.3); /* soft shadow */
-  backdrop-filter: blur(10px); /* glass effect */
-  -webkit-backdrop-filter: blur(10px); /* Safari support */
-  border: 1px solid rgba(255, 255, 255, 0.18); /* subtle border */
+  box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   margin: 40px auto;
   padding: 30px;
-  display: flex;              /* Add this */
-  flex-direction: column;     /* Keep items stacked */
-  align-items: center;        /* Horizontally center */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   overflow: hidden;
 }
 
@@ -61,9 +125,9 @@ h2 {
   align-items: center;
   padding: 10px;
   border-radius: 10px;
-  color: white;               /* White text */
-  text-decoration: none;     /* No underline */
-  cursor: default;           /* Not clickable */
+  color: #e0e0e0;
+  text-decoration: none;
+  cursor: default;
   font-weight: 600;
 }
 
@@ -73,29 +137,31 @@ img.prof {
   border-radius: 50%;
   border: double 6px transparent;
   background-image: 
-    linear-gradient(#fff, #fff), 
-    linear-gradient(to right, rgba(255, 63, 63, 0.95), rgba(255, 122, 105, 0.9));
+    linear-gradient(#2d2d2d, #2d2d2d), 
+    linear-gradient(to right, rgba(77, 171, 247, 0.8), rgba(102, 204, 255, 0.7));
   background-origin: border-box;
   background-clip: content-box, border-box;
   object-fit: cover;
   box-sizing: border-box;
   backdrop-filter: blur(10px);
-  box-shadow:0 8px 20px rgba(0, 0, 0, 0.25), 0 0 15px rgba(255, 100, 100, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(51, 154, 240, 0.3);
 }
 
 h5.name {
   margin-top: 4%;
   font-size: 1.5rem;
-  word-wrap: break-word; /* Ensures long words break and wrap */
-  word-break: break-word; /* Ensures long words break and wrap (in case word-wrap is not enough) */
-  text-align: center;  /* Centers the text horizontally */
-  max-width: 100%;  /* Prevents the text from overflowing its container */
-  line-height: 1.5;  /* Adjusts the line height for better spacing, especially when wrapped */
+  word-wrap: break-word;
+  word-break: break-word;
+  text-align: center;
+  max-width: 100%;
+  line-height: 1.5;
+  color: #e0e0e0;
 }
 
 p.level{
   margin-top: 1%;
   font-size: 1.2rem;
+  color: #b0b0b0;
 }
 
 .profile-button {
@@ -103,17 +169,17 @@ p.level{
   padding: 0.5rem 1rem;
   background: linear-gradient(
       225deg,
-      rgba(255, 122, 105, 0.9),   /* light coral */
-      rgba(255, 94, 77, 0.92),    /* bright red-orange */
-      rgba(255, 63, 63, 0.95),    /* strong red */
-      rgba(250, 80, 80, 0.95),    /* slightly darker red */
-      rgba(232, 61, 61, 0.95),    /* deeper cherry red */
-      rgba(255, 107, 92, 0.9)     /* soft coral again for looped tone */
+      rgba(77, 171, 247, 0.8),
+      rgba(51, 154, 240, 0.8),
+      rgba(41, 143, 232, 0.85),
+      rgba(51, 154, 240, 0.85),
+      rgba(41, 143, 232, 0.85),
+      rgba(102, 204, 255, 0.8)
   );
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border-radius: 20px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), 0 0 15px rgba(255, 100, 100, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(51, 154, 240, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.15);
   cursor: pointer;
   transition: background-color 0.2s;
@@ -123,39 +189,39 @@ p.level{
 button:hover {
   background: linear-gradient(
       225deg,
-      rgba(255, 150, 130, 0.9),  /* lighter light coral */
-      rgba(255, 120, 90, 0.92),   /* lighter bright red-orange */
-      rgba(255, 90, 90, 0.95),    /* lighter strong red */
-      rgba(250, 100, 100, 0.95),  /* lighter slightly darker red */
-      rgba(232, 80, 80, 0.95),    /* lighter deeper cherry red */
-      rgba(255, 140, 120, 0.9)    /* lighter soft coral */
+      rgba(102, 184, 255, 0.9),
+      rgba(77, 171, 247, 0.9),
+      rgba(61, 163, 242, 0.9),
+      rgba(77, 171, 247, 0.9),
+      rgba(61, 163, 242, 0.9),
+      rgba(128, 212, 255, 0.9)
   );
-  transform: scale(1.05); /* Slightly scale up the button */
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 100, 100, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.5);  /* Brighter border on hover */
+  transform: scale(1.05);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(51, 154, 240, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 /*------------------------RIGHT FORM------------------------------*/
 
 .profile-container {
-  width: 120.88422247446084vh;
+  width: 130vh;
   height: 58vh;
-  background: rgba(255, 255, 255, 0.7); /* translucent white */
+  background: rgba(45, 45, 45, 0.8);
   border-radius: 12px;
   margin-bottom: 2rem;
-  box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.3); /* soft shadow */
-  backdrop-filter: blur(10px); /* glass effect */
-  -webkit-backdrop-filter: blur(10px); /* Safari support */
-  border: 1px solid rgba(255, 255, 255, 0.18); /* subtle border */
+  box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   margin: 40px auto;
   padding: 30px;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .profile-container h2 {
   margin-bottom: 40px;
   font-size: 24px;
-  color: #333;
+  color: #e0e0e0;
 }
 
 .profile-form {
@@ -173,7 +239,7 @@ button:hover {
 .form-group label {
   margin-bottom: 8px;
   font-weight: 600;
-  color: #333;
+  color: #e0e0e0;
   font-size: 1.2rem;
 }
 
@@ -184,18 +250,18 @@ button:hover {
   border-radius: 15px;
   background: linear-gradient(
     145deg,
-    rgba(255, 240, 240, 0.35),
-    rgba(255, 220, 220, 0.25)
-  ); /* light red mist */
-  border: 1px solid rgba(255, 100, 100, 0.4); /* soft coral red border */
+    rgba(60, 70, 80, 0.5),
+    rgba(50, 60, 70, 0.4)
+  );
+  border: 1px solid rgba(77, 171, 247, 0.4);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 
-  inset 2px 2px 5px rgba(255, 200, 200, 0.5),
-  0px 4px 10px rgba(163, 11, 11, 0.2);
-  color: #222222;
-  pointer-events: none; /* Prevent clicks */
-  user-select: none; /* Prevent text selecting if needed */
+  inset 2px 2px 5px rgba(40, 50, 60, 0.8),
+  0px 4px 10px rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+  pointer-events: none;
+  user-select: none;
   transition: all 0.3s ease;
 }
 
@@ -209,33 +275,56 @@ button:hover {
     flex: 1;
 }
 
-.edit-icon {
-    position: absolute;
-    right: 10px;
+.form-buttons,
+#editButton {
+    margin-top: 20px;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 15px;
+    display: none;
+}
+
+.form-buttons button,
+#editButton, #changePasswordButton {
+    padding: 10px 20px;
+    background-color: #339af0;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 1.2rem;
-    color: #e03e3e;
-    transition: transform 0.2s;
+    transition: background 0.3s ease;
 }
 
-.edit-icon:hover {
-    transform: scale(1.2);
+.form-buttons button:hover,
+#editButton:hover, #changePasswordButton:hover{
+    opacity: 0.85;
 }
 
-
-
+.profile-form input.editable {
+  background: #333;
+  border: 2px solid #4dabf7;
+  box-shadow: 0 0 8px rgba(77, 171, 247, 0.7);
+  color: #e0e0e0;
+  pointer-events: auto;
+  user-select: auto;
+  cursor: text;
+  transition: all 0.3s ease;
+}
 
 /*----------------------------------- SECOND CONTAINER --------------------------------*/
 .section1 {
     margin: 4% auto;
-    background: rgba(255, 255, 255, 0.7); /* translucent white */
+    background: rgba(45, 45, 45, 0.8);
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.3); /* soft shadow */
-    backdrop-filter: blur(10px); /* glass effect */
-    -webkit-backdrop-filter: blur(10px); /* Safari support */
-    border: 1px solid rgba(255, 255, 255, 0.18); /* subtle border */
+    box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: -20px;
 }
 
@@ -244,14 +333,15 @@ button:hover {
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 0;
-    border-bottom: 1px solid #eee;
-    gap: 2rem; /* adds spacing */
+    border-bottom: 1px solid #444;
+    gap: 2rem;
 }
 
 .setting-row span {
     flex: 1;
     font-size: 1.1rem;
     text-align: left;
+    color: #e0e0e0;
 }
 
 .setting-row:last-child {
@@ -262,17 +352,17 @@ button, select {
     padding: 0.5rem 1rem;
     background: linear-gradient(
         225deg,
-        rgba(255, 122, 105, 0.9),   /* light coral */
-        rgba(255, 94, 77, 0.92),    /* bright red-orange */
-        rgba(255, 63, 63, 0.95),    /* strong red */
-        rgba(250, 80, 80, 0.95),    /* slightly darker red */
-        rgba(232, 61, 61, 0.95),    /* deeper cherry red */
-        rgba(255, 107, 92, 0.9)     /* soft coral again for looped tone */
+        rgba(77, 171, 247, 0.8),
+        rgba(51, 154, 240, 0.8),
+        rgba(41, 143, 232, 0.85),
+        rgba(51, 154, 240, 0.85),
+        rgba(41, 143, 232, 0.85),
+        rgba(102, 204, 255, 0.8)
     );
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), 0 0 15px rgba(255, 100, 100, 0.25);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(51, 154, 240, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.15);
     cursor: pointer;
     transition: background-color 0.2s;
@@ -282,26 +372,26 @@ button, select {
 button:hover, select:hover {
     background: linear-gradient(
         225deg,
-        rgba(255, 150, 130, 0.9),  /* lighter light coral */
-        rgba(255, 120, 90, 0.92),   /* lighter bright red-orange */
-        rgba(255, 90, 90, 0.95),    /* lighter strong red */
-        rgba(250, 100, 100, 0.95),  /* lighter slightly darker red */
-        rgba(232, 80, 80, 0.95),    /* lighter deeper cherry red */
-        rgba(255, 140, 120, 0.9)    /* lighter soft coral */
+        rgba(102, 184, 255, 0.9),
+        rgba(77, 171, 247, 0.9),
+        rgba(61, 163, 242, 0.9),
+        rgba(77, 171, 247, 0.9),
+        rgba(61, 163, 242, 0.9),
+        rgba(128, 212, 255, 0.9)
     );
-    transform: scale(1.05); /* Slightly scale up the button */
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 100, 100, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.5);  /* Brighter border on hover */
+    transform: scale(1.05);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(51, 154, 240, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 select:focus{
-    background-color: rgba(255,63,63,0.95);
+    background-color: rgba(41, 143, 232, 0.85);
 }
 
 .setting-title {
     font-weight: bold;
     margin-bottom: 1rem;
-    color: #34495e;
+    color: #e0e0e0;
 }
 
 .section1 input + label {
@@ -309,16 +399,15 @@ select:focus{
     height: 46px;
     position: relative;
     display: block;
-    background-color: #f89494; /* Light red (light mode) */
+    background-color: #555;
     border-radius: 20px;
-    box-shadow: inset 0px 5px 10px rgba(255, 100, 100, 0.4),
-                inset 0 -3px 6px rgba(255, 255, 255, 0.4),
-                0 5px 10px rgba(0, 0, 0, 0.25);
+    box-shadow: inset 0px 5px 10px rgba(0, 0, 0, 0.4),
+                inset 0 -3px 6px rgba(100, 100, 100, 0.4),
+                0 5px 10px rgba(0, 0, 0, 0.4);
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
-/* Toggle Knob */
 .section1 input + label:after {
     content: "";
     width: 42px;
@@ -326,39 +415,35 @@ select:focus{
     position: absolute;
     top: 2px;
     left: 2px;
-    background: linear-gradient(180deg, #ffb1a6, #e65151);
+    background: linear-gradient(180deg, #a0a0a0, #707070);
     border-radius: 20px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
     transition: 0.3s ease;
 }
 
-/* Hide default input */
 .section1 input {
     width: 0;
     height: 0;
     visibility: hidden;
 }
 
-/* Dark mode (toggle checked) */
 .section1 input:checked + label {
-    background-color: #4f74c8; /* Blue theme */
-    box-shadow: inset 0px 5px 10px rgba(60, 100, 180, 0.2),
-                inset 0 -3px 6px rgba(255, 255, 255, 0.2),
-                0 5px 10px rgba(0, 0, 0, 0.25);
+    background-color: #4f74c8;
+    box-shadow: inset 0px 5px 10px rgba(60, 100, 180, 0.3),
+                inset 0 -3px 6px rgba(100, 100, 150, 0.3),
+                0 5px 10px rgba(0, 0, 0, 0.4);
 }
 
 .section1 input:checked + label::after {
     left: 130px;
     transform: translate(-100%);
-    background: linear-gradient(180deg, #84b0ff, #1e3c72); /* Blue knob */
+    background: linear-gradient(180deg, #84b0ff, #1e3c72);
 }
 
-/* Press effect */
 .section1 input + label:active:after {
     width: 64px;
 }
 
-/* Icon Styling */
 .section1 label svg {
     position: absolute;
     width: 36px;
@@ -369,24 +454,23 @@ select:focus{
 
 .section1 label svg.sun {
     left: 5px;
-    fill: #ffffff;
+    fill: #b0b0b0;
     transition: 0.3s;
 }
 
 .section1 label svg.moon {
     left: 90px;
-    fill: #d0dfff;
+    fill: #a0b0ff;
     transition: 0.3s;
 }
 
 .section1 input:checked + label svg.sun {
-    fill: #b3b3b3;
+    fill: #ffff80;
 }
 
 .section1 input:checked + label svg.moon {
     fill: #ffffff;
 }
-
 
 .login-history {
     display: none;
@@ -402,16 +486,320 @@ table {
 th, td {
     text-align: left;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid #444;
+    color: #e0e0e0;
 }
 
 th {
      background: linear-gradient(
         225deg,
-        rgba(255, 94, 77, 0.92),    /* bright red-orange */
-        rgba(255, 63, 63, 0.95),    /* strong red */
-        rgba(250, 80, 80, 0.95),    /* slightly darker red */
-        rgba(232, 61, 61, 0.95)
+        rgba(51, 154, 240, 0.8),
+        rgba(41, 143, 232, 0.85),
+        rgba(51, 154, 240, 0.85),
+        rgba(41, 143, 232, 0.85)
     );
     color: white;
+}
+
+.left-container,
+.profile-container {
+  margin: 40px 0;
+}
+
+/* Change Password Modal Styles - Dark Mode */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #2d2d2d;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease-out;
+    z-index: 10001;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #444;
+    background: rgba(45, 45, 45, 0.9);
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #e0e0e0;
+    font-size: 1.25rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    color: #e0e0e0;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #444;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    background: rgba(45, 45, 45, 0.9);
+}
+
+/* Password Form Styles */
+.password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.password-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.password-form label {
+    font-weight: 600;
+    color: #e0e0e0;
+    font-size: 0.875rem;
+}
+
+.password-form input {
+    padding: 12px;
+    border: 2px solid #444;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+    background: #333;
+    color: #e0e0e0;
+}
+
+.password-form input:focus {
+    border-color: #4dabf7;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
+}
+
+.password-form input::placeholder {
+    color: #888;
+}
+
+/* Password Requirements Styles */
+.password-requirements {
+    background: rgba(45, 45, 45, 0.8);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 10px;
+    border: 1px solid #444;
+}
+
+.password-requirements p {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    color: #e0e0e0;
+    font-size: 0.875rem;
+}
+
+.password-requirements ul {
+    margin: 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.password-requirements li {
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    transition: color 0.3s ease;
+}
+
+.requirement-met {
+    color: #10b981;
+}
+
+.requirement-not-met {
+    color: #888;
+}
+
+.requirement-met::before {
+    content: "✓ ";
+    font-weight: bold;
+}
+
+.requirement-not-met::before {
+    content: "○ ";
+}
+
+/* Button Styles for Modal */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(
+        225deg,
+        rgba(77, 171, 247, 0.8),
+        rgba(51, 154, 240, 0.8),
+        rgba(41, 143, 232, 0.85)
+    );
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(
+        225deg,
+        rgba(102, 184, 255, 0.9),
+        rgba(77, 171, 247, 0.9),
+        rgba(61, 163, 242, 0.9)
+    );
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary {
+    background: #555;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary:hover {
+    background: #666;
+    transform: translateY(-1px);
+}
+
+/* CRITICAL FIX: Force inputs to be clickable */
+#changePasswordModal input[type="password"] {
+    pointer-events: auto !important;
+    cursor: text !important;
+}
+
+/* Ensure all interactive elements in modal are clickable */
+#changePasswordModal .form-group,
+#changePasswordModal input,
+#changePasswordModal button,
+#changePasswordModal label {
+    pointer-events: auto !important;
+}
+
+/* Remove any inherited pointer-events blocking */
+.modal-content * {
+    pointer-events: auto !important;
+}
+
+/* Specific fix for password inputs */
+#currentPassword, 
+#newPassword, 
+#confirmPassword {
+    pointer-events: auto !important;
+    cursor: text !important;
+    position: relative;
+    z-index: 10002 !important;
+}
+
+/* Loading state for buttons */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn .fa-spinner {
+    margin-right: 8px;
+}
+
+/* Success state */
+.password-success {
+    border-color: #10b981 !important;
+    background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+/* Error state */
+.password-error {
+    border-color: #ef4444 !important;
+    background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Focus states for accessibility */
+.password-form input:focus {
+    background: #3a3a3a;
+}
+
+/* Scrollbar styling for modal */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #2d2d2d;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #666;
 }

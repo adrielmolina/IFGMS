@@ -5,7 +5,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
+    <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/accounts.css') }}">
 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -53,7 +53,7 @@
             <table class="editableTable">
                 <thead>
                     <tr>
-                        <th> </th>
+                        <!-- <th> </th> -->
                         <th>ID</th>
                         <th>Date</th>
                         <th>Username</th>
@@ -67,7 +67,7 @@
                     {% for log in logs%}
                     <tr>
                         <!-- TODO enlarge checkboxes / change to custom cell-->
-                        <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ log.action_id }}"></td>
+                        <!-- <td><input type="checkbox" name="active_checkbox" id="active_checkbox" value="{{ log.action_id }}"></td> -->
                         <td>{{ log.action_id }}</td>
                         <td>{{ log.date }}</td>
                         <td>{{ log.staff_name }}</td>
@@ -87,11 +87,56 @@
 
 
 {% block extra_scripts %}
+<script>
+    // Dark Mode Functionality for Module
+    document.addEventListener("DOMContentLoaded", function() {
+        const themeLink = document.getElementById("theme-link");
+        const savedTheme = localStorage.getItem("baseTheme") || "light";
+        
+        if (savedTheme === "dark") {
+            switchToDarkMode();
+        }
+        
+        window.addEventListener('themeChanged', function(e) {
+            if (e.detail.theme === "dark") {
+                switchToDarkMode();
+            } else {
+                switchToLightMode();
+            }
+        });
+        
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'baseTheme') {
+                if (e.newValue === "dark") {
+                    switchToDarkMode();
+                } else {
+                    switchToLightMode();
+                }
+            }
+        });
+        
+        function switchToDarkMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('accounts.css', 'accounts-dark.css');
+            themeLink.setAttribute('href', newHref);
+        }
+        
+        function switchToLightMode() {
+            const currentHref = themeLink.getAttribute('href');
+            const newHref = currentHref.replace('accounts-dark.css', 'accounts.css');
+            themeLink.setAttribute('href', newHref);
+        }
+    });
+</script>
+
    <script>
 $(document).ready(function() {
     // Initialize DataTable for tables with the "editableTable" class
     $('.editableTable').each(function() {
-        var table = $(this).DataTable();
+        var table = $(this).DataTable({
+        "ordering": false,  // This prevents DataTable from re-sorting
+        "order": []         // Explicitly no order
+    });
         
     // Move "Show entries" outside the table
     var lengthControl = $(this)

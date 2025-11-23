@@ -12,6 +12,7 @@ from random import randint
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import resend
 
 if os.getenv('FLASK_ENV') == 'production' or os.getenv('FLASK_ENV') == 'development':
     DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'aiven').lower()
@@ -23,6 +24,7 @@ else:
     load_dotenv(env_loc)
 
     DB_CONNECTION_MODE = os.getenv('DB_CONNECTION_MODE', 'local').lower()
+    
 
 # FOR AIVEN DB CONNECTION
 AIVEN_URI = os.getenv('AIVEN_URI')
@@ -40,6 +42,10 @@ SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+
+RESEND_SENDER_EMAIL = os.getenv("RESEND_SENDER_EMAIL")
+RESEND_SENDER_EMAIL_GEN = os.getenv("RESEND_SENDER_EMAIL_GEN")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 # todo remove on deployment
 # print(f'SQL CONNECTION DEBUG\nHost={SQL_HOST}\nUser={SQL_USER}\nPass={SQL_PASS}\nDB={SQL_DB}')
@@ -302,7 +308,43 @@ def save_otp(email, otp):
         raise
     
 # TODO update email icon
+
+# Set API key
+resend.api_key = RESEND_API_KEY
 def send_otp_email(email, otp):
+    
+    """Send OTP to the user's email using Resend API."""
+    subject = "Your OTP Code for Password Reset"
+
+    # Same message as before, but wrapped in light HTML styling
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+        <p>Your OTP code for <strong>FGMS</strong> password reset is: <strong>{otp}</strong></p>
+        <p style="color: #555;">This OTP will expire in 5 minutes.</p>
+        <p>If you didn't request this password reset, please ignore this email.</p>
+        <br>
+        <p style="font-style: italic;">This is an automated email, please do not reply.</p>
+        <br>
+        <p>Thank you,<br><strong>FGMS Team</strong></p>
+    </div>
+    """
+
+    try:
+        resend.Emails.send({
+            "from": RESEND_SENDER_EMAIL,
+            "to": email,
+            "subject": subject,
+            "html": html_body
+        })
+        print("✅ OTP sent successfully!")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send OTP: {e}")
+        return False
+    
+    # OLD SMTP METHOD
+    '''
+    
     """Send OTP to the user's email. Returns True if successful, False otherwise."""
     subject = "Your OTP Code for Password Reset"
     body = f"""
@@ -332,6 +374,66 @@ def send_otp_email(email, otp):
     except Exception as e:
         print(f"❌ Failed to send OTP: {e}")
         return False  # Return False on failure
+    '''
+    
+    
+# Add these functions to your db_conn.py
+
+def send_birthday_greeting_email(member_email, member_name):
+    """Send automatic birthday greeting email"""
+    try:
+        subject = "🎂 Happy Birthday from Philippine Red Cross - Cavite Chapter!"
+        
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+            <h2 style="color: #e74c3c;">Happy Birthday, {member_name}! 🎂</h2>
+            <p>Wishing you a wonderful birthday filled with joy and happiness!</p>
+            <p>Thank you for being a valued member of our community.</p>
+            <br>
+            <p>Best regards,<br><strong>FGMS Team</strong></p>
+        </div>
+        """
+
+        resend.Emails.send({
+            "from": RESEND_SENDER_EMAIL_GEN,
+            "to": member_email,
+            "subject": subject,
+            "html": html_body
+        })
+        print(f"✅ Birthday greeting sent to {member_name} at {member_email}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send birthday greeting: {e}")
+        return False
+
+def send_renewal_reminder_email(member_email, member_name, days_left, maab_no=None):
+    """Send automatic renewal reminder email"""
+    try:
+        subject = f"⏰ Membership Renewal Reminder - {days_left} days left"
+        
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+            <h2 style="color: #FF9800;">Membership Renewal Reminder</h2>
+            <p>Dear {member_name},</p>
+            <p>Your FGMS membership will expire in <strong>{days_left} days</strong>.</p>
+            {"<p>MAAB Number: <strong>" + maab_no + "</strong></p>" if maab_no else ""}
+            <p>Please renew your membership to continue enjoying our services.</p>
+            <br>
+            <p>Best regards,<br><strong>FGMS Team</strong></p>
+        </div>
+        """
+
+        resend.Emails.send({
+            "from": RESEND_SENDER_EMAIL_GEN,
+            "to": member_email,
+            "subject": subject,
+            "html": html_body
+        })
+        print(f"✅ Renewal reminder sent to {member_name} at {member_email} ({days_left} days left)")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send renewal reminder: {e}")
+        return False
 
 def verifying_otp(email, otp_input):
     """Verify OTP against the database (original version with added debug prints)"""
@@ -596,8 +698,6 @@ def reset_account(id):
         traceback.print_exc()
         db_session.rollback()
         return False
-    finally:
-        db_session.close()
 
 
 def update_userlvl(id, new_level):
@@ -809,23 +909,24 @@ def get_member_records(status='active', office_loc=None):
 
         # Apply office location logic
         if office_loc == 'Chapter':
-            # Chapter = all Chapter + transmitted (declared) Dasma/Silang
-            query = query.filter(
-                (models.Records.origin == "Chapter") |
-                (
-                    (models.Records.origin.in_(["Dasmariñas", "Silang"])) &
-                    (models.Records.tags == "transmitted")
-                )
-            )
+            # Chapter users can see all records
+            print("🔍 Chapter user - showing all records")
+            # No additional filtering needed for Chapter users
+            pass
 
         elif office_loc == 'Dasmarinas':
+            # Only Dasmariñas records
             query = query.filter(models.Records.origin == "Dasmariñas")
+            print("🔍 Dasmarinas user - filtering to Dasmariñas records only")
 
         elif office_loc == 'Silang':
+            # Only Silang records
             query = query.filter(models.Records.origin == "Silang")
+            print("🔍 Silang user - filtering to Silang records only")
 
-        # If office_loc is None, return based only on status
+        # If office_loc is None or doesn't match known locations, return based only on status
         records = query.order_by(models.Records.record_id.desc()).all()
+        print(f"✅ Found {len(records)} records for office location: {office_loc}")
         return records
 
     except Exception as e:
@@ -1340,7 +1441,7 @@ def transmit_dispatch_entries(dispatch_id, account_id=None):
                 # Mark entry as declared with current date BUT KEEP DISPATCH_ID
                 entry.declared = True
                 entry.declaration_date = current_date
-                entry.tags = "transmitted"
+                entry.tags = "Declared"
                 # DON'T clear dispatch_id: entry.dispatch_id = None
                 
                 # Track the record ID for updating the record
@@ -1563,9 +1664,15 @@ def get_report_target_vs_actual(year):
     db_session = SessionLocal()
     try:
         categories = [
-            "Classic", "Bronze", "Silver", "Gold",
-            "Platinum", "Safe Card", "Senior", "Senior+"
+            "Classic", "Bronze", "Silver", "Gold", "Platinum", 
+            "Enhanced Platinum", "Senior", "Senior+", "Safe Card"
         ]
+
+        # DEBUG: Count total entries for the year
+        total_entries = db_session.query(models.Entries).filter(
+            extract("year", models.Entries.OR_date) == year
+        ).count()
+        print(f"🔍 DEBUG: Total entries in {year}: {total_entries}")
 
         # Query entries for monthly counts
         rows = (
@@ -1585,18 +1692,41 @@ def get_report_target_vs_actual(year):
             .all()
         )
 
-        # Query target_per_year for the year
+        print(f"🔍 DEBUG: Grouped entries found: {len(rows)}")
+        for category, month, count in rows:
+            print(f"  - {category}, Month {month}: {count}")
+
+        # DEBUG: Check for entries with NULL or different categories
+        null_category_entries = db_session.query(models.Entries).filter(
+            extract("year", models.Entries.OR_date) == year,
+            ~models.Entries.maab_category.in_(categories)
+        ).count()
+        print(f"🔍 DEBUG: Entries with non-matching categories: {null_category_entries}")
+
+        # DEBUG: Check for entries with NULL OR_date
+        null_date_entries = db_session.query(models.Entries).filter(
+            models.Entries.OR_date.is_(None)
+        ).count()
+        print(f"🔍 DEBUG: Entries with NULL OR_date: {null_date_entries}")
+
         target_row = db_session.query(models.Report_TvA).filter(models.Report_TvA.year == year).first()
 
-        cat_to_col = {
-        "Senior+": "senior_plus"
-}
+        category_to_column = {
+            "Classic": "classic",
+            "Bronze": "bronze", 
+            "Silver": "silver",
+            "Gold": "gold",
+            "Platinum": "platinum",
+            "Enhanced Platinum": "safe_card",
+            "Senior": "senior",
+            "Senior+": "senior_plus",
+            "Safe Card": "safe_card"
+        }
         
-        # Build pivot output with target at front
         output = {}
         for cat in categories:
-            target_col = cat_to_col.get(cat, cat.lower().replace(" ", "_"))
-            target_value = getattr(target_row, target_col, 0)
+            target_col = category_to_column.get(cat)
+            target_value = getattr(target_row, target_col, 0) if target_row else 0
             output[cat] = {0: target_value, **{m: 0 for m in range(1, 13)}}
 
         # Fill monthly counts from entries
@@ -1605,11 +1735,58 @@ def get_report_target_vs_actual(year):
             if category in output:
                 output[category][month] = count
 
+        # DEBUG: Calculate total detected vs expected
+        total_detected = sum(sum(cat_data.values()) for cat_data in output.values()) - sum(cat_data[0] for cat_data in output.values())
+        print(f"🔍 DEBUG: Total detected in report: {total_detected}")
+        print(f"🔍 DEBUG: Missing entries: {total_entries - total_detected}")
+
         return output
     except Exception as e:
         print(f"Error fetching report data: {e}")
-        return []
+        return {}
+    finally:
+        db_session.close()
 
+def auto_create_yearly_targets():
+    """Automatically create target rows for new year on January 1st"""
+    try:
+        from datetime import datetime
+        current_date = datetime.now()
+        current_year = current_date.year
+        
+        db_session = SessionLocal()
+        
+        # Check if target already exists for this year
+        existing_target = db_session.query(models.Report_TvA).filter(
+            models.Report_TvA.year == current_year
+        ).first()
+        
+        if not existing_target:
+            # Create new target row with null/zero values
+            new_target = models.Report_TvA(
+                year=current_year,
+                classic=0,
+                bronze=0,
+                silver=0,
+                gold=0,
+                platinum=0,
+                safe_card=0,
+                senior=0,
+                senior_plus=0
+            )
+            db_session.add(new_target)
+            db_session.commit()
+            print(f"✅ Auto-created target row for year {current_year}")
+            return True
+        else:
+            print(f"✅ Target row for year {current_year} already exists")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error auto-creating yearly targets: {e}")
+        return False
+    finally:
+        db_session.close()
 
 def get_current_active_dispatch(db_session=None):
     """Get current active dispatch with optional session parameter"""
@@ -2179,7 +2356,7 @@ def check_user_authorized(email):
 def GET_audit_logs():
     db_session = SessionLocal()
     try:
-        logs = db_session.query(models.Logs).order_by(models.Logs.date.desc()).all()
+        logs = db_session.query(models.Logs).order_by(models.Logs.action_id.desc()).all()
         return logs
     except Exception as e:
         print(f"Error fetching audit logs: {e}")
