@@ -4233,6 +4233,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const savedProfileImage = localStorage.getItem("profileImage");
         if (savedProfileImage) navProfileImage.src = savedProfileImage;
     }
+    const bdateInput = document.getElementById('bdate');
+    if (bdateInput) {
+        bdateInput.addEventListener('change', calculateAgeFromBirthdate);
+        console.log('✅ Birthdate age calculation event listener added');
+    }
     
     window.addEventListener('storage', function(e) {
         if (e.key === 'profileImage') {
