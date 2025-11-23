@@ -2267,63 +2267,62 @@ def change_password_api():
 @server.route('/api/members/all_members_complete', methods=['GET'])
 def get_all_members_complete():
     try:
-        print("🔄 API endpoint called")
+        print("🔄 API endpoint called: /api/members/all_members_complete")
         db_session = SessionLocal()
         
-        cursor = db_session.execute(text("""
-            WITH LatestMaabNo AS (
-                SELECT 
-                    member_id,
-                    maab_no,
-                    OR_date,
-                    ROW_NUMBER() OVER (PARTITION BY member_id ORDER BY OR_date DESC) as rn
-                FROM entry_contents
-                WHERE OR_date IS NOT NULL
+        # Subquery to get the latest entry for each member with OR_date
+        latest_entries_subquery = (
+            db_session.query(
+                models.Entries.member_id,
+                models.Entries.maab_no,
+                models.Entries.OR_date,
+                func.row_number().over(
+                    partition_by=models.Entries.member_id,
+                    order_by=models.Entries.OR_date.desc()
+                ).label('row_num')
             )
-            SELECT 
-                mi.member_id, 
-                mi.first_name, 
-                mi.middle_name, 
-                mi.last_name, 
-                mi.suffix, 
-                mi.birth_date, 
-                mi.age, 
-                mi.sex, 
-                mi.contact_no, 
-                mi.email, 
-                mi.address, 
-                mi.blood_type,
-                ec.maab_no,
-                ec.OR_date
-            FROM members_info mi
-            LEFT JOIN LatestMaabNo ec ON mi.member_id = ec.member_id AND ec.rn = 1
-            ORDER BY 
-                CASE WHEN ec.OR_date IS NULL THEN 1 ELSE 0 END,  -- Put NULLs last
-                ec.OR_date DESC,  -- Then sort by date (newest first)
-                mi.member_id
-        """))
+            .filter(models.Entries.OR_date.isnot(None))
+            .subquery()
+        )
         
-        members = cursor.fetchall()
+        # Main query to get members who have OR dates with their latest maab_no
+        results = (
+            db_session.query(
+                models.Members,
+                latest_entries_subquery.c.maab_no,
+                latest_entries_subquery.c.OR_date
+            )
+            .join(
+                latest_entries_subquery,
+                models.Members.member_id == latest_entries_subquery.c.member_id
+            )
+            .filter(latest_entries_subquery.c.row_num == 1)
+            .order_by(latest_entries_subquery.c.OR_date.desc())
+            .all()
+        )
         
         members_list = []
-        for member in members:
-            members_list.append({
-                'member_id': member[0],
-                'first_name': member[1],
-                'middle_name': member[2],
-                'last_name': member[3],
-                'suffix': member[4],
-                'birth_date': member[5].strftime('%Y-%m-%d') if member[5] else None,
-                'age': member[6],
-                'sex': member[7],
-                'contact_no': member[8],
-                'email': member[9],
-                'address': member[10],
-                'blood_type': member[11],
-                'maab_no': member[12]
-            })
+        for member, maab_no, or_date in results:
+            # Using OrderedDict to ensure maab_no is first
+            member_data = {
+                'maab_no': maab_no,  # First field as requested
+                'member_id': member.member_id,
+                'first_name': member.first_name,
+                'middle_name': member.middle_name,
+                'last_name': member.last_name,
+                'suffix': member.suffix,
+                'birth_date': member.birth_date.strftime('%Y-%m-%d') if member.birth_date else None,
+                'age': member.age,
+                'sex': member.sex,
+                'contact_no': member.contact_no,
+                'email': member.email,
+                'address': member.address,
+                'blood_type': member.blood_type,
+                'OR_date': or_date.strftime('%Y-%m-%d') if or_date else None
+            }
+            members_list.append(member_data)
         
-        print(f"✅ Successfully returned {len(members_list)} members")
+        print(f"✅ Successfully returned {len(members_list)} members with OR dates")
         return jsonify({
             'success': True, 
             'members': members_list, 
@@ -2333,9 +2332,10 @@ def get_all_members_complete():
     except Exception as e:
         print(f"❌ Error in API: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        if 'db_session' in locals():
-            db_session.close()
+            
+            
+            
+            
 @server.route('/api/save_entry_update', methods=['POST'])
 @login_required
 def save_entry_update():
