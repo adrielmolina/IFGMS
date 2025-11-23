@@ -1863,6 +1863,170 @@ def save_entry_details():
             except ValueError:
                 pass
 
+        # Check if member already exists
+        existing_member = db_session.query(models.Members).filter(
+            models.Members.first_name == first_name,
+            models.Members.last_name == last_name,
+            models.Members.birth_date == birthdate,
+            models.Members.sex == data.get('sex')
+        ).first()
+
+        if existing_member:
+            # Use existing member
+            member_id = existing_member.member_id
+            print(f"Found existing member with ID: {member_id}")
+            
+            # Update existing member information if needed
+            update_fields = []
+            if middle_name and middle_name != existing_member.middle_name:
+                existing_member.middle_name = middle_name
+                update_fields.append('middle_name')
+            if suffix and suffix != existing_member.suffix:
+                existing_member.suffix = suffix
+                update_fields.append('suffix')
+            if data.get('contact_no') and data.get('contact_no') != existing_member.contact_no:
+                existing_member.contact_no = data.get('contact_no')
+                update_fields.append('contact_no')
+            if data.get('email') and data.get('email') != existing_member.email:
+                existing_member.email = data.get('email')
+                update_fields.append('email')
+            if data.get('address') and data.get('address') != existing_member.address:
+                existing_member.address = data.get('address')
+                update_fields.append('address')
+            if data.get('blood_type') and data.get('blood_type') != existing_member.blood_type:
+                existing_member.blood_type = data.get('blood_type')
+                update_fields.append('blood_type')
+            
+            if update_fields:
+                print(f"Updated member fields: {', '.join(update_fields)}")
+                db_session.flush()
+        else:
+            # Create new member with proper None handling for all fields
+            new_member = models.Members(
+                first_name=first_name,
+                middle_name=middle_name or None,  # Convert empty string back to None
+                last_name=last_name,
+                suffix=suffix,
+                birth_date=birthdate,
+                age=data.get('age'),
+                sex=data.get('sex'),
+                contact_no=data.get('contact_no'),
+                email=data.get('email'),
+                address=data.get('address'),
+                blood_type=data.get('blood_type')
+            )
+            db_session.add(new_member)
+            db_session.flush()  # Get member_id without committing
+            
+            member_id = new_member.member_id
+            print(f"Created new member with ID: {member_id}")
+
+        # Create new entry
+        new_entry = models.Entries(
+            record_id=record_id,
+            maab_category=data.get('maab_category', 'Classic'),
+            maab_no=data.get('maab_no'),
+            member_id=member_id,
+            id_received=bool(data.get('id_received', False)),
+            declared=bool(data.get('declared', False)),
+            declaration_date=declaration_date,
+            paid=bool(data.get('paid', False)),
+            OR_num=data.get('OR_num'),
+            OR_date=OR_date,
+            remarks=data.get('remarks'),
+            tags=data.get('tags'),
+            dispatch_ready=bool(data.get('dispatch_ready', False))
+        )
+        db_session.add(new_entry)
+        db_session.flush()
+        
+        entry_id = new_entry.entry_id
+        print(f"Created new entry with ID: {entry_id}")
+
+        # Commit both member and entry
+        db_session.commit()
+        
+        print("=== ENTRY SAVE SUCCESS ===")
+        action_type = 'Add Entry (Existing Member)' if existing_member else 'Add Entry (New Member)'
+        db_conn.POST_action_log(current_user.username, current_user.user_level, action_type, f'Added entry for {first_name} {last_name}', current_user.account_id)
+        return jsonify({
+            "success": True, 
+            "message": "Entry added successfully",
+            "entry_id": entry_id,
+            "member_id": member_id,
+            "member_existed": bool(existing_member)
+        })
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"=== ENTRY SAVE ERROR ===")
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry Failed', f'Failed to add entry for {first_name} {last_name}', current_user.account_id)
+        return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+    finally:
+        db_session.close()
+    
+    #OLD QUERY. NO EXISTING MEMBER CHECK
+    '''
+    data = request.get_json()
+    print("=== ENTRY SAVE REQUEST ===")
+    print("Received data:", data)
+    
+    if not data:
+        db_conn.POST_action_log(current_user.username, current_user.user_level, 'Add Entry Failed', 'No data provided', current_user.account_id)
+        return jsonify({"success": False, "error": "No data provided"}), 400
+    
+    db_session = SessionLocal()
+    try:
+        # Extract and validate required fields
+        record_id = data.get('record_id')
+        if not record_id:
+            return jsonify({"success": False, "error": "Record ID is required"}), 400
+
+        # Extract member data with proper None handling
+        first_name = data.get('first_name')
+        middle_name = data.get('middle_name')
+        last_name = data.get('last_name')
+        suffix = data.get('suffix', 'NA')
+        
+        # Validate required fields
+        if not first_name or not last_name:
+            return jsonify({"success": False, "error": "First name and last name are required"}), 400
+
+        # Handle string fields - convert None to empty string, then strip
+        first_name = (first_name or '').strip().upper()
+        middle_name = (middle_name or '').strip().upper()
+        last_name = (last_name or '').strip().upper()
+        
+        # Parse birthdate
+        birthdate = None
+        birthdate_string = data.get('birth_date')
+        if birthdate_string:
+            try:
+                birthdate = datetime.strptime(birthdate_string, "%Y-%m-%d").date()
+            except ValueError as e:
+                print(f"Birthdate parsing error: {e}")
+                # Continue without birthdate rather than failing
+
+        # Parse other dates
+        declaration_date = None
+        declaration_date_string = data.get('declaration_date')
+        if declaration_date_string:
+            try:
+                declaration_date = datetime.strptime(declaration_date_string, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+
+        OR_date = None
+        OR_date_string = data.get('OR_date')
+        if OR_date_string:
+            try:
+                OR_date = datetime.strptime(OR_date_string, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+
         # Create new member with proper None handling for all fields
         new_member = models.Members(
             first_name=first_name,
@@ -1927,6 +2091,8 @@ def save_entry_details():
         return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
     finally:
         db_session.close()
+        
+    '''
     
 # # ===== GET ALL MEMBER IDs FROM members_info TABLE =====
 # @server.route('/api/members/all_member_ids')
@@ -2125,65 +2291,217 @@ def change_password_api():
             print("🔑 Database session closed")
             
             
-# Modified route to get ALL member data including all columns
-@server.route('/api/members/all_members_complete')
+# # Modified route to get ALL member data including all columns
+# @server.route('/api/members/all_members_complete')
+# def get_all_members_complete():
+#     try:
+#         db_session = SessionLocal()
+        
+#         try:
+#             # Query ALL member data including all columns
+#             cursor = db_session.execute(text("""
+#                 SELECT member_id, first_name, middle_name, last_name, suffix, 
+#                        birth_date, age, sex, contact_no, email, address, blood_type
+#                 FROM members_info 
+#                 ORDER BY member_id
+#             """))
+            
+#             members = cursor.fetchall()
+            
+#             # Convert to list of dictionaries
+#             members_list = []
+#             for member in members:
+#                 members_list.append({
+#                     'member_id': member[0],
+#                     'first_name': member[1],
+#                     'middle_name': member[2],
+#                     'last_name': member[3],
+#                     'suffix': member[4],
+#                     'birth_date': member[5],
+#                     'age': member[6],
+#                     'sex': member[7],
+#                     'contact_no': member[8],
+#                     'email': member[9],
+#                     'address': member[10],
+#                     'blood_type': member[11]
+#                 })
+            
+#             print(f"✅ Retrieved {len(members_list)} members with complete data")
+#             return jsonify({
+#                 'success': True, 
+#                 'members': members_list, 
+#                 'count': len(members_list)
+#             })
+            
+#         except Exception as e:
+#             print(f"❌ Database error: {e}")
+#             return jsonify({
+#                 'success': False, 
+#                 'error': str(e)
+#             }), 500
+            
+#         finally:
+#             db_session.close()
+            
+#     except Exception as e:
+#         print(f"❌ Route error: {e}")
+#         return jsonify({
+#             'success': False, 
+#             'error': 'Internal server error'
+#         }), 500
+
+
+# Test route to check if the server is working
+# @server.route('/api/test')
+# def test():
+#     return jsonify({"message": "Test route works!"})
+
+# # The route for all members complete
+# @server.route('/api/members/all_members_complete')
+# def get_all_members_complete():
+#     try:
+#         db_session = SessionLocal()
+        
+#         try:
+#             # Query ALL member data including all columns and maab_no from entry_contents
+#             cursor = db_session.execute(text("""
+#                 SELECT 
+#                     mi.member_id, 
+#                     mi.first_name, 
+#                     mi.middle_name, 
+#                     mi.last_name, 
+#                     mi.suffix, 
+#                     mi.birth_date, 
+#                     mi.age, 
+#                     mi.sex, 
+#                     mi.contact_no, 
+#                     mi.email, 
+#                     mi.address, 
+#                     mi.blood_type,
+#                     ec.maab_no
+#                 FROM members_info mi
+#                 LEFT JOIN entry_contents ec ON mi.member_id = ec.member_id
+#                 ORDER BY mi.member_id
+#             """))
+            
+#             members = cursor.fetchall()
+            
+#             # Convert to list of dictionaries
+#             members_list = []
+#             for member in members:
+#                 members_list.append({
+#                     'member_id': member[0],
+#                     'first_name': member[1],
+#                     'middle_name': member[2],
+#                     'last_name': member[3],
+#                     'suffix': member[4],
+#                     'birth_date': member[5].strftime('%Y-%m-%d') if member[5] else None,
+#                     'age': member[6],
+#                     'sex': member[7],
+#                     'contact_no': member[8],
+#                     'email': member[9],
+#                     'address': member[10],
+#                     'blood_type': member[11],
+#                     'maab_no': member[12]  # This comes from entry_contents table
+#                 })
+            
+#             print(f"✅ Retrieved {len(members_list)} members with complete data including maab_no")
+#             return jsonify({
+#                 'success': True, 
+#                 'members': members_list, 
+#                 'count': len(members_list)
+#             })
+            
+#         except Exception as e:
+#             print(f"❌ Database error: {e}")
+#             return jsonify({
+#                 'success': False, 
+#                 'error': str(e)
+#             }), 500
+            
+#         finally:
+#             db_session.close()
+            
+#     except Exception as e:
+#         print(f"❌ Route error: {e}")
+#         return jsonify({
+#             'success': False, 
+#             'error': 'Internal server error'
+#         }), 500
+
+# TODO adriel 
+@server.route('/api/members/all_members_complete', methods=['GET'])
 def get_all_members_complete():
     try:
+        print("🔄 API endpoint called: /api/members/all_members_complete")
         db_session = SessionLocal()
         
-        try:
-            # Query ALL member data including all columns
-            cursor = db_session.execute(text("""
-                SELECT member_id, first_name, middle_name, last_name, suffix, 
-                       birth_date, age, sex, contact_no, email, address, blood_type
-                FROM members_info 
-                ORDER BY member_id
-            """))
-            
-            members = cursor.fetchall()
-            
-            # Convert to list of dictionaries
-            members_list = []
-            for member in members:
-                members_list.append({
-                    'member_id': member[0],
-                    'first_name': member[1],
-                    'middle_name': member[2],
-                    'last_name': member[3],
-                    'suffix': member[4],
-                    'birth_date': member[5],
-                    'age': member[6],
-                    'sex': member[7],
-                    'contact_no': member[8],
-                    'email': member[9],
-                    'address': member[10],
-                    'blood_type': member[11]
-                })
-            
-            print(f"✅ Retrieved {len(members_list)} members with complete data")
-            return jsonify({
-                'success': True, 
-                'members': members_list, 
-                'count': len(members_list)
-            })
-            
-        except Exception as e:
-            print(f"❌ Database error: {e}")
-            return jsonify({
-                'success': False, 
-                'error': str(e)
-            }), 500
-            
-        finally:
-            db_session.close()
-            
-    except Exception as e:
-        print(f"❌ Route error: {e}")
+        # Subquery to get the latest entry for each member with OR_date
+        latest_entries_subquery = (
+            db_session.query(
+                models.Entries.member_id,
+                models.Entries.maab_no,
+                models.Entries.OR_date,
+                func.row_number().over(
+                    partition_by=models.Entries.member_id,
+                    order_by=models.Entries.OR_date.desc()
+                ).label('row_num')
+            )
+            .filter(models.Entries.OR_date.isnot(None))
+            .subquery()
+        )
+        
+        # Main query to get members who have OR dates with their latest maab_no
+        results = (
+            db_session.query(
+                models.Members,
+                latest_entries_subquery.c.maab_no,
+                latest_entries_subquery.c.OR_date
+            )
+            .join(
+                latest_entries_subquery,
+                models.Members.member_id == latest_entries_subquery.c.member_id
+            )
+            .filter(latest_entries_subquery.c.row_num == 1)
+            .order_by(latest_entries_subquery.c.OR_date.desc())
+            .all()
+        )
+        
+        members_list = []
+        for member, maab_no, or_date in results:
+            # Using OrderedDict to ensure maab_no is first
+            member_data = {
+                'maab_no': maab_no,  # First field as requested
+                'member_id': member.member_id,
+                'first_name': member.first_name,
+                'middle_name': member.middle_name,
+                'last_name': member.last_name,
+                'suffix': member.suffix,
+                'birth_date': member.birth_date.strftime('%Y-%m-%d') if member.birth_date else None,
+                'age': member.age,
+                'sex': member.sex,
+                'contact_no': member.contact_no,
+                'email': member.email,
+                'address': member.address,
+                'blood_type': member.blood_type,
+                'OR_date': or_date.strftime('%Y-%m-%d') if or_date else None
+            }
+            members_list.append(member_data)
+        
+        print(f"✅ Successfully returned {len(members_list)} members with OR dates")
         return jsonify({
-            'success': False, 
-            'error': 'Internal server error'
-        }), 500
-
+            'success': True, 
+            'members': members_list, 
+            'count': len(members_list)
+        })
+        
+    except Exception as e:
+        print(f"❌ Error in API: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+            
+            
+            
+            
 @server.route('/api/save_entry_update', methods=['POST'])
 @login_required
 def save_entry_update():
