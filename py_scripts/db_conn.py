@@ -382,7 +382,7 @@ def send_otp_email(email, otp):
 def send_birthday_greeting_email(member_email, member_name):
     """Send automatic birthday greeting email"""
     try:
-        subject = "🎂 Happy Birthday from FGMS!"
+        subject = "🎂 Happy Birthday from Philippine Red Cross - Cavite Chapter!"
         
         html_body = f"""
         <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
