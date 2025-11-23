@@ -2449,7 +2449,7 @@ function clearEntryForm() {
     document.getElementById('sex').value = '';
     document.getElementById('blood_type').value = '';
     
-    const checkboxes = ['id_received', 'entry_declared', 'entry_paid'];
+    const checkboxes = ['id_received', 'entry_declared', 'entry_paid', 'renew'];
     checkboxes.forEach(checkbox => {
         const element = document.getElementById(checkbox);
         if (element) element.checked = false;
@@ -2468,7 +2468,7 @@ function clearEntryForm() {
         orDateField.style.backgroundColor = '#f5f5f5';
         orDateField.style.cursor = 'not-allowed';
     }
-    
+    document.getElementById('renew_overlay_btn').disabled = true;
     clearAllValidationErrors();
 }
 
