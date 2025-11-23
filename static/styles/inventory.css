@@ -254,10 +254,14 @@ body {
   color: white;
 }
 
-.action-buttons #openFormBtn2,
-.action-buttons #assignIDBtn {
+.action-buttons #openFormBtn2
+{
   background: #4285f4;  
   color: white;
+}
+
+.action-buttons #assignIDBtn {
+    display: none !important;
 }
 
 /* Hover effect */

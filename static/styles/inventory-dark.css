@@ -38,6 +38,10 @@ body {
     color: #4dabf7
 }
 
+.action-buttons #assignIDBtn {
+    display: none !important;
+}
+
 
 
 .filter_search_container {
