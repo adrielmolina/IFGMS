@@ -620,10 +620,10 @@
                                 </select>
 
                                 <label for="chinabank_check_no">Chinabank Check No.</label>
-                                <input type="text" id="chinabank_check_no" name="chinabank_check_no" required autocomplete="off" disabled>
+                                <input type="number" id="chinabank_check_no" name="chinabank_check_no" required autocomplete="off" disabled>
 
                                 <label for="bpi_check_no">BPI Check No.</label>
-                                <input type="text" id="bpi_check_no" name="bpi_check_no" required autocomplete="off" disabled>    
+                                <input type="number" id="bpi_check_no" name="bpi_check_no" required autocomplete="off" disabled>    
 
                                 <button class="generate_prm" id="generate_prm" hidden>Generate PRM Template</button>
                                 <input type="file" accept=".xlsx" id="upload_prm" name="upload_prm" required autocomplete="off" hidden>
@@ -642,11 +642,11 @@
                                 </span>
 
                                 <label for="chinabank_amount">Chinabank Amount</label>
-                                <input type="text" id="chinabank_amount" name="chinabank_amount" required autocomplete="off" disabled>
+                                <input type="number" id="chinabank_amount" name="chinabank_amount" required autocomplete="off" disabled>
                                                                 
                                 
                                 <label for="bpi_amount">BPI Amount</label>  
-                                <input type="text" id="bpi_amount" name="bpi_amount" required autocomplete="off" disabled>
+                                <input type="number" id="bpi_amount" name="bpi_amount" required autocomplete="off" disabled>
 
                                 <button class="generate_quit_claim" id="generate_quit_claim" hidden>Generate Quit Claim Template</button>
                                 <input type="file" accept=".docx" id="upload_quit_claim" name="upload_quit_claim" required autocomplete="off" hidden>
@@ -1910,7 +1910,7 @@ document.getElementById('delete_claim_record').addEventListener('click', functio
     }
 
     document.getElementById('delete_claim_record').innerHTML = 'Deleting...';
-    document.getElementById('delete_claim_record').disabled = true;
+    document.getElementById('delete_claim_record').disabled = false;
 
     fetch(`/api/delete_claim_record`, {
         method: 'DELETE',
