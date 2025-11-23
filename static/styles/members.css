@@ -1574,6 +1574,22 @@ div.table-container {
     display: inline-block !important;
 }
 
+/* ===== ENTRY FORM BUTTON VISIBILITY FIXES ===== */
+
+/* Delete Entry button - hidden by default, shown only when editing */
+#delete_entry {
+    display: none !important;
+}
+
+#delete_entry.show {
+    display: inline-block !important;
+}
+
+/* Back to Add Entry button - hidden by default, shown only when editing */
+#back_to_add {
+    display: none !important;
+}
+
 #back_to_add.show {
     display: inline-block !important;
 }
@@ -1656,4 +1672,51 @@ div.table-container {
     background-color: #dc3545;
     position: sticky;
     top: 0;
+}
+
+
+/* Ensure proper button spacing in entry details controls */
+.entry_details .controls_box {
+    display: flex !important;
+    gap: 10px !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+}
+
+/* Button container layout fixes */
+.entry_details .controls_box button {
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+/* Secondary button styling for Back to Add Entry */
+.btn-secondary {
+    background-color: #6c757d !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 14px !important;
+    text-decoration: none !important;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-secondary:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    transform: none !important;
 }

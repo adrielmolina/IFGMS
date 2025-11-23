@@ -2594,7 +2594,7 @@ function populateEntryForm(entryData) {
             orDateInput.value = convertToYYYYMMDD(entryData.OR_date);
         } else orDateInput.value = '';
         
-        document.getElementById('id_received').checked = false;
+        document.getElementById('id_received').checked = Boolean(entryData.id_received);
         document.getElementById('entry_declared').checked = Boolean(entryData.declared);
         document.getElementById('entry_paid').checked = Boolean(entryData.paid);
         
@@ -2612,6 +2612,7 @@ function populateEntryForm(entryData) {
 
         setTimeout(() => updateEntryDispatchReady(), 200);
 
+        // Switch to edit mode to show delete button and back button
         switchToEditMode();
         
         setTimeout(() => {
@@ -2761,16 +2762,18 @@ function switchToAddMode() {
         addButton.disabled = false;
     }
     
+    // Hide Back to Add Entry button
     const backButton = document.getElementById('back_to_add');
     if (backButton) {
         console.log('🔧 Hiding back button');
-        backButton.style.display = 'none';
+        backButton.classList.remove('show');
     }
     
+    // Hide Delete Entry button
     const deleteButton = document.getElementById('delete_entry');
     if (deleteButton) {
         console.log('🔧 Hiding delete button');
-        deleteButton.style.display = 'none';
+        deleteButton.classList.remove('show');
     }
     
     console.log('Switched back to add mode');
@@ -2786,16 +2789,18 @@ function switchToEditMode() {
         addButton.disabled = false;
     }
     
+    // Show Back to Add Entry button
     const backButton = document.getElementById('back_to_add');
     if (backButton) {
         console.log('🔧 Showing back button');
-        backButton.style.display = 'inline-block';
+        backButton.classList.add('show');
     }
     
+    // Show Delete Entry button
     const deleteButton = document.getElementById('delete_entry');
     if (deleteButton) {
         console.log('🔧 Showing delete button');
-        deleteButton.style.display = 'inline-block';
+        deleteButton.classList.add('show');
     }
     
     console.log('Switched to edit mode for entry:', currentEditingEntryId);
@@ -3033,7 +3038,7 @@ async function openEmptyRecordOverlay() {
             setOriginBasedOnUser();
             setLocationParticularToUppercase();
             highlightRequiredFields();
-            switchToAddMode();
+            switchToAddMode(); // Ensure we start in add mode
             setupMaabNumberHandling();
             setBirthdayMaxDate();
             disableEntryDetails();
