@@ -698,8 +698,6 @@ def reset_account(id):
         traceback.print_exc()
         db_session.rollback()
         return False
-    finally:
-        db_session.close()
 
 
 def update_userlvl(id, new_level):
