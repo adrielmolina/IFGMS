@@ -571,33 +571,32 @@
     <div class="overlay-content">
         <span class="close-overlay" id="closeRenewOverlay">&times;</span>
         <div class="overlay-body">
-            <h3>Renew Member</h3>
+            <h3>Members Information</h3>
             
-                                <div class="search_box" style="margin: 20px 0;">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input id="renew_search_input" type="text" placeholder="Search members...">
-                                </div>
+            <div class="search_box" style="margin: 20px 0;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="renew_search_input" type="text" placeholder="Search members...">
+            </div>
 
-                                <div class="table-container">
-                                    <table style="width: 100%;">
-                                        <thead>
-                                            <tr>
-                                                <th>Member ID</th>
-                                                <th>First Name</th>
-                                                <th>Middle Name</th>
-                                                <th>Last Name</th>
-                                                <th>Suffix</th>
-                                                <th>Birthdate</th>
-                                                <th>Sex</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div> -->
+            <div class="table-container">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Previous MAAB ID</th>
+                            <th>First Name</th>
+                            <th>Middle Name</th>
+                            <th>Last Name</th>
+                            <th>Birth Date</th>
+                            <th>Sex</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div> -->
 
 <div id="renewOverlay" class="overlay">
     <div class="overlay-content">
@@ -611,12 +610,12 @@
                 <input id="renew_search_input" type="text" placeholder="Search members...">
             </div>
 
-            <!-- Table with 5 columns (removed suffix and birthdate) -->
+            <!-- Updated Table with MAAB No -->
             <div class="table-container">
                 <table style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>Previous ID</th>
+                            <th>Previous MAAB No</th>
                             <th>First Name</th>
                             <th>Middle Name</th>
                             <th>Last Name</th>
@@ -671,380 +670,7 @@
         });
     });
 
-//  // Global variable to store all members data
-// let allMembers = [];
-
-// // Function to load members and display in overlay
-// async function loadMembersForOverlay() {
-//     try {
-//         console.log('🔄 Loading members for overlay...');
-        
-//         // Show loading state
-//         const tbody = document.querySelector('#renewOverlay tbody');
-//         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading members...</td></tr>';
-        
-//         // Fetch from your Flask route
-//         const response = await fetch('/api/members/all_members_complete');
-//         const data = await response.json();
-        
-//         console.log('📊 Received members data:', data);
-        
-//         if (data.success) {
-//             allMembers = data.members;
-//             console.log(`✅ Loaded ${allMembers.length} members`);
-//             displayMembersInOverlay(allMembers);
-//         } else {
-//             throw new Error(data.message || 'Failed to load members');
-//         }
-//     } catch (error) {
-//         console.error('❌ Error loading members:', error);
-//         const tbody = document.querySelector('#renewOverlay tbody');
-//         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error loading members</td></tr>';
-//     }
-// }
-
-// // Function to display members in the overlay table
-// function displayMembersInOverlay(members) {
-//     const tbody = document.querySelector('#renewOverlay tbody');
-    
-//     if (members.length === 0) {
-//         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No members found</td></tr>';
-//         return;
-//     }
-    
-//     // Clear existing content
-//     tbody.innerHTML = '';
-    
-//     // Add each member as a table row
-//     members.forEach(member => {
-//         const row = document.createElement('tr');
-//         row.style.cursor = 'pointer'; // Show it's clickable
-        
-//         row.innerHTML = `
-//             <td>${member.member_id || ''}</td>
-//             <td>${member.first_name || ''}</td>
-//             <td>${member.middle_name || ''}</td>
-//             <td>${member.last_name || ''}</td>
-//             <td>${member.birth_date || ''}</td>
-//             <td>${member.sex || ''}</td>
-//         `;
-        
-//         // Add click event to populate form
-//         row.addEventListener('click', function() {
-//             populateEntryFormWithMemberData(member);
-//         });
-        
-//         // Add hover effects
-//         row.addEventListener('mouseenter', function() {
-//             this.style.backgroundColor = '#f0f8ff';
-//         });
-        
-//         row.addEventListener('mouseleave', function() {
-//             this.style.backgroundColor = '';
-//         });
-        
-//         tbody.appendChild(row);
-//     });
-    
-//     console.log(`✅ Displayed ${members.length} members in overlay`);
-// }
-
-// // Function to populate entry form with member data
-// function populateEntryFormWithMemberData(member) {
-//     console.log('🎯 Populating form with member data:', member);
-    
-//     // Populate the form fields
-//     document.getElementById('fname').value = member.first_name || '';
-//     document.getElementById('mname').value = member.middle_name || '';
-//     document.getElementById('lname').value = member.last_name || '';
-    
-//     // Set suffix (handle 'NA' value)
-//     const suffixSelect = document.getElementById('suffix');
-//     const memberSuffix = member.suffix || 'NA';
-//     suffixSelect.value = memberSuffix === 'NA' ? 'NA' : memberSuffix;
-    
-//     // Set birthdate (format if needed)
-//     if (member.birth_date) {
-//         const birthDate = new Date(member.birth_date);
-//         if (!isNaN(birthDate.getTime())) {
-//             document.getElementById('bdate').value = birthDate.toISOString().split('T')[0];
-//         }
-//     }
-    
-//     // Set age
-//     document.getElementById('age').value = member.age || '';
-    
-//     // Set sex
-//     const sexSelect = document.getElementById('sex');
-//     sexSelect.value = member.sex || '';
-    
-//     // Set contact number (remove +63 prefix if present)
-//     let contactNo = member.contact_no || '';
-//     if (contactNo.startsWith('+63')) {
-//         contactNo = contactNo.substring(3);
-//     } else if (contactNo.startsWith('63')) {
-//         contactNo = contactNo.substring(2);
-//     }
-//     document.getElementById('contact').value = contactNo;
-    
-//     // Set email and address
-//     document.getElementById('email').value = member.email || '';
-//     document.getElementById('address').value = member.address || '';
-    
-//     // Set blood type
-//     const bloodTypeSelect = document.getElementById('blood_type');
-//     bloodTypeSelect.value = member.blood_type || '';
-    
-//     // Show success message and close overlay
-//     toastAlert("Member Data Loaded", "Member information has been populated in the form. Please verify and save the entry.");
-    
-//     // Close the renew overlay
-//     document.getElementById('renewOverlay').style.display = 'none';
-    
-//     // Optional: Scroll to the entry form
-//     document.getElementById('entry_details').scrollIntoView({ behavior: 'smooth' });
-    
-//     console.log('✅ Form populated with member data');
-// }
-
-    // Global variable to store all members data
-// let allMembers = [];
-
-// // Function to load members and display in overlay
-// async function loadMembersForOverlay() {
-//     try {
-//         console.log('🔄 Loading members for overlay...');
-        
-//         // Show loading state
-//         const tbody = document.querySelector('#renewOverlay tbody');
-//         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Loading members...</td></tr>';
-        
-//         // Fetch from your Flask route
-//         const response = await fetch('/api/members/all_members_complete');
-//         const data = await response.json();
-        
-//         console.log('📊 Received members data:', data);
-        
-//         if (data.success) {
-//             allMembers = data.members;
-//             console.log(`✅ Loaded ${allMembers.length} members`);
-//             displayMembersInOverlay(allMembers);
-//         } else {
-//             throw new Error(data.message || 'Failed to load members');
-//         }
-//     } catch (error) {
-//         console.error('❌ Error loading members:', error);
-//         const tbody = document.querySelector('#renewOverlay tbody');
-//         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error loading members</td></tr>';
-//     }
-// }
-
-// // Function to display members in the overlay table
-// function displayMembersInOverlay(members) {
-//     const tbody = document.querySelector('#renewOverlay tbody');
-    
-//     if (members.length === 0) {
-//         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No members found</td></tr>';
-//         return;
-//     }
-    
-//     // Clear existing content
-//     tbody.innerHTML = '';
-    
-//     // Add each member as a table row
-//     members.forEach(member => {
-//         const row = document.createElement('tr');
-//         row.style.cursor = 'pointer';
-        
-//         // Format birth date for display
-//         let formattedBirthDate = '';
-//         if (member.birth_date) {
-//             const birthDate = new Date(member.birth_date);
-//             if (!isNaN(birthDate.getTime())) {
-//                 formattedBirthDate = birthDate.toISOString().split('T')[0];
-//             }
-//         }
-        
-//         row.innerHTML = `
-//             <td>${member.member_id || ''}</td>
-//             <td>${member.first_name || ''}</td>
-//             <td>${member.middle_name || ''}</td>
-//             <td>${member.last_name || ''}</td>
-//             <td>${formattedBirthDate}</td>
-//             <td>${member.sex || ''}</td>
-//         `;
-        
-//         // Add click event to populate form
-//         row.addEventListener('click', function() {
-//             populateEntryFormWithMemberData(member);
-//         });
-        
-//         // Add hover effects
-//         row.addEventListener('mouseenter', function() {
-//             this.style.backgroundColor = '#f0f8ff';
-//         });
-        
-//         row.addEventListener('mouseleave', function() {
-//             this.style.backgroundColor = '';
-//         });
-        
-//         tbody.appendChild(row);
-//     });
-    
-//     console.log(`✅ Displayed ${members.length} members in overlay`);
-// }
-
-// // Function to populate entry form with member data
-// function populateEntryFormWithMemberData(member) {
-//     console.log('🎯 Populating form with member data:', member);
-    
-//     try {
-//         // Populate the basic form fields
-//         document.getElementById('fname').value = member.first_name || '';
-//         document.getElementById('mname').value = member.middle_name || '';
-//         document.getElementById('lname').value = member.last_name || '';
-        
-//         // Set suffix (handle 'NA' value)
-//         const suffixSelect = document.getElementById('suffix');
-//         const memberSuffix = member.suffix || 'NA';
-//         suffixSelect.value = memberSuffix === 'NA' ? 'NA' : memberSuffix;
-        
-//         // Set birthdate (format if needed)
-//         if (member.birth_date) {
-//             const birthDate = new Date(member.birth_date);
-//             if (!isNaN(birthDate.getTime())) {
-//                 document.getElementById('bdate').value = birthDate.toISOString().split('T')[0];
-//             }
-//         }
-        
-//         // Set age
-//         document.getElementById('age').value = member.age || '';
-        
-//         // Set sex
-//         const sexSelect = document.getElementById('sex');
-//         sexSelect.value = member.sex || '';
-        
-//         // Set contact number (remove +63 prefix if present)
-//         let contactNo = member.contact_no || '';
-//         if (contactNo.startsWith('+63')) {
-//             contactNo = contactNo.substring(3);
-//         } else if (contactNo.startsWith('63')) {
-//             contactNo = contactNo.substring(2);
-//         }
-//         document.getElementById('contact').value = contactNo;
-        
-//         // Set email and address
-//         document.getElementById('email').value = member.email || '';
-//         document.getElementById('address').value = member.address || '';
-        
-//         // Set blood type
-//         const bloodTypeSelect = document.getElementById('blood_type');
-//         bloodTypeSelect.value = member.blood_type || '';
-        
-//         // Show success message
-//         toastAlert("Member Data Loaded", "Member information has been populated in the form. Please verify and save the entry.");
-        
-//         // Close the renew overlay
-//         document.getElementById('renewOverlay').style.display = 'none';
-        
-//         // Scroll to the entry form for better UX
-//         setTimeout(() => {
-//             document.getElementById('entry_details').scrollIntoView({ behavior: 'smooth' });
-//         }, 500);
-        
-//         console.log('✅ Form populated with member data');
-        
-//     } catch (error) {
-//         console.error('❌ Error populating form:', error);
-//         toastAlert("Error", "Failed to populate form with member data. Please try again.");
-//     }
-// }
-
-// // Function to search members (client-side filtering)
-// function searchMembers(searchTerm) {
-//     const searchLower = searchTerm.toLowerCase().trim();
-    
-//     if (searchLower === '') {
-//         displayMembersInOverlay(allMembers);
-//         return;
-//     }
-    
-//     const filteredMembers = allMembers.filter(member => 
-//         (member.member_id && member.member_id.toString().toLowerCase().includes(searchLower)) ||
-//         (member.first_name && member.first_name.toLowerCase().includes(searchLower)) ||
-//         (member.middle_name && member.middle_name.toLowerCase().includes(searchLower)) ||
-//         (member.last_name && member.last_name.toLowerCase().includes(searchLower)) ||
-//         (member.sex && member.sex.toLowerCase().includes(searchLower)) ||
-//         (member.birth_date && new Date(member.birth_date).toISOString().includes(searchLower))
-//     );
-    
-//     displayMembersInOverlay(filteredMembers);
-// }
-
-// // Single consolidated DOMContentLoaded event listener
-// document.addEventListener('DOMContentLoaded', function() {
-//     console.log('🔧 Initializing renew overlay...');
-    
-//     // Add click event to Renew button in the ENTRY FORM
-//     const renewButton = document.querySelector('button[onclick*="renew"], .input-container button:last-child');
-//     if (renewButton) {
-//         console.log('✅ Found renew button in entry form');
-//         renewButton.addEventListener('click', function(e) {
-//             e.preventDefault();
-//             console.log('🎯 Renew button clicked - opening overlay and loading data');
-//             document.getElementById('renewOverlay').style.display = 'flex';
-//             loadMembersForOverlay();
-//         });
-//     } else {
-//         console.log('❌ Could not find renew button in entry form');
-//         // Alternative: Look for any button that says "Renew"
-//         const allButtons = document.querySelectorAll('button');
-//         allButtons.forEach(button => {
-//             if (button.textContent.includes('Renew')) {
-//                 console.log('✅ Found renew button by text content');
-//                 button.addEventListener('click', function(e) {
-//                     e.preventDefault();
-//                     document.getElementById('renewOverlay').style.display = 'flex';
-//                     loadMembersForOverlay();
-//                 });
-//             }
-//         });
-//     }
-    
-//     // Close overlay when close button is clicked
-//     const closeBtn = document.getElementById('closeRenewOverlay');
-//     if (closeBtn) {
-//         closeBtn.addEventListener('click', function() {
-//             document.getElementById('renewOverlay').style.display = 'none';
-//         });
-//     }
-    
-//     // Close overlay when clicking outside content
-//     const overlay = document.getElementById('renewOverlay');
-//     if (overlay) {
-//         overlay.addEventListener('click', function(e) {
-//             if (e.target === this) {
-//                 document.getElementById('renewOverlay').style.display = 'none';
-//             }
-//         });
-//     }
-    
-//     // Close overlay with ESC key
-//     document.addEventListener('keydown', function(e) {
-//         if (e.key === "Escape") {
-//             document.getElementById('renewOverlay').style.display = 'none';
-//         }
-//     });
-    
-//     // Search input event listener
-//     const searchInput = document.getElementById('renew_search_input');
-//     if (searchInput) {
-//         searchInput.addEventListener('input', function(e) {
-//             searchMembers(e.target.value);
-//         });
-//     }
-// });
-
+// Global variable to store all members data
 let allMembers = [];
 
 // Function to clear search and reset overlay
@@ -1356,6 +982,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+
 
     // Dark Mode Functionality for Members Module
     document.addEventListener("DOMContentLoaded", function() {
