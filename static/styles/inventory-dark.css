@@ -1469,3 +1469,33 @@ th.sort-desc {
     font-family: "Font Awesome 6 Free" !important;
     font-weight: 900; 
 }
+
+/* Add to your CSS file */
+.handsontable .wtHolder {
+    overflow: auto !important;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.handsontable .wtHolder::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+.handsontableContainer {
+    height: 100% !important;
+    position: relative;
+}
+
+#current_hot_container {
+    height: 100% !important;
+    min-height: 520px;
+}
+
+/* Make the entire table area focusable */
+.table_wrapper {
+    cursor: default;
+}
+
+.table_wrapper:focus {
+    outline: none;
+}   
