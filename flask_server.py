@@ -4986,19 +4986,43 @@ def get_notifications():
                 member_name = f"{member.first_name} {member.last_name}"
                 member_email = member.email
                 
-                # AUTO-SEND BIRTHDAY GREETING (only if email exists)
+                # CHECK IF EMAIL WAS ALREADY SENT TODAY
+                email_already_sent = db_session.query(models.EmailLog).filter(
+                    models.EmailLog.email == member_email,
+                    models.EmailLog.email_type == 'birthday',
+                    models.EmailLog.sent_date == today
+                ).first()
+                
+                # AUTO-SEND BIRTHDAY GREETING (only if email exists AND not already sent today)
                 email_sent = False
-                email_status = "❌ No email"
+                email_status = " | No email"
                 
                 if member_email and member_email.strip():
-                    try:
-                        email_sent = db_conn.send_birthday_greeting_email(member_email, member_name)
-                        email_status = "✅ Sent" if email_sent else "❌ Failed"
-                    except Exception as e:
-                        print(f"❌ Error sending birthday email: {e}")
-                        email_status = "❌ Error"
+                    if email_already_sent:
+                        email_status = " | Already sent today"
+                        email_sent = True
+                    else:
+                        try:
+                            email_sent = db_conn.send_birthday_greeting_email(member_email, member_name)
+                            if email_sent:
+                                # LOG THE EMAIL SENDING
+                                email_log = models.EmailLog(
+                                    email=member_email,
+                                    member_name=member_name,
+                                    email_type='birthday',
+                                    sent_date=today,
+                                    status='sent'
+                                )
+                                db_session.add(email_log)
+                                db_session.commit()
+                                email_status = " | Sent"
+                            else:
+                                email_status = " | Failed"
+                        except Exception as e:
+                            print(f"Error sending birthday email: {e}")
+                            email_status = " | Error"
                 else:
-                    email_status = "❌ No email address"
+                    email_status = " | No email address"
                 
                 notifications.append({
                     'type': 'birthday',
@@ -5009,12 +5033,11 @@ def get_notifications():
                     'email_sent': email_sent
                 })
             
-            # 2. Check for expiring memberships (extend to 120 days for testing)
+            # 2. Check for expiring memberships - SIMILAR FIX FOR RENEWAL REMINDERS
             print("⏰ Checking expiring memberships...")
-            days_threshold = 120  # Extended for testing since your closest is 129 days
+            days_threshold = 120
             future_date = today + timedelta(days=days_threshold)
             
-            # Get entries that are paid and have OR_date
             expiring_entries = db_session.query(
                 models.Entries.entry_id,
                 models.Entries.OR_date,
@@ -5037,7 +5060,6 @@ def get_notifications():
             for entry in expiring_entries:
                 if entry.OR_date:
                     try:
-                        # Calculate expiration date (OR_date + 1 year)
                         if isinstance(entry.OR_date, str):
                             or_date = datetime.strptime(entry.OR_date, '%Y-%m-%d').date()
                         else:
@@ -5046,29 +5068,54 @@ def get_notifications():
                         expiration_date = or_date + timedelta(days=365)
                         days_until_expiry = (expiration_date - today).days
                         
-                        # Check if expiring within threshold (including already expired)
                         if 0 <= days_until_expiry <= days_threshold:
                             member_name = f"{entry.first_name} {entry.last_name}"
                             member_email = entry.email
                             
-                            # AUTO-SEND RENEWAL REMINDER
+                            # CHECK IF RENEWAL EMAIL WAS ALREADY SENT TODAY
+                            renewal_already_sent = db_session.query(models.EmailLog).filter(
+                                models.EmailLog.email == member_email,
+                                models.EmailLog.email_type == 'renewal',
+                                models.EmailLog.sent_date == today,
+                                models.EmailLog.days_until_expiry == days_until_expiry
+                            ).first()
+                            
+                            # AUTO-SEND RENEWAL REMINDER (only if not already sent today)
                             email_sent = False
-                            email_status = "❌ No email"
+                            email_status = " | No email"
                             
                             if member_email and member_email.strip():
-                                try:
-                                    email_sent = db_conn.send_renewal_reminder_email(
-                                        member_email, 
-                                        member_name, 
-                                        days_until_expiry,
-                                        entry.maab_no
-                                    )
-                                    email_status = "✅ Sent" if email_sent else "❌ Failed"
-                                except Exception as e:
-                                    print(f"❌ Error sending renewal email: {e}")
-                                    email_status = "❌ Error"
+                                if renewal_already_sent:
+                                    email_status = " | Already sent today"
+                                    email_sent = True
+                                else:
+                                    try:
+                                        email_sent = db_conn.send_renewal_reminder_email(
+                                            member_email, 
+                                            member_name, 
+                                            days_until_expiry,
+                                            entry.maab_no
+                                        )
+                                        if email_sent:
+                                            # LOG THE EMAIL SENDING
+                                            email_log = models.EmailLog(
+                                                email=member_email,
+                                                member_name=member_name,
+                                                email_type='renewal',
+                                                sent_date=today,
+                                                status='sent',
+                                                days_until_expiry=days_until_expiry
+                                            )
+                                            db_session.add(email_log)
+                                            db_session.commit()
+                                            email_status = " | Sent"
+                                        else:
+                                            email_status = " | Failed"
+                                    except Exception as e:
+                                        print(f"Error sending renewal email: {e}")
+                                        email_status = " | Error"
                             else:
-                                email_status = "❌ No email address"
+                                email_status = " | No email address"
                             
                             status_text = "EXPIRED" if days_until_expiry <= 0 else f"expires in {days_until_expiry} days"
                             priority = 'high' if days_until_expiry <= 30 else 'medium'
@@ -5085,7 +5132,7 @@ def get_notifications():
                             expiring_count += 1
                             
                     except Exception as e:
-                        print(f"❌ Error processing entry {entry.entry_id}: {e}")
+                        print(f"Error processing entry {entry.entry_id}: {e}")
                         continue
             
             print(f"⏰ Found {expiring_count} expiring memberships (within {days_threshold} days)")
@@ -5102,7 +5149,7 @@ def get_notifications():
             })
             
         except Exception as e:
-            print(f"❌ Database error in get_notifications: {e}")
+            print(f"Database error in get_notifications: {e}")
             import traceback
             traceback.print_exc()
             return jsonify({
@@ -5116,7 +5163,7 @@ def get_notifications():
             db_session.close()
         
     except Exception as e:
-        print(f"❌ Major error in get_notifications: {e}")
+        print(f"Major error in get_notifications: {e}")
         import traceback
         traceback.print_exc()
         
