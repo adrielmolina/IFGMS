@@ -421,7 +421,7 @@ button {
     margin-left: 30px !important;
     margin-right: 15px !important;
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(10px) !important;
     animation: fadeInCard 0.4s ease forwards;
 }
 
@@ -490,10 +490,10 @@ button {
 }
 
 .audit-logs_table.full {
-    margin-top: 10px;
-    margin-right: 10px;
-    margin-left: -15px !important;
-    background: #fff;
+    margin-top: 10px !important;
+    margin-right: -5px !important;
+    margin-left: 5px !important;
+    background: transparent !important;
     border-radius: 15px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     overflow: hidden;
