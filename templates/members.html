@@ -491,16 +491,23 @@
                                     </td>
 
                                     <!-- RENEW -->
-                                     <td>
+                                     <!-- <td>
                                         <div class="input-container checkbox-container">
                                             <label for="renew">Renew</label>
                                             <input type="checkbox" id="renew" name="renew" autocomplete="off">
                                         </div>
-                                    </td>
+                                    </td> -->
+
+                                    <!-- TODO swapped rename the functions too later -->
+                                    <td>
+                                        <div class="input-container">
+                                            <button id="renew_overlay_btn">Upgrade</button>
+                                        </div>
+                                    </td> 
 
                                     <td>
                                         <div class="input-container">
-                                            <button id="renew_overlay_btn" disabled>Renew</button>
+                                            <button id="upgrade_overlay_btn">Renew</button>
                                         </div>
                                     </td> 
                                 </tr>
@@ -2227,8 +2234,13 @@ function populateEntryForm(entryData) {
         document.getElementById('entry_paid').checked = Boolean(entryData.paid);
         
         // Update OR Date field state based on paid status
-        updateORDateFieldState(Boolean(entryData.paid), orDateInput);
+        //updateORDateFieldsState(Boolean(entryData.paid), orDateInput);
         
+        const orNoInput = document.getElementById('entry_or_no');
+        if (orDateInput && orNoInput) {
+            updateORFieldsState(Boolean(entryData.paid), orDateInput, orNoInput);
+        }
+
         setTimeout(() => {
             const category = document.getElementById('maab_cat').value;
             if (window.populateMAABNoDropdown) {
@@ -2468,7 +2480,7 @@ function clearEntryForm() {
         orDateField.style.backgroundColor = '#f5f5f5';
         orDateField.style.cursor = 'not-allowed';
     }
-    document.getElementById('renew_overlay_btn').disabled = true;
+    //document.getElementById('renew_overlay_btn').disabled = true;
     clearAllValidationErrors();
 }
 
@@ -4117,18 +4129,19 @@ function setupButtonEventListeners() {
     });
 
     const entryPaidCheckbox = document.getElementById('entry_paid');
-    if (entryPaidCheckbox) {
-        entryPaidCheckbox.addEventListener('change', function() {
-            updateEntryDispatchReady();
-            setTimeout(() => updateRecordPaidFromEntries(), 100);
-            
-            // Update OR Date field state when paid checkbox changes
-            const orDateField = document.getElementById('entry_or_date');
-            if (orDateField) {
-                updateORDateFieldState(this.checked, orDateField);
-            }
-        });
-    }
+if (entryPaidCheckbox) {
+    entryPaidCheckbox.addEventListener('change', function() {
+        updateEntryDispatchReady();
+        setTimeout(() => updateRecordPaidFromEntries(), 100);
+        
+        // Update OR fields state when paid checkbox changes
+        const orDateField = document.getElementById('entry_or_date');
+        const orNoField = document.getElementById('entry_or_no');
+        if (orDateField && orNoField) {
+            updateORFieldsState(this.checked, orDateField, orNoField);
+        }
+    });
+}
 
     const entryDeclaredCheckbox = document.getElementById('entry_declared');
     if (entryDeclaredCheckbox) {
@@ -4299,37 +4312,47 @@ function setupOriginFilterBasedOnUser() {
 function setupORDateFieldState() {
     const paidCheckbox = document.getElementById('entry_paid');
     const orDateField = document.getElementById('entry_or_date');
-    
-    if (!paidCheckbox || !orDateField) return;
-    
+    const orNoField = document.getElementById('entry_or_no');
+
+    if (!paidCheckbox || !orDateField || !orNoField) return;
+
     // Initialize state based on current paid status
-    updateORDateFieldState(paidCheckbox.checked, orDateField);
-    
-    // Add event listener for paid checkbox changes
+    updateORFieldsState(paidCheckbox.checked, orDateField, orNoField);
+
+    // Add event listener for changes
     paidCheckbox.addEventListener('change', function() {
-        updateORDateFieldState(this.checked, orDateField);
+        updateORFieldsState(this.checked, orDateField, orNoField);
     });
 }
 
-function updateORDateFieldState(isPaid, orDateField) {
+function updateORFieldsState(isPaid, orDateField, orNoField) {
     if (isPaid) {
-        // Enable OR Date when paid is checked
         orDateField.readOnly = false;
         orDateField.style.backgroundColor = '';
         orDateField.style.cursor = 'pointer';
         orDateField.title = 'Enter OR date';
+
+        orNoField.readOnly = false;
+        orNoField.style.backgroundColor = '';
+        orNoField.style.cursor = 'text';
+        orNoField.title = 'Enter OR number';
+
     } else {
-        // Disable OR Date when paid is unchecked
+        orDateField.value = '';
         orDateField.readOnly = true;
         orDateField.style.backgroundColor = '#f5f5f5';
         orDateField.style.cursor = 'not-allowed';
         orDateField.title = 'OR Date is only available when Paid is checked';
-        
-        // Optional: Clear OR Date when unpaid
-        // orDateField.value = '';
+
+        orNoField.value = '';
+        orNoField.readOnly = true;
+        orNoField.style.backgroundColor = '#f5f5f5';
+        orNoField.style.cursor = 'not-allowed';
+        orNoField.title = 'OR No. is only available when Paid is checked';
     }
 }
 
+/*
 document.getElementById('renew').addEventListener('change', function() {
     const renew_overlay_btn = document.getElementById('renew_overlay_btn');
     const tag = document.getElementById('entry_tags');
@@ -4341,9 +4364,22 @@ document.getElementById('renew').addEventListener('change', function() {
     else {
         renew_overlay_btn.disabled = true;
         tag.value = '';
-    }
-
+    } 
 });
 
+document.getElementById('upgrade').addEventListener('change', function() {
+    const upgrade_overlay_btn = document.getElementById('upgrade_overlay_btn');
+    const tag = document.getElementById('entry_tags');
+
+    if (this.checked) {
+        upgrade_overlay_btn.disabled = false;
+        tag.value = 'upgrade';
+    }
+    else {
+        upgrade_overlay_btn.disabled = true;
+        tag.value = '';
+    }
+});
+*/
 </script>
 {% endblock %}

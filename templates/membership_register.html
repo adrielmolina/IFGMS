@@ -1247,6 +1247,11 @@
 
         // Close Confirmation Overlay
         function closeConfirmationOverlay() {
+
+            window.location.reload();
+            return;
+
+            // refresh the page instead of closing the overlay
             confirmationOverlay.style.display = 'none';
             confirmationOverlay.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
@@ -1262,7 +1267,8 @@
                 closeTermsOverlay();
             }
             if (event.target === confirmationOverlay) {
-                closeConfirmationOverlay();
+                //closeConfirmationOverlay();
+                //disabled closing when clicking ouside for confirmation overlay
             }
         });
 
@@ -1329,6 +1335,15 @@
                 }
             });
 
+            // --- EMAIL FORMAT CHECK ---
+            const emailEl = document.getElementById('email');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailEl.value.trim() && !emailRegex.test(emailEl.value.trim())) {
+                isValid = false;
+                emailEl.style.borderColor = 'red';
+                toastError("Please enter a valid email address.");
+            }
+
             if (!isValid) {
                 toastError("Please fill in all required fields marked with *");
                 return;
@@ -1356,7 +1371,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success === true) {
-                    // Show confirmation overlay
                     showConfirmationOverlay(member_info, data.reference_id);
                 } else {
                     toastError(data.error || "Registration failed. Please try again");
@@ -1365,7 +1379,6 @@
                 console.error('Error:', error);
                 toastError("An error occurred during registration. Please try again.");
             }).finally(() => {
-                // Reset button state
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             });
@@ -1428,8 +1441,31 @@
             });
         });
 
+        function clearAllInputs() {
+            // Clear text, email, number, password, etc.
+            const textInputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], input[type="password"], input[type="tel"], input[type="url"], input[type="date"]');
+            textInputs.forEach(input => input.value = '');
+
+            // Clear checkboxes and radios
+            const checkboxesAndRadios = document.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+            checkboxesAndRadios.forEach(input => input.checked = false);
+
+            // Clear textareas
+            const textareas = document.querySelectorAll('textarea');
+            textareas.forEach(area => area.value = '');
+
+            // Reset selects
+            const selects = document.querySelectorAll('select');
+            selects.forEach(select => select.selectedIndex = 0);
+        }
+
+
         // ===== INITIALIZATION =====
         document.addEventListener('DOMContentLoaded', function() {
+            clearAllInputs();
+            // reset the province to cavite
+            document.getElementById('province').value = 'Cavite';
+
             // Set up gallery button event listeners
             const leftBtn = document.getElementById('leftBtn');
             const rightBtn = document.getElementById('rightBtn');

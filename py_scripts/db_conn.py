@@ -1297,7 +1297,7 @@ def get_entries(record_id):
 def add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, bloodtype, contact, email, municipality, address, maab_cat, origin):
     db_session = SessionLocal()
     try:
-        #create new member first
+        # --- create new member first ---
         new_member = models.Members(
             first_name=fname,
             middle_name=mname,
@@ -1317,28 +1317,39 @@ def add_entry_content_online(fname, mname, lname, suffix, birthdate, age, sex, b
         
         member_id = new_member.member_id
         
-        # create new record first
-        new_record = models.Records(
-            year=datetime.now().year,
-            id_received=None,
-            declared=None,
-            declaration_date=None,
-            effectivity_date=date.today(), # set effectivity date to today, update when paid
-            location_particular='Online Registration',
-            location_category='Online', 
-            municipality=municipality,
-            district=tools.get_district_from_municipality(municipality),
-            paid=None,
-            origin=origin,
-            remarks=None,
-            tags=None
-        )
+        # --- check if a record already exists today ---
+        today_tag = f"for: {datetime.now().strftime('%Y-%m-%d')}"
+        existing_record = db_session.query(models.Records).filter(
+            models.Records.location_particular == 'Online Registration',
+            models.Records.tags == today_tag
+        ).first()
         
-        db_session.add(new_record)
-        db_session.commit()
+        if existing_record:
+            record_id = existing_record.record_id
+        else:
+            # --- create new record ---
+            new_record = models.Records(
+                year=datetime.now().year,
+                id_received=None,
+                declared=None,
+                declaration_date=None,
+                effectivity_date=None,
+                location_particular='Online Registration',
+                location_category='Online', 
+                municipality=municipality,
+                district=tools.get_district_from_municipality(municipality),
+                paid=None,
+                origin=origin,
+                remarks=None,
+                tags=today_tag
+            )
+            
+            db_session.add(new_record)
+            db_session.commit()
+            
+            record_id = new_record.record_id
         
-        record_id = new_record.record_id
-        
+        # --- create entry content ---
         new_entry_content = models.Entries(
             record_id=record_id,
             maab_category=maab_cat,
