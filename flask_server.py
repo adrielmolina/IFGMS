@@ -126,6 +126,8 @@ def login():
         }, "error")
         return render_template('index.html')
     
+    # previous code
+    '''
     user = db_conn.sign_in(username, password)
 
     if user:
@@ -157,6 +159,59 @@ def login():
             "redirect_url": url_for('landing_page')
         }, "error")
         db_conn.POST_action_log(username, None, 'Login Attempt', 'Fail. Wrong username/password', None)
+        return render_template('index.html')
+    '''
+    
+    result = db_conn.sign_in(username, password)
+    status = result.get("status")
+    user = result.get("user")
+
+    if status == "success":
+        db_session = db_conn.SessionLocal()
+        try:
+            refreshed_user = db_session.query(db_conn.models.Accounts).get(user.account_id)
+            print(f'🔍 DEBUG: User found: {refreshed_user.username}, Status: {refreshed_user.acct_status}')
+            if refreshed_user.acct_status == 'approved':
+                login_user(refreshed_user)
+                session['has_profile_pic'] = db_conn.get_profile_pic(refreshed_user.account_id) is not None
+                db_conn.POST_action_log(refreshed_user.username, refreshed_user.user_level, 'Login Attempt', 'Success', refreshed_user.account_id)
+                return redirect(url_for('dashboard'))
+            elif refreshed_user.acct_status == 'pending':
+                flash({
+                    "title": "Login Error!",
+                    "text": "Account not approved yet. Contact admin.",
+                    "redirect_url": url_for('landing_page')
+                },"error")
+                db_conn.POST_action_log(username, None, 'Login Attempt', 'Fail. Account status pending', None)
+                return render_template('index.html')
+        finally:
+            db_session.close()
+
+    elif status == "locked":
+        flash({
+            "title": "Login Error!",
+            "text": "3 Login attempts failed. Please contact your administrator.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        db_conn.POST_action_log(user.username, None, 'Login Attempt', 'Fail. Locked due to 3 failed attempts', user.account_id)
+        return render_template('index.html')
+
+    elif status == "wrong_password":
+        flash({
+            "title": "Login Error!",
+            "text": f"Wrong password. Attempt {user.login_attempt}/3.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        db_conn.POST_action_log(user.username, None, 'Login Attempt', f'Fail. Wrong password, attempt {user.login_attempt}', user.account_id)
+        return render_template('index.html')
+
+    else:  # user not found
+        flash({
+            "title": "Login Error!",
+            "text": "Wrong username or password. Try again.",
+            "redirect_url": url_for('landing_page')
+        }, "error")
+        db_conn.POST_action_log(username, None, 'Login Attempt', 'Fail. User not found', None)
         return render_template('index.html')
 
 
@@ -1307,6 +1362,7 @@ def get_profile_pic(user_id):
     else:
         return send_file('static/assets/pfp.jpg', mimetype='image/jpeg')
 
+'''
 # === Inject profile picture state into templates ===
 @server.context_processor
 def inject_profile_pic_state():
@@ -1314,6 +1370,8 @@ def inject_profile_pic_state():
         has_pic = db_conn.get_profile_pic(current_user.account_id) is not None
         return {"has_profile_pic": has_pic}
     return {"has_profile_pic": False}
+'''
+
 
 # === Delete profile picture ===
 @server.route('/api/delete_profile_pic', methods=['DELETE'])

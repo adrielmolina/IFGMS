@@ -94,7 +94,9 @@ def shutdown_session():
     SessionLocal.remove()
 
 
-def sign_in(username=None, password=None):    
+def sign_in(username=None, password=None):
+    # previous code
+    '''
     db_session = SessionLocal()
     
     try:
@@ -120,6 +122,46 @@ def sign_in(username=None, password=None):
         print(f"❌ Error in sign_in: {e}")
         db_session.close()
         return None
+    '''
+    
+        
+    db_session = SessionLocal()
+    
+    try:
+        # Find user regardless of password
+        user = db_session.query(models.Accounts).filter(
+            models.Accounts.username == username
+        ).first()
+
+        print(f"🔍 DEBUG sign_in: username='{username}', user_found={user is not None}")
+
+        if user:
+            # Check if login attempts exceeded
+            if user.login_attempt >= 3:
+                print(f"⚠️ User {username} exceeded login attempts")
+                return {"status": "locked", "user": user}
+
+            # Check password
+            if tools.check_password(password, user.password):
+                print(f"✅ Password correct for user {username}")
+                # Reset login attempts on successful login
+                user.login_attempt = 0
+                db_session.commit()
+                # Detach user from session before returning
+                #db_session.expunge(user)
+                return {"status": "success", "user": user}
+            else:
+                # Increment login_attempt on wrong password
+                user.login_attempt += 1
+                db_session.commit()
+                print(f"❌ Invalid password for user {username}, attempts={user.login_attempt}")
+                return {"status": "wrong_password", "user": user}
+        else:
+            print(f"❌ User {username} not found")
+            return {"status": "not_found", "user": None}
+    except Exception as e:
+        print(f"❌ Error in sign_in: {e}")
+        return {"status": "error", "user": None}
     
     
 # TODO make the generated id current year + 0000 + last inserted id
