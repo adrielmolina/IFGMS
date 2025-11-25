@@ -25,6 +25,7 @@ class Accounts(Base, UserMixin):
     acct_status = Column(String(255))
     acct_review_date = Column(Date)
     profile_pic = Column(LargeBinary, nullable=True)
+    login_attempt = Column(Integer, default=0)
     
 
     def get_id(self):
@@ -58,7 +59,9 @@ class Accounts(Base, UserMixin):
             'office_location': self.office_location,
             'user_level': self.user_level,
             'acct_status': self.acct_status,
-            'acct_review_date': self.acct_review_date.strftime('%Y-%m-%d') if self.acct_review_date else None
+            'acct_review_date': self.acct_review_date.strftime('%Y-%m-%d') if self.acct_review_date else None,
+            'profile_pic': self.profile_pic,
+            'login_attempt': self.login_attempt
         }
     
 # Add to your models.py (optional)
