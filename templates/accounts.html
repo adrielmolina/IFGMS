@@ -66,6 +66,9 @@
     <button id="reset" name="reset" value="reset" title="This will set the password to Current Year + Current Month + user's initials" disabled style="opacity: 0.5; cursor: not-allowed;">
         <i class="fa-solid fa-key"></i> RESET PASSWORD ⓘ
     </button>
+    <button id="attempt" name="attempt" value="attempt" disabled style="opacity: 0.5; cursor: not-allowed;">
+        <i class="fa-solid fa-key"></i> RESET LOGIN ATTEMPT
+    </button>
 </div>
 </div>
 
@@ -218,6 +221,34 @@
 <script>
     // Dark Mode Functionality for Module
     document.addEventListener("DOMContentLoaded", function() {
+
+        // ====================== RESET FILTERS ======================
+        const resetBtn = document.getElementById('resetFilters');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', resetAllFilters);
+        }
+
+        // ====================== PROFILE IMAGE ======================
+        const navProfileImage = document.getElementById("navProfileImage");
+        if (navProfileImage) {
+            const savedProfileImage = localStorage.getItem("profileImage");
+            if (savedProfileImage) navProfileImage.src = savedProfileImage;
+        }
+
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'profileImage' && navProfileImage) {
+                navProfileImage.src = e.newValue || "/static/assets/pfp.jpg";
+            }
+        });
+
+        // Initialize button states after 1 second
+        setTimeout(() => {
+            updateButtonStates();
+        }, 1000);
+
+
+
+
         const themeLink = document.getElementById("theme-link");
         const savedTheme = localStorage.getItem("baseTheme") || "light";
         
@@ -260,23 +291,33 @@
 document.addEventListener('DOMContentLoaded', function () {
     // ====================== VARIABLES ======================
     let archiveBtn = document.getElementById('archive');
-    let resetBtn = document.getElementById('reset');
+    let resetBtn = document.getElementById('reset'); // optional, if used
+    let attemptBtn = document.getElementById('attempt'); // new login attempt reset button
     let createAccountBtn = document.getElementById('create_account_btn');
 
     // ====================== BUTTON STATE MANAGEMENT ======================
     function updateButtonStates() {
         const selectedActive = activeTable.getSelectedData().length > 0;
         
+        // Archive button
         if (archiveBtn) {
             archiveBtn.disabled = !selectedActive;
             archiveBtn.style.opacity = selectedActive ? '1' : '0.5';
             archiveBtn.style.cursor = selectedActive ? 'pointer' : 'not-allowed';
         }
         
+        // Reset button (generic)
         if (resetBtn) {
             resetBtn.disabled = !selectedActive;
             resetBtn.style.opacity = selectedActive ? '1' : '0.5';
             resetBtn.style.cursor = selectedActive ? 'pointer' : 'not-allowed';
+        }
+
+        // Login attempt reset button
+        if (attemptBtn) {
+            attemptBtn.disabled = !selectedActive;
+            attemptBtn.style.opacity = selectedActive ? '1' : '0.5';
+            attemptBtn.style.cursor = selectedActive ? 'pointer' : 'not-allowed';
         }
     }
 
@@ -714,6 +755,70 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ====================== RESET LOGIN ATTEMPT FUNCTIONALITY ======================
+    document.getElementById('attempt').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (this.disabled) return;
+        
+        const selectedData = activeTable.getSelectedData();
+        const ids = selectedData.map(row => row.account_id);
+        const names = selectedData.map(row => `${row.first_name} ${row.last_name}`);
+        
+        if (!ids.length) {
+            toastError('Selection Required', 'Please select at least one account to reset login attempts.');
+            return;
+        }
+
+        const accountList = names.join('\n');
+        if (!confirm(`Are you sure you want to reset login attempts for ${ids.length} selected account(s)?\n\nAccounts:\n${accountList}`)) {
+            return;
+        }
+
+        // Show loading state
+        const originalText = this.innerHTML;
+        this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Resetting login attempts for ${ids.length} account(s)...`;
+        this.disabled = true;
+
+        console.log('Resetting login attempts for accounts:', names);
+
+        fetch('/api/accounts/reset_attempt', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log('Reset attempts response:', data);
+            if (data.success) {
+                const successCount = data.reset_count || ids.length;
+                toastSuccess('Login Attempts Reset', `Successfully reset login attempts for ${successCount} account(s)!`);
+                
+                // Clear selection and refresh table
+                activeTable.deselectRow();
+                fetchAccounts();
+            } else {
+                throw new Error(data.error || 'Reset failed');
+            }
+        })
+        .catch(err => {
+            console.error('Reset error:', err);
+            toastError('Reset Failed', 'Failed to reset login attempts: ' + err.message);
+        })
+        .finally(() => {
+            // Restore button state
+            this.innerHTML = originalText;
+            this.disabled = false;
+            updateButtonStates();
+        });
+    });
+
     // ====================== EDIT CELL EVENTS ======================
     activeTable.on("cellEdited", function(cell) {
         const oldValue = cell.getOldValue();
@@ -998,6 +1103,7 @@ function resetAllFilters() {
     updateTableInfo(activeTable, "active_info");
 }
 
+/*
 document.getElementById('resetFilters').addEventListener('click', resetAllFilters);
 
     // ====================== PROFILE IMAGE ======================
@@ -1016,7 +1122,7 @@ document.getElementById('resetFilters').addEventListener('click', resetAllFilter
     // Initialize button states
     setTimeout(() => {
         updateButtonStates();
-    }, 1000);
+    }, 1000);*/
 });
 </script>
 {% endblock %}

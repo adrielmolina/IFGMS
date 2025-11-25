@@ -4344,11 +4344,13 @@ def get_accounts():
     active_accounts = db_conn.get_accounts(status=['approved'])
     # PENDING accounts
     pending_accounts = db_conn.get_accounts(status=['pending'])
-
+    print("Fetched accounts data", active_accounts, pending_accounts)
+    
     return jsonify({
         "active": [acc.to_dict() for acc in active_accounts],
         "pending": [acc.to_dict() for acc in pending_accounts]
     })
+    
 
 @server.route('/api/accounts/<id>/create', methods=['POST'])
 @login_required
@@ -4702,6 +4704,57 @@ def archive_account():
     except Exception as e:
         print(f"❌ Error in archive_account: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+    
+    
+    
+@server.route('/api/accounts/reset_attempt', methods=['PATCH'])
+@login_required
+@roles_required('admin', 'superadmin')
+def reset_login_attempt():
+    try:
+        data = request.get_json()
+        ids = data.get('ids', [])
+        
+        if not ids:
+            return jsonify({"success": False, "error": "No account IDs provided"}), 400
+
+        db_session = SessionLocal()
+        success_count = 0
+        
+        try:
+            # Bulk reset login_attempt to 0
+            result = db_session.query(models.Accounts).filter(
+                models.Accounts.account_id.in_(ids)
+            ).update({models.Accounts.login_attempt: 0}, synchronize_session=False)
+            
+            db_session.commit()
+            success_count = result
+
+            # Log the action
+            db_conn.POST_action_log(
+                current_user.username,
+                current_user.user_level,
+                'Reset Login Attempts',
+                f'Reset login attempts for {success_count} account(s): {ids}',
+                current_user.account_id
+            )
+
+        except Exception as e:
+            db_session.rollback()
+            raise e
+        finally:
+            db_session.close()
+        
+        if success_count > 0:
+            return jsonify({"success": True, "reset_count": success_count})
+        else:
+            return jsonify({"success": False, "error": "Failed to reset login attempts"}), 500
+
+    except Exception as e:
+        print(f"❌ Error in reset_login_attempt: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 # ==================== API ROUTES FOR AUDIT TRAILS ====================
 # SIMPLE WORKING API ROUTES
 @server.route('/api/get_users', methods=['GET'])

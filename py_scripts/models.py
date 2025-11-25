@@ -60,7 +60,6 @@ class Accounts(Base, UserMixin):
             'user_level': self.user_level,
             'acct_status': self.acct_status,
             'acct_review_date': self.acct_review_date.strftime('%Y-%m-%d') if self.acct_review_date else None,
-            'profile_pic': self.profile_pic,
             'login_attempt': self.login_attempt
         }
     
