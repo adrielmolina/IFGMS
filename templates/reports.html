@@ -5,17 +5,11 @@
 {% block head %}
     <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='styles/reports.css') }}">
 
-    <!-- <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet"> -->
-    <!-- <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script> -->
-    <!-- <link href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css" rel="stylesheet"> -->
-
     <!-- Tabulator CSS v5.5.2 -->
     <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
 
     <!-- Tabulator JS v5.5.2 -->
     <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
-
-
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
@@ -39,10 +33,123 @@
             </div>
 
             <button id="openReportsOverlay" class="btn-primary">
-                <i class="fas fa-plus"></i> Add Report Data
+                <i class="fas fa-plus"></i> Set Annual Target
             </button>
         </div>
     </div>
+
+    <!-- KPI CARDS SECTION -->
+<section class="kpi-container">
+    <!-- Row 1 -->
+    <div class="kpi-card" data-metric="total-members">
+        <div class="kpi-icon">
+            <img src="{{ url_for('static', filename='assets/users.png') }}" alt="Total Members" class="kpi-icon-img">
+        </div>
+        <h2>12,450</h2>
+        <p>Total Members (This Year)</p>
+        <div class="kpi-trend positive">
+            5.2% vs last year
+        </div>
+    </div>
+
+    <div class="kpi-card" data-metric="revenue">
+        <div class="kpi-icon">
+            <img src="{{ url_for('static', filename='assets/calendar.png') }}" alt="Calendar" class="kpi-icon-img">
+        </div>
+        <h2>₱2,780,500</h2>
+        <p>Total Amount Collected</p>
+        <div class="comparison">
+            <span class="comparison-item">
+                <img src="{{ url_for('static', filename='assets/money.png') }}" alt="Money" class="small-icon">
+                Monthly: ₱231,708
+            </span>
+        </div>
+    </div>
+
+    <div class="kpi-card status-on-track" data-metric="achievement">
+        <div class="status-indicator"></div>
+        <div class="kpi-icon">
+            <img src="{{ url_for('static', filename='assets/target.png') }}" alt="Target" class="kpi-icon-img">
+        </div>
+        <h2>68%</h2>
+        <p>Target Achievement</p>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 68%"></div>
+        </div>
+        <div class="progress-label">42,100 / 62,000</div>
+    </div>
+
+    <div class="kpi-card" data-metric="monthly">
+        <div class="kpi-icon">
+            <img src="{{ url_for('static', filename='assets/chart-up.png') }}" alt="Monthly Trend" class="kpi-icon-img">
+        </div>
+        <h2>412</h2>
+        <p>Month-to-Date Applications</p>
+        <div class="time-comparison">
+            <div class="comparison-row">
+                <span>vs Last Month:</span>
+                <span class="positive">+12%</span>
+            </div>
+            <div class="comparison-row">
+                <span>vs Last Year:</span>
+                <span class="positive">+8%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="kpi-card" data-metric="growth">
+        <div class="kpi-icon">
+            <img src="{{ url_for('static', filename='assets/growth.png') }}" alt="Growth" class="kpi-icon-img">
+        </div>
+        <h2 class="growth-value">▲ +12%</h2>
+        <p>Growth vs Last Month</p>
+        <div class="growth-details">
+            <span class="positive">+442 members</span>
+        </div>
+    </div>
+
+    <!-- Card 6: Top Performing Category -->
+    <div class="kpi-card status-on-track" data-metric="top-category">
+        <div class="status-indicator"></div>
+        <div class="kpi-icon">
+            <img src="{{ url_for('static', filename='assets/crown.png') }}" alt="Top Category" class="kpi-icon-img">
+        </div>
+        <h2>Bronze</h2>
+        <p>Top Performing Category</p>
+        <div class="category-details">
+            <span>740 units</span>
+            <span class="amount">₱111,000</span>
+        </div>
+        <div class="market-share">34% of total</div>
+    </div>
+
+    <!-- Card 7: Worst Performing Category -->
+    <div class="kpi-card status-behind" data-metric="worst-category">
+        <div class="status-indicator"></div>
+        <div class="kpi-icon">
+            <img src="{{ url_for('static', filename='assets/exclamation.png') }}" alt="Needs Attention" class="kpi-icon-img">
+        </div>
+        <h2>Senior+</h2>
+        <p>Needs Attention</p>
+        <div class="category-details">
+            <span>18 units</span>
+            <span class="amount">₱5,400</span>
+        </div>
+        <div class="achievement-rate">40% achieved</div>
+    </div>
+
+    <div class="kpi-card" data-metric="renewal-rate">
+        <div class="kpi-icon">
+            <img src="{{ url_for('static', filename='assets/alt.png') }}" alt="Year Completion" class="kpi-icon-img">
+        </div>
+        <h2>87%</h2>
+        <p>Member Renewal Rate</p>
+        <div class="kpi-trend positive">
+            <i class="fas fa-arrow-up"></i> 3% improvement
+        </div>
+    </div>
+</section>
 
     <!-- Updated Overlay HTML -->
 <div id="reportsOverlay" class="overlay">
@@ -224,6 +331,15 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeOverlay();
         initializeFilters();
         initializeCollapseBoxes();
+        loadKPIData();
+    
+    // Reload KPI data when year filter changes
+    const yearFilter = document.getElementById('filter_year');
+    if (yearFilter) {
+        yearFilter.addEventListener('change', function() {
+            loadKPIData();
+        });
+    }
     });
 });
 
@@ -886,6 +1002,192 @@ async function saveTargetData() {
         alert('Error saving budget data: ' + error.message);
     }
 }
+
+// Function to load KPI data from database
+async function loadKPIData() {
+    try {
+        console.log('🔄 Loading KPI data...');
+        const response = await fetch('/api/reports/kpi_data');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ KPI data loaded successfully:', result.data);
+            updateKPICards(result.data);
+        } else {
+            console.error('❌ Error in KPI data response:', result.error);
+            // Show fallback values or error message
+            showKPIFallback();
+        }
+    } catch (error) {
+        console.error('❌ Error fetching KPI data:', error);
+        // Show fallback values
+        showKPIFallback();
+    }
+}
+
+// Function to show fallback values when API fails
+function showKPIFallback() {
+    console.log('🔄 Using fallback KPI values');
+    // You can keep the current hardcoded values or show a message
+    // The cards will maintain their current hardcoded values
+    const fallbackMessage = document.createElement('div');
+    fallbackMessage.className = 'kpi-fallback-message';
+    fallbackMessage.innerHTML = '<small>Using sample data - API unavailable</small>';
+    
+    const kpiContainer = document.querySelector('.kpi-container');
+    if (kpiContainer && !document.querySelector('.kpi-fallback-message')) {
+        kpiContainer.appendChild(fallbackMessage);
+    }
+}
+
+// Function to update KPI cards with real data
+function updateKPICards(data) {
+    // Total Members Card
+    const totalMembersCard = document.querySelector('[data-metric="total-members"]');
+    if (totalMembersCard) {
+        totalMembersCard.querySelector('h2').textContent = data.total_members.toLocaleString();
+        const trendElement = totalMembersCard.querySelector('.kpi-trend');
+        if (trendElement) {
+            const growthText = data.membership_growth >= 0 ? 
+                `${data.membership_growth.toFixed(1)}% vs last year` : 
+                `${Math.abs(data.membership_growth).toFixed(1)}% vs last year`;
+            trendElement.textContent = growthText;
+            trendElement.className = `kpi-trend ${data.membership_growth >= 0 ? 'positive' : 'negative'}`;
+        }
+    }
+
+    // Revenue Card
+    const revenueCard = document.querySelector('[data-metric="revenue"]');
+    if (revenueCard) {
+        revenueCard.querySelector('h2').textContent = `₱${data.total_revenue.toLocaleString()}`;
+        const comparisonElement = revenueCard.querySelector('.comparison-item');
+        if (comparisonElement) {
+            comparisonElement.innerHTML = `
+                <img src="{{ url_for('static', filename='assets/money.png') }}" alt="Money" class="small-icon">
+                Monthly: ₱${Math.round(data.monthly_revenue).toLocaleString()}
+            `;
+        }
+    }
+
+    // Target Achievement Card
+    const achievementCard = document.querySelector('[data-metric="achievement"]');
+    if (achievementCard) {
+        achievementCard.querySelector('h2').textContent = `${data.target_achievement.toFixed(0)}%`;
+        const progressFill = achievementCard.querySelector('.progress-fill');
+        const progressLabel = achievementCard.querySelector('.progress-label');
+        
+        if (progressFill) {
+            progressFill.style.width = `${data.target_achievement}%`;
+        }
+        if (progressLabel) {
+            progressLabel.textContent = `${data.target_current.toLocaleString()} / ${data.target_total.toLocaleString()}`;
+        }
+        
+        // Update status indicator
+        const statusIndicator = achievementCard.querySelector('.status-indicator');
+        if (statusIndicator) {
+            achievementCard.className = `kpi-card ${
+                data.target_achievement >= 75 ? 'status-on-track' : 
+                data.target_achievement >= 50 ? 'status-at-risk' : 'status-behind'
+            }`;
+        }
+    }
+
+    // Monthly Applications Card
+    const monthlyCard = document.querySelector('[data-metric="monthly"]');
+    if (monthlyCard) {
+        monthlyCard.querySelector('h2').textContent = data.mtd_applications.toLocaleString();
+        const timeComparison = monthlyCard.querySelector('.time-comparison');
+        if (timeComparison) {
+            timeComparison.innerHTML = `
+                <div class="comparison-row">
+                    <span>vs Last Month:</span>
+                    <span class="${data.last_month_comparison >= 0 ? 'positive' : 'negative'}">${data.last_month_comparison >= 0 ? '+' : ''}${data.last_month_comparison}%</span>
+                </div>
+                <div class="comparison-row">
+                    <span>vs Last Year:</span>
+                    <span class="${data.last_year_comparison >= 0 ? 'positive' : 'negative'}">${data.last_year_comparison >= 0 ? '+' : ''}${data.last_year_comparison}%</span>
+                </div>
+            `;
+        }
+    }
+
+    // Growth Card
+    const growthCard = document.querySelector('[data-metric="growth"]');
+    if (growthCard) {
+        const growthValue = growthCard.querySelector('.growth-value');
+        const growthDetails = growthCard.querySelector('.growth-details span');
+        
+        if (growthValue) {
+            growthValue.textContent = `${data.membership_growth >= 0 ? '▲' : '▼'} ${Math.abs(data.membership_growth).toFixed(1)}%`;
+            growthValue.className = `growth-value ${data.membership_growth >= 0 ? 'positive' : 'negative'}`;
+        }
+        if (growthDetails) {
+            growthDetails.textContent = `${data.growth_member_count >= 0 ? '+' : ''}${data.growth_member_count} members`;
+            growthDetails.className = data.growth_member_count >= 0 ? 'positive' : 'negative';
+        }
+    }
+
+    // Top Category Card
+    const topCategoryCard = document.querySelector('[data-metric="top-category"]');
+    if (topCategoryCard && data.top_category) {
+        topCategoryCard.querySelector('h2').textContent = data.top_category.name;
+        const categoryDetails = topCategoryCard.querySelector('.category-details');
+        const marketShare = topCategoryCard.querySelector('.market-share');
+        
+        if (categoryDetails) {
+            categoryDetails.innerHTML = `
+                <span>${data.top_category.count} units</span>
+                <span class="amount">₱${data.top_category.revenue.toLocaleString()}</span>
+            `;
+        }
+        if (marketShare) {
+            // Calculate market share percentage
+            const marketSharePercent = data.top_category.count > 0 ? 
+                (data.top_category.count / data.total_members * 100).toFixed(0) : 0;
+            marketShare.textContent = `${marketSharePercent}% of total`;
+        }
+    }
+
+    // Worst Category Card
+    const worstCategoryCard = document.querySelector('[data-metric="worst-category"]');
+    if (worstCategoryCard && data.worst_category) {
+        worstCategoryCard.querySelector('h2').textContent = data.worst_category.name;
+        const categoryDetails = worstCategoryCard.querySelector('.category-details');
+        const achievementRate = worstCategoryCard.querySelector('.achievement-rate');
+        
+        if (categoryDetails) {
+            categoryDetails.innerHTML = `
+                <span>${data.worst_category.count} units</span>
+                <span class="amount">₱${data.worst_category.revenue.toLocaleString()}</span>
+            `;
+        }
+        if (achievementRate) {
+            // Calculate achievement rate (you might want different logic here)
+            const achievementPercent = data.worst_category.count > 0 ? 
+                Math.min((data.worst_category.count / 50) * 100, 100).toFixed(0) : 0;
+            achievementRate.textContent = `${achievementPercent}% achieved`;
+        }
+    }
+
+    // Renewal Rate Card
+    const renewalCard = document.querySelector('[data-metric="renewal-rate"]');
+    if (renewalCard) {
+        renewalCard.querySelector('h2').textContent = `${data.renewal_rate.toFixed(0)}%`;
+        const trendElement = renewalCard.querySelector('.kpi-trend');
+        if (trendElement) {
+            trendElement.innerHTML = `
+                <i class="fas fa-arrow-${data.renewal_improvement >= 0 ? 'up' : 'down'}"></i>
+                ${Math.abs(data.renewal_improvement)}% ${data.renewal_improvement >= 0 ? 'improvement' : 'decline'}
+            `;
+            trendElement.className = `kpi-trend ${data.renewal_improvement >= 0 ? 'positive' : 'negative'}`;
+        }
+    }
+}
 </script>
 {% endblock %}
-
