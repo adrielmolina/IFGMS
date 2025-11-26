@@ -598,61 +598,99 @@
                         </div>
                     </div>
 
-                <div class="collapse_box_header">
-                    <input id="claim_status_check" name="claim_status_check" class="collapse_box_checkbox"
-                    type="checkbox" checked data-target_div="claim_status_info"> 
-                    <label for="claim_status_check" class="collapse_box_label">Claim Status</label>
-                </div>
-                <div id="claim_status_info" class="collapse_group">  
-                    <div class="release_section" id="release_section">
-                        <!-- <h4>Release Section</h4>
-                        <p>For the release of the claim, please ensure that all requirements are met and the claimant has signed the Quit Claim.</p>
-                        <p>For any questions or concerns, please contact the claims department.</p> -->
+<div class="collapse_box_header">
+    <input id="claim_status_check" name="claim_status_check" class="collapse_box_checkbox"
+    type="checkbox" checked data-target_div="claim_status_info"> 
+    <label for="claim_status_check" class="collapse_box_label">Claim Status</label>
+</div>
+<div id="claim_status_info" class="collapse_group">  
+    <div class="release_section" id="release_section">
+        <p> Approved or Denied claims will be locked from editing. </p>
+        
+        <div class="columns">
+            <!-- Left Column - Existing Claim Status Fields -->
+            <div class="release_sectin_column">
+                <label for="claim_status">Status</label>
+                <select name="claim_status" id="claim_status">
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Denied">Denied</option>
+                </select>
 
-                        <p> Approved or Denied claims will be locked from editing. </p>
-                        <div class="columns">
-                            <div class="release_sectin_column">
-                                <label for="claim_status">Status</label>
-                                <select name="claim_status" id="claim_status">
-                                    <option value="Pending">Pending</option>
-                                    <option value="Approved">Approved</option>
-                                    <option value="Denied">Denied</option>
-                                </select>
+                <label for="chinabank_check_no">Chinabank Check No.</label>
+                <input type="number" id="chinabank_check_no" name="chinabank_check_no" required autocomplete="off" disabled>
 
-                                <label for="chinabank_check_no">Chinabank Check No.</label>
-                                <input type="number" id="chinabank_check_no" name="chinabank_check_no" required autocomplete="off" disabled>
+                <label for="bpi_check_no">BPI Check No.</label>
+                <input type="number" id="bpi_check_no" name="bpi_check_no" required autocomplete="off" disabled>    
 
-                                <label for="bpi_check_no">BPI Check No.</label>
-                                <input type="number" id="bpi_check_no" name="bpi_check_no" required autocomplete="off" disabled>    
+                <button class="generate_prm" id="generate_prm" hidden>Generate PRM Template</button>
+                <input type="file" accept=".xlsx" id="upload_prm" name="upload_prm" required autocomplete="off" hidden>
+                <a class="prm_file" id="prm_file" href="drive.google.com" style="display: none;">View PRM File</a>
+            </div>
 
-                                <button class="generate_prm" id="generate_prm" hidden>Generate PRM Template</button>
-                                <input type="file" accept=".xlsx" id="upload_prm" name="upload_prm" required autocomplete="off" hidden>
-                                <a class="prm_file" id="prm_file" href="drive.google.com" style="display: none;">View PRM File</a>
+            <!-- Right Column - Existing Fields -->
+            <div class="release_sectin_column">
+                <label for="date_released">Date Approved / Denied</label>
+                <span>
+                    <input disabled type="date" id="date_released" name="date_released" required autocomplete="off">
+                    <button style="float: right;" type="button" onclick="document.getElementById('date_released').value = new Date().toISOString().slice(0, 10);">
+                        Today
+                    </button>
+                </span>
 
-                            </div>
-
-                            <div class="release_sectin_column">
-                                <label for="date_released">Date Approved / Denied</label>
-
-                                <span>
-                                <input disabled type="date" id="date_released" name="date_released" required autocomplete="off">
-                                    <button style="float: right;" type="button" onclick="document.getElementById('date_released').value = new Date().toISOString().slice(0, 10);">
-                                        Today
-                                    </button>
-                                </span>
-
-                                <label for="chinabank_amount">Chinabank Amount</label>
-                                <input type="number" id="chinabank_amount" name="chinabank_amount" required autocomplete="off" disabled>
-                                                                
+                <label for="chinabank_amount">Chinabank Amount</label>
+                <input type="number" id="chinabank_amount" name="chinabank_amount" required autocomplete="off" disabled>
                                 
-                                <label for="bpi_amount">BPI Amount</label>  
-                                <input type="number" id="bpi_amount" name="bpi_amount" required autocomplete="off" disabled>
+                <label for="bpi_amount">BPI Amount</label>  
+                <input type="number" id="bpi_amount" name="bpi_amount" required autocomplete="off" disabled>
 
-                                <button class="generate_quit_claim" id="generate_quit_claim" hidden>Generate Quit Claim Template</button>
-                                <input type="file" accept=".docx" id="upload_quit_claim" name="upload_quit_claim" required autocomplete="off" hidden>
-                                <a class="quit_claim_file" id="quit_claim_file" href="drive.google.com" style="display: none;" >View Quit Claim File</a>
+                <button class="generate_quit_claim" id="generate_quit_claim" hidden>Generate Quit Claim Template</button>
+                <input type="file" accept=".docx" id="upload_quit_claim" name="upload_quit_claim" required autocomplete="off" hidden>
+                <a class="quit_claim_file" id="quit_claim_file" href="drive.google.com" style="display: none;" >View Quit Claim File</a>
+            </div>
+
+            <!-- NEW: Right Side - MAAB ID Gallery Display -->
+            <div class="release_sectin_column maab-gallery-column">
+                <div class="maab-gallery-container">
+                    <h4 id="maab-gallery-title">MAAB ID Membership</h4>
+                    
+                    <!-- MAAB ID Image Display -->
+                    <div class="maab-image-area">
+                        <div class="maab-image-wrapper">
+                            <img id="maab-id-image" src="{{ url_for('static', filename='assets/ID1.png') }}" alt="MAAB ID" class="maab-id-img">
+                        </div>
+                        <p class="maab-id-caption" id="maab-id-caption">CLASSIC ID</p>
+                    </div>
+
+                    <!-- MAAB ID Benefits -->
+                    <div class="maab-benefits-area">
+                        <div class="benefits-header">
+                            <h5>Membership Benefits</h5>
+                        </div>
+                        <div class="benefits-list" id="maab-benefits-list">
+                            <div class="benefit-placeholder">
+                                Enter and verify MAAB No. to view benefits
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Membership Status -->
+                    <div class="membership-status">
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text" id="membership-status-text">Verify MAAB No.</span>
+                        </div>
+                        <div class="coverage-dates">
+                            <span>Coverage Period: </span>
+                            <span id="coverage-period-display">Not available</span>
+                        </div>
+                        <div class="member-type" id="member-type-display">
+                            ID Type: Not verified
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
                         <div class="release_remarks_section">
                             <label for="release_remarks">Release Remarks</label>
@@ -2479,6 +2517,217 @@ function initializeFormStateTracking() {
 // Call this in DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
     initializeFormStateTracking();
+});
+
+// MAAB Gallery Data - Same as your inventory
+const maabGalleryData = {
+    classic: {
+        title: "CLASSIC ID",
+        image: "{{ url_for('static', filename='assets/ID1.png') }}",
+        details: [
+            "Issuance Age is 3 - 65 years old",
+            "Php 12,000.00 - Accident Death, Disablement & Dismemberment",
+            "Php 12,000.00 - Unprovoked Murder and Assault",
+            "Php 5,000.00 - Accidental Medical Reimbursement",
+            "Php 5,000.00 - Burial Assistance (if Accident)",
+            "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+    },
+    "premier-bronze": {
+        title: "PREMIER BRONZE ID",
+        image: "{{ url_for('static', filename='assets/ID2.png') }}",
+        details: [
+            "Issuance Age is 3 - 65 years old",
+            "Php 35,000.00 - Accident Death, Disablement & Dismemberment",
+            "Php 35,000.00 - Unprovoked Murder and Assault",
+            "Php 5,000.00 - Accidental Medical Reimbursement",
+            "Php 5,000.00 - Burial Assistance (if Accident)",
+            "Php 150.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+    },
+    "premier-silver": {
+        title: "PREMIER SILVER ID",
+        image: "{{ url_for('static', filename='assets/ID3.png') }}",
+        details: [
+            "Issuance Age is 3 - 65 years old",
+            "Php 100,000.00 - Accident Death, Disablement & Dismemberment",
+            "Php 100,000.00 - Unprovoked Murder and Assault",
+            "Php 10,000.00 - Accidental Medical Reimbursement",
+            "Php 5,000.00 - Burial Assistance (if Accident)",
+            "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+    },
+    "premier-gold": {
+        title: "PREMIER GOLD ID",
+        image: "{{ url_for('static', filename='assets/ID4.png') }}",
+        details: [
+            "Issuance Age is 3 - 65 years old",
+            "Php 200,000.00 - Accident Death, Disablement & Dismemberment",
+            "Php 200,000.00 - Unprovoked Murder and Assault",
+            "Php 10,000.00 - Accidental Medical Reimbursement",
+            "Php 5,000.00 - Burial Assistance (if Accident)",
+            "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+    },
+    "premier-platinum": {
+        title: "PREMIER PLATINUM ID",
+        image: "{{ url_for('static', filename='assets/ID5.png') }}",
+        details: [
+            "Issuance Age is 3 - 65 years old",
+            "Php 300,000.00 - Accident Death, Disablement & Dismemberment",
+            "Php 300,000.00 - Unprovoked Murder and Assault",
+            "Php 10,000.00 - Accidental Medical Reimbursement",
+            "Php 5,000.00 - Burial Assistance (if Accident)",
+            "Php 200.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+    },
+    senior: {
+        title: "SENIOR ID",
+        image: "{{ url_for('static', filename='assets/ID6.png') }}",
+        details: [
+            "Issuance Age is 66 - 80 years old",
+            "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+            "Php 50,000.00 - Unprovoked Murder and Assault",
+            "Php 5,000.00 - Accidental Medical Reimbursement",
+            "Php 5,000.00 - Burial Assistance (if Accident)",
+            "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+    },
+    seniorplus: {
+        title: "SENIOR PLUS ID",
+        image: "{{ url_for('static', filename='assets/ID7.png') }}",
+        details: [
+            "Issuance Age is 81 - 85 years old",
+            "Php 50,000.00 - Accident Death, Disablement & Dismemberment",
+            "Php 50,000.00 - Unprovoked Murder and Assault",
+            "Php 5,000.00 - Accidental Medical Reimbursement",
+            "Php 5,000.00 - Burial Assistance (if Accident)",
+            "Php 100.00 - A day / Hospital Daily Allowance (Max. of 60 days)"
+        ]
+    }
+};
+
+// Function to detect MAAB ID type from MAAB number prefix
+function detectMAABTypeFromPrefix(maabNo) {
+    if (!maabNo) return 'classic';
+    
+    const maabStr = maabNo.toString().toUpperCase().trim();
+    
+    // Pattern detection based on MAAB numbering system from inventory
+    if (maabStr.startsWith('PC')) return 'classic';
+    if (maabStr.startsWith('PB')) return 'premier-bronze';
+    if (maabStr.startsWith('PS')) return 'premier-silver';
+    if (maabStr.startsWith('PG')) return 'premier-gold';
+    if (maabStr.startsWith('PP')) return 'premier-platinum';
+    if (maabStr.startsWith('PEP')) return 'premier-platinum'; // Safe Card uses Platinum benefits
+    if (maabStr.startsWith('SP')) return 'seniorplus';
+    if (maabStr.startsWith('S') && !maabStr.startsWith('SP')) return 'senior';
+    
+    // Default fallback
+    return 'classic';
+}
+
+// Function to update MAAB gallery display
+function updateMAABGallery() {
+    const maabNo = document.getElementById('maab_no').value;
+    const effDate = document.getElementById('eff_date').value;
+    const benefitsList = document.getElementById('maab-benefits-list');
+    const galleryTitle = document.getElementById('maab-gallery-title');
+    const maabImage = document.getElementById('maab-id-image');
+    const maabCaption = document.getElementById('maab-id-caption');
+    const statusText = document.getElementById('membership-status-text');
+    const coverageDisplay = document.getElementById('coverage-period-display');
+    const memberTypeDisplay = document.getElementById('member-type-display');
+    
+    if (maabNo && effDate) {
+        const maabType = detectMAABTypeFromPrefix(maabNo);
+        const galleryData = maabGalleryData[maabType];
+        
+        if (galleryData) {
+            // Update image and title
+            maabImage.src = galleryData.image;
+            maabImage.alt = galleryData.title;
+            maabCaption.textContent = galleryData.title;
+            galleryTitle.textContent = 'MAAB ID Membership';
+            
+            // Update benefits list
+            benefitsList.innerHTML = '';
+            galleryData.details.forEach(detail => {
+                const benefitItem = document.createElement('div');
+                benefitItem.className = 'benefit-item';
+                benefitItem.innerHTML = `
+                    <span class="benefit-icon">✓</span>
+                    <span class="benefit-text">${detail}</span>
+                `;
+                benefitsList.appendChild(benefitItem);
+            });
+            
+            // Update status and coverage
+            statusText.textContent = 'Active Membership';
+            memberTypeDisplay.textContent = `ID Type: ${galleryData.title}`;
+            
+            const effectivityDate = new Date(effDate);
+            const expirationDate = new Date(effectivityDate);
+            expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+            
+            coverageDisplay.textContent = 
+                `${effectivityDate.toLocaleDateString()} - ${expirationDate.toLocaleDateString()}`;
+                
+        } else {
+            showGalleryPlaceholder();
+        }
+    } else {
+        showGalleryPlaceholder();
+    }
+}
+
+function showGalleryPlaceholder() {
+    const benefitsList = document.getElementById('maab-benefits-list');
+    const galleryTitle = document.getElementById('maab-gallery-title');
+    const maabImage = document.getElementById('maab-id-image');
+    const maabCaption = document.getElementById('maab-id-caption');
+    const statusText = document.getElementById('membership-status-text');
+    const coverageDisplay = document.getElementById('coverage-period-display');
+    const memberTypeDisplay = document.getElementById('member-type-display');
+    
+    galleryTitle.textContent = 'MAAB ID Membership';
+    maabImage.src = "{{ url_for('static', filename='assets/ID1.png') }}";
+    maabCaption.textContent = 'CLASSIC ID';
+    benefitsList.innerHTML = '<div class="benefit-placeholder">Enter and verify MAAB No. to view benefits</div>';
+    statusText.textContent = 'Verify MAAB No.';
+    coverageDisplay.textContent = 'Not available';
+    memberTypeDisplay.textContent = 'ID Type: Not verified';
+}
+
+// Call this when MAAB number is verified
+document.getElementById('verify_maab_no').addEventListener('click', function() {
+    // Your existing verification code...
+    
+    // Then update gallery display after a short delay to ensure data is loaded
+    setTimeout(updateMAABGallery, 200);
+});
+
+// Also update when MAAB number is manually changed
+document.getElementById('maab_no').addEventListener('input', function() {
+    // Clear gallery if MAAB number is cleared
+    if (!this.value) {
+        showGalleryPlaceholder();
+    } else {
+        // Optional: Auto-detect and update based on prefix even without verification
+        updateMAABGallery();
+    }
+});
+
+// Update when effectivity date changes
+document.getElementById('eff_date').addEventListener('change', function() {
+    if (document.getElementById('maab_no').value) {
+        updateMAABGallery();
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    showGalleryPlaceholder();
 });
 </script>
 {% endblock %}
