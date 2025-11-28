@@ -787,3 +787,275 @@ body {
         height: 20px;
     }
 }
+
+/* Enhanced Target vs Actual Table Styles - Dark Mode */
+#target_v_actual_table .tabulator-col {
+    background-color: #1e1e2e !important;
+    color: #e0e0e0 !important;
+    font-weight: 600;
+    border-right: 1px solid #444;
+}
+
+#target_v_actual_table .tabulator-col .tabulator-col-content {
+    justify-content: center !important;
+    padding: 8px 4px !important;
+}
+
+/* Row colors matching your existing tables */
+#target_v_actual_table .tabulator-row {
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    border-bottom: 1px solid #444;
+    background-color: #2d2d3d !important;
+}
+
+#target_v_actual_table .tabulator-row-even {
+    background-color: #2d2d3d !important;
+}
+
+#target_v_actual_table .tabulator-row-odd {
+    background-color: #1e1e2e !important;
+}
+
+#target_v_actual_table .tabulator-row:hover {
+    background-color: #333344 !important;
+}
+
+/* Header group styling */
+#target_v_actual_table .tabulator-col-group {
+    background-color: #4dabf7 !important;
+    color: #fff !important;
+}
+
+#target_v_actual_table .tabulator-col-group .tabulator-col-group-cols {
+    border-bottom: 2px solid #339af0;
+}
+
+/* Sub-header styling */
+#target_v_actual_table .tabulator-col[tabulator-field="category"] {
+    background-color: #2d2d3d !important;
+    font-weight: 700;
+}
+
+/* Achievement percentage styling */
+.achievement-cell {
+    text-align: center;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+.achievement-excellent {
+    background: rgba(16, 185, 129, 0.15);
+    color: #51cf66;
+    border: 1px solid rgba(81, 207, 102, 0.3);
+}
+
+.achievement-good {
+    background: rgba(59, 130, 246, 0.15);
+    color: #4dabf7;
+    border: 1px solid rgba(77, 171, 247, 0.3);
+}
+
+.achievement-fair {
+    background: rgba(245, 158, 11, 0.15);
+    color: #ffd43b;
+    border: 1px solid rgba(255, 212, 59, 0.3);
+}
+
+.achievement-poor {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+/* Gap indicator styling */
+.gap-positive {
+    color: #51cf66;
+    font-weight: 600;
+}
+
+.gap-negative {
+    color: #ff6b6b;
+    font-weight: 600;
+}
+
+.gap-neutral {
+    color: #b0b0b0;
+    font-weight: 600;
+}
+
+/* Status badge styling */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+.status-on-track {
+    background: rgba(16, 185, 129, 0.15);
+    color: #51cf66;
+    border-color: rgba(81, 207, 102, 0.3);
+}
+
+.status-at-risk {
+    background: rgba(245, 158, 11, 0.15);
+    color: #ffd43b;
+    border-color: rgba(255, 212, 59, 0.3);
+}
+
+.status-behind {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ff6b6b;
+    border-color: rgba(255, 107, 107, 0.3);
+}
+
+/* Current month highlighting */
+.current-month-column .tabulator-col {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+    position: relative;
+}
+
+.current-month-column .tabulator-col::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #ffd43b;
+}
+
+.current-month-cell {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+    position: relative;
+}
+
+.current-month-cell::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #ffd43b;
+}
+
+/* Performance indicators */
+.performance-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.performance-excellent { background-color: #51cf66; }
+.performance-good { background-color: #4dabf7; }
+.performance-fair { background-color: #ffd43b; }
+.performance-poor { background-color: #ff6b6b; }
+
+/* Summary row styling */
+.tabulator-footer {
+    background: #2d2d3d !important;
+    border-top: 2px solid #4dabf7 !important;
+    font-weight: 600;
+    padding: 12px 15px !important;
+    color: #e0e0e0 !important;
+}
+
+.summary-totals {
+    font-weight: 700;
+    color: #4dabf7;
+}
+
+/* Alert flags for critical items */
+.alert-flag {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.alert-critical { background-color: #ff6b6b; }
+.alert-warning { background-color: #ffd43b; }
+.alert-info { background-color: #4dabf7; }
+
+/* Column borders and spacing */
+#target_v_actual_table .tabulator-cell {
+    border-right: 1px solid #444;
+    padding: 6px 4px;
+    color: #e0e0e0 !important;
+}
+
+#target_v_actual_table .tabulator-col:last-child,
+#target_v_actual_table .tabulator-cell:last-child {
+    border-right: none;
+}
+
+/* Frozen column styling */
+#target_v_actual_table .tabulator-frozen {
+    background-color: #2d2d3d !important;
+    border-right: 2px solid #4dabf7 !important;
+}
+
+#target_v_actual_table .tabulator-frozen-left {
+    z-index: 10;
+}
+
+/* Money formatting */
+.money-cell {
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    #target_v_actual_table .tabulator-table {
+        font-size: 0.8rem;
+    }
+    
+    #target_v_actual_table .tabulator-col {
+        min-width: 80px;
+    }
+    
+    #target_v_actual_table .tabulator-cell {
+        padding: 4px 2px;
+    }
+    
+    .achievement-cell {
+        font-size: 0.7rem;
+        padding: 2px 4px;
+    }
+}
+
+/* Print styles */
+@media print {
+    #target_v_actual_table .tabulator-col {
+        background-color: #2d2d3d !important;
+        color: #e0e0e0 !important;
+    }
+    
+    #target_v_actual_table .tabulator-row {
+        background-color: #1e1e2e !important;
+    }
+}
+
+/* Ensure all text in the table is visible in dark mode */
+#target_v_actual_table,
+#target_v_actual_table *:not(.tabulator-col):not(.tabulator-col-content) {
+    color: #e0e0e0 !important;
+}
+
+/* Header text color specifically */
+#target_v_actual_table .tabulator-col {
+    color: #e0e0e0 !important;
+}

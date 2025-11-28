@@ -741,3 +741,263 @@ body {
         height: 20px;
     }
 }
+
+/* Enhanced Target vs Actual Table Styles - Matching Your Design */
+#target_v_actual_table .tabulator-col {
+    background-color: #ffffff !important;
+    color: #1f1313 !important;
+    font-weight: 600;
+    border-right: 1px solid #e0e0e0;
+}
+
+#target_v_actual_table .tabulator-col .tabulator-col-content {
+    justify-content: center !important;
+    padding: 8px 4px !important;
+}
+
+/* Row colors matching your existing tables */
+#target_v_actual_table .tabulator-row {
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #efefef !important;
+}
+
+#target_v_actual_table .tabulator-row-even {
+    background-color: #efefef !important;
+}
+
+#target_v_actual_table .tabulator-row-odd {
+    background-color: #f8f9fa !important;
+}
+
+#target_v_actual_table .tabulator-row:hover {
+    background-color: #e9ecef !important;
+}
+
+/* Header group styling */
+#target_v_actual_table .tabulator-col-group {
+    background-color: #f07474 !important;
+    color: #fff !important;
+}
+
+#target_v_actual_table .tabulator-col-group .tabulator-col-group-cols {
+    border-bottom: 2px solid #B92F2F;
+}
+
+/* Sub-header styling */
+#target_v_actual_table .tabulator-col[tabulator-field="category"] {
+    background-color: #f8f9fa !important;
+    font-weight: 700;
+}
+
+/* Achievement percentage styling */
+.achievement-cell {
+    text-align: center;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+.achievement-excellent {
+    background: #f0fdf4;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+
+.achievement-good {
+    background: #f0f9ff;
+    color: #3b82f6;
+    border: 1px solid #93c5fd;
+}
+
+.achievement-fair {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fed7aa;
+}
+
+.achievement-poor {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+/* Gap indicator styling */
+.gap-positive {
+    color: #059669;
+    font-weight: 600;
+}
+
+.gap-negative {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.gap-neutral {
+    color: #6b7280;
+    font-weight: 600;
+}
+
+/* Status badge styling */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+.status-on-track {
+    background: #f0fdf4;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+
+.status-at-risk {
+    background: #fffbeb;
+    color: #d97706;
+    border-color: #fed7aa;
+}
+
+.status-behind {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+/* Current month highlighting */
+.current-month-column .tabulator-col {
+    background-color: #fff3cd !important;
+    position: relative;
+}
+
+.current-month-column .tabulator-col::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #ffc107;
+}
+
+.current-month-cell {
+    background-color: #fff3cd !important;
+    position: relative;
+}
+
+.current-month-cell::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #ffc107;
+}
+
+/* Performance indicators */
+.performance-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.performance-excellent { background-color: #10b981; }
+.performance-good { background-color: #3b82f6; }
+.performance-fair { background-color: #f59e0b; }
+.performance-poor { background-color: #ef4444; }
+
+/* Summary row styling */
+.tabulator-footer {
+    background: #f8f9fa !important;
+    border-top: 2px solid #B92F2F !important;
+    font-weight: 600;
+    padding: 12px 15px !important;
+    color: #333 !important;
+}
+
+.summary-totals {
+    font-weight: 700;
+    color: #B92F2F;
+}
+
+/* Alert flags for critical items */
+.alert-flag {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.alert-critical { background-color: #ef4444; }
+.alert-warning { background-color: #f59e0b; }
+.alert-info { background-color: #3b82f6; }
+
+/* Column borders and spacing */
+#target_v_actual_table .tabulator-cell {
+    border-right: 1px solid #e0e0e0;
+    padding: 6px 4px;
+}
+
+#target_v_actual_table .tabulator-col:last-child,
+#target_v_actual_table .tabulator-cell:last-child {
+    border-right: none;
+}
+
+/* Frozen column styling */
+#target_v_actual_table .tabulator-frozen {
+    background-color: #f8f9fa !important;
+    border-right: 2px solid #B92F2F !important;
+}
+
+#target_v_actual_table .tabulator-frozen-left {
+    z-index: 10;
+}
+
+/* Money formatting */
+.money-cell {
+    font-weight: 600;
+    color: #1f1313;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    #target_v_actual_table .tabulator-table {
+        font-size: 0.8rem;
+    }
+    
+    #target_v_actual_table .tabulator-col {
+        min-width: 80px;
+    }
+    
+    #target_v_actual_table .tabulator-cell {
+        padding: 4px 2px;
+    }
+    
+    .achievement-cell {
+        font-size: 0.7rem;
+        padding: 2px 4px;
+    }
+}
+
+/* Print styles */
+@media print {
+    #target_v_actual_table .tabulator-col {
+        background-color: #f8f9fa !important;
+        color: #1f1313 !important;
+    }
+    
+    #target_v_actual_table .tabulator-row {
+        background-color: #fff !important;
+    }
+}
