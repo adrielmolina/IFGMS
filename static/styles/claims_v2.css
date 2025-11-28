@@ -686,7 +686,6 @@ label {
   border-color: #64748b;
   box-shadow: 0 0 0 2px rgba(100,116,139,0.2);
 } */
-
 .release_section {
     background: #fff;
     border-radius: 10px;
@@ -699,41 +698,47 @@ label {
     width: 100%;
     box-sizing: border-box;
     grid-column: 1 / -1;  
-  }
+    margin-right: 0 !important; 
+    max-width: none !important; 
+}
 
-  /* Restore two-column structure */
-  .columns {
+/* Restore two-column structure */
+.columns {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
-  }
+    width: 100%; /* Ensure full width */
+}
 
-  /* Column styling */
-  .release_sectin_column {
+/* Column styling */
+.release_sectin_column {
     display: flex;
     flex-direction: column;
     gap: 14px;
-  }
+    width: 100%; 
+}
 
-  /* Remarks below columns */
-  .release_remarks_section {
+/* Remarks below columns */
+.release_remarks_section {
     display: flex;
     flex-direction: column;
     gap: 10px;
-  }
+    width: 100%; /* Full width for remarks */
+}
 
-  /* Form controls */
-  .release_section input,
-  .release_section select {
+/* Form controls - Make inputs wider */
+.release_section input,
+.release_section select {
     padding: 8px 10px;
     border: 1px solid #d1d5db;
     border-radius: 6px;
     font-size: 14px;
     box-sizing: border-box;
-  }
+    width: 100%; /* Ensure inputs take full width of their container */
+}
 
-  /* Buttons */
-  .release_section button {
+/* Buttons */
+.release_section button {
     background-color: #64748b;
     color: #fff;
     border: none;
@@ -742,54 +747,77 @@ label {
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s ease-in-out;
-  }
+    width: auto; /* Let buttons size to content */
+}
 
-  .release_section button:hover {
+.release_section button:hover {
     background-color: #475569;
-  }
+}
 
-  /* Links */
-  .release_section a {
+/* Links */
+.release_section a {
     color: #1d4ed8;
     text-decoration: none;
     font-weight: 500;
-  }
+}
 
-  .release_section a:hover {
+.release_section a:hover {
     text-decoration: underline;
-  }
+}
 
-  /* Responsive: stack columns on smaller screens */
-  @media (max-width: 900px) {
-    .columns {
-      grid-template-columns: 1fr;
-    }
-  }
-
-
-  /* Labels and inputs alignment */
-  .release_sectin_column label {
+/* Labels and inputs alignment */
+.release_sectin_column label {
     font-weight: 500;
     color: #374151;
     margin-bottom: 4px;
-  }
+    width: 100%; 
+}
 
-  .release_sectin_column input,
-  .release_sectin_column select {
+.release_sectin_column input,
+.release_sectin_column select {
     border: 1px solid #d1d5db;
     border-radius: 6px;
     padding: 8px 10px;
     font-size: 14px;
     background-color: #fff;
     transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  }
+    width: 100%; 
+    max-width: none;
+}
 
-  .release_sectin_column input:focus,
-  .release_sectin_column select:focus {
+.release_sectin_column input:focus,
+.release_sectin_column select:focus {
     outline: none;
     border-color: #64748b;
     box-shadow: 0 0 0 2px rgba(100,116,139,0.2);
-  }
+}
+
+/* Additional fix for the parent container */
+#claim_status_info .release_section {
+    width: 100% !important;
+    margin-right: 0 !important;
+    padding-right: 20px !important; /* Normal padding only */
+}
+
+/* Ensure the grid columns use available space efficiently */
+.columns .release_sectin_column:first-child {
+    margin-right: 0;
+}
+
+.columns .release_sectin_column:last-child {
+    margin-left: 0;
+}
+
+/* Responsive: stack columns on smaller screens */
+@media (max-width: 900px) {
+    .columns {
+        grid-template-columns: 1fr;
+    }
+    
+    .release_section {
+        padding: 20px 15px; /* Slightly reduce padding on mobile */
+    }
+}
 
   /* Buttons */
   .release_sectin_column button,
@@ -849,21 +877,17 @@ label {
     background-color: #fff;
   }
 
-/* Center and slightly compress the release section */
 .release_section {
-  max-width: 70%; /* Adjust this (e.g., 80%, 70%) for how "compressed" you want it */
-  /* margin: 0 auto;  Centers it horizontally  */
+  max-width: 70%; 
 }
 
-/* Make the Date Released label span a normal block again */
 .release_sectin_column span {
   display: block;
   margin-bottom: 4px;
 }
 
-/* Make the date input and button sit on the same line */
 #date_released {
-  width: calc(100% - 90px); /* leave space for button */
+  width: calc(100% - 90px); 
   display: inline-block;
   vertical-align: middle;
 }
@@ -881,24 +905,21 @@ span button[onclick*="date_released"] {
   font-size: 14px;
   cursor: pointer;
   transition: background 0.2s ease-in-out;
-  height: 36px; /* matches input height */
+  height: 36px;
   line-height: 20px;
   position: relative;
-  top: 3px; /* fine-tune alignment */
+  top: 3px;
 }
 
 span button[onclick*="date_released"]:hover {
   background-color: #475569;
 }
 
-
-/* Base positioning context */
 #claim_status_info {
   position: relative;
   padding-top: 40px;
 }
 
-/* Checkbox and label (already correct) */
 #claim_status_info #picked_up {
   position: absolute;
   top: 12px;
@@ -909,17 +930,16 @@ span button[onclick*="date_released"]:hover {
 
 #claim_status_info label[for="picked_up"] {
   position: absolute;
-  top: 10px;
-  left: 50px; /* Increased from 38px to 46px for more space */
+  top: 15px;
+  left: 50px;
   font-weight: 500;
   color: #374151;
 }
 
-/* Date picker and its label beside the Picked Up field */
 #claim_status_info label[for="date_picked_up"] {
   position: absolute;
-  top: 10px;
-  left: 140px; /* adjust this spacing as needed */
+  top: 15px !important;
+  left: 140px;
   font-weight: 500;
   color: #374151;
 }
@@ -927,9 +947,8 @@ span button[onclick*="date_released"]:hover {
 #claim_status_info #date_picked_up {
   position: absolute;
   top: 8px;
-  left: 270px; /* align visually with the label */
+  left: 270px !important;
 }
-
 
 /* ========================================================= */
 /* CLAIMS TABLE DESIGN                                       */
@@ -1209,4 +1228,191 @@ span button[onclick*="date_released"]:hover {
   #claim_status_info {
     grid-template-columns: 1fr;
   }
+}
+
+/* ========================================================= */
+/* MAAB GALLERY STYLES                                       */
+/* ========================================================= */
+.maab-gallery-column {
+    background: #ffffff !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+    padding: 20px !important;
+    border: 1px solid #e0e0e0 !important;
+    min-width: 350px !important;
+    height: fit-content !important;
+}
+
+.maab-gallery-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+}
+
+.maab-gallery-container h4 {
+    margin: 0 0 15px 0 !important;
+    color: #B92F2F !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    padding-bottom: 10px !important;
+    border-bottom: 2px solid #c49191 !important;
+}
+
+.maab-image-area {
+    text-align: center !important;
+    padding: 15px !important;
+    background: #f8f9fa !important;
+    border-radius: 8px !important;
+    border: 1px solid #ddd !important;
+}
+
+.maab-image-wrapper {
+    margin-bottom: 10px !important;
+}
+
+.maab-id-img {
+    max-width: 200px !important;
+    height: auto !important;
+    border-radius: 5px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+.maab-id-caption {
+    font-weight: bold !important;
+    color: #333 !important;
+    margin: 0 !important;
+    font-size: 16px !important;
+}
+
+.maab-benefits-area {
+    background: #f8f9fa !important;
+    border-radius: 8px !important;
+    border: 1px solid #ddd !important;
+    padding: 15px !important;
+}
+
+.benefits-header h5 {
+    margin: 0 0 15px 0 !important;
+    color: #2c3e50 !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+.benefits-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+}
+
+.benefit-item {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    background: white !important;
+    border-radius: 6px !important;
+    border-left: 3px solid #B92F2F !important;
+}
+
+.benefit-icon {
+    color: #28a745 !important;
+    font-weight: bold !important;
+    flex-shrink: 0 !important;
+    margin-top: 2px !important;
+    font-size: 14px !important;
+}
+
+.benefit-text {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    color: #555 !important;
+    flex: 1 !important;
+}
+
+.benefit-placeholder {
+    text-align: center !important;
+    color: #6c757d !important;
+    font-style: italic !important;
+    padding: 20px !important;
+    background: #f8f9fa !important;
+    border-radius: 6px !important;
+    border: 1px dashed #dee2e6 !important;
+}
+
+.membership-status {
+    background: #f8f9fa !important;
+    border-radius: 8px !important;
+    border: 1px solid #ddd !important;
+    padding: 15px !important;
+}
+
+.status-indicator {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+}
+
+.status-dot {
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    background: #6c757d !important;
+}
+
+.status-indicator.active .status-dot {
+    background: #28a745 !important;
+    animation: pulse 2s infinite !important;
+}
+
+.status-text {
+    font-weight: 500 !important;
+    color: #333 !important;
+    font-size: 14px !important;
+}
+
+.coverage-dates {
+    font-size: 14px !important;
+    color: #555 !important;
+    margin-bottom: 8px !important;
+}
+
+.coverage-dates span:first-child {
+    font-weight: 500 !important;
+}
+
+.member-type {
+    font-size: 14px !important;
+    color: #007bff !important;
+    font-weight: 500 !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #dee2e6 !important;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Scrollbar styling */
+.benefits-list::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+.benefits-list::-webkit-scrollbar-track {
+    background: #f1f1f1 !important;
+    border-radius: 2px !important;
+}
+
+.benefits-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1 !important;
+    border-radius: 2px !important;
+}
+
+.benefits-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8 !important;
 }
