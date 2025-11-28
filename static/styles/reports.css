@@ -356,16 +356,28 @@ body {
     border-top: 1px solid #e0e0e0;
 }
 
+.buttons_container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
 .btn-primary {
     background: #B92F2F;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 10px 16px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.95rem;
     font-weight: 500;
     transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap; /* Prevent text wrapping */
+    flex-shrink: 0; /* Prevent button shrinking */
 }
 
 .btn-primary:hover {
