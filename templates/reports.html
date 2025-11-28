@@ -342,6 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeCollapseBoxes();
         loadKPIData();
         initializeAutoRefresh();
+        initializeExportButton();
     
     // Reload KPI data when year filter changes
     const yearFilter = document.getElementById('filter_year');
@@ -1520,6 +1521,398 @@ function updateKPICards(data) {
             `;
             trendElement.className = `kpi-trend ${data.renewal_improvement >= 0 ? 'positive' : 'negative'}`;
         }
+    }
+}
+
+// Helper function to get summary data for export
+function getSummaryDataForExport() {
+    const summaryElement = document.getElementById('summary-totals');
+    const yearFilter = document.getElementById('filter_year');
+    
+    return {
+        summary_text: summaryElement ? summaryElement.textContent.replace(/<[^>]*>/g, '').trim() : '',
+        selected_year: yearFilter ? yearFilter.value : 'Not selected',
+        export_date: new Date().toLocaleString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }),
+        total_categories: target_vs_actual_table ? target_vs_actual_table.getDataCount() : 0
+    };
+}
+
+// Helper function to get status text
+function getStatusText(status) {
+    const statusMap = {
+        'on_track': 'On Track',
+        'at_risk': 'At Risk',
+        'behind': 'Behind Target'
+    };
+    return statusMap[status] || status;
+}
+
+// Helper function to extract category details
+function extractCategoryDetails(details) {
+    const result = {
+        units: '',
+        revenue: '',
+        share: ''
+    };
+    
+    if (details) {
+        const parts = details.split(';');
+        parts.forEach(part => {
+            if (part.includes('units')) {
+                result.units = part.trim();
+            } else if (part.includes('₱')) {
+                result.revenue = part.trim();
+            } else if (part.includes('%')) {
+                result.share = part.trim();
+            }
+        });
+    }
+    
+    return result;
+}
+
+// Helper function to format currency
+function formatCurrency(amount) {
+    if (typeof amount === 'string') {
+        amount = parseFloat(amount.replace(/[₱,]/g, '')) || 0;
+    }
+    return `₱${Math.round(amount).toLocaleString('en-US')}`;
+}
+
+// Enhanced KPI data extraction with better formatting
+function getKPIDataForExport() {
+    const kpiData = [];
+    const kpiCards = document.querySelectorAll('.kpi-card');
+    
+    kpiCards.forEach(card => {
+        const metric = card.getAttribute('data-metric');
+        const title = card.querySelector('p').textContent.trim();
+        let value = card.querySelector('h2').textContent.trim();
+        
+        // Clean value for CSV
+        value = value.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        
+        let details = '';
+        
+        switch (metric) {
+            case 'total-members':
+                details = card.querySelector('.kpi-trend')?.textContent.trim() || '';
+                break;
+            case 'revenue':
+                const comparison = card.querySelector('.comparison-item');
+                details = comparison ? comparison.textContent.trim() : '';
+                break;
+            case 'achievement':
+                const progressLabel = card.querySelector('.progress-label');
+                details = progressLabel ? progressLabel.textContent.trim() : '';
+                break;
+            case 'monthly':
+                const comparisons = card.querySelectorAll('.comparison-row');
+                details = Array.from(comparisons).map(row => 
+                    row.textContent.trim().replace(/\n/g, ' ')
+                ).join('; ');
+                break;
+            case 'growth':
+                const growthDetails = card.querySelector('.growth-details span');
+                details = growthDetails ? growthDetails.textContent.trim() : '';
+                break;
+            case 'top-category':
+            case 'worst-category':
+                const categoryDetails = card.querySelector('.category-details');
+                const marketShare = card.querySelector('.market-share, .achievement-rate');
+                details = categoryDetails ? categoryDetails.textContent.trim() : '';
+                details += marketShare ? '; ' + marketShare.textContent.trim() : '';
+                break;
+            case 'renewal-rate':
+                details = card.querySelector('.kpi-trend')?.textContent.trim() || '';
+                break;
+        }
+        
+        // Clean details for CSV
+        details = details.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        
+        kpiData.push({
+            metric: metric,
+            title: title,
+            value: value,
+            details: details
+        });
+    });
+    
+    return kpiData;
+}
+
+// Enhanced table data extraction
+function getTableDataForExport() {
+    if (!target_vs_actual_table) {
+        console.warn('Table not initialized yet');
+        return { headers: [], rows: [] };
+    }
+    
+    const tableData = target_vs_actual_table.getData();
+    
+    // Clean and format the data
+    const cleanedData = tableData.map(row => {
+        const cleanRow = {};
+        
+        // Copy all properties and clean them
+        Object.keys(row).forEach(key => {
+            let value = row[key];
+            
+            if (typeof value === 'string') {
+                // Remove HTML tags and extra whitespace
+                value = value.replace(/<[^>]*>/g, '')
+                            .replace(/\n/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+            }
+            
+            cleanRow[key] = value;
+        });
+        
+        return cleanRow;
+    });
+    
+    return {
+        headers: ['Category', 'Target Units', 'Target Amount', 'YTD Units', 'YTD Amount', 'Achievement', 'Status'],
+        rows: cleanedData
+    };
+}
+
+// Professional CSV layout with headers
+function generateProfessionalCSVLayout(kpiData, tableData, summaryData) {
+    let csvContent = '';
+    
+    // ===== TITLE AND HEADER SECTION =====
+    csvContent += 'PHILIPPINE RED CROSS - CAVITE CHAPTER,\n';
+    csvContent += 'FGMS PERFORMANCE DASHBOARD REPORT,\n';
+    csvContent += ',\n';
+    csvContent += `"Report Date: ${new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric'
+    })}",\n`;
+    csvContent += `"Report Period: ${document.getElementById('filter_year').value || 'All Years'}",\n`;
+    csvContent += '"Generated By: FGMS Dashboard System",\n';
+    csvContent += ',\n';
+    
+    // ===== EXECUTIVE SUMMARY SECTION =====
+    csvContent += 'EXECUTIVE SUMMARY,\n';
+    csvContent += ',\n';
+    
+    // Summary metrics in a table format
+    csvContent += 'KEY METRIC,VALUE,TREND/COMPARISON,\n';
+    
+    const summaryMetrics = [
+        { label: 'Total Members', kpi: 'total-members' },
+        { label: 'Total Revenue', kpi: 'revenue' },
+        { label: 'Target Achievement', kpi: 'achievement' },
+        { label: 'Month-to-Date Applications', kpi: 'monthly' },
+        { label: 'Growth Rate', kpi: 'growth' },
+        { label: 'Member Renewal Rate', kpi: 'renewal-rate' }
+    ];
+    
+    summaryMetrics.forEach(metric => {
+        const kpi = kpiData.find(k => k.metric === metric.kpi);
+        if (kpi) {
+            const cleanValue = kpi.value.replace(/[₱]/g, '');
+            const cleanDetails = kpi.details.replace(/[₱▲▼%]/g, '').trim();
+            csvContent += `"${metric.label}","${cleanValue}","${cleanDetails}",\n`;
+        }
+    });
+    
+    csvContent += ',\n';
+    
+    // ===== PERFORMANCE CATEGORIES =====
+    csvContent += 'TOP PERFORMING CATEGORIES,\n';
+    csvContent += ',\n';
+    csvContent += 'CATEGORY,PERFORMANCE,UNITS,REVENUE,MARKET SHARE,\n';
+    
+    const topCategory = kpiData.find(kpi => kpi.metric === 'top-category');
+    const worstCategory = kpiData.find(kpi => kpi.metric === 'worst-category');
+    
+    if (topCategory) {
+        const details = extractCategoryDetails(topCategory.details);
+        csvContent += `"Top Performer","${topCategory.value}","${details.units}","${details.revenue}","${details.share}",\n`;
+    }
+    
+    if (worstCategory) {
+        const details = extractCategoryDetails(worstCategory.details);
+        csvContent += `"Needs Attention","${worstCategory.value}","${details.units}","${details.revenue}","${details.share}",\n`;
+    }
+    
+    csvContent += ',\n';
+    
+    // ===== TARGET VS ACTUAL MAIN TABLE =====
+    csvContent += 'TARGET VS ACTUAL PERFORMANCE SUMMARY,\n';
+    csvContent += ',\n';
+    csvContent += 'MEMBERSHIP CATEGORY,TARGET UNITS,TARGET AMOUNT,YTD ACTUAL UNITS,YTD ACTUAL AMOUNT,ACHIEVEMENT %,STATUS,\n';
+    
+    if (tableData.rows && tableData.rows.length > 0) {
+        tableData.rows.forEach(row => {
+            csvContent += `"${row.category}",`;
+            csvContent += `${row.target_PCS || 0},`;
+            csvContent += `"${formatCurrency(row.target_AMT || 0)}",`;
+            csvContent += `${row.ytd_pcs || 0},`;
+            csvContent += `"${formatCurrency(row.ytd_amt || 0)}",`;
+            csvContent += `${row.overall_achievement || 0}%,`;
+            csvContent += `"${getStatusText(row.status)}",\n`;
+        });
+    }
+    
+    csvContent += ',\n';
+    
+    // ===== MONTHLY PERFORMANCE DETAILS =====
+    csvContent += 'MONTHLY PERFORMANCE BREAKDOWN,\n';
+    csvContent += ',\n';
+    
+    // Create monthly header
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    let monthlyHeader = 'CATEGORY,';
+    months.forEach(month => {
+        monthlyHeader += `${month} UNITS,${month} AMOUNT,${month} ACH %,`;
+    });
+    csvContent += monthlyHeader + '\n';
+    
+    // Monthly data
+    if (tableData.rows && tableData.rows.length > 0) {
+        tableData.rows.forEach(row => {
+            let monthlyRow = `"${row.category}",`;
+            months.forEach(month => {
+                monthlyRow += `${row[`${month}_PCS`] || 0},`;
+                monthlyRow += `"${formatCurrency(row[`${month}_AMT`] || 0)}",`;
+                monthlyRow += `${row[`${month}_achievement`] || 0}%,`;
+            });
+            csvContent += monthlyRow + '\n';
+        });
+    }
+    
+    csvContent += ',\n';
+    
+    // ===== PERFORMANCE ANALYSIS =====
+    csvContent += 'PERFORMANCE ANALYSIS AND INSIGHTS,\n';
+    csvContent += ',\n';
+    
+    // Calculate totals
+    if (tableData.rows && tableData.rows.length > 0) {
+        const totalTargetUnits = tableData.rows.reduce((sum, row) => sum + (parseInt(row.target_PCS) || 0), 0);
+        const totalActualUnits = tableData.rows.reduce((sum, row) => sum + (parseInt(row.ytd_pcs) || 0), 0);
+        const totalTargetAmount = tableData.rows.reduce((sum, row) => sum + (parseFloat(row.target_AMT) || 0), 0);
+        const totalActualAmount = tableData.rows.reduce((sum, row) => sum + (parseFloat(row.ytd_amt) || 0), 0);
+        const overallAchievement = totalTargetUnits > 0 ? ((totalActualUnits / totalTargetUnits) * 100).toFixed(1) : 0;
+        
+        csvContent += 'OVERALL PERFORMANCE METRICS,\n';
+        csvContent += `"Total Target Units","${totalTargetUnits.toLocaleString()}",\n`;
+        csvContent += `"Total Actual Units","${totalActualUnits.toLocaleString()}",\n`;
+        csvContent += `"Total Target Amount","${formatCurrency(totalTargetAmount)}",\n`;
+        csvContent += `"Total Actual Amount","${formatCurrency(totalActualAmount)}",\n`;
+        csvContent += `"Overall Achievement Rate","${overallAchievement}%",\n`;
+        csvContent += `"Variance (Units)","${(totalActualUnits - totalTargetUnits).toLocaleString()}",\n`;
+        csvContent += `"Variance (Amount)","${formatCurrency(totalActualAmount - totalTargetAmount)}",\n`;
+        csvContent += ',\n';
+        
+        // Status breakdown
+        const statusCounts = {};
+        tableData.rows.forEach(row => {
+            const status = getStatusText(row.status);
+            statusCounts[status] = (statusCounts[status] || 0) + 1;
+        });
+        
+        csvContent += 'PERFORMANCE STATUS BREAKDOWN,\n';
+        Object.entries(statusCounts).forEach(([status, count]) => {
+            csvContent += `"${status}","${count} categories",\n`;
+        });
+    }
+    
+    csvContent += ',\n';
+    csvContent += 'END OF REPORT,\n';
+    
+    return csvContent;
+}
+
+// Professional CSV export with proper headers and layout
+function exportToCSV() {
+    try {
+        console.log('📊 Starting professional CSV export process...');
+        
+        // Get all data
+        const kpiData = getKPIDataForExport();
+        const tableData = getTableDataForExport();
+        const summaryData = getSummaryDataForExport();
+        
+        // Generate professional CSV content
+        const csvContent = generateProfessionalCSVLayout(kpiData, tableData, summaryData);
+        
+        // Download file
+        downloadCSVFile(csvContent);
+        
+        console.log('✅ Professional CSV export completed successfully');
+        
+    } catch (error) {
+        console.error('❌ Error exporting to CSV:', error);
+        alert('Error exporting data: ' + error.message);
+    }
+}
+
+// Enhanced file download with professional naming
+function downloadCSVFile(csvContent) {
+    // Add UTF-8 BOM for Excel compatibility
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    // Professional filename
+    const now = new Date();
+    const dateString = now.toISOString().split('T')[0];
+    const yearFilter = document.getElementById('filter_year').value;
+    
+    const filename = `PRC_FGMS_Performance_Report_${yearFilter}_${dateString}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+// Update the export button to use professional version
+function initializeExportButton() {
+    const exportBtn = document.getElementById('exportData');
+    
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            // Add loading state
+            const originalText = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="fas fa-file-excel"></i> Generating Report...';
+            exportBtn.disabled = true;
+            
+            setTimeout(() => {
+                try {
+                    exportToCSV();
+                } catch (error) {
+                    console.error('Export error:', error);
+                    alert('Error generating professional report: ' + error.message);
+                } finally {
+                    // Restore button state
+                    exportBtn.innerHTML = originalText;
+                    exportBtn.disabled = false;
+                }
+            }, 1000);
+        });
+        
+        console.log('✅ Professional export button initialized');
     }
 }
 </script>

@@ -1071,3 +1071,37 @@ body {
 #target_v_actual_table .tabulator-col {
     color: #e0e0e0 !important;
 }
+
+/* Export button loading state */
+.btn-export:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-export.loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-export.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-right-color: transparent;
+    animation: button-spinner 0.75s linear infinite;
+}
+
+@keyframes button-spinner {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
