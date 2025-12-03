@@ -1637,7 +1637,11 @@ div.table-container {
     display: inline-block !important;
 }
 
-#renew_overlay_btn:disabled {
+/* ===============================
+   BUTTON DISABLED STATE
+   =============================== */
+#renew_overlay_btn:disabled,
+#upgrade_overlay_btn:disabled {
     background-color: #cccccc !important;
     color: #666666 !important;
     cursor: not-allowed !important;
@@ -1646,9 +1650,11 @@ div.table-container {
     box-shadow: none !important;
 }
 
-
-/* Fixed size specifically for renew overlay */
-#renewOverlay.overlay {
+/* ===============================
+   UNIVERSAL OVERLAY STYLING
+   (Applies to upgrade + renew)
+   =============================== */
+#upgade_renew_overlay.overlay {
     display: none;
     position: fixed;
     top: 0;
@@ -1659,66 +1665,74 @@ div.table-container {
     z-index: 1000;
 }
 
-#renewOverlay .overlay-content {
-    background-color: white;
+#upgade_renew_overlay .overlay-content {
+    background-color: #fff;
     margin: 5% auto;
     padding: 20px;
     width: 90%;
     max-width: 1200px;
-    height: 80vh; /* Fixed height */
-    min-height: 600px; /* Minimum height */
+    height: 80vh;
+    min-height: 600px;
     border-radius: 8px;
-    display: flex;
-    flex-direction: column; /* This makes the content stack properly */
-}
-
-#renewOverlay .overlay-body {
-    flex: 1; /* Takes up remaining space */
     display: flex;
     flex-direction: column;
 }
 
-#renewOverlay .table-container {
-    flex: 1; /* Takes up available space */
-    max-height: none; /* Remove max-height constraint */
-    overflow-y: auto; /* Scroll only the table, not the entire overlay */
+#upgade_renew_overlay .overlay-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===============================
+   TABLE AREA
+   =============================== */
+#upgade_renew_overlay .table-container {
+    flex: 1;
+    overflow-y: auto;
     border: 1px solid #ddd;
 }
 
-#renewOverlay .close-overlay {
+#upgade_renew_overlay .table-container table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+#upgade_renew_overlay .table-container th,
+#upgade_renew_overlay .table-container td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    width: 20%;
+    text-align: left;
+    word-wrap: break-word;
+}
+
+#upgade_renew_overlay .table-container th {
+    background-color: #dc3545;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+/* ===============================
+   CLOSE BUTTON
+   =============================== */
+#upgade_renew_overlay .close-overlay {
     float: right;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
 }
 
-#renewOverlay .close-overlay:hover {
+#upgade_renew_overlay .close-overlay:hover {
     color: red;
 }
 
-#renewOverlay .table-container table {
-    border-collapse: collapse;
-    width: 100%;
-    table-layout: fixed; /* ADDED - Forces even column distribution */
-}
-
-#renewOverlay .table-container th,
-#renewOverlay .table-container td {
-    width: 20%; /* ADDED - Each column takes exactly 20% width */
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-    word-wrap: break-word; /* ADDED - Handle long text content */
-}
-
-#renewOverlay .table-container th {
-    background-color: #dc3545;
-    position: sticky;
-    top: 0;
-}
-
-
-/* Ensure proper button spacing in entry details controls */
+/* ===============================
+   ENTRY DETAILS BUTTON FIXES
+   =============================== */
 .entry_details .controls_box {
     display: flex !important;
     gap: 10px !important;
@@ -1727,16 +1741,17 @@ div.table-container {
     flex-wrap: wrap !important;
 }
 
-/* Button container layout fixes */
 .entry_details .controls_box button {
     margin: 0 !important;
     flex-shrink: 0 !important;
 }
 
-/* Secondary button styling for Back to Add Entry */
+/* ===============================
+   SECONDARY BUTTON STYLE
+   =============================== */
 .btn-secondary {
     background-color: #6c757d !important;
-    color: white !important;
+    color: #fff !important;
     padding: 8px 12px !important;
     border: none !important;
     border-radius: 8px !important;
@@ -1752,7 +1767,6 @@ div.table-container {
 
 .btn-secondary:hover {
     background-color: #5a6268 !important;
-    color: white !important;
     transform: translateY(-1px) !important;
 }
 
