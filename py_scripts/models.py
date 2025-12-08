@@ -246,6 +246,7 @@ class Claims(Base):
     req_marriage_cert = Column(Boolean)
     req_death_cert = Column(Boolean)
     req_burial_receipts = Column(Boolean)
+    req_auth_letter = Column(Boolean)
     sent_advanced_notice = Column(Boolean)
     claim_type = Column(Enum('ACCIDENT', 'DEATH', 'DENGUE'))
     
@@ -311,6 +312,7 @@ class Claims(Base):
             'req_marriage_cert': self.req_marriage_cert,
             'req_death_cert': self.req_death_cert,
             'req_burial_receipts': self.req_burial_receipts,
+            'req_auth_letter': self.req_auth_letter,
             'sent_advanced_notice': self.sent_advanced_notice,
             'claim_type': self.claim_type
         }
@@ -416,6 +418,7 @@ class Claims_Archive(Base):
     req_marriage_cert = Column(Boolean)
     req_death_cert = Column(Boolean)
     req_burial_receipts = Column(Boolean)
+    req_auth_letter = Column(Boolean)
     sent_advanced_notice = Column(Boolean)
     claim_type = Column(Enum('ACCIDENT', 'DEATH'))
 

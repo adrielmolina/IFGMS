@@ -1572,9 +1572,13 @@ def save_entry_update(data):
         entry = db_session.query(models.Entries).filter_by(entry_id=entry_id).first()
         if not entry:
             print(f"❌ Entry {entry_id} not found in database.")
+
             return False
         
         print(f"✅ Entry found: ID={entry.entry_id}, Member ID={entry.member_id}")
+
+        # archived = models.ArchivedEntries(
+
 
         # Update entry fields with proper validation
         update_fields = [
