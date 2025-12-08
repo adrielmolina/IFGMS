@@ -559,6 +559,11 @@
                                         <input type="checkbox" id="req_marriage_cert" name="req_marriage_cert">
                                         <label for="req_marriage_cert">Marriage Certificate</label>
                                     </li>
+
+                                    <li>
+                                        <input type="checkbox" id="req_auth_letter" name="req_auth_letter">
+                                        <label for="req_auth_letter">Authorization Letter</label>
+                                    </li>
                                     
                                     <li class="claim_remarks_li">
                                         <div class="input_set">
@@ -1196,6 +1201,7 @@ function openLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
             document.getElementById('req_birth_cert').checked = !!claimDetails.req_birth_cert;
             document.getElementById('req_marriage_cert').checked = !!claimDetails.req_marriage_cert;
             document.getElementById('req_death_cert').checked = !!claimDetails.req_death_cert;
+            document.getElementById('req_auth_letter').checked = !!claimDetails.req_burial_receipts;
             document.getElementById('req_burial_receipts').checked = !!claimDetails.req_burial_receipts;
             document.getElementById('sent_advanced_notice').checked = !!claimDetails.sent_advanced_notice;
             
@@ -2080,6 +2086,7 @@ document.addEventListener("DOMContentLoaded", () => {
             req_birth_cert: document.getElementById('req_birth_cert').checked,
             req_marriage_cert: document.getElementById('req_marriage_cert').checked,
             req_death_cert: document.getElementById('req_death_cert').checked,
+            req_auth_letter: document.getElementById('req_auth_letter').checked,
             req_burial_receipts: document.getElementById('req_burial_receipts').checked,
             sent_advanced_notice: document.getElementById('sent_advanced_notice').checked,
             claim_type: document.getElementById('claim_type').value
@@ -2444,7 +2451,7 @@ function updateSaveButtonState() {
             'req_claim_form', 'req_prc_id', 'req_med_cert', 'req_hos_bill_or',
             'req_state_of_acc', 'req_doctor_pres', 'req_purchased_meds', 'req_med_records',
             'req_animal_bite_treat_rec', 'req_incident_rep', 'req_police_rep', 'req_brgy_rep',
-            'req_drivers_lic', 'req_birth_cert', 'req_marriage_cert', 'req_death_cert',
+            'req_drivers_lic', 'req_birth_cert', 'req_marriage_cert', 'req_death_cert', 'req_auth_letter',
             'req_burial_receipts', 'sent_advanced_notice'
         ];
         
