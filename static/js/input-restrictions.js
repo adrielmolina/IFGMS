@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== 7️⃣ DATE FIELDS ENFORCEMENT =====
   // Ensure OR date field uses datepicker
-  const dateFields = ["entry_or_date", "bdate", "declare_date", "dec_date", "eff_date"];
+  const dateFields = ["entry_or_date", "declare_date", "dec_date", "eff_date"];
 
   dateFields.forEach(id => {
     const input = document.getElementById(id);

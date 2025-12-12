@@ -2063,6 +2063,29 @@ def save_entry_details():
         entry_id = new_entry.entry_id
         print(f"Created new entry with ID: {entry_id}")
 
+        
+        # --- Handle UPGRADE/RENEW logic after main save ---
+        tags = data.get('tags')
+        if tags:
+            tag_lines = [line.strip() for line in tags.split("\n") if line.strip()]
+
+            for line in tag_lines:
+                if "UPGRADE" in line or "RENEW" in line:
+                    parts = [p.strip() for p in line.split("|")]
+                    if len(parts) == 2:
+                        old_id = parts[1]
+
+                        # Separate query for old entry
+                        old_entry = db_session.query(models.Entries).filter(
+                            models.Entries.maab_no == old_id
+                        ).first()
+
+                        if old_entry:
+                            old_entry.inactive = True
+                            db_session.flush()
+                            print(f"Set inactive=True for old entry {old_id}")
+        
+        
         # Commit both member and entry
         db_session.commit()
         

@@ -1320,6 +1320,7 @@ def get_entries(record_id):
             )
             .join(models.Members, models.Entries.member_id == models.Members.member_id)
             .filter(models.Entries.record_id == record_id)
+            .filter(models.Entries.inactive == False)   # ← added filter
             .all()
         )
 

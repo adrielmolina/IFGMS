@@ -156,6 +156,7 @@ class Entries(Base):
     tags = Column(String(255))
     dispatch_ready = Column(Boolean)
     dispatch_id = Column(Integer, ForeignKey('dispatch.dispatch_id'))
+    inactive = Column(Boolean, default=False)
     
     @property
     def declaration_date_YMD(self):

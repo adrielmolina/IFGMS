@@ -1453,6 +1453,39 @@
 
         // ===== FAQ FUNCTIONALITY =====
         document.addEventListener('DOMContentLoaded', function() {
+
+
+            //limit birthdate to 3 years old and above
+            const birthdateInput = document.getElementById('birthdate');
+
+            // Set max date to 3 years ago
+            const today = new Date();
+            const threeYearsAgo = new Date();
+            threeYearsAgo.setFullYear(today.getFullYear() - 3);
+
+            const yyyy = threeYearsAgo.getFullYear();
+            const mm = String(threeYearsAgo.getMonth() + 1).padStart(2, '0');
+            const dd = String(threeYearsAgo.getDate()).padStart(2, '0');
+
+            birthdateInput.max = `${yyyy}-${mm}-${dd}`;
+
+            // Function to block manual typing but keep datepicker
+            const blockManualTyping = (input) => {
+                input.addEventListener('keydown', (e) => {
+                    const allowedKeys = [
+                        "Tab", "Backspace", "Delete",
+                        "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+                        "Enter", "F4", " " // Space
+                    ];
+                    if (allowedKeys.includes(e.key)) return;
+                    e.preventDefault();
+                });
+            };
+
+            blockManualTyping(birthdateInput);
+
+            //-==--=-==--=-=-==---=-==-=--=-=-=-=-==-=-=--=
+
             const faqQuestions = document.querySelectorAll('.faq-question');
             
             faqQuestions.forEach(question => {
