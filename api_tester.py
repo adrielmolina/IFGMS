@@ -48,41 +48,6 @@ def get_claim_id_test():
     claim_id = db_conn.get_claim_id()
     print("New claim ID:", claim_id)
 
-def mailjet_test():
-    """
-    This call sends an email to one recipient with an additional SMTP header
-    """
-    from mailjet_rest import Client
-    import os
-    api_key = '4114a70cf79318eff0303b28859ad89c'
-    api_secret = '5120feed68c8bf4fd32bb7cc25d4f50e'
-    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
-    data = {
-    'Messages': [
-                    {
-                            "From": {
-                                    "Email": "pilot@mailjet.com",
-                                    "Name": "Mailjet Pilot"
-                            },
-                            "To": [
-                                    {
-                                            "Email": "passenger1@mailjet.com",
-                                            "Name": "passenger 1"
-                                    }
-                            ],
-                            "Subject": "Your email flight plan!",
-                            "TextPart": "Dear passenger 1, welcome to Mailjet! May the delivery force be with you!",
-                            "HTMLPart": "<h3>Dear passenger 1, welcome to <a href=\"https://www.mailjet.com/\">Mailjet</a>!<br />May the delivery force be with you!",
-                            "Headers": {
-                                    "X-My-header": "X2332X-324-432-534"
-                            }
-                    }
-            ]
-    }
-    result = mailjet.send.create(data=data)
-    print (result.status_code)
-    
-    print(result.json())
 
 
 if __name__ == "__main__":
